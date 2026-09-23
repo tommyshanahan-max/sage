@@ -3057,6 +3057,18 @@ export function cleanSay(raw) {
      * because there is nothing to strip. A payment code put in a room by the
      * board is the opposite of two people swapping a way to leave it. */
     ...(/^[a-f0-9]{20}$/.test(String(raw.pay || "")) ? { pay: String(raw.pay) } : {}),
+    /* A CODE IN THE ROOM, kept as the string it encodes and drawn by the
+     * board — see qrBuffer in lib/qr.js and /api/say/:id/qr.png.
+     *
+     * NOT AN UPLOADED PICTURE, and that is the whole point. An image somebody
+     * can post into a room is a way to put anything in a room — a contact
+     * card, a screenshot of a WeChat id — and stripContact cannot read a
+     * picture. A string this board encoded itself is a thing it can look at
+     * before it draws it.
+     *
+     * 512 characters because that is past any payment code and short of
+     * anything anybody would try to hide in one. */
+    ...(raw.qr ? { qr: s(raw.qr, 512) } : {}),
   };
 }
 

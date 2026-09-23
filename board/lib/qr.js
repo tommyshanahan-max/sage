@@ -99,3 +99,18 @@ export async function qrPng(text, { ec = "M" } = {}) {
     errorCorrectionLevel: ec, margin: 1, scale: 8,
   });
 }
+
+/** The same code as PNG bytes, for a route that serves it as a file.
+ *
+ *  WHY BYTES AND NOT THE DATA URI ABOVE. A code that arrives in a room has to
+ *  be an <img> with a real src: the note at the top of this file says the
+ *  long-press menu reads an <img> and nothing else, and a room redraws its
+ *  lines on every poll — inlining a data URI per line per poll sends the same
+ *  few kilobytes again and again for a picture that never changes. A URL is
+ *  fetched once and then cached by the browser, which is what an <img> is for.
+ */
+export async function qrBuffer(text, { ec = "M" } = {}) {
+  return QRCode.toBuffer(String(text), {
+    errorCorrectionLevel: ec, margin: 1, scale: 8, type: "png",
+  });
+}

@@ -28,6 +28,11 @@ const arg = (n, d = "") => { const i = rest.indexOf("--" + n); return i < 0 ? d 
 const text = arg("text").trim();
 const room = arg("room").trim();
 
+/* A CODE UNDER THE LINE. What goes in is the string the code encodes — a URL,
+   or a wallet's own wxp://… — and the board draws it. Not a picture: see the
+   `qr` note in cleanSay for why an uploaded image is a different and worse
+   thing. The line is still required, because a code with nothing said over it
+   is a thing nobody knows whether to press. */
 if (!text) {
   console.log("");
   console.log('  What should he say?  make mo-say WHAT="Photographs are being looked at tomorrow."');
@@ -38,7 +43,7 @@ if (!text) {
 const r = await fetch(base + "/api/mo/say", {
   method: "POST",
   headers: { "x-admin-secret": key, "Content-Type": "application/json" },
-  body: JSON.stringify({ text, room }),
+  body: JSON.stringify({ text, room, qr: arg("qr") }),
 });
 const d = await r.json().catch(() => ({}));
 

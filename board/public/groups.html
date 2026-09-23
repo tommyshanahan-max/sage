@@ -255,6 +255,14 @@
   /* The chip takes the board's own green rather than a literal, so it is not
      a pale mint square on the dark ground — the mistake made once already on
      the money panel. */
+  /* A CODE IN THE ROOM. White ground always, at every size, because a code
+     on a dark card is a code a camera and a long-press both refuse — the
+     quiet zone is part of the code, not decoration. Sized in CSS so the image
+     can be whatever the drawer thought; the long-press menu reads the <img>,
+     not the pixels. */
+  .qrline{display:block;width:11rem;height:11rem;margin:.45rem 0 0;
+    background:#fff;border:1px solid var(--line);border-radius:.7rem;padding:.55rem}
+
   .bill .bpaid{display:inline-flex;align-items:center;gap:.35rem;margin-top:.6rem;
     font-size:.74rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
     color:var(--t2);border:1px solid var(--t2);padding:.28rem .6rem;border-radius:999px}
@@ -2466,6 +2474,16 @@ function paintRoom(g) {
     /* THE BILL, DRAWN FROM THE ROW AND NOT FROM THE LINE — see billView. The
        figure and whether it has been paid are read every time the room is
        loaded, so a request paid an hour after it was sent says so here. */
+    /* THE CODE, DRAWN BY THE BOARD FROM THE STRING IT KEPT. An <img> with a
+       real src and nothing around it: 长按二维码识别 is the gesture, and a
+       sentence above the code explaining the gesture is the string CLAUDE.md
+       warns about. */
+    if (m.qr) {
+      const img = el("img", "qrline");
+      img.src = "/api/say/" + m.id + "/qr.png";
+      img.alt = "";
+      wrap.append(img);
+    }
     if (m.bill) {
       const c = el("div", "bill");
       c.append(el("span", "bamt", m.bill.amount || ""));

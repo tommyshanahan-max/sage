@@ -66,7 +66,7 @@ import { openChina } from "./lib/china.js";
  * says it to both halves. */
 import { OFF } from "./public/off.js";
 import { createWallet } from "./lib/wallet/index.js";
-import { qrBits, qrPng } from "./lib/qr.js";
+import { qrBits, qrPng, qrBuffer } from "./lib/qr.js";
 
 const app = express();
 app.disable("x-powered-by");
@@ -509,7 +509,7 @@ const ROOT_IS_BOARD = process.env.BOARD_AT_ROOT === "1";
    the button was never on the screen. The POST to /china/api/connect came
    back as door.html too, and an HTML page from a JSON fetch fails silently.
    `china` and not `china\/`: /china itself is the fork. */
-const OPEN_PATHS = /^\/(china|enter|auth\/google|i\/|w\/|r\/|s\/|d\/|pay\/|demo(?:\.png)?$|api\/demo\/ask$|sell$|api\/sell$|dealio|api\/pay\/onboard$|api\/dealio\/try\/qr$|shop\/|order\/|orders$|api\/shop\/|api\/shop-media$|api\/order\/|api\/orders$|api\/product\/|api\/memo\/|api\/request(?:s|\/|$)|api\/snap|api\/door$|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.(?:html|pdf)|g\/|share-exchange\.png|share-square\.png|about|rules|terms|privacy|rewards|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/offer|api\/wait|api\/butler$|api\/butler-voice$|api\/butler-hear$|api\/write\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
+const OPEN_PATHS = /^\/(china|enter|auth\/google|i\/|w\/|r\/|s\/|d\/|pay\/|demo(?:\.png)?$|api\/demo\/ask$|sell$|api\/sell$|dealio|api\/pay\/onboard$|api\/dealio\/try\/qr$|shop\/|order\/|orders$|api\/shop\/|api\/shop-media$|api\/order\/|api\/orders$|api\/product\/|api\/memo\/|api\/request(?:s|\/|$)|api\/say\/|api\/snap|api\/door$|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.(?:html|pdf)|g\/|share-exchange\.png|share-square\.png|about|rules|terms|privacy|rewards|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/offer|api\/wait|api\/butler$|api\/butler-voice$|api\/butler-hear$|api\/write\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
 
 /* ---- BEING SOMEBODY YOU SPEAK FOR ----------------------------------------
  *
@@ -6117,11 +6117,23 @@ app.post("/api/mo/say", admin, express.json({ limit: "4kb" }), async (req, res) 
     return res.status(400).json({ error: "room" });
   }
   const rooms = one ? [one] : store.WAITROOMS_CHAT;
+  /* A CODE UNDER THE LINE, AND HE IS THE ONLY ONE WHO CAN PUT ONE THERE.
+   *
+   * Everything about a code in a room is on the `qr` note in cleanSay: a
+   * string this board encodes itself, never a picture somebody uploaded,
+   * because stripContact cannot read a picture. This route is already behind
+   * the admin key, so the string came from whoever runs the board.
+   *
+   * contactShaped is run on the line and not on the code: a payment code is
+   * a way to pay somebody, which is the point, and it is not a way to reach
+   * them off the board. */
+  const qr = String(req.body?.qr || "").trim().slice(0, 512);
   const made = [];
   await change((board) => {
     for (const key of rooms) {
       const row = store.cleanSay({
         id: store.newId(), group: store.doorRoom(key), by: store.MO, text,
+        ...(qr ? { qr } : {}),
       });
       board.says.push(row);
       made.push({ room: key, id: row.id });
@@ -9278,6 +9290,11 @@ app.get("/api/groups", notesOff, async (req, res) => {
           evt: m.evt || null,
           // The bill on the line, looked up now — see billView.
           bill: billView(board, m),
+          /* THAT THERE IS A CODE, NEVER THE CODE ITSELF. The page draws an
+             <img> pointing at the route below; a payment code sent down with
+             every poll of every room is a payment code in a great many more
+             places than it needs to be. */
+          qr: Boolean(m.qr),
           mine: m.by === me, reported: Boolean(m.report),
           ...(m.by === store.MO
             ? { who: store.MO, handle: MO_NAME, photo: "", bot: true }
@@ -13865,6 +13882,8 @@ app.get("/api/door", notesOff, async (req, res) => {
                      evt: m.evt || null,
                      // The bill on the line, looked up now — see billView.
                      bill: billView(board, m),
+                     // That there is a code, never the code — see /api/say/:id/qr.png.
+                     qr: Boolean(m.qr),
                      mine: how !== "peek" && m.by === me,
                      reported: Boolean(m.report), ...named(m.by) })),
   });
@@ -14126,6 +14145,38 @@ function moSays(board, group, kind, who) {
 }
 
 /** Saying something in one. */
+/** THE CODE ON A LINE, AS A FILE.
+ *
+ *  An <img> with a real src, because that is what a long-press menu reads —
+ *  see the note at the top of lib/qr.js — and because a room redraws itself
+ *  on every poll and a data URI would be re-sent every time.
+ *
+ *  NO DOOR ON IT, and that is deliberate: it is a payment code, which is a
+ *  thing whose whole purpose is to be shown to somebody who is not a member.
+ *  The id is twenty hex characters and unguessable, which is the same
+ *  authority /pay/<id> runs on. It answers with a picture or a 404 and never
+ *  says whether a line exists.
+ *
+ *  Cached hard. The string a code encodes never changes: a different code is
+ *  a different line with a different id.
+ */
+app.get("/api/say/:id/qr.png", async (req, res) => {
+  const id = String(req.params.id || "");
+  if (!/^[a-f0-9]{20}$/.test(id)) return res.status(404).end();
+  const board = await store.load(FILE);
+  const m = board.says.find((x) => x.id === id);
+  if (!m || !m.qr) return res.status(404).end();
+  try {
+    const png = await qrBuffer(m.qr);
+    res.set("Content-Type", "image/png");
+    res.set("Cache-Control", "public, max-age=31536000, immutable");
+    res.end(png);
+  } catch (err) {
+    console.error("say qr:", err.message);
+    res.status(404).end();
+  }
+});
+
 /* THE BILL ON A LINE, READ WHEN THE LINE IS READ AND NOT WHEN IT WAS SAID.
  *
  * cleanSay keeps an id and nothing else, for the reason written over it: a
