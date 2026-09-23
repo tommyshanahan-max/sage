@@ -2297,6 +2297,17 @@ try: ## Open the board on THIS machine, with a room in it, before deploying: mak
 	@# survives the command, which is the point: it is a thing to look at, not
 	@# a place to keep anything.
 	@#
+	@# A COMMENT CANNOT GO INSIDE THE BLOCK BELOW. Every backslash-continued
+	@# line is handed to the shell as ONE line, so a `#` anywhere in it comments
+	@# out everything after it — the rest of the command, silently. This was
+	@# written wrong once, with `@#` lines in the middle of the trap block.
+	@#
+	@# AND A BILL IN THE ROOM, for the same reason as the two lines: the thing
+	@# worth looking at cannot be reached by typing. Claire asks for the balance
+	@# and puts it in the room; Sasha — who you are — gets the Pay button under
+	@# it. Through the real routes, because a seeded request row would have to
+	@# know a shape /api/request already knows.
+	@#
 	@# THE TWO LINES IN THE ROOM GO IN THROUGH THE REAL ROUTE, after the server
 	@# is up, rather than into the seed file. A message has a shape the seed
 	@# would then have to know and keep in step with; /api/group/say already
@@ -2355,13 +2366,22 @@ try: ## Open the board on THIS machine, with a room in it, before deploying: mak
 	    "http://127.0.0.1:$$port/api/group/say" || true; }; \
 	  say clairedevice0001 "Read it. The 14th works — I have him on hold until Friday."; \
 	  say tomdevice0000001 "Sasha, Claire. Terms are at the top. Both of you tap Agree and I will get out of the way."; \
+	  bill=$$(curl -fsS -X POST -H 'content-type: application/json' \
+	    -H 'x-board-device: clairedevice0001' \
+	    -d '{"device":"clairedevice0001","from":"Claire","to":"Sasha","amount":"¥30,000","cur":"cny","what":"Macau, March — the balance","way":"in"}' \
+	    "http://127.0.0.1:$$port/api/request" 2>/dev/null \
+	    | sed -n 's/.*"id":"\([a-f0-9]\{20\}\)".*/\1/p'); \
+	  [ -n "$$bill" ] && curl -fsS -o /dev/null -X POST -H 'content-type: application/json' \
+	    -d "{\"device\":\"clairedevice0001\",\"group\":\"$$room\",\"pay\":\"$$bill\"}" \
+	    "http://127.0.0.1:$$port/api/group/say" || true; \
 	  url="http://127.0.0.1:$$port/groups"; \
 	  (command -v open >/dev/null && open "$$url" 2>/dev/null) \
 	    || (command -v xdg-open >/dev/null && xdg-open "$$url" 2>/dev/null) \
 	    || true; \
 	  echo "  $$url"; \
 	  echo; \
-	  echo "  Tap Macau, March, then Pay on the balance. Ctrl-C when you have seen enough."; \
+	  echo "  Tap Macau, March. The bill at the bottom of the room is the new bit."; \
+	  echo "  Ctrl-C when you have seen enough."; \
 	  echo; \
 	  wait $$pid
 
