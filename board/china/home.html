@@ -1,0 +1,164 @@
+<!doctype html>
+<!-- CHINA BUSINESS SOLUTIONS, IN DEALIO'S CLOTHES.
+     The palette and the shape are lifted from board/public/dealio.html —
+     same dark ground, same serif headline over a sans body, same order:
+     what it is, then how, then what it costs, then who it is for, then what
+     it never does, then who is behind it. That order is not decoration. A
+     stranger deciding whether to trust somebody with a payment reads down
+     it in that sequence, and the last two sections are the ones that settle
+     it. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>China Business Solutions</title>
+<meta name="description" content="Take payment from clients in mainland China. They pay in WeChat. You get the money in your own currency.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif&display=swap">
+<style>
+  :root{
+    --bg:#0B0E15; --card:#141924; --ink:#E9EDF5; --ink2:#A3B0C4; --mut:#6F7D92;
+    --line:#232B39; --hair:#1C2330; --acc:#3F68D8; --accink:#fff; --ok:#3FBE7D;
+    --serif:'Instrument Serif',Georgia,"Songti SC",'Times New Roman',serif;
+  }
+  *{box-sizing:border-box}
+  [hidden]{display:none!important}
+  body{margin:0;background:var(--bg);color:var(--ink);font-size:16px;line-height:1.5;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",Helvetica,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  .wrap{max-width:26rem;margin:0 auto;padding:0 1.3rem}
+  a{color:var(--acc)}
+
+  .bar{display:flex;align-items:center;gap:.6rem;
+    padding:calc(1.1rem + env(safe-area-inset-top,0px)) 0 1.4rem}
+  .dot{width:.55rem;height:.55rem;border-radius:50%;background:var(--acc);flex:none}
+  .name{font-size:.76rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--ink2)}
+  .bar .sp{flex-grow:1}
+  /* 44px, like every other target here. The language button and the contact
+     address were 30-odd — small enough that the person this is built for
+     cannot hit them, and the language button is the one a Chinese reader
+     needs first. */
+  .lang{display:inline-flex;align-items:center;min-height:44px;
+    border:1px solid var(--line);background:none;color:var(--ink2);
+    font:inherit;font-size:.82rem;padding:0 .9rem;border-radius:999px;cursor:pointer}
+
+  h1{margin:.4rem 0 0;font-family:var(--serif);font-weight:400;font-size:2.6rem;line-height:1.08}
+  .lede{margin:1rem 0 0;font-size:1.02rem;line-height:1.6;color:var(--ink2)}
+  .corridor{margin:1.1rem 0 0;font-size:.78rem;line-height:1.6;color:var(--mut)}
+
+  .go{display:flex;align-items:center;justify-content:center;min-height:52px;
+    margin:1.6rem 0 0;padding:1rem;border-radius:999px;background:var(--acc);
+    color:var(--accink);font-size:1rem;font-weight:600;text-decoration:none}
+  .see{display:inline-flex;align-items:center;min-height:44px;margin-top:.9rem;
+    font-size:.92rem;color:var(--ink2);text-decoration:none}
+
+  .ways{display:flex;flex-wrap:wrap;gap:1rem;margin:2rem 0 0;
+    padding:1.2rem 0;border-top:1px solid var(--hair);border-bottom:1px solid var(--hair)}
+  .way{display:flex;align-items:center;gap:.45rem;font-size:.86rem;color:var(--ink2)}
+  .way i{width:.45rem;height:.45rem;border-radius:50%;background:var(--ok);flex:none}
+  .way.b i{background:#3F68D8} .way.c i{background:var(--mut)}
+
+  section{padding:2.6rem 0 0}
+  .lab{margin:0;font-size:.7rem;font-weight:700;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--mut)}
+  h2{margin:.7rem 0 0;font-family:var(--serif);font-weight:400;font-size:1.8rem;line-height:1.2}
+  p{margin:1rem 0 0;font-size:.95rem;line-height:1.65;color:var(--ink2)}
+
+  ol{margin:1.4rem 0 0;padding:0;list-style:none;counter-reset:s}
+  ol li{counter-increment:s;display:flex;gap:1rem;padding:0 0 1.4rem}
+  ol li::before{content:counter(s);flex:none;width:1.2rem;font-size:.8rem;color:var(--mut)}
+  ol b{display:block;font-size:.98rem;color:var(--ink);font-weight:600}
+  ol span{display:block;margin-top:.35rem;font-size:.9rem;line-height:1.6;color:var(--ink2)}
+
+  .big{margin:1.2rem 0 0;font-family:var(--serif);font-size:3.2rem;line-height:1;color:var(--acc)}
+  .under{margin:.5rem 0 0;font-family:var(--serif);font-size:1.5rem;line-height:1.25;color:var(--ink)}
+
+  .never p{padding-bottom:1.1rem;border-bottom:1px solid var(--hair)}
+  .never p:last-of-type{border-bottom:0}
+
+  .who{margin-top:1.4rem}
+  .who dt{font-size:.74rem;color:var(--mut);margin-top:1rem}
+  .who dd{margin:.2rem 0 0;font-size:.95rem;color:var(--ink)}
+  .who dd a{display:inline-flex;align-items:center;min-height:44px}
+
+  footer{margin-top:3rem;padding:1.6rem 0 calc(2.4rem + env(safe-area-inset-bottom,0px));
+    border-top:1px solid var(--hair)}
+  footer a{display:inline-flex;align-items:center;min-height:44px;margin-right:1.4rem;
+    font-size:.88rem;color:var(--ink2)}
+  footer p{font-size:.78rem;color:var(--mut)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="bar">
+    <span class="dot"></span><span class="name">China Business Solutions</span>
+    <span class="sp"></span>
+    <button class="lang" type="button">中文</button>
+  </div>
+
+  <h1>Get paid<br>from China.</h1>
+  <p class="lede">Your client pays the way they already pay for everything. You get the money in your own currency.</p>
+  <p class="corridor">Cross-border payments for services &mdash; mainland China to Australia.</p>
+
+  <a class="go" href="index.html">Get set up</a><br>
+  <a class="see" href="beijing.html">Or let us invoice for you &rsaquo;</a>
+
+  <div class="ways">
+    <span class="way"><i></i>WeChat Pay 微信支付</span>
+    <span class="way b"><i></i>Alipay 支付宝</span>
+    <span class="way c"><i></i>Card</span>
+  </div>
+
+  <section>
+    <p class="lab">How it works</p>
+    <h2>Three steps, and two of them are one tap.</h2>
+    <ol>
+      <li><span><b>You ask.</b><span>Type the amount and what it is for. You get a link.</span></span></li>
+      <li><span><b>They pay.</b><span>They open the link, long-press the code, and pay in WeChat or Alipay. No account, no app, no sign-up.</span></span></li>
+      <li><span><b>You are paid.</b><span>The money settles to your own bank account in your own currency.</span></span></li>
+    </ol>
+  </section>
+
+  <section>
+    <p class="lab">Two ways in</p>
+    <h2>Your account, or ours.</h2>
+    <p><b style="color:var(--ink)">Your own Stripe.</b> The money lands in your account and we never touch it. Stripe collects your identity and bank details itself &mdash; and if you already have an account with them, it offers to reuse what it has already verified.</p>
+    <p><b style="color:var(--ink)">Our Beijing company.</b> Sign one contract. Your client pays us in WeChat against a 发票, and we pay you as our supplier. Nothing to set up, and you can move to your own account later.</p>
+  </section>
+
+  <section>
+    <p class="lab">Who it is for</p>
+    <h2>People, not companies.</h2>
+    <p>Lawyers, agents, consultants, translators, designers, tutors and sole traders outside China with clients inside it.</p>
+    <p>Ordinary payment services are built for registered businesses with a website and a merchant account. Most of the people doing this work have neither, and their alternative is a bank branch, a form, and several days of not knowing.</p>
+  </section>
+
+  <section class="never">
+    <p class="lab">What this never does</p>
+    <h2>It never holds your money.</h2>
+    <p>Payments are processed and funds are held by a licensed payment provider. This is not a bank and is not a money transmitter.</p>
+    <p>Each recipient is identity-checked by that provider, and the money settles to their own account. It does not pass through a balance of ours.</p>
+    <p>No cash. No cryptocurrency. No bearer instruments.</p>
+    <p>No goods trade, no marketplace, no escrow. Payment for services between two people who already know each other.</p>
+    <p>It is not a way around anybody&rsquo;s reporting requirements or limits. The provider&rsquo;s own limits and checks apply to every payment.</p>
+    <p>The service is not encrypted end to end and does not claim to be.</p>
+  </section>
+
+  <section>
+    <p class="lab">Who runs it</p>
+    <h2>One person, in Australia.</h2>
+    <dl class="who">
+      <dt>Legal entity</dt><dd>Thomas Joseph Kidd Shanahan</dd>
+      <dt>Entity form</dt><dd>Individual / sole trader</dd>
+      <dt>Registered in</dt><dd>Australia</dd>
+      <dt>ABN</dt><dd>97 922 742 244</dd>
+      <dt>Contact</dt><dd><a href="mailto:mo@thexchange.app">mo@thexchange.app</a></dd>
+    </dl>
+  </section>
+
+  <footer>
+    <a href="/dealio/terms">Terms</a><a href="/privacy">What is kept</a>
+    <p>China Business Solutions is a trading name of Thomas Joseph Kidd Shanahan.</p>
+  </footer>
+</div>
+</body>
+</html>
