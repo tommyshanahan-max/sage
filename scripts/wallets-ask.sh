@@ -33,7 +33,7 @@ fi
 
 echo ""
 echo "  ────────────────────────────────────────────────"
-echo "  PASTE A STRIPE SECRET KEY, then press Enter"
+echo "  PASTE A STRIPE KEY (sk_ or a read-only rk_), then Enter"
 echo "  Nothing will appear as you paste. That is normal."
 echo "  ────────────────────────────────────────────────"
 printf '  sk_'
@@ -41,9 +41,13 @@ read -rs KEY < /dev/tty || { echo ""; echo "  Nothing read."; exit 1; }
 echo ""
 KEY="$(printf '%s' "$KEY" | tr -d '[:space:]')"
 [ -n "$KEY" ] || { echo "  Empty — nothing pasted."; exit 1; }
+# rk_ AS WELL AS sk_. This command only reads — GET /v1/account and GET
+# /v1/payment_method_configurations — so a restricted read-only key is the
+# right key for it, and refusing one would push somebody towards a full secret
+# key for a question that cannot change anything.
 case "$KEY" in
-  sk_live_*|sk_test_*) ;;
-  *) echo "  That does not start with sk_live_ or sk_test_."; exit 1 ;;
+  sk_live_*|sk_test_*|rk_live_*|rk_test_*) ;;
+  *) echo "  That does not start with sk_ or rk_, live or test."; exit 1 ;;
 esac
 
 # Through the environment rather than argv, for the same reason as hook-make.

@@ -89,7 +89,7 @@ if (!res.ok) {
 }
 
 const configs = Array.isArray(j?.data) ? j.data : [];
-const mode = /^sk_live/.test(KEY) ? "live" : /^sk_test/.test(KEY) ? "test" : "unknown";
+const mode = /^[sr]k_live/.test(KEY) ? "live" : /^[sr]k_test/.test(KEY) ? "test" : "unknown";
 
 console.log("");
 /* THE NAME AND THE ID, because a name alone does not separate an account from
