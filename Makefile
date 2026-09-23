@@ -848,8 +848,13 @@ weidian-pull: ## Read the old 微店 shop: make weidian-pull SHOP=https://weidia
 	@# Writes /data/weidian.json inside post_data. `make weidian-json` prints
 	@# it, and the reviews go in per item with `make review-import`.
 	@test -n "$(SHOP)" || { echo 'which shop? make weidian-pull SHOP=https://weidian.com/s/1202970134'; exit 1; }
-	@$(COMPOSE) --profile post run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" post-browser \
-	  node /seed/weidian-pull.mjs --shop "$(SHOP)" --out /data/weidian.json --max "$(or $(MAX),40)"
+	@# MOUNTED AT /app/seed, NOT /seed. playwright is installed at
+	@# /app/node_modules in this image, and an ESM bare specifier resolves by
+	@# walking up from the importing FILE — from /seed that is /seed then /,
+	@# so it never saw it and every run died with ERR_MODULE_NOT_FOUND. One
+	@# directory deeper inside /app and the ordinary walk finds it.
+	@$(COMPOSE) --profile post run --rm --no-deps -T -v "$(CURDIR)/scripts:/app/seed:ro" post-browser \
+	  node /app/seed/weidian-pull.mjs --shop "$(SHOP)" --out /data/weidian.json --max "$(or $(MAX),40)"
 
 weidian-json: ## Print what weidian-pull read: make weidian-json
 	@$(COMPOSE) --profile post run --rm --no-deps -T post-browser \
@@ -871,8 +876,8 @@ weidian-reviews: ## Old 微店 reviews onto the matching products: make weidian-
 	@# somebody's words about formula filed under a jar of honey would never
 	@# be found again. DRY=1 shows what it would match and writes nothing.
 	@if [ -n "$(SHOP)" ]; then $(MAKE) weidian-pull SHOP="$(SHOP)" MAX="$(or $(MAX),40)"; fi
-	@$(COMPOSE) --profile post run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" post-browser \
-	  node /seed/weidian-reviews.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	@$(COMPOSE) --profile post run --rm --no-deps -T -v "$(CURDIR)/scripts:/app/seed:ro" post-browser \
+	  node /app/seed/weidian-reviews.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  --file /data/weidian.json $(if $(DRY),--dry,)
 
 review-import: ## All the old reviews at once: make review-import N=1 FILE=scripts/reviews-1.json

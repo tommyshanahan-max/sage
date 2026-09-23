@@ -36,7 +36,21 @@ if (!SHOP) {
   process.exit(1);
 }
 
-const { chromium } = await import("playwright");
+/* PLAYWRIGHT LIVES IN THE IMAGE, NOT BESIDE THIS FILE.
+ *
+ * This read `await import("playwright")` and died with ERR_MODULE_NOT_FOUND on
+ * every run — so `make weidian-pull` had never once worked. The package is
+ * installed, at /app/node_modules in the post-browser image (see
+ * post/browser/package.json), but this script is bind-mounted at /seed, and an
+ * ESM bare specifier resolves by walking up from the IMPORTING FILE — /seed,
+ * then / — and never reaches /app. NODE_PATH does not help either: ESM ignores
+ * it. So the Makefile now mounts this beside the modules and PLAYWRIGHT is the
+ * escape hatch for anywhere else, the same one deck-pdf.mjs carries.
+ *
+ * `.default || ns` because playwright's entry is CommonJS: depending on how it
+ * is reached, `chromium` is either a named re-export or a key on default. */
+const pw = await import(process.env.PLAYWRIGHT || "playwright");
+const { chromium } = pw.default || pw;
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /* A phone. The shop is an H5 page built for one, and the desktop rendering of
