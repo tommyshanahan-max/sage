@@ -11935,6 +11935,50 @@ app.get("/api/product/:id/asks", async (req, res) => {
  *  written here are worth reading because an order nobody can fake stands
  *  behind them; one imported by hand has nothing behind it but Tom's word,
  *  and saying so is what keeps the others worth anything. */
+/** TAKE OUT THE ROWS THAT ARE NOT REVIEWS.
+ *
+ *  The 微店 import reads blocks off a page, and a page carries more than
+ *  reviews: 18 of the first 219 rows were the reviewer's own masked name
+ *  (`L***花`) or a specification line (`型号：3`) sitting where the words
+ *  should be. On a page whose entire worth is that it is checkable, a row of
+ *  gibberish costs more than the row is worth.
+ *
+ *  ONLY IMPORTED ROWS, EVER. A review written against a real order on this
+ *  board is somebody's own words about a parcel they received, and nothing
+ *  here may touch one — so the filter is `src` only, and the endpoint says
+ *  how many it would take before it takes any.
+ *
+ *  It judges shape, not sentiment: a masked handle, a spec line, or fewer
+ *  than two characters. 好👍 stays, because that is a real thing somebody
+ *  wrote.
+ */
+const JUNK = [
+  /^[^\s]{1,4}\*{2,}[^\s]{0,6}$/u,        /* L***花 — a masked name, not words */
+  /^(型号|规格|颜色|尺码|口味)\s*[:：]/u,  /* 型号：3 — the spec line under a review */
+];
+const isJunk = (text) => {
+  const t = String(text || "").trim();
+  /* Empty only, not "short". A bare 👍 is somebody's actual answer and a
+     one-word 好 is how most of these read — an earlier draft dropped both by
+     treating length as a proxy for meaning, which it is not. */
+  if (!t) return true;
+  return JUNK.some((re) => re.test(t));
+};
+
+app.post("/api/admin/review-tidy", admin, express.json({ limit: "2kb" }), async (req, res) => {
+  const go = Boolean(req.body?.go);
+  const board = await store.load(FILE);
+  const doomed = board.reviews.filter((r) => r.src && isJunk(r.text));
+  const sample = doomed.slice(0, 12).map((r) => r.text);
+  if (!go) return res.json({ ok: true, would: doomed.length, sample, kept: board.reviews.length - doomed.length });
+  const out = await change((b) => {
+    const before = b.reviews.length;
+    b.reviews = b.reviews.filter((r) => !(r.src && isJunk(r.text)));
+    return { removed: before - b.reviews.length, kept: b.reviews.length };
+  });
+  res.json({ ok: true, ...out, sample });
+});
+
 app.post("/api/admin/review-add", admin, express.json({ limit: "512kb" }), async (req, res) => {
   /* A LIST, OR ONE. Six hundred reviews typed in one at a time is six
      hundred commands, and the WeChat store has that many. The single form
@@ -13063,6 +13107,18 @@ app.post("/api/admin/product/:id", admin, express.json({ limit: "2kb" }), async 
     if (req.body?.out !== undefined) p.out = Boolean(req.body.out);
     if (req.body?.off !== undefined) p.off = Boolean(req.body.off);
     if (req.body?.kind !== undefined) p.kind = String(req.body.kind).trim().slice(0, 20);
+    /* A NAME CAN BE WRONG, AND UNTIL NOW COULD NOT BE PUT RIGHT.
+       This handler took the photograph, the sold-out flag, the shelf and the
+       kind, and not the name — so a product added with a typo, or with its
+       own description run onto the end of it by an import, was a row that
+       could only be retired and added again. Retiring it takes its reviews
+       with it, because the reviews page is built from products that are on
+       the shelf. The name stays the same length limit as cleanProduct. */
+    if (req.body?.name !== undefined) {
+      const name = String(req.body.name).trim().slice(0, 80);
+      if (name) p.name = name;
+    }
+    if (req.body?.en !== undefined) p.en = String(req.body.en).trim().slice(0, 80);
     return { ok: true, name: p.name };
   });
   if (out?.error) return res.status(404).json(out);

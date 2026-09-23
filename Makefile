@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: try try-china china wallets app-state claire-episodes deal claire-key claire-count claire-seed claire-video listing invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who bells twice admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check post post-status post-run post-login post-code post-logins weidian-pull weidian-json weidian-reviews shop-chapter
+.PHONY: try try-china china wallets app-state claire-episodes deal claire-key claire-count claire-seed claire-video listing invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who bells twice admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check post post-status post-run post-login post-code post-logins weidian-pull weidian-json weidian-reviews shop-chapter review-tidy product-names
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -889,6 +889,31 @@ weidian-reviews: ## Old 微店 reviews onto the matching products: make weidian-
 	@$(COMPOSE) --profile post run --rm --no-deps -T -v "$(CURDIR)/scripts:/app/seed:ro" post-browser \
 	  node /app/seed/weidian-reviews.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  --file /data/weidian.json $(if $(DRY),--dry,) $(if $(ADD),--add,)
+
+product-names: ## Shorten names that carry their own blurb: make product-names [GO=1] [ID=... NAME="..."]
+	@# The 微店 import read each name off a page with no clean title element,
+	@# so fourteen products went on the shelf as the name followed by the
+	@# first sentence of the description, with no newline to cut at.
+	@#
+	@# THE CUT IS WHERE THE BRAND COMES BACK — these blurbs open by repeating
+	@# it. Anything without that seam is listed and left alone, because a
+	@# name cut in the wrong place can say the wrong thing about what is in
+	@# the tin. Without GO=1 it only proposes. ID= and NAME= rename one.
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/product-names.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  $(if $(ID),--id "$(ID)" --name "$(NAME)",$(if $(GO),--go,))
+
+review-tidy: ## Take the rows that are not reviews off: make review-tidy [GO=1]
+	@# The 微店 import reads blocks off a page, and a page carries more than
+	@# reviews — the reviewer's own masked name (L***花), the 型号 line under
+	@# the stars. 18 of the first 219 imported rows were one of those.
+	@#
+	@# IMPORTED ROWS ONLY. A review written against a real order here is
+	@# somebody's words about a parcel they got, and nothing in this target
+	@# can touch one. Without GO=1 it only says what it would take.
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/review-tidy.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  $(if $(GO),--go,)
 
 review-import: ## All the old reviews at once: make review-import N=1 FILE=scripts/reviews-1.json
 	@# The file is a JSON array: [{"who":"李娜","stars":5,"text":"…","at":"2024-11-02"}, …]
