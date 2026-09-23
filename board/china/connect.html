@@ -31,10 +31,14 @@
       <div class="list no">Move or refund your money<br>See your balance or payouts<br>Change anything in your account</div>
     </div>
 
-    <div class="card flag">
-      <b>One thing to switch on</b>
-      <p>WeChat Pay and Alipay are off by default. In Stripe: <b>Settings &rarr; Payment methods</b>.</p>
-    </div>
+    <!-- THE "ONE THING TO SWITCH ON" PANEL IS GONE, and it was pointing at
+         the wrong account. It told the merchant that WeChat Pay and Alipay
+         are off by default and to turn them on in Settings → Payment
+         methods. The charge is a destination charge, so it is the PLATFORM's
+         payment methods that decide; and the account this button opens is an
+         Express one, which has no such page. See the long note at the top of
+         switch.html. Nothing replaces it here: there is nothing for the
+         person reading to do. -->
 
     <!-- ONE FIELD, AND IT IS NOT A FORM.
          The screen is meant to be a button, and it nearly is. The address is

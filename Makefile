@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: try try-china china app-state claire-episodes deal claire-key claire-count claire-seed claire-video listing invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who bells twice admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check post post-status post-run post-login post-code post-logins weidian-pull weidian-json weidian-reviews shop-chapter
+.PHONY: try try-china china wallets app-state claire-episodes deal claire-key claire-count claire-seed claire-video listing invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who bells twice admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check post post-status post-run post-login post-code post-logins weidian-pull weidian-json weidian-reviews shop-chapter
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -1207,6 +1207,25 @@ pay-try: ## Why a payment was refused, in Stripe's words: make pay-try ID=... [M
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/pay-try.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  --id "$(ID)" --method "$(METHOD)"
+
+wallets: ## Will Stripe let this platform offer WeChat Pay and Alipay: make wallets
+	@# THE QUESTION THE WHOLE PRODUCT RESTS ON, AND IT WAS A SCREEN.
+	@#
+	@# The dashboard answers it on an Account status page, in an "Active" list
+	@# that is truncated behind "View more" — so the two methods this product
+	@# exists for were neither confirmed nor denied, on a page that cannot be
+	@# read back or pasted anywhere.
+	@#
+	@# IT ASKS ABOUT THE PLATFORM, WHICH IS THE ACCOUNT THAT DECIDES. The
+	@# charge is a destination charge, created here with transfer_data, and
+	@# Stripe's rule for those is that the PLATFORM's payment method
+	@# configuration is the one that applies. A merchant's own settings never
+	@# come into it — which is why the screen telling them to go and switch
+	@# WeChat Pay on is gone.
+	@#
+	@# Read-only, and it names no account. Safe at any time.
+	@$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/stripe-methods.mjs
 
 hook-make: ## Make the Stripe webhook and print its secret: used by make go-live
 	@# NOT FOR TYPING. `make go-live` calls it and catches the secret in a

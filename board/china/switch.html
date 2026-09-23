@@ -1,15 +1,36 @@
 <!doctype html>
-<!-- WHAT ACTUALLY HAPPENS ON CONNECT, and it is not the success screen.
-     WeChat Pay and Alipay are off by default on every new Stripe account, so
-     this is the ordinary outcome and the success screen is the exception. It
-     leads with the green chip because the part that worked has to be said
-     first: somebody who reads "WeChat Pay is off" under a red heading thinks
-     the connection failed and starts again. -->
+<!-- WAITING ON STRIPE, WHICH IS NOT THE SAME AS BEING TOLD TO DO SOMETHING.
+     WHAT THIS SCREEN USED TO SAY, AND WHY IT WAS WRONG.
+     It read "One switch left — WeChat Pay is off on your account", with two
+     numbered steps: in Stripe, Settings → Payment methods, turn on WeChat Pay
+     and Alipay. Every word of that was aimed at the wrong account.
+
+     The charge is a DESTINATION CHARGE. lib/stripe.js builds it on the
+     platform with transfer_data.destination — so it is the PLATFORM's payment
+     method configuration that decides whether WeChat Pay can be offered, not
+     the merchant's. Stripe says so plainly: charges use your platform's
+     payment method configurations when they are destination charges. A
+     merchant who did exactly what this screen said would have changed nothing
+     about their own payments.
+
+     And they could not have done it anyway. makePayee opens these with
+     dashboard: "express" and one capability — recipient / stripe_transfers.
+     An Express account is a payout destination. There is no Settings →
+     Payment methods in it to go to.
+
+     WHAT IS ACTUALLY BEING WAITED ON is that capability going from requested
+     to active, which happens when Stripe accepts their identity and their
+     bank. payeeReady has always read exactly that and was right all along;
+     the screen over it was describing a different product.
+
+     SO IT IS A WAITING SCREEN, AND WAITING SCREENS SAY NOTHING TO DO. No
+     steps, no dashboard, no duration — nobody here has timed this and four
+     guesses have already been written onto these screens as facts. -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>One switch left — China Business Solutions</title>
+<title>Stripe is checking — China Business Solutions</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif&display=swap">
 <link rel="stylesheet" href="./china.css">
 </head>
@@ -20,33 +41,32 @@
       <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#E0B95C" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
       Stripe connected
     </span>
-    <h1>One switch left.</h1>
-    <p>WeChat Pay is off on your account, so nobody can pay you yet.</p>
+    <h1>Stripe is checking your details.</h1>
+    <p>Nothing for you to do. We watch for it.</p>
   </header>
 
   <div class="body">
-    <div class="card tight">
-      <div class="step"><span class="n">1</span><span>In Stripe: <b>Settings &rarr; Payment methods</b></span></div>
-      <div class="step"><span class="n">2</span><span>Turn on <b>WeChat Pay</b> and <b>Alipay</b></span></div>
+    <div class="card">
+      <b>Close this if you like</b>
+      <p>Your link still works. Come back and it will say you can take payment.</p>
     </div>
-    <p class="note">Off by default on every account. Stripe switches them on straight away &mdash; there is nothing to apply for.</p>
     <div class="grow"></div>
   </div>
 
   <footer class="foot">
     <button class="go" id="again" type="button">Check again</button>
-    <p class="under" id="under">We check again by ourselves every few seconds.</p>
-    <!-- ONLY UNDER `make china`, where there is no Stripe dashboard to go
-         and switch anything on in. The server says so — see `demo` in
-         api/state — and says so to nobody else: BOARD_PAY_DEMO is not set on
-         the box, so this line is not on the deployed screen. -->
-    <p class="under" id="standin" hidden><a href="/china/stand-in">Stand-in: the Stripe dashboard</a></p>
+    <p class="under" id="under">We check by ourselves every few seconds.</p>
+    <!-- ONLY UNDER `make try-china`, where there is no Stripe to be checking
+         anything. The server says so — see `demo` in api/state — and says so
+         to nobody else: BOARD_PAY_DEMO is not set on the box, so this line is
+         not on the deployed screen. -->
+    <p class="under" id="standin" hidden><a href="/china/stand-in">Stand-in: let Stripe accept it</a></p>
   </footer>
 </main>
 <script>
 /* ASKS STRIPE, AND ASKS AGAIN WITHOUT BEING TOLD.
  *
- * Switching WeChat Pay on happens in another tab, and the moment it is done
+ * The capability goes active while nobody is looking, and the moment it does
  * this screen is wrong. A button alone would leave somebody staring at a
  * stale page wondering whether it took. So it polls while the tab is in
  * front, and the button is for the impatient.
@@ -61,13 +81,13 @@
   var tries = 0, timer = null;
 
   async function look(byHand) {
-    if (byHand) { btn.disabled = true; btn.textContent = "Checking\u2026"; }
+    if (byHand) { btn.disabled = true; btn.textContent = "Checking…"; }
     try {
       var r = await fetch("api/state", { headers: { Accept: "application/json" } });
       var j = await r.json();
       if (j && j.demo) standin.hidden = false;
       if (j && j.ready) { location.href = "live.html"; return true; }
-      if (byHand) under.textContent = "Still off. Stripe can take a moment to catch up.";
+      if (byHand) under.textContent = "Not yet. Stripe has it.";
     } catch (e) {
       if (byHand) under.textContent = "No answer just now. Try again in a moment.";
     }
@@ -77,10 +97,9 @@
 
   btn.addEventListener("click", function () { look(true); });
 
-  /* ASK ONCE ON ARRIVAL, not in five seconds' time. Somebody who switched the
-     wallets on before finishing — which Stripe lets them do — lands here on a
-     screen telling them to go and do the thing they have done, and it stays
-     wrong for a poll. */
+  /* ASK ONCE ON ARRIVAL, not in five seconds' time. Somebody whose account
+     Stripe cleared while they were still on its pages lands here on a screen
+     that is already wrong, and it stays wrong for a poll. */
   look(false);
 
   timer = setInterval(function () {

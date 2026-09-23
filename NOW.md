@@ -54,6 +54,39 @@ every link was repointed, and the one nobody links — the bare address Tom
 hands people — was missed. `index.html` is gone and the mount serves
 `home.html`.
 
+**The merchant was being told to switch on something that is not theirs
+(23 Sep).** `switch.html` read "One switch left — WeChat Pay is off on your
+account", with two steps: in Stripe, Settings → Payment methods, turn the two
+wallets on. Every word aimed at the wrong account.
+
+- The charge is a **destination charge** — `lib/stripe.js` builds it on the
+  platform with `transfer_data.destination`. Stripe: *charges use your
+  platform's payment method configurations when they're destination charges.*
+  So **this platform's wallets decide every payment the product will ever
+  take**, and no merchant's settings ever come into it.
+- They could not have done it anyway. `makePayee` opens `dashboard: "express"`
+  with one capability, `recipient` / `stripe_transfers`. An Express account is
+  a payout destination; there is no Settings → Payment methods in it.
+- What is really being waited on is that capability going from *requested* to
+  *active*, when Stripe accepts their identity and bank. `payeeReady` has read
+  exactly that all along and was right; the screen over it described a
+  different product.
+
+The screen is now a waiting screen with nothing to do on it, and the panel
+saying the same thing on `connect.html` is gone.
+
+**So the Active list on Aozhou Baba is the whole answer**, and it is not
+something to read off a dashboard any more:
+
+```
+ssh root@45.77.8.166 'cd ~/tc && make wallets'
+```
+
+It asks Stripe for this platform's payment method configurations and says, for
+WeChat Pay, Alipay and Card: on, off but available, or **NOT AVAILABLE** —
+which is Stripe refusing the method to this account, a different day's work
+from a switch nobody has flipped. `make pay-check` names it.
+
 **The live account has one open task and a clock on it (23 Sep, 13:29).**
 `/account/status` on the Aozhou Baba account:
 

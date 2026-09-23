@@ -66,6 +66,13 @@ line("Can be paid", paid.length ? paid.join(", ") : "nobody yet");
 line("Deals with a plan", String(j.deals));
 line("Requests made", String(j.asks) + (j.asks ? " · " + j.asksPaid + " paid" : ""));
 if (j.demo) line("Demo stand-in", "ON — the payment screen is a drawing");
+/* EVERYTHING ABOVE IS READ OUT OF .env, AND WHETHER STRIPE WILL ACTUALLY
+   OFFER THE TWO WALLETS IS NOT IN .env. It is a property of this platform
+   account, it is the thing the whole product rests on, and a key being set
+   says nothing about it. Named here rather than left to be remembered —
+   the same reason make wallet-why is named below. */
+console.log("");
+console.log("  Whether Stripe will offer WeChat Pay and Alipay at all: make wallets");
 console.log("");
 
 /* THE CODES, WHICH ARE A SEPARATE ANSWER FROM STRIPE'S.
