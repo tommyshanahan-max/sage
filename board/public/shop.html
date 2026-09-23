@@ -228,8 +228,15 @@
   .grid.one .item .row,.item.wide .row{padding-top:.6rem}
   .item .mid{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;
     gap:.15rem;padding:.55rem .6rem .6rem}
+  /* The name is a link to the thing's own page now, and it should not
+     announce itself as one: underlined blue in a grid of goods reads as a
+     document, not a shop. Same type, same colour, bigger tap area. */
+  /* The picture is a link now; it must still lay out as the picture did. */
+  .picwrap{display:block;text-decoration:none;color:inherit}
+  .grid.one .picwrap,.item.wide .picwrap{flex:0 0 auto}
   .item .nm{font-size:.85rem;line-height:1.4;display:-webkit-box;
-    -webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    -webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+    color:inherit;text-decoration:none}
   .item .un{font-size:.72rem;color:var(--mut)}
 
   /* The shelves, and the row of them across the top. 全部 first because
@@ -439,7 +446,27 @@ const yuan = (n) => "¥" + (n / 100).toLocaleString("zh-CN", {
 let SHOP = null, ITEMS = [], POST = 3000, PROOF = null;
 /* Which shelf she is looking at. "" is 全部. */
 let SHELF = "";
-const CART = new Map();
+/* THE BASKET, SHARED WITH THE PRODUCT'S OWN PAGE.
+ *
+ * This was memory-only, written to sessionStorage once, on the way to
+ * checkout. That was fine while the shop was one page. With a second page
+ * that can also add to the basket, two copies exist and whichever wrote last
+ * silently wins — so it is read on load and written on every change, and
+ * checkout goes on reading exactly what it always read. */
+const CART_KEY = "shop:cart";
+const CART = (() => {
+  try {
+    const raw = JSON.parse(sessionStorage.getItem(CART_KEY) || "null");
+    if (raw && raw.handle === HANDLE && Array.isArray(raw.lines)) {
+      return new Map(raw.lines.map((l) => [String(l.id), Number(l.n) || 0]).filter(([, n]) => n > 0));
+    }
+  } catch { /* private mode, or somebody's idea of a JSON file */ }
+  return new Map();
+})();
+function keepCart() {
+  const lines = [...CART].filter(([, n]) => n > 0).map(([id, n]) => ({ id, n }));
+  try { sessionStorage.setItem(CART_KEY, JSON.stringify({ handle: HANDLE, lines })); } catch { /* private mode */ }
+}
 
 function total() {
   let n = 0;
@@ -474,6 +501,7 @@ function stepper(it) {
   const wrap = el("div", "qty");
   const set = (q) => {
     if (q <= 0) CART.delete(it.id); else CART.set(it.id, Math.min(q, 99));
+    keepCart();
     fill();
     paint();
   };
@@ -1070,19 +1098,27 @@ function grid(items) {
     /* NO PICTURE IS A BOX, NOT A BROKEN ONE. An <img> with an empty src
        draws the browser's torn-page icon, which reads as something failing
        rather than something missing. */
+    /* The picture opens it too. A photograph in a shop grid is the biggest
+       thing on the card and the first thing a thumb goes to — having only
+       the name work would teach her that tapping does nothing. */
+    const open = document.createElement("a");
+    open.href = "/shop/" + encodeURIComponent(HANDLE) + "/p/" + encodeURIComponent(it.id);
+    open.className = "picwrap";
+    open.setAttribute("aria-label", it.name);
     if (it.photo) {
       const pic = el("img", "pic");
       pic.src = it.photo;
       pic.alt = "";
       pic.loading = "lazy";
-      card.append(pic);
+      open.append(pic);
     } else {
       /* Given something to be rather than left as a grey square — see
          .noimg. The English name is what is printed on the tin she is
          looking for, so it is the honest thing to put there; her own name
          for it is already two lines below. */
-      card.append(el("div", "noimg", it.en || it.name));
+      open.append(el("div", "noimg", it.en || it.name));
     }
+    card.append(open);
 
     const mid = el("div", "mid");
     /* Asked per row, once, after the list is on screen. A shop with no
@@ -1092,7 +1128,17 @@ function grid(items) {
     rv.hidden = true;
     /* Her name for it, or the warehouse's when the page is being read in
        English — the same row, said to whoever is looking at it. */
-    mid.append(el("div", "nm", (lang() === "en" && it.en) ? it.en : it.name));
+    /* THE NAME OPENS THE THING. The row used to do nothing at all when
+       pressed, which is not what a shop row does anywhere else on her
+       phone — and the page it opens is the one that can be forwarded into
+       a chat, which is how anything here actually sells. The stepper stays
+       on the row, because adding a second tin of what she already buys
+       should not cost her a page. */
+    const nm = document.createElement("a");
+    nm.className = "nm";
+    nm.href = "/shop/" + encodeURIComponent(HANDLE) + "/p/" + encodeURIComponent(it.id);
+    nm.textContent = (lang() === "en" && it.en) ? it.en : it.name;
+    mid.append(nm);
     mid.append(rv);
     fetch("/api/product/" + encodeURIComponent(it.id) + "/reviews", { cache: "no-store" })
       .then((r) => r.json())

@@ -6743,6 +6743,17 @@ export const STRINGS = {
      answers "what do people say about this shop", which is the question
      asked before a first order. */
   "sh.allRev":         ["All reviews", "全部评价"],
+  /* THE PRODUCT'S OWN PAGE. The level below the shopfront: the picture, the
+     price, what people said, and the button. Its own address because the way
+     a thing is bought here is that somebody forwards it into a chat. */
+  "it.add":            ["Add to cart", "加入购物车"],
+  "it.goCart":         ["Checkout · {n} in cart", "去结算 · 已选 {n} 件"],
+  "it.added":          ["Added", "已加入购物车"],
+  "it.post":           ["Postage {post} per order", "运费 ¥{post}／单"],
+  "it.shop":           ["Shop", "小店"],
+  "it.noAsks":         ["No questions yet.", "还没有人提问。"],
+  "it.gone":           ["This one is no longer listed.", "这件商品已经下架了。"],
+  "it.toShop":         ["Back to the shop", "回到小店"],
   "sh.revCount":       ["{n} reviews · {stars} average", "{n} 条评价 · 平均 {stars} 分"],
   "sh.noRev":          ["No reviews yet.", "还没有评价。"],
   "sh.loading":        ["Loading…", "加载中…"],

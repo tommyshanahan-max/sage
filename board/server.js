@@ -10030,6 +10030,12 @@ app.get("/d/:t", (req, res, next) => page("memo.html", req, res, next));
 const shopPage = (file) => (req, res, next) =>
   page(file, req, res, next, { "{{HANDLE}}": encodeURIComponent(String(req.params.handle || "")) });
 
+/* ONE THING, ON ITS OWN ADDRESS. The shopfront is a list, and a list is
+   where somebody decides what to LOOK at; this is where they decide whether
+   to buy. Its own URL because that is how a thing is bought here — somebody
+   forwards it into a chat, and a sheet over the shopfront cannot be
+   forwarded. Kept above /shop/:handle so the router reaches it. */
+app.get("/shop/:handle/p/:id", shopPage("item.html"));
 app.get("/shop/:handle/checkout", shopPage("checkout.html"));
 app.get("/shop/:handle", shopPage("shop.html"));
 /* THE OTHER SIDE OF THE SAME SHOP. /shop/<handle> faces China and sells the
@@ -11825,6 +11831,38 @@ app.get("/api/product/:id/reviews", async (req, res) => {
     stars: all.length
       ? Math.round((all.reduce((n, r) => n + r.stars, 0) / all.length) * 10) / 10
       : 0,
+  });
+});
+
+/** ONE PRODUCT, FOR ITS OWN PAGE.
+ *
+ *  The shopfront already sends every product, so this exists for the case
+ *  the shopfront cannot serve: somebody opening a forwarded link straight to
+ *  one thing. Sending the whole catalogue to render one tin would make the
+ *  page she was sent slower than the shop she was not.
+ *
+ *  A SOLD-OUT ROW STILL ANSWERS. It is 已售完 on the page, not a 404 — a link
+ *  somebody sent a friend last week should say what happened to the thing,
+ *  not act as though it never existed.
+ */
+app.get("/api/shop/:handle/product/:id", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const handle = String(req.params.handle || "").slice(0, 40);
+  const id = shop.cleanId(req.params.id);
+  if (!handle || !id) return res.status(404).json({ error: "gone" });
+  const board = await store.load(FILE);
+  const who = board.people.find((p) => p.handle && p.handle === handle);
+  if (!who) return res.status(404).json({ error: "gone" });
+  const p = board.products.find((x) => x.id === id && !x.off);
+  if (!p) return res.status(404).json({ error: "gone" });
+  res.json({
+    ok: true,
+    shop: { handle: who.handle, name: who.shop?.name || "", banner: shopPic(who.shop?.banner) },
+    product: { id: p.id, name: p.name, en: p.en, unit: p.unit, kind: p.kind,
+      price: p.price, photo: shopPic(p.photo), out: Boolean(p.out) },
+    /* One postage per order, the way every parcel out of Australia is
+       actually charged — said here rather than discovered at checkout. */
+    post: POST_FEN,
   });
 });
 

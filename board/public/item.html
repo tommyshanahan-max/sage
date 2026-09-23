@@ -1,0 +1,358 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>商品</title>
+<meta name="robots" content="noindex">
+<!--
+  ONE THING, ON ITS OWN ADDRESS — the level below the shopfront.
+
+  The list is where she decides what to LOOK at. This is where she decides
+  whether to BUY, and those are different screens: the picture big enough to
+  read the tin, the price where the price goes, what other people said, and
+  the button. Nothing else.
+
+  ITS OWN URL BECAUSE IT GETS SENT. The way a thing is bought in this trade
+  is that somebody forwards it into a chat — 这个好用 — and a sheet over the
+  shopfront cannot be forwarded. A shop whose products cannot be sent to one
+  friend has turned off the only distribution it has.
+
+  THE SHAPE IS THE ONE SHE ALREADY KNOWS, from 微店 and every other shop on
+  her phone: picture, red price, name, 规格, then 评价, then 问大家, then the
+  bar across the bottom with 加入购物车. Copying the shape is not laziness —
+  a layout she has to learn is a layout she leaves.
+
+  WHAT IT DOES NOT DO: invent a description. The catalogue holds a name, a
+  unit and a price, and a paragraph of marketing written by this page would
+  be words no one at this shop said.
+-->
+<style>
+  :root{
+    --bg:#FAF7F1; --card:#FFFFFF; --ink:#1B1815; --ink2:#5A5449; --mut:#8C857A;
+    --line:#EAE4D9; --acc:#C33C28; --ok:#1F7A4D;
+    --deep:#1E3A2E; --deep2:#2C5443; --sun:#D9A62E;
+    --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB",
+      "Microsoft YaHei","Noto Sans SC",sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink)}
+  body{font-family:var(--sans);font-size:16px;line-height:1.5;
+    padding:env(safe-area-inset-top,0) 0 calc(5.6rem + env(safe-area-inset-bottom,0))}
+  main{max-width:34rem;margin:0 auto;padding:0 0 1rem}
+
+  /* BACK, ON TOP OF THE PICTURE. She arrived here from a chat as often as
+     from the shop, so it says the shop's name rather than "back" — going
+     "back" from a forwarded link is the browser's word for leaving. */
+  .top{position:sticky;top:0;z-index:5;display:flex;align-items:center;
+    gap:.5rem;padding:.55rem .8rem;background:rgba(250,247,241,.92);
+    backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  .top a{display:inline-flex;align-items:center;gap:.35rem;font-size:.86rem;
+    color:var(--ink2);text-decoration:none}
+  .top .lang{margin-left:auto}
+
+  /* THE PICTURE, SQUARE AND FULL WIDTH. Square because that is what the
+     photograph of a tin on a bench is, and because every shop she uses
+     shows it square — a 16:9 crop of a tall tin cuts the label off, which
+     is the one part she is actually reading. */
+  .pic{display:block;width:100%;aspect-ratio:1/1;object-fit:cover;
+    background:var(--line)}
+  .noimg{display:flex;align-items:center;justify-content:center;
+    width:100%;aspect-ratio:1/1;background:#F0EADF;color:var(--mut);
+    font-size:1.1rem;padding:2rem;text-align:center}
+
+  .body{padding:1rem .9rem 0}
+
+  /* THE PRICE FIRST AND LARGE, IN RED. Red is the price in China and always
+     will be. The ¥ is smaller than the number, the way it is printed
+     everywhere, so the number is what the eye lands on. */
+  .price{display:flex;align-items:baseline;gap:.5rem;margin:0}
+  .price b{color:var(--acc);font-size:2rem;line-height:1;font-weight:600}
+  .price b i{font-style:normal;font-size:1.1rem;margin-right:.1rem}
+  .price .out{font-size:.8rem;color:var(--mut);border:1px solid var(--line);
+    border-radius:999px;padding:.2rem .6rem;background:var(--card)}
+
+  h1{margin:.7rem 0 .3rem;font-size:1.15rem;line-height:1.45;font-weight:600}
+  .unit{margin:0;font-size:.88rem;color:var(--mut)}
+  .en{margin:.35rem 0 0;font-size:.8rem;color:var(--mut)}
+
+  /* 运费 said here rather than discovered at checkout. A postage surprise on
+     the last screen is the commonest reason a full basket is abandoned, and
+     one line of type on this page costs nothing. */
+  .ship{margin:.9rem 0 0;font-size:.82rem;color:var(--ink2)}
+
+  .sect{background:var(--card);border:1px solid var(--line);border-radius:.85rem;
+    padding:.95rem 1rem;margin:1rem .9rem 0}
+  .sect h2{margin:0 0 .6rem;font-size:.82rem;letter-spacing:.06em;
+    font-weight:600;color:var(--mut);display:flex;align-items:baseline;gap:.5rem}
+  .sect h2 span{margin-left:auto;font-size:.78rem;color:var(--mut);
+    font-weight:400;letter-spacing:0}
+  .sect .none{margin:0;font-size:.88rem;color:var(--mut)}
+
+  .rev{padding:.7rem 0;border-top:1px solid var(--line)}
+  .rev:first-of-type{border-top:0;padding-top:0}
+  .rev .who{display:flex;align-items:baseline;gap:.55rem}
+  .rev .who b{font-size:.85rem;color:var(--ink2);font-weight:500}
+  .rev .who span{font-size:.85rem;color:var(--sun)}
+  .rev p{margin:.3rem 0 0;font-size:.92rem;line-height:1.55}
+  .rev .src{font-size:.74rem;color:var(--mut)}
+  .rev img{width:5rem;height:5rem;object-fit:cover;border-radius:.5rem;
+    margin:.45rem 0 0;display:block}
+
+  .ask{padding:.6rem 0;border-top:1px solid var(--line)}
+  .ask:first-of-type{border-top:0;padding-top:0}
+  .ask .q{margin:0;font-size:.92rem}
+  .ask .a{margin:.25rem 0 0;font-size:.88rem;color:var(--ink2)}
+
+  .more{display:block;width:100%;margin:.7rem 0 0;padding:.55rem;
+    border:1px solid var(--line);border-radius:.6rem;background:var(--bg);
+    font:inherit;font-size:.86rem;color:var(--ink2)}
+
+  /* THE BAR. 加入购物车 and nothing competing with it. The count sits on the
+     left because she has usually pressed + two or three times by the time
+     she looks at it. */
+  .bar{position:fixed;left:0;right:0;bottom:0;z-index:6;display:flex;
+    align-items:center;gap:.7rem;padding:.7rem .8rem calc(.7rem + env(safe-area-inset-bottom,0));
+    background:rgba(255,255,255,.96);border-top:1px solid var(--line);
+    backdrop-filter:blur(8px)}
+  .qty{display:flex;align-items:center;gap:.55rem}
+  .qty button{width:2.1rem;height:2.1rem;border-radius:999px;
+    border:1px solid var(--line);background:var(--card);font:inherit;
+    font-size:1.1rem;line-height:1;color:var(--ink)}
+  .qty button.add{background:var(--deep);border-color:var(--deep);color:#fff}
+  .qty b{min-width:1.4rem;text-align:center;font-weight:600}
+  .bar .go{flex:1 1 auto;padding:.85rem;border:0;border-radius:.7rem;
+    background:var(--acc);color:#fff;font:inherit;font-size:1rem;font-weight:600}
+  .bar .go[disabled]{background:var(--line);color:var(--mut)}
+  .said{position:fixed;left:50%;bottom:5.2rem;transform:translateX(-50%);
+    background:var(--ink);color:#fff;font-size:.85rem;padding:.5rem .9rem;
+    border-radius:999px;z-index:7}
+</style>
+
+<main id="root"></main>
+<div class="bar">
+  <div class="qty" id="qty"></div>
+  <button class="go" type="button" id="go" disabled></button>
+</div>
+
+<script type="module">
+import { T, lang, setLang, pickLang, langButton } from "/i18n.js";
+
+setLang(pickLang("zh"));
+
+const HANDLE = "{{HANDLE}}";
+const ID = (location.pathname.match(/\/p\/([^/?#]+)/) || [])[1] || "";
+const $ = (id) => document.getElementById(id);
+const el = (t, c, txt) => {
+  const n = document.createElement(t);
+  if (c) n.className = c;
+  if (txt !== undefined) n.textContent = txt;
+  return n;
+};
+
+/* THE SAME BASKET AS THE SHOPFRONT.
+ *
+ * The shop keeps its cart in memory and writes it to sessionStorage on the
+ * way to checkout. That was fine while there was one page; with two, a tin
+ * added here and a tin added there would be two baskets, and the second one
+ * to write would quietly win. So both pages read and write the same key on
+ * every change, and checkout keeps reading what it always read. */
+const KEY = "shop:cart";
+function readCart() {
+  try {
+    const raw = JSON.parse(sessionStorage.getItem(KEY) || "null");
+    if (!raw || raw.handle !== HANDLE || !Array.isArray(raw.lines)) return new Map();
+    return new Map(raw.lines.map((l) => [String(l.id), Number(l.n) || 0]));
+  } catch { return new Map(); }
+}
+function writeCart(map) {
+  const lines = [...map].filter(([, n]) => n > 0).map(([id, n]) => ({ id, n }));
+  try { sessionStorage.setItem(KEY, JSON.stringify({ handle: HANDLE, lines })); } catch { /* private mode */ }
+}
+
+let ITEM = null, SHOP = null, POST = 0;
+const CART = readCart();
+
+function money(fen) { return (fen / 100).toLocaleString("zh-CN"); }
+
+function paint() {
+  const q = CART.get(ID) || 0;
+  const go = $("go");
+  go.disabled = Boolean(ITEM?.out);
+  go.textContent = ITEM?.out ? T("sh.out") : (q ? T("it.goCart", { n: String(q) }) : T("it.add"));
+
+  const wrap = $("qty");
+  wrap.textContent = "";
+  if (ITEM?.out) return;
+  const set = (n) => {
+    if (n <= 0) CART.delete(ID); else CART.set(ID, Math.min(n, 99));
+    writeCart(CART);
+    paint();
+  };
+  const more = el("button", q ? null : "add", "+");
+  more.type = "button";
+  more.setAttribute("aria-label", T("sh.more"));
+  more.addEventListener("click", () => set(q + 1));
+  if (!q) { wrap.append(more); return; }
+  const less = el("button", null, "−");
+  less.type = "button";
+  less.setAttribute("aria-label", T("sh.less"));
+  less.addEventListener("click", () => set(q - 1));
+  wrap.append(less, el("b", null, String(q)), more);
+}
+
+function flash(word) {
+  const n = el("div", "said", word);
+  document.body.append(n);
+  setTimeout(() => n.remove(), 1400);
+}
+
+function draw() {
+  const root = $("root");
+  root.textContent = "";
+
+  const top = el("div", "top");
+  const back = document.createElement("a");
+  back.href = "/shop/" + HANDLE;
+  back.append(el("span", null, "‹"), document.createTextNode(SHOP?.name || T("it.shop")));
+  top.append(back);
+  const sw = langButton(() => draw());
+  sw.className = "lang";
+  top.append(sw);
+  root.append(top);
+
+  if (ITEM.photo) {
+    const img = el("img", "pic");
+    img.src = ITEM.photo;
+    img.alt = "";
+    root.append(img);
+  } else {
+    root.append(el("div", "noimg", ITEM.en || ITEM.name));
+  }
+
+  const body = el("div", "body");
+  const price = el("div", "price");
+  const b = el("b");
+  b.append(el("i", null, "¥"), document.createTextNode(money(ITEM.price)));
+  price.append(b);
+  if (ITEM.out) price.append(el("span", "out", T("sh.out")));
+  body.append(price);
+
+  body.append(el("h1", null, (lang() === "en" && ITEM.en) ? ITEM.en : ITEM.name));
+  if (ITEM.unit) body.append(el("p", "unit", ITEM.unit));
+  /* The English name stays visible for whoever runs the shop and for a buyer
+     matching the tin against a photograph — it is what is printed on it. */
+  if (ITEM.en && lang() !== "en") body.append(el("p", "en", ITEM.en));
+  if (POST) body.append(el("p", "ship", T("it.post", { post: money(POST) })));
+  root.append(body);
+
+  root.append(revSect());
+  root.append(askSect());
+  paint();
+}
+
+/* 评价 — the same rows the shopfront shows behind its number, here in full
+   and without a tap, because this is the page where the question is asked. */
+const revBox = el("div", "sect");
+function revSect() {
+  revBox.textContent = "";
+  revBox.append(el("h2", null, T("sh.reviews")));
+  revBox.append(el("p", "none", T("sh.loading")));
+  return revBox;
+}
+const askBox = el("div", "sect");
+function askSect() {
+  askBox.textContent = "";
+  askBox.append(el("h2", null, T("sh.asks")));
+  askBox.append(el("p", "none", T("sh.loading")));
+  return askBox;
+}
+
+async function fillReviews() {
+  let j = null;
+  try {
+    const r = await fetch("/api/product/" + encodeURIComponent(ID) + "/reviews", { cache: "no-store" });
+    j = await r.json();
+  } catch { /* an offline phone is not an error worth a stack */ }
+  revBox.textContent = "";
+  const h = el("h2", null, T("sh.reviews"));
+  if (j?.n) h.append(el("span", null, T(j.n === 1 ? "sh.stars1" : "sh.stars", { stars: j.stars.toFixed(1), n: String(j.n) })));
+  revBox.append(h);
+  if (!j?.rows?.length) { revBox.append(el("p", "none", T("sh.noRev"))); return; }
+  for (const r of j.rows.slice(0, 8)) {
+    const box = el("div", "rev");
+    const who = el("div", "who");
+    who.append(el("b", null, r.who || "***"), el("span", null, "★".repeat(r.stars)));
+    box.append(who);
+    if (r.text) box.append(el("p", null, r.text));
+    if (r.src) box.append(el("p", "src", T("sh.fromOld")));
+    if (r.photo) {
+      const img = el("img");
+      img.src = r.photo;
+      img.alt = "";
+      img.loading = "lazy";
+      img.addEventListener("error", () => img.remove());
+      box.append(img);
+    }
+    revBox.append(box);
+  }
+  /* The rest are on the shopfront's own sheet rather than a second endpoint
+     and a second kind of paging on a phone. */
+  if (j.n > 8) {
+    const more = el("button", "more", T("sh.allRev"));
+    more.type = "button";
+    more.addEventListener("click", () => { location.href = "/shop/" + HANDLE; });
+    revBox.append(more);
+  }
+}
+
+async function fillAsks() {
+  let j = null;
+  try {
+    const r = await fetch("/api/product/" + encodeURIComponent(ID) + "/asks", { cache: "no-store" });
+    j = await r.json();
+  } catch { /* same */ }
+  askBox.textContent = "";
+  askBox.append(el("h2", null, T("sh.asks")));
+  if (!j?.rows?.length) { askBox.append(el("p", "none", T("it.noAsks"))); return; }
+  for (const q of j.rows.slice(0, 6)) {
+    const box = el("div", "ask");
+    box.append(el("p", "q", q.q || q.text || ""));
+    const answer = (q.a && q.a.length ? q.a[0].text : q.answer) || "";
+    if (answer) box.append(el("p", "a", answer));
+    askBox.append(box);
+  }
+}
+
+$("go").addEventListener("click", () => {
+  if (!ITEM || ITEM.out) return;
+  const q = CART.get(ID) || 0;
+  if (!q) { CART.set(ID, 1); writeCart(CART); paint(); flash(T("it.added")); return; }
+  location.href = "/shop/" + HANDLE + "/checkout";
+});
+
+try {
+  const r = await fetch("/api/shop/" + HANDLE + "/product/" + encodeURIComponent(ID), { cache: "no-store" });
+  const j = await r.json();
+  if (!j?.ok) throw new Error("gone");
+  ITEM = j.product;
+  SHOP = j.shop;
+  POST = j.post || 0;
+  document.title = ITEM.name;
+  draw();
+  fillReviews();
+  fillAsks();
+} catch {
+  /* A thing that is not there sends her back to the shop rather than showing
+     an error she can do nothing with. Everything on this page came from a
+     link somebody else sent her, and the shop is the one place that is
+     certainly still there. */
+  const root = $("root");
+  root.textContent = "";
+  const p = el("p", "none", T("it.gone"));
+  p.style.padding = "2rem .9rem";
+  root.append(p);
+  const a = document.createElement("a");
+  a.href = "/shop/" + HANDLE;
+  a.textContent = T("it.toShop");
+  a.style.cssText = "display:block;padding:0 .9rem";
+  root.append(a);
+}
+</script>
