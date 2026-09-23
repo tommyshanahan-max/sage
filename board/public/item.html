@@ -293,12 +293,12 @@ async function fillReviews() {
     }
     revBox.append(box);
   }
-  /* The rest are on the shopfront's own sheet rather than a second endpoint
+  /* The rest are on the shop's reviews page rather than a second endpoint
      and a second kind of paging on a phone. */
   if (j.n > 8) {
     const more = el("button", "more", T("sh.allRev"));
     more.type = "button";
-    more.addEventListener("click", () => { location.href = "/shop/" + HANDLE; });
+    more.addEventListener("click", () => { location.href = "/shop/" + HANDLE + "/reviews"; });
     revBox.append(more);
   }
 }

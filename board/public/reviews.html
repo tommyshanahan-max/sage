@@ -1,0 +1,246 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>全部评价</title>
+<meta name="robots" content="noindex">
+<!--
+  EVERY REVIEW IN THE SHOP, AT ITS OWN ADDRESS.
+
+  The shopfront already opens this as a sheet. It is a page as well because
+  a sheet cannot be forwarded, and "看看别人怎么说" is exactly the thing one
+  buyer sends another before her first order.
+
+  THE COUNT AND THE AVERAGE COME OFF THE API AND ARE NEVER WORKED OUT HERE.
+  The server counts what is actually in the file — see /api/shop/:handle/reviews
+  in server.js. A page that averages its own rows would print a different
+  number from the shopfront the moment the API caps or filters anything, and
+  the shop would be caught saying two things.
+
+  NO PAGING. The API stops at 300 and the order is the server's: rows with
+  words above bare stars, newest first. A "load more" button on a list nobody
+  reads to the end of is a control that exists for the developer.
+
+  來自老店 IS SAID OUT LOUD on every imported row. The value of the others is
+  that an order stands behind them, and quietly mixing these in spends it.
+-->
+<style>
+  :root{
+    --bg:#FAF7F1; --card:#FFFFFF; --ink:#1B1815; --ink2:#5A5449; --mut:#8C857A;
+    --line:#EAE4D9; --acc:#C33C28; --star:#F5A623;
+    --deep:#1E3A2E; --deep2:#2C5443; --sun:#D9A62E;
+    --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB",
+      "Microsoft YaHei","Noto Sans SC",sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink)}
+  body{font-family:var(--sans);font-size:16px;line-height:1.5;
+    padding:env(safe-area-inset-top,0) 0 calc(4.5rem + env(safe-area-inset-bottom,0))}
+  main{max-width:34rem;margin:0 auto;padding:0 .8rem 1rem}
+
+  /* The same sign as the shopfront, so she knows she has not left it. */
+  .hero{margin:0 -.8rem 1.1rem;padding:1.5rem 1.1rem 1.4rem;
+    background:linear-gradient(158deg,var(--deep) 0%,var(--deep2) 72%,#35624E 100%);
+    color:#fff;width:calc(100% + 1.6rem)}
+  .hero a.back{display:inline-flex;align-items:center;gap:.4rem;
+    font-size:.82rem;color:rgba(255,255,255,.72);text-decoration:none;
+    margin:0 0 .9rem}
+  .hero .top{display:flex;align-items:flex-start;gap:.9rem}
+  .hero .top>div{min-width:0;flex:1 1 auto}
+  .hero h1{margin:0;font-size:1.7rem;line-height:1.2;letter-spacing:.04em;
+    font-weight:600}
+  /* THE COUNT AND THE AVERAGE AS TYPE, not two stat tiles. Same treatment as
+     the credentials line on the shopfront: the figure in the sun, the word
+     beside it, one line she runs her eye across. */
+  .hero p{margin:.5rem 0 0;font-size:.86rem;line-height:1.6;
+    color:rgba(255,255,255,.72)}
+  .hero .lang{flex:0 0 auto;border:1px solid rgba(255,255,255,.4);
+    background:transparent;color:#fff;font:inherit;font-size:.74rem;
+    border-radius:999px;padding:.25rem .65rem}
+
+  /* ONE REVIEW, THE SAME SHAPE AS IN THE SHEET. She may well have read the
+     sheet first; a second layout for the same rows would read as a second
+     shop. Hairlines rather than cards, because three hundred cards is a
+     scroll through a wall of boxes. */
+  .rev1{padding:1rem 0;border-top:1px solid var(--line)}
+  .rev1:first-child{border-top:0;padding-top:.2rem}
+  .rev1 .top{display:flex;align-items:baseline;gap:.6rem}
+  .rev1 .top b{font-size:.9rem;color:var(--ink2);font-weight:500}
+  .rev1 .top span{font-size:.9rem;color:var(--star);letter-spacing:.05em}
+  /* The date pushed to the far end. It is the quietest thing in the row and
+     it is also the one that answers "is this shop new" — so it is there,
+     and it is not competing with the words. */
+  .rev1 .top i{margin-left:auto;flex:0 0 auto;font-style:normal;
+    font-size:.76rem;color:var(--mut);font-variant-numeric:tabular-nums}
+  /* WHICH THING IT IS ABOUT, and it opens that thing. A review that moved
+     her is a review she wants to act on, and making her go back to the
+     shelves to find the tin is the step where she stops. Not underlined
+     blue: a page of links reads as a document, not a shop. */
+  .rev1 a.item{display:inline-block;margin:.3rem 0 0;font-size:.8rem;
+    color:var(--mut);text-decoration:none;border-bottom:1px solid var(--line);
+    padding-bottom:.05rem}
+  .rev1 p{margin:.35rem 0 0;font-size:.96rem;line-height:1.6}
+  .rev1 img{width:7rem;height:7rem;object-fit:cover;border-radius:.5rem;
+    margin:.5rem 0 0;display:block;background:var(--line)}
+  .rev1 .src{font-size:.74rem;color:var(--mut)}
+  .rev1 .back{margin:.5rem 0 0;padding:.55rem .7rem;background:var(--card);
+    border:1px solid var(--line);border-radius:.55rem;font-size:.88rem;
+    color:var(--ink2)}
+
+  /* Back to the shelves, because somebody who read to the bottom of three
+     hundred reviews has decided and now wants the thing. */
+  .go{display:block;text-align:center;text-decoration:none;font-size:1rem;
+    font-weight:600;padding:1rem;border-radius:999px;background:var(--deep);
+    color:#fff;margin:1.9rem 0 0}
+  .none{padding:2.5rem .3rem;text-align:center;color:var(--mut);font-size:.95rem}
+</style>
+
+<main>
+  <div class="hero">
+    <a class="back" id="back" href="#">&larr; <span id="backw">店铺</span></a>
+    <div class="top">
+      <div>
+        <h1 id="ttl">&nbsp;</h1>
+        <p id="sub"></p>
+      </div>
+      <span id="langslot"></span>
+    </div>
+  </div>
+  <div id="root"></div>
+</main>
+
+<script type="module">
+import { T, setLang, pickLang, langButton } from "/i18n.js";
+
+/* Chinese unless the reader has said otherwise — see pickLang. */
+setLang(pickLang("zh"));
+
+/* THE SERVER SAYS WHOSE SHOP THIS IS — see shopPage() in server.js.
+   Read off location.pathname this was empty on the shop's own domain,
+   where Caddy rewrites / to /shop/<handle> without the browser ever
+   seeing it, and the front door drew "这家店打不开了" while the API
+   answered ok:true. The path is still the fallback, for a page opened
+   from a file or served some way nobody has thought of yet. */
+const HANDLE = decodeURIComponent("{{HANDLE}}".replace(/^\{\{HANDLE\}\}$/, ""))
+  || decodeURIComponent((location.pathname.match(/^\/shop\/([^/]+)/) || [])[1] || "");
+const $ = (id) => document.getElementById(id);
+const el = (t, c, x) => {
+  const n = document.createElement(t);
+  if (c) n.className = c;
+  if (x != null) n.textContent = x;
+  return n;
+};
+
+const SHOPHREF = "/shop/" + encodeURIComponent(HANDLE);
+$("back").href = SHOPHREF;
+
+/* 2024-03-11T… → 2024.03.11. Dots rather than dashes because that is how a
+   date is written on a Chinese screen, and no relative "3 天前": these rows
+   go back years and "912 天前" is a number nobody can read. */
+const day = (iso) => String(iso || "").slice(0, 10).replace(/-/g, ".");
+
+let SHOP = null, DATA = null;
+
+function draw() {
+  $("ttl").textContent = T("sh.allRev");
+  document.title = T("sh.allRev");
+  $("backw").textContent = SHOP?.name || SHOP?.handle || T("sh.back");
+  const root = $("root");
+  root.textContent = "";
+
+  const rows = DATA?.rows || [];
+
+  /* AN EMPTY LIST IS NOT AN ERROR. This page is reachable while six hundred
+     rows are still sitting in the 微店 shop waiting to be imported, and the
+     person doing the importing has to be able to open the door before the
+     room is furnished. So: one quiet line, page colours, no red. */
+  if (!rows.length) {
+    $("sub").textContent = "";
+    root.append(el("p", "none", T("sh.noRev")));
+    return;
+  }
+
+  /* COUNTED BY THE SERVER, PRINTED HERE. n and stars come off the API
+     untouched — see the note at the top of this file. */
+  $("sub").textContent = T("sh.revCount", {
+    n: String(DATA.n), stars: String(DATA.stars),
+  });
+
+  for (const r of rows) {
+    const box = el("div", "rev1");
+    const top = el("div", "top");
+    top.append(el("b", null, r.who || "***"));
+    top.append(el("span", null, "★".repeat(r.stars)));
+    if (r.at) top.append(el("i", null, day(r.at)));
+    box.append(top);
+
+    /* The thing, and the way to it. No link when the row has no product id
+       — an anchor pointing at /p/undefined is a 404 with her name on it. */
+    if (r.item) {
+      if (r.itemId) {
+        const a = el("a", "item", r.item);
+        a.href = SHOPHREF + "/p/" + encodeURIComponent(r.itemId);
+        box.append(a);
+      } else {
+        box.append(el("p", "item", r.item));
+      }
+    }
+
+    if (r.text) box.append(el("p", null, r.text));
+    /* Where it came from, when it did not come from an order here — the
+       same label the shopfront uses, for the same reason. */
+    if (r.src) box.append(el("p", "src", T("sh.fromOld")));
+    if (r.photo) {
+      const img = el("img");
+      img.src = r.photo;
+      img.alt = "";
+      img.loading = "lazy";
+      /* No empty frame where a picture is not — see the same note on the
+         shopfront's cards. */
+      img.addEventListener("error", () => img.remove());
+      box.append(img);
+    }
+    if (r.back) {
+      const b = el("p", "back");
+      b.append(el("b", null, T("sh.shopSaid") + " "), document.createTextNode(r.back));
+      box.append(b);
+    }
+    root.append(box);
+  }
+
+  const go = el("a", "go", T("sh.arcGo"));
+  go.href = SHOPHREF;
+  root.append(go);
+}
+
+/* The switch is live before the rows are. Tapped while the request is still
+   out, draw() would paint an empty list — "还没有评价" over a shop that has
+   three hundred — so until the answer is in it only re-says 加载中. */
+$("langslot").replaceWith(langButton(() => {
+  if (DATA) { draw(); return; }
+  $("ttl").textContent = T("sh.allRev");
+  $("sub").textContent = T("sh.loading");
+}));
+
+(async () => {
+  $("ttl").textContent = T("sh.allRev");
+  $("sub").textContent = T("sh.loading");
+  try {
+    /* Two requests, both no-store. The shop's own call is only for the name
+       over the back link, so a shop that will not open still shows its
+       reviews rather than nothing. */
+    const [rv, sh] = await Promise.all([
+      fetch("/api/shop/" + encodeURIComponent(HANDLE) + "/reviews", { cache: "no-store" })
+        .then((r) => r.json()),
+      fetch("/api/shop/" + encodeURIComponent(HANDLE), { cache: "no-store" })
+        .then((r) => r.json()).catch(() => null),
+    ]);
+    if (!rv?.ok) throw new Error("gone");
+    DATA = rv;
+    SHOP = sh?.ok ? sh.shop : null;
+    draw();
+  } catch {
+    $("ttl").textContent = T("sh.allRev");
+    $("sub").textContent = "";
+    $("root").append(el("p", "none", T("sh.gone")));
+  }
+})();
+</script>

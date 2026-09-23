@@ -91,6 +91,39 @@ try {
     process.exit(2);
   }
 
+  /* EVERY PICTURE ON THE SHOP PAGE, AS ADDRESSES.
+   *
+   * The shop's own avatar and banner are here, and they are the photographs
+   * of the person whose shop this is — which is what the new shopfront wants
+   * and does not have. Printed as URLs rather than downloaded: the addresses
+   * are on Weidian's CDN, which answers from anywhere, so whoever is choosing
+   * can fetch and look at them without this script guessing which one is him.
+   *
+   * Tiny ones are dropped. A shop page carries two dozen icons, arrows and
+   * spacers, and a 40-pixel square is never a photograph of anybody. */
+  out.photos = await page.evaluate(() => {
+    const seen = new Map();
+    for (const img of document.querySelectorAll("img")) {
+      const src = img.currentSrc || img.src || "";
+      if (!src || src.startsWith("data:")) continue;
+      const w = img.naturalWidth || img.width || 0;
+      const h = img.naturalHeight || img.height || 0;
+      if (w && w < 120 && h && h < 120) continue;
+      if (!seen.has(src)) seen.set(src, { src, w, h, alt: img.alt || "" });
+    }
+    /* Background images too: shop banners are usually a div with a
+       background-image, not an <img>, and the banner is the likeliest place
+       to find a photograph of the family rather than of a tin. */
+    for (const n of document.querySelectorAll("div,section,header")) {
+      const bg = getComputedStyle(n).backgroundImage || "";
+      const m = bg.match(/url\("?(https?:[^")]+)"?\)/);
+      if (m && !seen.has(m[1])) seen.set(m[1], { src: m[1], w: 0, h: 0, alt: "background" });
+    }
+    return [...seen.values()];
+  });
+  console.error(`pictures on the shop page: ${out.photos.length}`);
+  for (const p of out.photos) console.error(`  ${p.w}x${p.h}  ${p.src}`);
+
   /* ITEM LINKS. Weidian's item addresses are /item.html?itemID=… and the shop
      page is a grid of them. Collected by href rather than by class, because
      class names on these pages are generated and change without notice. */

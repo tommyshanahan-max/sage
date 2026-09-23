@@ -1925,6 +1925,13 @@ export function cleanPerson(raw) {
          not trust with a question about her money. */
       const wechat = s(r.wechat, 40);
       const qr = s(r.qr, 300);
+      /* THE OLD STORE, STILL OPEN. 微店 is where this shop has traded for
+         years and where its history is — six hundred reviews that cannot be
+         moved without losing what they were attached to. Sending somebody
+         there is not a leak, it is the proof: a buyer who wants to see that
+         this is not a page put up last week can go and look at the shop that
+         has been there since 2019. Its address, nothing else. */
+      const weidian = s(r.weidian, 300);
       /* Whether an assistant answers the常见 questions before she has to
          wait for a person. Off unless somebody turned it on — see
          lib/shopkeep.js for what it is allowed to know. */
@@ -1956,8 +1963,8 @@ export function cleanPerson(raw) {
         })
         .filter(Boolean)
         .slice(0, 12);
-      if (!name && !banner && !story && !wechat && !qr && !ai && !chapters.length) return undefined;
-      return { name, banner, story, wechat, qr, ai, ...(chapters.length ? { chapters } : {}) };
+      if (!name && !banner && !story && !wechat && !qr && !weidian && !ai && !chapters.length) return undefined;
+      return { name, banner, story, wechat, qr, weidian, ai, ...(chapters.length ? { chapters } : {}) };
     })(),
     /* TWO SHAPES, BECAUSE THERE ARE TWO PLACES A PERSON CAN BE.
      *

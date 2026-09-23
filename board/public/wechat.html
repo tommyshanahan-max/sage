@@ -1,0 +1,276 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>老店</title>
+<meta name="robots" content="noindex">
+<!--
+  老店 — FOR THE BUYER ASKING "是上周才建的吧？".
+
+  A shopfront on a domain nobody has heard of, selling infant formula, taking
+  money from a stranger abroad: the first question is not the price. It is
+  whether any of this existed yesterday. The answer is that it did, on 微店,
+  for years — and this is the page that says so and hands her the address so
+  she can go and look for herself.
+
+  SO EVERY LINE HERE IS CHECKABLE OR IT IS NOT HERE. The numbers are the ones
+  the server counted off the file (proof, in /api/shop/:handle). The address
+  is whatever the seller typed into his own settings. Nothing on this page is
+  written by us about him, because a page that exists to answer "is this
+  real" cannot afford one sentence somebody made up — and an empty field says
+  "还没填" rather than quietly rounding up to a claim.
+
+  EVERY PIECE IS OPTIONAL AND EACH ONE RENDERS OR DOES NOT. A shop with no
+  QR code shows no QR block, not an empty frame: a hole reads as something
+  broken, which is the one impression this page cannot afford.
+-->
+<style>
+  :root{
+    --bg:#FAF7F1; --card:#FFFFFF; --ink:#1B1815; --ink2:#5A5449; --mut:#8C857A;
+    --line:#EAE4D9; --acc:#C33C28;
+    --deep:#1E3A2E; --deep2:#2C5443; --sun:#D9A62E;
+    --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB",
+      "Microsoft YaHei","Noto Sans SC",sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink)}
+  body{font-family:var(--sans);font-size:16px;line-height:1.5;
+    padding:env(safe-area-inset-top,0) 0 calc(4.5rem + env(safe-area-inset-bottom,0))}
+  main{max-width:34rem;margin:0 auto;padding:0 .8rem 1rem}
+
+  /* The same sign as the shopfront, so she knows she has not left it. */
+  .hero{margin:0 -.8rem 1.1rem;padding:1.5rem 1.1rem 1.4rem;
+    background:linear-gradient(158deg,var(--deep) 0%,var(--deep2) 72%,#35624E 100%);
+    color:#fff;width:calc(100% + 1.6rem)}
+  .hero a.back{display:inline-flex;align-items:center;gap:.4rem;
+    font-size:.82rem;color:rgba(255,255,255,.72);text-decoration:none;
+    margin:0 0 .9rem}
+  .hero .top{display:flex;align-items:flex-start;gap:.9rem}
+  .hero .top>div{min-width:0;flex:1 1 auto}
+  .hero h1{margin:0;font-size:1.7rem;line-height:1.2;letter-spacing:.04em;
+    font-weight:600}
+  /* THE COUNTED NUMBERS AS A LINE OF TYPE, not three stat columns — the same
+     credentials line the shopfront wears, because these are the same three
+     figures and she has already read them once. 开店 is on this one: on the
+     shopfront it is provenance and comes fourth, here it is the whole
+     question. */
+  .hero .sub{display:block;font-size:.84rem;line-height:1.6;margin-top:.55rem;
+    color:rgba(255,255,255,.72)}
+  .hero .sub i{font-style:normal;color:var(--sun);font-weight:600}
+  .hero .sub em{font-style:normal;opacity:.38;padding:0 .4rem}
+  .hero .lang{flex:0 0 auto;border:1px solid rgba(255,255,255,.4);
+    background:transparent;color:#fff;font:inherit;font-size:.74rem;
+    border-radius:999px;padding:.25rem .65rem}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:.85rem;
+    padding:1.15rem 1.1rem;margin:0 0 .8rem;
+    box-shadow:0 1px 2px rgba(27,24,21,.04)}
+  .card>p{margin:0;font-size:1.02rem;line-height:1.7}
+  .card .how{margin:.5rem 0 0;font-size:.82rem;color:var(--mut)}
+
+  /* THE ADDRESS, AS A BUTTON AND AS TEXT UNDER IT. The text is not
+     decoration: "go and look" is the whole offer of this page, and a buyer
+     who is checking whether a shop is real wants to see weidian.com before
+     she taps, not after. */
+  .out{display:block;text-align:center;text-decoration:none;font-size:1rem;
+    font-weight:600;padding:.9rem;border-radius:999px;background:var(--deep);
+    color:#fff;margin:.9rem 0 0}
+  .addr{margin:.5rem 0 0;font-size:.78rem;color:var(--mut);text-align:center;
+    word-break:break-all}
+  /* 还没填 — page colours, no red. A field the seller has not filled in is
+     not an error the buyer caused. */
+  .soon{margin:.6rem 0 0;font-size:.88rem;color:var(--mut)}
+
+  /* 微信号 and the code. Centred, because a code is a thing she points a
+     phone at, and the id is a thing she copies. */
+  .wxc{text-align:center}
+  .wxc h2{margin:0 0 .8rem;font-size:.72rem;letter-spacing:.09em;
+    font-weight:600;color:var(--mut);text-align:left}
+  .wxc .wx{display:flex;align-items:center;justify-content:center;gap:.6rem}
+  .wxc .wx b{font-size:1.15rem;letter-spacing:.02em}
+  .wxc .wx button{border:1px solid var(--line);background:var(--card);
+    color:var(--ink2);font:inherit;font-size:.78rem;border-radius:999px;
+    padding:.25rem .7rem}
+  .wxc img{width:min(15rem,62vw);height:auto;border-radius:.6rem;display:block;
+    margin:1rem auto .5rem;background:var(--line)}
+
+  .go{display:block;text-align:center;text-decoration:none;font-size:1rem;
+    font-weight:600;padding:1rem;border-radius:999px;background:var(--card);
+    border:1px solid var(--line);color:var(--ink);margin:1.5rem 0 0}
+  .none{padding:2.5rem .3rem;text-align:center;color:var(--mut);font-size:.95rem}
+</style>
+
+<main>
+  <div class="hero">
+    <a class="back" id="back" href="#">&larr; <span id="backw">店铺</span></a>
+    <div class="top">
+      <div>
+        <h1 id="ttl">&nbsp;</h1>
+        <span class="sub" id="sub"></span>
+      </div>
+      <span id="langslot"></span>
+    </div>
+  </div>
+  <div id="root"></div>
+</main>
+
+<script type="module">
+import { T, setLang, pickLang, langButton } from "/i18n.js";
+
+/* Chinese unless the reader has said otherwise — see pickLang. */
+setLang(pickLang("zh"));
+
+/* THE SERVER SAYS WHOSE SHOP THIS IS — see shopPage() in server.js.
+   Read off location.pathname this was empty on the shop's own domain,
+   where Caddy rewrites / to /shop/<handle> without the browser ever
+   seeing it, and the front door drew "这家店打不开了" while the API
+   answered ok:true. The path is still the fallback, for a page opened
+   from a file or served some way nobody has thought of yet. */
+const HANDLE = decodeURIComponent("{{HANDLE}}".replace(/^\{\{HANDLE\}\}$/, ""))
+  || decodeURIComponent((location.pathname.match(/^\/shop\/([^/]+)/) || [])[1] || "");
+const $ = (id) => document.getElementById(id);
+const el = (t, c, x) => {
+  const n = document.createElement(t);
+  if (c) n.className = c;
+  if (x != null) n.textContent = x;
+  return n;
+};
+
+const SHOPHREF = "/shop/" + encodeURIComponent(HANDLE);
+$("back").href = SHOPHREF;
+
+let SHOP = null, PROOF = null;
+
+/* WHAT HE TYPED, MADE INTO SOMETHING A BROWSER WILL OPEN — and nothing more.
+   The field is a free-text box in his own settings, so "weidian.com/?userid=1"
+   with no scheme is what most people paste and an <a> with that href resolves
+   against /shop/<handle>/ and lands on this board. A scheme is added; the
+   address itself is never guessed at or rewritten, and anything that is not
+   http(s) is refused outright rather than turned into a link somewhere
+   nobody chose. */
+function outbound(raw) {
+  const s = String(raw || "").trim();
+  if (!s) return "";
+  if (/^https?:\/\//i.test(s)) return s;
+  if (/^[a-z][a-z0-9+.-]*:/i.test(s)) return "";
+  return "https://" + s.replace(/^\/+/, "");
+}
+
+function draw() {
+  $("ttl").textContent = T("sh.oldTtl");
+  document.title = T("sh.oldTtl");
+  $("backw").textContent = SHOP?.name || SHOP?.handle || T("sh.back");
+
+  /* THE THREE FIGURES, AND ONLY THE ONES THAT ARE NOT ZERO. A shop that has
+     done nothing yet shows an empty line rather than three zeros, which
+     would tell her the one thing it wanted to hide — same rule as the
+     shopfront's credentials line. */
+  const sub = $("sub");
+  sub.textContent = "";
+  const pf = PROOF || {};
+  const bits = [];
+  if (pf.sent) bits.push([String(pf.sent), T("sh.pSent")]);
+  if (pf.reviews) bits.push([String(pf.reviews), T("sh.pRev")]);
+  /* 2023-04 → 2023.04, the way a date is written on a Chinese screen. */
+  if (pf.since) bits.push([pf.since.replace("-", "."), T("sh.pSince")]);
+  bits.forEach(([n, lab], i) => {
+    if (i) sub.append(el("em", null, "·"));
+    sub.append(el("i", null, n), document.createTextNode(" " + lab));
+  });
+
+  const root = $("root");
+  root.textContent = "";
+
+  /* WHAT THE OLD SHOP IS, in one line, and then the way to it. */
+  const box = el("div", "card");
+  box.append(el("p", null, T("sh.oldWhat")));
+  const href = outbound(SHOP?.weidian);
+  if (href) {
+    const a = el("a", "out", T("sh.oldGo"));
+    a.href = href;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    box.append(a);
+    box.append(el("p", "addr", SHOP.weidian));
+  } else {
+    /* NO ADDRESS IS SAID, NOT FILLED IN. The temptation here is a search
+       link or a guessed weidian.com/<handle>; both send her somewhere the
+       shop never claimed, off the page whose whole job is being checkable. */
+    box.append(el("p", "soon", T("sh.oldNone")));
+  }
+  root.append(box);
+
+  /* THE WECHAT HALF, only when there is one. */
+  if (SHOP?.wechat || SHOP?.qr) {
+    const wx = el("div", "card wxc");
+    wx.append(el("h2", null, T("sh.wechat")));
+    if (SHOP.wechat) {
+      const row = el("div", "wx");
+      row.append(el("b", null, SHOP.wechat));
+      const c = el("button", null, T("sh.wechatCopy"));
+      c.type = "button";
+      c.addEventListener("click", async () => {
+        /* execCommand first: the async clipboard is refused inside WeChat's
+           own browser, which is where she is. Same as the shopfront. */
+        let done = false;
+        try {
+          const ta = document.createElement("textarea");
+          ta.value = SHOP.wechat;
+          ta.style.position = "fixed";
+          ta.style.opacity = "0";
+          document.body.append(ta);
+          ta.select();
+          done = document.execCommand("copy");
+          ta.remove();
+        } catch { done = false; }
+        if (!done) { try { await navigator.clipboard.writeText(SHOP.wechat); done = true; } catch { } }
+        if (done) c.textContent = T("sh.wechatDone");
+      });
+      row.append(c);
+      wx.append(row, el("p", "how", T("sh.wechatHow")));
+    }
+    if (SHOP.qr) {
+      const img = el("img");
+      img.src = SHOP.qr;
+      img.alt = "";
+      /* 长按二维码识别 leads — she does this every day with codes sent to
+         her in a chat. A line explaining what a QR code is would be the
+         tell that this shop was built for somebody else. */
+      const how = el("p", "how", T("sh.qrHow"));
+      /* No empty frame where a code is not — and the instruction goes with
+         it, because a grey rectangle under 长按二维码 is worse than nothing:
+         she will long-press it and nothing will happen. Declared above the
+         listener rather than below it; an error event is always async, but
+         a handler reading a const from further down the file is a trap for
+         whoever moves this next. */
+      img.addEventListener("error", () => { img.remove(); how.remove(); });
+      wx.append(img, how);
+    }
+    root.append(wx);
+  }
+
+  const go = el("a", "go", T("sh.arcGo"));
+  go.href = SHOPHREF;
+  root.append(go);
+}
+
+/* The switch is live before the shop is. Tapped while the request is still
+   out, draw() would paint 老店地址还没填上来 over a shop that has one. */
+$("langslot").replaceWith(langButton(() => {
+  if (SHOP) { draw(); return; }
+  $("ttl").textContent = T("sh.oldTtl");
+}));
+
+(async () => {
+  $("ttl").textContent = T("sh.oldTtl");
+  try {
+    const r = await fetch("/api/shop/" + encodeURIComponent(HANDLE), { cache: "no-store" });
+    const j = await r.json();
+    if (!r.ok || !j?.ok) throw new Error("gone");
+    SHOP = j.shop || {};
+    PROOF = j.proof || null;
+    draw();
+  } catch {
+    $("ttl").textContent = T("sh.oldTtl");
+    $("root").append(el("p", "none", T("sh.gone")));
+  }
+})();
+</script>

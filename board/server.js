@@ -10047,6 +10047,12 @@ app.get("/shop/:handle", shopPage("shop.html"));
    shop in Beijing, the year it closed, and now this. Its own address so it
    can be sent on its own, which is what somebody does with a story. */
 app.get("/shop/:handle/story", shopPage("story.html"));
+/* THE OTHER TWO DOORS ALONG THE SAME SHELF. Each is a page rather than a
+   sheet for the reason the product page is: a buyer forwards these. "Look at
+   their reviews" and "they have been on 微店 since 2019" are both things
+   somebody says WITH A LINK, and a sheet cannot be sent. */
+app.get("/shop/:handle/reviews", shopPage("reviews.html"));
+app.get("/shop/:handle/wechat", shopPage("wechat.html"));
 
 app.get("/sell", (req, res, next) => page("sell.html", req, res, next));
 app.get("/api/sell", async (req, res) => {
@@ -11395,6 +11401,13 @@ app.get("/api/shop/:handle", async (req, res) => {
       /* 联系店家 — see the note on `shop` in store.js. The id is public by
          the act of putting it on a shopfront; nothing else about her is. */
       wechat: who.shop?.wechat || "",
+      /* The old 微店 shop, when there is one. Public by the act of being a
+         shop, and the 老店 page is where a doubting buyer is sent to check
+         that this did not appear last week. */
+      weidian: who.shop?.weidian || "",
+      /* Whether there is a story behind the paragraph, so the shopfront
+         knows whether to offer the door rather than opening an empty room. */
+      hasStory: Boolean(who.shop?.chapters?.length),
       qr: shopPic(who.shop?.qr),
       ai: Boolean(who.shop?.ai),
       /* HIS OWN WORDS, unrendered. Every other pair on this board carries a
@@ -12660,9 +12673,14 @@ app.post("/api/admin/shop-contact", admin, express.json({ limit: "2kb" }), async
       wechat: req.body?.wechat !== undefined
         ? String(req.body.wechat).trim().slice(0, 40) : (now.wechat || ""),
       qr: qr || now.qr || "",
+      /* The old 微店 shop's address. Kept beside the WeChat id because it is
+         the same fact — where this shop was before it was here — and it is
+         what the 老店 page sends a doubting buyer to look at. */
+      weidian: req.body?.weidian !== undefined
+        ? String(req.body.weidian).trim().slice(0, 300) : (now.weidian || ""),
       ai: req.body?.ai !== undefined ? Boolean(req.body.ai) : Boolean(now.ai),
     };
-    return { ok: true, wechat: p.shop.wechat, qr: Boolean(p.shop.qr), ai: p.shop.ai };
+    return { ok: true, wechat: p.shop.wechat, qr: Boolean(p.shop.qr), weidian: p.shop.weidian, ai: p.shop.ai };
   });
   if (out?.error) return res.status(404).json({ error: "not on this board: " + who });
   res.json({ ok: true, ...out });

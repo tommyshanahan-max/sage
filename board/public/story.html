@@ -85,8 +85,13 @@
 </main>
 
 <script type="module">
-import { T, lang, pickLang } from "/i18n.js";
-pickLang();
+import { T, lang, setLang, pickLang } from "/i18n.js";
+/* setLang, NOT pickLang ALONE. pickLang works out which language to use and
+   RETURNS it; without setLang the answer is thrown away and the page renders
+   in English — on a page whose entire readership is Chinese. Every other shop
+   page pairs them; this one did not, and nothing about the symptom points at
+   the missing call. */
+setLang(pickLang("zh"));
 
 /* THE SERVER SAYS WHOSE SHOP THIS IS — see shopPage() in server.js.
    Read off location.pathname this was empty on the shop's own domain,

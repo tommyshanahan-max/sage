@@ -1,7 +1,7 @@
 /* HOW A BUYER REACHES THE PERSON WHO SOLD IT TO HER.
  *
  *   node scripts/shop-contact.mjs <base> <admin-key> --who Mei \
- *     [--wechat meimei_au] [--qr <url>] [--ai 1|0]
+ *     [--wechat meimei_au] [--qr <url>] [--weidian <url>] [--ai 1|0]
  *
  * 联系店家 is on every Chinese shop she has used, bottom left beside the buy
  * button. It is WeChat: an id she can search, or a code she can long press.
@@ -20,6 +20,10 @@ const body = { who };
 /* Sent only when given, so setting a code does not wipe an id. */
 if (rest.includes("--wechat")) body.wechat = arg("wechat");
 if (arg("qr")) body.qr = arg("qr");
+/* The old 微店 shop's address. Beside the WeChat id because it is the same
+   fact — where this shop was before it was here — and it is what the 老店
+   page sends a buyer to check. */
+if (rest.includes("--weidian")) body.weidian = arg("weidian");
 if (rest.includes("--ai")) body.ai = arg("ai") === "1";
 
 const r = await fetch(base.replace(/\/$/, "") + "/api/admin/shop-contact", {
@@ -41,5 +45,6 @@ console.log("");
 console.log("  " + who + " can be contacted.");
 console.log("    WeChat    " + (j.wechat || "—"));
 console.log("    QR code   " + (j.qr ? "on this board" : "—"));
+console.log("    微店      " + (j.weidian || "—"));
 console.log("    Assistant " + (j.ai ? "on" : "off"));
 console.log("");

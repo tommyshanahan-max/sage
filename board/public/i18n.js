@@ -6559,6 +6559,17 @@ export const STRINGS = {
   "sh.arcGo":          ["See what is in the shop", "去看看店里的东西"],
   "sh.arcNone":        ["Nothing written here yet.", "还没有写。"],
   "sh.back":           ["the shop", "店铺"],
+  /* 老店 — /shop/<handle>/wechat. The page a buyer opens when her question
+     is not the price but "是上周才建的吧？". Four words about what the old
+     shop is, the address so she can go and check it herself, and the three
+     counted figures beside them. Nothing here is written about the seller
+     by us: the whole page is worth opening only because every line on it
+     can be checked, and one invented sentence would spend that.
+     还没填 rather than a guessed address — see outbound() on that page. */
+  "sh.oldTtl":         ["The old shop", "老店"],
+  "sh.oldWhat":        ["This shop's older storefront, on Weidian.", "这家店的老店，开在微店。"],
+  "sh.oldGo":          ["Open it on Weidian", "去微店看看"],
+  "sh.oldNone":        ["The address for the old shop is not up here yet.", "老店地址还没填上来。"],
   "sh.reach":          ["Any question, message me", "有问题，微信找我"],
   "sh.reachSub":       ["I answer every one myself", "每条都是我本人回"],
 
@@ -6743,6 +6754,12 @@ export const STRINGS = {
      answers "what do people say about this shop", which is the question
      asked before a first order. */
   "sh.allRev":         ["All reviews", "全部评价"],
+  /* THE THREE DOORS under the sign, in the order a stranger asks: who are
+     you, what do people say, how long have you been doing this. Each is a
+     page with its own address, because each is a thing somebody forwards
+     into a chat with one line of their own. */
+  "sh.dStory":         ["Our story", "店主的故事"],
+  "sh.dOld":           ["WeChat store", "老店 · 微店"],
   /* THE PRODUCT'S OWN PAGE. The level below the shopfront: the picture, the
      price, what people said, and the button. Its own address because the way
      a thing is bought here is that somebody forwards it into a chat. */

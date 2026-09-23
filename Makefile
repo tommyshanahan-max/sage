@@ -879,7 +879,7 @@ review-add: ## An old review from the WeChat store: make review-add N=1 WHO="李
 	  /seed/review-add.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  --n "$(N)" --text "$(TEXT)" --who "$(WHO)" --stars "$(STARS)" --photo "$(PHOTO)" --at "$(AT)"
 
-shop-contact: ## How her buyers reach her: make shop-contact WHO="Mei" WECHAT="meimei_au" [QR=url] [AI=1]
+shop-contact: ## How her buyers reach her: make shop-contact WHO="Mei" WECHAT="meimei_au" [QR=url] [WEIDIAN=url] [AI=1]
 	@# 联系店家 sits bottom left on the shopfront, beside the buy button,
 	@# because that is where it is on every Chinese shop she has used.
 	@# WECHAT is an id she can search for, QR a code she can long press;
@@ -889,7 +889,8 @@ shop-contact: ## How her buyers reach her: make shop-contact WHO="Mei" WECHAT="m
 	@test -n "$(WHO)" || { echo 'make shop-contact WHO="Mei" WECHAT="meimei_au"'; exit 1; }
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/shop-contact.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
-	  --who "$(WHO)" $(if $(WECHAT),--wechat "$(WECHAT)",) --qr "$(QR)" $(if $(AI),--ai "$(AI)",)
+	  --who "$(WHO)" $(if $(WECHAT),--wechat "$(WECHAT)",) --qr "$(QR)" \
+	  $(if $(WEIDIAN),--weidian "$(WEIDIAN)",) $(if $(AI),--ai "$(AI)",)
 
 shop-check: ## What a shop row holds: make shop-check WHO="Tom"
 	@# What is stored, and whether the picture behind it is still on disk

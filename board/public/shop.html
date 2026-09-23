@@ -94,6 +94,15 @@
   /* THE CLAIMS, BELOW THE FACTS AND QUIETER THAN THEM. They were white
      pills on the band, competing with his name for the first glance. On the
      page ground, in ink, they read as the small print they are. */
+  /* THE THREE DOORS. A row of three, sitting on the page ground directly
+     under the sign — big enough to be a target on a phone, quiet enough
+     that they do not compete with the goods. They scroll off; they are the
+     first thing she can tap and not the thing the shop is for. */
+  .doors{display:flex;gap:.5rem;margin:0 .3rem .85rem}
+  .doors a{flex:1 1 0;text-align:center;padding:.6rem .3rem;
+    border:1px solid var(--line);border-radius:.6rem;background:var(--card);
+    color:var(--ink2);font-size:.82rem;text-decoration:none;line-height:1.3}
+  .doors a:active{background:var(--bg)}
   .trust{display:flex;flex-wrap:wrap;gap:.4rem;margin:0 .3rem 1rem}
   .trust span{font-size:.72rem;line-height:1;padding:.42rem .65rem;
     border-radius:999px;background:var(--card);border:1px solid var(--line);
@@ -269,11 +278,6 @@
   .rev1 img{width:5.5rem;height:5.5rem;object-fit:cover;border-radius:.5rem;
     margin:.45rem 0 0;display:block}
   .rev1 .src{margin:.3rem 0 0;font-size:.74rem;color:var(--mut)}
-  /* 全部评价 — a text link under the credentials line, not a fourth button
-     on a band that already has three things on it. */
-  .allrev{display:block;margin:.35rem 0 0;padding:0;border:0;background:none;
-    font:inherit;font-size:.78rem;color:var(--ink2);text-decoration:underline;
-    text-underline-offset:.2em;cursor:pointer}
   /* Which thing the review is about. Small, above the words: a wall of
      sentences about nothing in particular is worse than no page. */
   .rev1 .item{margin:.15rem 0 0;font-size:.76rem;color:var(--mut)}
@@ -666,78 +670,6 @@ function revSheet(it, j, asks) {
   document.body.append(sheet);
 }
 
-/* EVERY REVIEW IN THE SHOP, NEWEST FIRST.
- *
- * One request, made when the button is pressed and never on load: a shop
- * page that fetches three hundred reviews nobody asked for is a slow shop
- * page on a phone on a train.
- *
- * Each row says which thing it is about, because a wall of sentences about
- * nothing in particular is worse than no page at all. The 来自老店 label
- * rides along for the same reason it does everywhere else — the value of
- * the others is that an order stands behind them.
- */
-async function allRevSheet() {
-  const sheet = el("div", "sh");
-  const card = el("div", "shc");
-  card.append(el("h2", null, T("sh.allRev")));
-
-  const wait = el("p", "hint", T("sh.loading"));
-  card.append(wait);
-  const shut = el("button", "shut", T("sh.close"));
-  shut.type = "button";
-  shut.addEventListener("click", () => sheet.remove());
-  card.append(shut);
-  sheet.append(card);
-  sheet.addEventListener("click", (e) => { if (e.target === sheet) sheet.remove(); });
-  document.body.append(sheet);
-
-  let j = null;
-  try {
-    const r = await fetch("/api/shop/" + encodeURIComponent(HANDLE) + "/reviews", { cache: "no-store" });
-    j = await r.json();
-  } catch { /* handled below — an offline phone is not an error worth a stack */ }
-  wait.remove();
-  if (!j?.ok || !j.rows?.length) {
-    card.insertBefore(el("p", "hint", T("sh.noRev")), shut);
-    return;
-  }
-
-  /* The count and the average, said once at the top. Counted by the server
-     from what is actually there; the page never works out a number about
-     itself. */
-  const head = el("p", "hint");
-  head.textContent = T("sh.revCount", { n: String(j.n), stars: String(j.stars) });
-  card.insertBefore(head, shut);
-
-  const list = el("div", "revs");
-  for (const r of j.rows) {
-    const box = el("div", "rev1");
-    const top = el("div", "top");
-    top.append(el("b", null, r.who || "***"));
-    top.append(el("span", null, "★".repeat(r.stars)));
-    box.append(top);
-    if (r.item) box.append(el("p", "item", r.item));
-    if (r.text) box.append(el("p", null, r.text));
-    if (r.src) box.append(el("p", "src", T("sh.fromOld")));
-    if (r.photo) {
-      const img = el("img");
-      img.src = r.photo;
-      img.alt = "";
-      img.loading = "lazy";
-      img.addEventListener("error", () => img.remove());
-      box.append(img);
-    }
-    if (r.back) {
-      const b = el("p", "back");
-      b.append(el("b", null, T("sh.shopSaid") + " "), document.createTextNode(r.back));
-      box.append(b);
-    }
-    list.append(box);
-  }
-  card.insertBefore(list, shut);
-}
-
 /* 问大家 — the questions, whoever may answer them, and the box to add one.
    Answering is offered only to somebody the server says may: the page
    cannot see the orders and must not guess. */
@@ -942,10 +874,6 @@ function draw() {
      微店 shop waiting to be imported, and a door that appears only once the
      room behind it is furnished cannot be checked by the person furnishing
      it. So the door stays, and the empty room says so politely. */
-  const all = el("button", "allrev", T("sh.allRev"));
-  all.type = "button";
-  all.addEventListener("click", allRevSheet);
-  box.append(all);
   top.append(box);
   /* The switch rides the band rather than sitting in a corner of the page:
      it belongs with whose shop this is. Flipping it redraws the list and
@@ -954,6 +882,34 @@ function draw() {
   top.append(langButton(() => { draw(); paint(); }));
   hero.append(top);
   root.append(hero);
+
+  /* THE THREE DOORS, DIRECTLY UNDER THE SIGN.
+   *
+   * 店主的故事, 全部评价, 老店 — the three questions a stranger asks before a
+   * first order, in the order she asks them: who are you, what do people say,
+   * and how long have you been doing this. They were a sheet and a sentence
+   * buried further down, which meant the answers existed and nobody found
+   * them.
+   *
+   * PAGES, NOT SHEETS, AND THAT IS THE WHOLE POINT. Each answer is a thing
+   * somebody forwards into a chat — "看他们的评价" with a link. A sheet over
+   * this page cannot be sent to anybody.
+   *
+   * A door is offered only when there is a room behind it: no chapters, no
+   * 故事 button; no 微店 address, no 老店 button. 全部评价 stays even at zero,
+   * because the rows are on their way in from the old shop and the person
+   * doing the importing has to be able to watch them arrive. */
+  const doors = el("div", "doors");
+  const door = (href, word) => {
+    const a = document.createElement("a");
+    a.href = "/shop/" + encodeURIComponent(HANDLE) + href;
+    a.textContent = word;
+    doors.append(a);
+  };
+  if (SHOP?.hasStory || SHOP?.story) door("/story", T("sh.dStory"));
+  door("/reviews", T("sh.allRev"));
+  if (SHOP?.weidian) door("/wechat", T("sh.dOld"));
+  root.append(doors);
 
   /* The two claims, under the band and in ink. 墨尔本直发 is not repeated —
      it opens the credential line above. */
