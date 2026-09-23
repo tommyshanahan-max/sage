@@ -239,6 +239,26 @@
      it is a fact between two people's sentences, not one of them. */
   .evt{margin:.9rem 0;text-align:center;font-size:.76rem;color:var(--muted)}
 
+  /* A BILL IN THE ROOM. Its own object, not a bubble with numbers in it:
+     everything else in here is somebody talking and this is a thing to act
+     on, so it gets an edge and the room's only filled button. Four seconds
+     and one glance — the figure, one line about what it is for, and the
+     button. Nothing else fits on it. */
+  .bill{margin:.35rem 0 0;border:1px solid var(--line);border-radius:.9rem;
+    padding:.8rem .9rem;background:var(--raise);min-width:12.5rem}
+  .bill .bamt{display:block;font-family:var(--serif);font-size:1.7rem;line-height:1.1;color:var(--ink)}
+  .bill .bwhat{display:block;margin-top:.15rem;font-size:.84rem;color:var(--muted);
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bill a.bgo{display:flex;align-items:center;justify-content:center;min-height:44px;
+    margin-top:.7rem;border-radius:999px;background:var(--accent);color:var(--accent-ink);
+    font-size:.92rem;font-weight:600;text-decoration:none}
+  /* The chip takes the board's own green rather than a literal, so it is not
+     a pale mint square on the dark ground — the mistake made once already on
+     the money panel. */
+  .bill .bpaid{display:inline-flex;align-items:center;gap:.35rem;margin-top:.6rem;
+    font-size:.74rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--t2);border:1px solid var(--t2);padding:.28rem .6rem;border-radius:999px}
+
   /* THE LEDGER. A card across the top of the hand-kept room, quiet enough that
      the conversation under it is still the page. Label left, fact right — the
      shape of the rows on a person's page, so the same two facts do not look
@@ -2439,7 +2459,31 @@ function paintRoom(g) {
        only reachable inside his own panel, which is off. A person's message
        read aloud by a machine is a different and worse idea. */
     if (m.bot && said) hearMo(bub, said);
-    wrap.append(bub);
+    /* A LINE WITH A BILL ON IT AND NO WORDS IS NOT AN EMPTY BUBBLE. "Here is
+       the bill" is the whole message most of the time, and an empty grey
+       bubble above the card is a thing that looks broken. */
+    if (said) wrap.append(bub);
+    /* THE BILL, DRAWN FROM THE ROW AND NOT FROM THE LINE — see billView. The
+       figure and whether it has been paid are read every time the room is
+       loaded, so a request paid an hour after it was sent says so here. */
+    if (m.bill) {
+      const c = el("div", "bill");
+      c.append(el("span", "bamt", m.bill.amount || ""));
+      if (m.bill.what) c.append(el("span", "bwhat", m.bill.what));
+      if (m.bill.state === "paid") {
+        c.append(el("span", "bpaid", T("grp.billPaid")));
+      } else if (!m.mine) {
+        /* ONLY THE OTHER SIDE GETS THE BUTTON. Whoever sent the bill pressing
+           Pay on their own bill is a payment to themselves, and the screen
+           that offers it is a screen that has not thought about who is
+           reading. They see the figure and the state; that is what they want
+           from it. */
+        const go = el("a", "bgo", T("grp.billPay"));
+        go.href = "/pay/" + m.bill.id;
+        c.append(go);
+      }
+      wrap.append(c);
+    }
     const meta = el("div", "meta");
     meta.append(el("span", null, (m.mine ? "" : (m.handle || "") + " · ") + when(m.at)));
     // Reporting the doorman to the doorman is not a thing anybody means to do.

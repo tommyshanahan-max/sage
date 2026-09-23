@@ -9276,6 +9276,8 @@ app.get("/api/groups", notesOff, async (req, res) => {
           // What happened to the room, when the line is about the room — see
           // moSays. The page writes the sentence; this is the fact.
           evt: m.evt || null,
+          // The bill on the line, looked up now — see billView.
+          bill: billView(board, m),
           mine: m.by === me, reported: Boolean(m.report),
           ...(m.by === store.MO
             ? { who: store.MO, handle: MO_NAME, photo: "", bot: true }
@@ -13861,6 +13863,8 @@ app.get("/api/door", notesOff, async (req, res) => {
                         with a face on them, which is worse than not sending
                         them at all. */
                      evt: m.evt || null,
+                     // The bill on the line, looked up now — see billView.
+                     bill: billView(board, m),
                      mine: how !== "peek" && m.by === me,
                      reported: Boolean(m.report), ...named(m.by) })),
   });
@@ -14122,12 +14126,51 @@ function moSays(board, group, kind, who) {
 }
 
 /** Saying something in one. */
+/* THE BILL ON A LINE, READ WHEN THE LINE IS READ AND NOT WHEN IT WAS SAID.
+ *
+ * cleanSay keeps an id and nothing else, for the reason written over it: a
+ * request paid on Tuesday must not read "unpaid" for ever because that is
+ * what was true when it was put in the room. So everything drawn on the card
+ * is looked up here, on the way out, every time.
+ *
+ * An allowlist, like every other view on this board. A request row carries
+ * who asked and where the money lands; a room does not need either.
+ *
+ * Gone means gone: a request taken back leaves the words in the room and the
+ * card disappears, which is the same rule a deleted room follows. */
+const billView = (board, m) => {
+  if (!m.pay) return null;
+  const q = board.requests.find((x) => x.id === m.pay);
+  if (!q || q.off) return null;
+  /* requestState and not a stored flag, for the same reason the figures are
+     read here: "paid" is derived from what each side has said, and it changes
+     after the line was written. */
+  return {
+    id: q.id, amount: q.amount, cur: q.cur || "", what: q.what || "",
+    from: q.from || "", state: request.requestState(q),
+  };
+};
+
 app.post("/api/group/say", notesOff, express.json({ limit: "16kb" }), async (req, res) => {
   const me = hashDevice(String(req.body?.device || ""), SALT);
   const id = String(req.body?.group || "");
   let text = String(req.body?.text || "").trim().slice(0, 600);
+  /* A REQUEST FOR MONEY PUT IN THE ROOM, AND IT IS A LINE ON ITS OWN.
+   *
+   * WHY THE ID AND NOT A CODE OR A LINK. The board's first rule is that two
+   * people do not swap a way to leave it, and stripContact below enforces
+   * that on every line anybody types. A payment code pasted in as text is
+   * indistinguishable from that and would be stripped — rightly. So nothing
+   * is typed: the sender picks a request they already made, this carries its
+   * id, and the page draws the card from the row. See the note on `pay` in
+   * cleanSay.
+   *
+   * AND IT MAY ARRIVE WITH NO WORDS AT ALL, which is the ordinary case —
+   * "here is the bill" is the whole message. So the empty-line refusal below
+   * lets it through when there is a request on it. */
+  const pay = /^[a-f0-9]{20}$/.test(String(req.body?.pay || "")) ? String(req.body.pay) : "";
   if (!me) return res.status(400).json({ error: "no" });
-  if (!text) return res.status(400).json({ error: "empty" });
+  if (!text && !pay) return res.status(400).json({ error: "empty" });
 
   const door = store.doorKey(id);
   /* The id of the line this call writes, so the other-language render can be
@@ -14270,8 +14313,11 @@ app.post("/api/group/say", notesOff, express.json({ limit: "16kb" }), async (req
     const cut = store.stripContact(text, mentionable);
     /* NOTHING LEFT BUT THE CONTACT. "wechat tomshan88" on its own is not a
        message with a problem in it — it is the problem, and there is nothing
-       to post. Still refused, and now it is the only thing that is. */
-    if (!cut.text) return { error: "contact", what: cut.took[0] || "" };
+       to post. Still refused, and now it is the only thing that is.
+       UNLESS THERE IS A BILL ON IT: a request posted with no words is not an
+       empty line, and one posted with words that were all contact detail
+       still has the request left, which is the part worth keeping. */
+    if (!cut.text && !pay) return { error: "contact", what: cut.took[0] || "" };
     took = cut.took;
     text = cut.text;
 
@@ -14300,7 +14346,20 @@ app.post("/api/group/say", notesOff, express.json({ limit: "16kb" }), async (req
       && before && before.by === me
       && Date.now() - (Date.parse(was.at || "") || 0) < 3 * 60_000);
 
-    board.says.push(store.cleanSay({ id: store.newId(), group: id, by: me, text }));
+    /* WHOSE BILL IT IS. Only the person who asked can put their own request
+       in a room: anything else is one member billing a room in another
+       member's name, which is the shape of every payment scam there is.
+       A request that is gone, or taken back, is dropped rather than refused —
+       the words still belong in the room. */
+    let bill = "";
+    if (pay) {
+      const q = board.requests.find((x) => x.id === pay);
+      if (q && !q.off && q.by === me) bill = pay;
+    }
+    if (pay && !bill && !text) return { error: "bill" };
+    board.says.push(store.cleanSay({
+      id: store.newId(), group: id, by: me, text, ...(bill ? { pay: bill } : {}),
+    }));
     /* Held so the render can be started after this write commits — see
        renderSay, which must not run inside the lock. */
     saidId = board.says[board.says.length - 1].id;

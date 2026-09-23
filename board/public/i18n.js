@@ -5124,6 +5124,13 @@ export const STRINGS = {
   "rq.wayNo":          ["{way} would not take this one.", "{way} 没能接这一笔。"],
   "pay.cancel":        ["Not now", "先不付"],
   "pay.go":            ["Pay", "去付款"],
+  /* A BILL PUT IN A ROOM. Two strings and no third: the card is a figure, a
+     line and a button, and anything explaining it is a screen that has not
+     been designed. The Chinese is what a Chinese payer already reads on every
+     other payment screen they meet — 去付 and 已支付 — not a translation of
+     the English. */
+  "grp.billPay":       ["Pay", "去付"],
+  "grp.billPaid":      ["Paid", "已支付"],
 
   /* The payment happens inside the room. These are the frame around Stripe's
      form — everything the payer reads that is ours, not theirs. */

@@ -3041,6 +3041,22 @@ export function cleanSay(raw) {
     ...(raw.evt && ["in", "out", "left", "welcome", "page"].includes(String(raw.evt.kind))
       ? { evt: { kind: String(raw.evt.kind), who: s(raw.evt.who, 40) } }
       : {}),
+    /* A REQUEST FOR MONEY, PUT IN THE ROOM. An id and nothing else.
+     *
+     * THE SAME RULE AS evt: THE FACT IS STORED, THE PAGE DRAWS IT. The amount,
+     * what it is for and whether it has been paid all live on the request row
+     * and change after this line is said — a request paid on Tuesday must not
+     * read "unpaid" for ever because that is what was true when it was sent.
+     * Storing the figure here would be storing a copy that goes stale, which
+     * is the mistake the note over evt above is about, in a place where the
+     * stale copy is about money.
+     *
+     * AND IT IS WHY THIS DOES NOT BREAK THE CONTACT RULE. Nobody types a code
+     * or a link: the sender picks a request they already made, this keeps its
+     * id, and the board draws the card. stripContact never sees anything,
+     * because there is nothing to strip. A payment code put in a room by the
+     * board is the opposite of two people swapping a way to leave it. */
+    ...(/^[a-f0-9]{20}$/.test(String(raw.pay || "")) ? { pay: String(raw.pay) } : {}),
   };
 }
 
