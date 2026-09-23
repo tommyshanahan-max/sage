@@ -116,7 +116,31 @@ const key0 = (s) => String(s || "")
    refused against a product that is plainly on the shelf. The first line is
    the name; everything after the first newline is prose. Both are tried,
    because a shop whose titles happen to be clean loses nothing by it. */
-const head = (s) => String(s || "").split("\n")[0].trim();
+/* THE NAME, WITHOUT THE BLURB THAT FOLLOWS IT.
+   Splitting on a newline was right for the pages that have one and did
+   nothing for the pages that do not — those run the description straight on
+   from the name, and fourteen products went onto a live shelf reading
+   "Nature's Way … 180 tablets Nature's Way Children's brain fish oil, is
+   specially designed for…". The seam is where the brand comes back, which is
+   how these blurbs open; below sixteen characters the cut is refused, because
+   "Bellamy's 4+" says less about the jar than the long name does. Same rule
+   as scripts/product-names.mjs, which repairs the ones already written. */
+const head = (s) => {
+  const line = String(s || "").split("\n")[0].trim();
+  const first = line.split(/\s+/)[0] || "";
+  const stem = first.replace(/[\u2019'`]s$/i, "").replace(/[^\p{L}\p{N}]/gu, "");
+  if (stem.length >= 3) {
+    const re = new RegExp(stem.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "giu");
+    for (const m of line.matchAll(re)) {
+      if (m.index > 12) {
+        const cut = line.slice(0, m.index).trim().replace(/[,\uFF0C\u3001\-\u2013\u2014]$/, "").trim();
+        if (cut.length >= 16) return cut;
+        break;
+      }
+    }
+  }
+  return line;
+};
 
 function match(name) {
   const keys = [...new Set([key0(name), key0(head(name))])].filter(Boolean);
