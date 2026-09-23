@@ -257,11 +257,22 @@ needs its own Chinese merchant account. The suppliers here are Australian
 professionals. So the route is **one merchant account, many orders**, never
 many merchants.
 
-**The ICP dependency is the same one as everywhere else on this page.** The
-payer opens the code page inside WeChat, and WeChat shows
-「该网站未完成ICP备案」over any domain without a filing. `thexchange.cn` under
-the WFOE is already bought for exactly this. A payment page behind a warning
-screen is not a payment page.
+**The ICP question here, stated correctly the second time.** The first version
+of this said a payment page behind WeChat's warning screen is not a payment
+page. That is an overstatement, and this same document says so twenty lines
+up: the 「该网站未完成ICP备案」page has a 继续访问 button and **the link does
+open**. `thexchange.app` opens in WeChat today.
+
+So it is a judgement, not a blocker: one extra tap and a sentence about not
+being able to confirm the site is safe, shown to somebody who is about to hand
+over money. Worse there than on an ordinary link, and still not a wall.
+
+What IS a hard block on this page is different and is about login, not
+payment: 网页授权 only calls back to a 备案'd domain.
+
+**Unchecked, and it matters more than either:** whether WeChat Pay's own
+merchant application requires the merchant's site to be 备案'd. Nobody has
+asked. `thexchange.cn` under the WFOE is bought and would settle it.
 
 **And it does not answer the structural objection.**
 `docs/cross-border-payments.md` examined this same WFOE-buys-and-resells route
