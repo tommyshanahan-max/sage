@@ -168,6 +168,47 @@ try {
     }
     return [...seen];
   });
+
+  /* STOP GUESSING AT THE MARKUP AND DO WHAT A CUSTOMER DOES: TAP A TILE.
+   *
+   * Two goes at reading the id out of the page both found nothing. The
+   * anchors are not there, and neither is the id: the evidence dump showed
+   * the shop rendering 贝拉米 有机婴儿米粉 and its whole description with no
+   * itemID anywhere in the markup. The tile is a div, the router holds the id
+   * in component state, and it only becomes an address at the moment of the
+   * tap. A third pattern guess would have been the third wrong one.
+   *
+   * So: tap the product photographs and write down where each one lands.
+   * Slower — a navigation and a goBack per tile — but it cannot be wrong
+   * about the shape of a page it never has to parse, and it needs only MAX
+   * of them rather than the whole shelf.
+   *
+   * The photographs are the handle because every tile on these shops has one,
+   * off geilicdn, and the picture is the part that is certainly inside the
+   * clickable area. Anything that does not navigate to an item is skipped in
+   * silence: banners and category chips carry pictures too. */
+  if (!links.length) {
+    const home = page.url();
+    for (let i = 0; i < MAX * 4 && links.length < MAX; i++) {
+      const tiles = await page.$$('img[src*="geilicdn"]');
+      const tile = tiles[i];
+      if (!tile) break;
+      try {
+        await tile.click({ timeout: 5000 });
+        await wait(2500);
+        const landed = page.url();
+        if (/item\.html|itemID=|\/item\//i.test(landed) && !links.includes(landed.split("#")[0])) {
+          links.push(landed.split("#")[0]);
+        }
+        if (landed !== home) {
+          await page.goto(home, { waitUntil: "domcontentloaded" });
+          await wait(2000);
+          await toTheBottom(page);
+        }
+      } catch { /* not a tile, or it opened nothing — the next one may be */ }
+    }
+    if (links.length) console.error(`found by tapping: ${links.length}`);
+  }
   console.error(`shop page: ${links.length} item links`);
 
   /* A RUN THAT FINDS NOTHING HAS TO SAY WHAT IT SAW.
