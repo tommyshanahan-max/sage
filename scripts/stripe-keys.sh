@@ -84,8 +84,52 @@ ask() {
   printf '%s' "$val"
 }
 
+# The same, for a value that is allowed to be missing. Enter skips it.
+ask_maybe() {
+  local label="$1" want="$2" val=""
+  while :; do
+    echo "" >&2
+    echo "  ────────────────────────────────────────────────" >&2
+    printf '  PASTE THE %s, or press Enter to skip\n' "$(printf '%s' "$label" | tr '[:lower:]' '[:upper:]')" >&2
+    echo "  Nothing will appear as you paste. That is normal." >&2
+    echo "  ────────────────────────────────────────────────" >&2
+    printf '  %s' "$want" >&2
+    read -rs val < /dev/tty || { echo ""; echo "  Nothing read."; exit 1; }
+    echo "" >&2
+    val="$(printf '%s' "$val" | tr -d '[:space:]')"
+    if [ -z "$val" ]; then echo "    Skipped." >&2; break; fi
+    case "$val" in
+      "$want"*) echo "    starts $want, ${#val} characters" >&2; break ;;
+      *) echo "    That does not start with $want. Enter to skip." >&2 ;;
+    esac
+  done
+  printf '%s' "$val"
+}
+
 SK="$(ask "Secret key" "sk_${MODE}_")"
 PK="$(ask "Publishable key" "pk_${MODE}_")"
+
+# THE DOOR FOR SOMEBODY WHO ALREADY HAS STRIPE, WHICH IS A THIRD VALUE AND
+# WAS A HAND EDIT.
+#
+# "Connect my Stripe" on /china/connect hands a merchant to Stripe's OAuth and
+# takes back the id of THEIR account, rather than opening them an empty second
+# one. It cannot work without the platform's client id, and without it the
+# screen says so and puts the other route first — so the button that is meant
+# to be the default has been inert since it was written, waiting on a value
+# that lived in the dashboard and nowhere else.
+#
+# ASKED HERE BECAUSE IT IS PER-MODE, exactly like the keys and the payout
+# accounts below. Stripe issues one client id for live and another for test,
+# and a live ca_ left behind under test keys walks merchants into the wrong
+# mode with no error anywhere. So skipping it REMOVES it: the door turns
+# itself off, which is a screen that says the truth, instead of a button that
+# quietly sends people to the other account.
+#
+# NOT A SECRET, unlike the other two — it travels in the query string of every
+# OAuth link. It is read the same way anyway; a value nobody can see pasted is
+# a value nobody pastes into the wrong window.
+CID="$(ask_maybe "Connect client id (${MODE} mode)" "ca_")"
 
 # THE THIRD VALUE IS MADE, NOT FETCHED.
 #
@@ -159,6 +203,16 @@ put() {
 put TOMSCODING_BOARD_STRIPE_KEY "$SK"
 put TOMSCODING_BOARD_STRIPE_PK "$PK"
 put TOMSCODING_BOARD_DEAL_FEE_SECRET "$WH"
+if [ -n "$CID" ]; then
+  put TOMSCODING_BOARD_STRIPE_CLIENT_ID "$CID"
+else
+  # See the note by CID. Left in place it would belong to the other mode.
+  if grep -q "^TOMSCODING_BOARD_STRIPE_CLIENT_ID=" .env; then
+    grep -v "^TOMSCODING_BOARD_STRIPE_CLIENT_ID=" .env > .env.next || true
+    mv .env.next .env
+    echo "  No client id given — removed the old one. \"Connect my Stripe\" is off."
+  fi
+fi
 
 # The wrong names, if an earlier run of this script left them. They are dead
 # lines that nothing reads — and a live secret key sitting in a file under a
