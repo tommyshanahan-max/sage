@@ -10457,6 +10457,35 @@ const webOnly = (req, res, next) =>
  * WeChat on iOS caches hard against the URL, and a screen must never be a day
  * old. ETag still does the work — a page that has not changed comes back 304
  * and costs one round trip, not a download. */
+/* SOMEBODY WHO HAS CONNECTED DOES NOT GO TO THE CONNECT PAGE.
+ *
+ * It drew itself, asked the server, and then replaced itself with "you are
+ * already set up" — so a merchant coming back saw a screen offering to open
+ * him an account, for as long as the fetch took. A page that corrects itself
+ * after it has been read is a page that was wrong when it was read.
+ *
+ * So the server sends them on before a byte is drawn. Before the static
+ * mount, because the static mount is what would otherwise serve it.
+ *
+ * BOTH SPELLINGS. The mount's `extensions` option makes /china/connect and
+ * /china/connect.html the same page, and the first version of this guard
+ * named only the short one — which is not the one home.html links to. A
+ * guard that covers one of two names for the same page is not a guard.
+ *
+ * NOT home.html, which is allowed to adapt: it is the front page and its two
+ * states are both true — one sells the thing and the other picks up where
+ * somebody left off. This one has a single job that is already done. */
+app.get(["/china/connect", "/china/connect.html"], webOnly, async (req, res, next) => {
+  const row = await CHINA.find(chinaToken(req));
+  if (!row) return next();
+  let ready = false;
+  if (stripe.configured()) {
+    try { ready = await stripe.payeeReady(row.account); }
+    catch (err) { console.error("china connect ready:", err.message); }
+  }
+  res.redirect(302, ready ? "/china/ask" : "/china/switch");
+});
+
 app.use("/china", webOnly, express.static("china", {
   extensions: ["html"],
   setHeaders: (res) => res.set("Cache-Control", "no-cache"),
