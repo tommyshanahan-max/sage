@@ -31,7 +31,7 @@
        that is honestly Australian. The red stays, because red is the price
        in China and always will be, but warmer — #D6483B is the Taobao
        default and sits badly on paper. */
-    --bg:#FAF7F1; --card:#FFFFFF; --ink:#1B1815; --ink2:#5A5449; --mut:#8C857A;
+    --bg:#FAF7F1; --card:#FFFFFF; --ink:#1B1815; --ink2:#5A5449; --mut:#6B6458;
     --line:#EAE4D9; --acc:#C33C28; --ok:#1F7A4D;
     --deep:#1E3A2E; --deep2:#2C5443; --sun:#D9A62E;
     --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB",
@@ -226,10 +226,18 @@
      be: the product's English name, quiet, centred, on a tint. It is the
      name on the tin she is looking for anyway, and a shelf of them looks
      like a decision rather than a failure. */
+  /* AND IT HAS TO BE READABLE, OR IT IS A BLANK SQUARE AGAIN.
+     This was #A79E8F on a #F4EFE6 tint — about 2.3:1, under half what text
+     needs — so the card that exists to stop a hole looking broken WAS the
+     hole: Tom reported the first product on the shopfront as "no image, its
+     blank" when the name was sitting right there, unreadable. Same fault as
+     the three doors, in the same session. Ink rather than another shade of
+     the background, and big enough to be a name rather than a caption. */
   .item .noimg{width:100%;aspect-ratio:1/1;display:flex;align-items:center;
     justify-content:center;padding:.9rem;text-align:center;
     background:linear-gradient(160deg,#F4EFE6 0%,#EAE3D6 100%);
-    font-size:.78rem;line-height:1.45;color:#A79E8F;overflow:hidden}
+    font-size:.9rem;line-height:1.5;font-weight:500;color:var(--ink2);
+    overflow:hidden}
   .grid.one .item .noimg,.item.wide .noimg{width:9.5rem;flex:0 0 auto}
   /* A SHELF WITH ONE THING ON IT left half a row empty, which reads as a
      picture that failed to load rather than as a short shelf. It goes wide
