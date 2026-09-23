@@ -256,13 +256,16 @@ hidden until it exists), and the 微店 review import.
 Its payments are **not** on Airwallex and must not be until the conversation
 above has happened. `aozhoubaba.com` is its domain.
 
-**The shop front is not on that name yet (21 Sep).** `aozhoubaba.com` resolves
-to `207.207.210.23/36/50` — not to `45.77.8.166`, where `thexchange.app` and
-`crowdfundme.app` point. Until the A record moves, Caddy will ask Let's Encrypt
-for a certificate it cannot get, silently and for ever. One line does the rest
-once it has: `make shop-open WHO="Tom" NAME="澳洲爸爸汤姆"` checks the handle,
-the DNS and the site blocks before it writes anything, then names the shop and
-prints the address.
+**The shop front is on that name (23 Sep).** `aozhoubaba.com` resolves to
+`45.77.8.166` and serves the shopfront over TLS; `/` is rewritten to
+`/shop/Tom`, and the API answers there with 澳洲爸爸汤姆. The A record moved
+at some point after 21 Sep.
+
+This paragraph said the opposite until today, and a session spent an hour on
+the wrong answer because of it — told that the domain did not point here, it
+went looking for a DNS problem while the real one was a deploy that had been
+run on the MacBook instead of the box. A line in this file that has stopped
+being true costs more than a line that was never written.
 
 ## Mail
 
