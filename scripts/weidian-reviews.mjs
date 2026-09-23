@@ -44,6 +44,9 @@ const DRY = rest.includes("--dry");
 const ADD = rest.includes("--add") && !DRY;
 /* --photos: put the right picture over the wrong one. See fillPhoto(). */
 const REPHOTO = rest.includes("--photos") && !DRY;
+/* --names: give a row carrying an English name the Chinese one off 微店.
+   One direction only — see where it is used. */
+const RENAME = rest.includes("--names") && !DRY;
 
 let pulled;
 try {
@@ -143,6 +146,48 @@ const head = (s) => {
   }
   return line;
 };
+
+/* THE REVIEWS ARE THE JOIN, WHEN THE NAMES HAVE STOPPED AGREEING.
+ *
+ * The first import created fourteen rows named off an English rendering of
+ * the 微店 pages. The puller now reads the Chinese title, which is right —
+ * and means a scraped item no longer matches the very row it created, so
+ * nothing matched, no picture was written, and fourteen products sat on the
+ * shopfront wearing 微店's logo through three separate attempts to fix it.
+ *
+ * But those rows are already carrying that item's reviews, word for word:
+ * `review-add` dropped the duplicates, so a review's text is effectively a
+ * key. One review in common is an exact identification — nobody writes the
+ * same sentence about two different tins — and it survives any amount of
+ * renaming in either catalogue.
+ *
+ * Built once, lazily, and only when a name has already failed: on a shop
+ * whose names line up this costs nothing. */
+let byText = null;
+async function learnReviews() {
+  byText = new Map();
+  for (const p of products) {
+    try {
+      const r = await fetch(API + "/api/product/" + encodeURIComponent(p.id) + "/reviews",
+        { headers: { "x-admin-secret": key } });
+      const j = await r.json().catch(() => null);
+      for (const row of (j?.rows || [])) {
+        if (row?.text && !byText.has(row.text)) byText.set(row.text, p);
+      }
+    } catch { /* a product whose reviews will not load simply teaches nothing */ }
+  }
+}
+async function byReview(rows) {
+  if (!byText) await learnReviews();
+  const hit = new Map();
+  for (const r of rows) {
+    const p = r?.text && byText.get(r.text);
+    if (p) hit.set(p.id, (hit.get(p.id) || 0) + 1);
+  }
+  if (hit.size !== 1) return null;   /* two products share these words: refuse */
+  const [id] = [...hit.keys()];
+  return products.find((p) => p.id === id) || null;
+}
 
 function match(name) {
   const keys = [...new Set([key0(name), key0(head(name))])].filter(Boolean);
@@ -252,6 +297,14 @@ async function fillPhoto(row, name) {
 
 for (const [name, rows] of byItem) {
   let { row, how } = match(name);
+  /* Before creating anything: is this item's row already here under a name
+     that no longer matches? Its own reviews will say so. Checked ahead of
+     --add, because adding a second row for a tin already on the shelf is the
+     failure this is here to undo. */
+  if (!row) {
+    const known = await byReview(rows);
+    if (known) { row = known; how = "found by its own reviews"; }
+  }
   if (!row && ADD && how === "nothing like it in the catalogue") {
     ({ row, how } = await add(name));
   }
@@ -259,6 +312,27 @@ for (const [name, rows] of byItem) {
   /* Newly added rows already carry their picture from add(); this is for the
      ones that were here first and never had one. */
   if (!DRY && (row.photo === false || REPHOTO)) how += await fillPhoto(row, name);
+
+  /* AND THE NAME, WHEN THE ROW IS CARRYING AN ENGLISH ONE.
+     The first import named fourteen rows off an English rendering — "A 2 New
+     Zealand formula milk powder 1 paragraph", which is 1段 through a
+     translator — on a shopfront every one of whose buyers is Chinese. Those
+     rows can only be found now by their reviews, and once found the proper
+     Chinese name is sitting right here in the scrape.
+     Behind NAMES=1, and only in one direction: an English row takes a
+     Chinese name, never the reverse. A row somebody named themselves is not
+     something an importer gets to overwrite because it looked at a web
+     page. */
+  if (!DRY && RENAME && /[\u4e00-\u9fff]/.test(head(name)) && !/[\u4e00-\u9fff]/.test(row.name || "")) {
+    try {
+      const r = await fetch(API + "/api/admin/product/" + encodeURIComponent(row.id), {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-admin-secret": key },
+        body: JSON.stringify({ name: head(name) }),
+      });
+      if (r.ok) { row.name = head(name); how += ", renamed"; }
+    } catch { /* a rename that fails leaves the English name, which is what was there */ }
+  }
 
   /* stars defaults to 5 — 好评100% is what the old shop actually carried, and
      the puller cannot read a star count off those pages. Said here rather
