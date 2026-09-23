@@ -272,6 +272,15 @@ try {
     try {
       await page.goto(url, { waitUntil: "domcontentloaded" });
       await wait(3000);
+      /* NUDGE THE GALLERY INTO LOADING BEFORE ANYTHING IS MEASURED.
+         微店 lazy-loads the product shots, so straight after navigation their
+         naturalWidth is 0 and a size test skips every one of them — leaving
+         the header logo, already loaded, as the only candidate. That is
+         exactly how fourteen products came to wear the same 店 square even
+         after the selector was "fixed". */
+      await toTheBottom(page, 4);
+      await page.evaluate(() => window.scrollTo(0, 0));
+      await wait(1500);
 
       Object.assign(item, await page.evaluate(() => {
         const t = (sel) => document.querySelector(sel)?.textContent?.trim() || "";
@@ -305,14 +314,26 @@ try {
            comes close, so size decides it. Anything under 200px square is a
            chrome icon, a rating star or a spacer. */
         let photo = "", best = 0;
+        const shots = [];
         for (const im of document.querySelectorAll("img")) {
-          const src = im.currentSrc || im.src || "";
+          /* The address is read from the attribute as well as the property,
+             because a lazy image has a src it has not fetched yet and we want
+             it either way — the picture is wanted, not its loading state. */
+          const src = im.currentSrc || im.src || im.getAttribute("data-src") || "";
           if (!src || src.startsWith("data:")) continue;
+          if (!/geilicdn|weidian/i.test(src)) continue;
+          shots.push(src);
           const w = im.naturalWidth || im.width || 0;
           const h = im.naturalHeight || im.height || 0;
           if (w < 200 || h < 200) continue;
           if (w * h > best) { best = w * h; photo = src; }
         }
+        /* NOTHING MEASURED MEANS NOTHING HAD LOADED, not that there are no
+           pictures. The header mark is the first image on these pages and the
+           gallery follows it, so the last one is a product shot and the first
+           one is the logo — order is the only thing still true when every
+           size reads zero. */
+        if (!photo && shots.length) photo = shots[shots.length - 1];
         return { name, price: priceText.replace(/\s/g, ""), photo };
       }));
 
