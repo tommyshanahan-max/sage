@@ -38,7 +38,11 @@ if (NAMES) {
 }
 
 const yes = (b) => (b ? "yes" : "no");
-const line = (k, v) => console.log("  " + k.padEnd(26) + v);
+/* THE PAD IS TWO WIDER THAN THE LONGEST LABEL, not a number somebody liked.
+   "Connect an existing account" is 27 characters against a 26 pad, so it
+   printed "accountno — BOARD_STRIPE_CLIENT_ID is not set" — a label welded
+   to its value on a screen whose whole job is being read at a glance. */
+const line = (k, v) => console.log("  " + k.padEnd(20) + " " + v);
 
 console.log("");
 console.log(j.takesPayments
@@ -53,7 +57,7 @@ line("API version", j.apiVersion || "not pinned");
    out". It is not a reason payments are off — without it the board still
    opens accounts and still takes money; it just cannot connect an account
    somebody already has. */
-line("Connect an existing account", j.canLink ? "yes" : "no — BOARD_STRIPE_CLIENT_ID is not set");
+line("Connect existing", j.canLink ? "yes" : "no — BOARD_STRIPE_CLIENT_ID is not set");
 line("Fee", j.feePct + "%" + (j.feePage ? ", with a page to pay it on" : ", no page to pay it on"));
 /* By name, because the next thing to type is `make ask WHO="…"` and a count
    leaves that command half-written. */
