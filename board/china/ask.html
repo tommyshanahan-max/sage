@@ -1,0 +1,126 @@
+<!doctype html>
+<!-- ASKING SOMEBODY TO PAY. The amount first, because the amount is the thing
+     they already know — nobody opens this wondering what to charge. See the
+     same argument written out over pad() in dealio.html, where the board
+     arrived at it first. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Ask someone to pay</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif&display=swap">
+<link rel="stylesheet" href="./china.css">
+</head>
+<body>
+<main class="sheet">
+  <header class="top">
+    <a class="back" href="live.html">&larr; Back</a>
+    <h1>Ask someone to pay</h1>
+    <p>They get a link. No account, no app, nothing to install.</p>
+  </header>
+
+  <div class="body">
+    <div class="card">
+      <label for="amount" class="label" style="display:block">How much</label>
+      <div style="display:flex;align-items:baseline;gap:.4rem">
+        <span id="sign" style="font-family:var(--serif);font-size:2.3rem;color:var(--muted)">&yen;</span>
+        <input id="amount" inputmode="decimal" autocomplete="off" placeholder="0"
+          style="flex:1;min-width:0;border:0;background:transparent;font-family:var(--serif);
+                 font-size:2.3rem;color:var(--ink);padding:0;outline:none">
+      </div>
+    </div>
+
+    <div class="card">
+      <label for="what" class="label" style="display:block">What for</label>
+      <input id="what" maxlength="140" autocomplete="off" placeholder="Title search &mdash; 3 properties"
+        style="width:100%;font-size:1rem;padding:.8rem .85rem;border:1px solid #DAD6CC;
+               border-radius:.55rem;background:#fff;color:var(--ink);font-family:inherit">
+      <p style="margin:.6rem 0 0;font-size:.82rem;color:var(--muted)">They read this above the amount. Write it the way you would say it.</p>
+    </div>
+
+    <!-- ASKED ONCE AND KEPT. It is the first line of a page a stranger in
+         WeChat decides whether to trust, so it is theirs to choose. Hidden
+         after the first request. -->
+    <div class="card" id="namebox">
+      <label for="name" class="label" style="display:block">Your name, as they will see it</label>
+      <input id="name" maxlength="64" autocomplete="organization"
+        style="width:100%;font-size:1rem;padding:.8rem .85rem;border:1px solid #DAD6CC;
+               border-radius:.55rem;background:#fff;color:var(--ink);font-family:inherit">
+    </div>
+
+    <p id="say" hidden style="margin:0;font-size:.95rem;line-height:1.5;font-weight:500;
+      color:#7C3220;background:#F7ECE8;border-radius:.6rem;padding:.8rem .9rem"></p>
+
+    <p class="note">Nothing is charged until they pay, and nothing at all if they do not.</p>
+    <div class="grow"></div>
+  </div>
+
+  <footer class="foot">
+    <button class="go" id="go" type="button">Make the link
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+    </button>
+  </footer>
+</main>
+<script>
+(function () {
+  var go = document.getElementById("go");
+  var say = document.getElementById("say");
+  var namebox = document.getElementById("namebox");
+  var nameIn = document.getElementById("name");
+  function tell(t) {
+    say.textContent = t; say.hidden = !t;
+    if (t) try { say.scrollIntoView({ block: "center", behavior: "smooth" }); } catch (e) {}
+  }
+
+  /* If they have asked before, their name is known and the field is one
+     thing fewer on the screen. */
+  fetch("api/state", { headers: { Accept: "application/json" } })
+    .then(function (r) { return r.json(); })
+    .then(function (j) {
+      if (j && j.name) { nameIn.value = j.name; namebox.hidden = true; }
+      else if (j && j.email) nameIn.placeholder = j.email.split("@")[0];
+    })
+    .catch(function () {});
+
+  /* Grouped when they stop typing, not while the caret is moving — the board
+     learned that one the hard way; see pad() in dealio.html. */
+  var amount = document.getElementById("amount");
+  amount.addEventListener("blur", function () {
+    var raw = amount.value.replace(/,/g, "").trim();
+    if (/^\d+$/.test(raw)) amount.value = raw.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  });
+
+  go.addEventListener("click", async function () {
+    var amt = amount.value.trim();
+    if (!amt) { tell("How much is it for?"); amount.focus(); return; }
+    var nm = nameIn.value.trim();
+    if (!nm) { tell("They need a name to see at the top of the page."); nameIn.focus(); return; }
+    tell("");
+    go.disabled = true;
+    var was = go.innerHTML;
+    go.textContent = "Making it…";
+    try {
+      var r = await fetch("api/ask", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: "¥" + amt, what: document.getElementById("what").value.trim(), name: nm,
+        }),
+      });
+      var j = await r.json().catch(function () { return null; });
+      if (r.ok && j && j.url) {
+        location.href = "sent.html?u=" + encodeURIComponent(j.url);
+        return;
+      }
+      tell(j && j.error === "who"
+        ? "We have lost track of your account here. Go back and connect again."
+        : j && j.error === "amount" ? "How much is it for?"
+        : j && j.error === "name" ? "They need a name to see at the top of the page."
+        : "That would not save. Try again in a moment.");
+    } catch (e) { tell("No answer. Check your connection and try again."); }
+    go.disabled = false;
+    go.innerHTML = was;
+  });
+})();
+</script>
+</body>
+</html>

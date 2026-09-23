@@ -46,13 +46,40 @@ export function openChina(dir) {
   }
 
   return {
-    /** A fresh token for a merchant we have just minted an account for. */
+    /** A fresh token for a merchant we have just minted an account for.
+     *
+     *  `by` IS THEIR IDENTITY AND IT IS NOT A BOARD IDENTITY. A payment
+     *  request row wants a 32-hex hash for who is asking — the board fills
+     *  it with a device hash, because on the board the asker is a member.
+     *  Here they are not one and never will be: somebody arriving at these
+     *  screens is a business deciding how to take money from China, and
+     *  sending them through a sign-in with another product's name on it to
+     *  raise an invoice is the wrong product wearing the right one's hat.
+     *  So they get their own, minted once and kept beside the account. */
     async remember({ account, email }) {
       const token = randomBytes(16).toString("hex");
       const d = await read();
-      d.byToken[token] = { account: String(account), email: String(email || ""), at: new Date().toISOString() };
+      d.byToken[token] = {
+        account: String(account), email: String(email || ""),
+        by: randomBytes(16).toString("hex"),
+        name: "",
+        at: new Date().toISOString(),
+      };
       await write(d);
       return token;
+    },
+
+    /** The name their client reads at the top of the payment page. Asked for
+     *  once, on the first request, and kept. */
+    async nameIt(token, name) {
+      const t = String(token || "");
+      if (!/^[0-9a-f]{32}$/.test(t)) return null;
+      const d = await read();
+      const row = d.byToken[t];
+      if (!row) return null;
+      row.name = String(name || "").trim().slice(0, 64);
+      await write(d);
+      return row;
     },
     /* ONE TRIP TO STRIPE AND BACK, REMEMBERED.
      *
@@ -88,6 +115,21 @@ export function openChina(dir) {
       delete d.states[t];
       await write(d);
       return Number(row.at) > Date.now() - 3600 * 1000;
+    },
+    /** The merchant behind a request row's `by`, or null.
+     *
+     *  The payer's page and the charge both resolve who gets the money by
+     *  looking the asker up in board.people. A merchant who came through
+     *  /china is not there and never will be, so the page said "has not said
+     *  where the money should land" under a perfectly good amount and
+     *  offered no way to pay — which is the same failure the Airwallex note
+     *  above describes, arriving from the other direction. */
+    async byBy(by) {
+      const b = String(by || "");
+      if (!/^[0-9a-f]{32}$/.test(b)) return null;
+      const d = await read();
+      for (const row of Object.values(d.byToken)) if (row && row.by === b) return row;
+      return null;
     },
     /** The account behind a cookie, or null. Never throws on a bad value. */
     async find(token) {

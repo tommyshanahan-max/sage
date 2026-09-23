@@ -1,0 +1,67 @@
+<!doctype html>
+<!-- THE LINK, AND ONE THING TO DO WITH IT.
+     A screen that ends in a URL and a full stop is a screen somebody stares
+     at. The whole product is sending this into WeChat, so Copy is the
+     button and everything else is quieter. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Send them this</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif&display=swap">
+<link rel="stylesheet" href="./china.css">
+</head>
+<body>
+<main class="sheet">
+  <div class="body" style="padding-top:calc(2.4rem + env(safe-area-inset-top,0px))">
+    <div class="mid">
+      <div class="tick">
+        <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+      </div>
+      <h1>Send them this</h1>
+      <p>They open it, pay in WeChat, and you get a message when it lands.</p>
+    </div>
+
+    <div class="card" style="margin-top:1.4rem">
+      <code class="block" id="url" style="white-space:normal;word-break:break-all">&nbsp;</code>
+      <p style="margin:.7rem 0 0;font-size:.82rem;color:var(--muted)">Paste it into WeChat. They need no account and no app.</p>
+    </div>
+
+    <p class="note">The page shows a code as well, for anyone who would rather scan.</p>
+    <div class="grow"></div>
+  </div>
+
+  <footer class="foot">
+    <button class="go" id="copy" type="button">Copy the link</button>
+    <p class="under"><a href="ask.html">Ask someone else</a></p>
+  </footer>
+</main>
+<script>
+(function () {
+  var u = new URLSearchParams(location.search).get("u") || "";
+  var box = document.getElementById("url");
+  var copy = document.getElementById("copy");
+  if (!u) { location.replace("ask.html"); return; }
+  box.textContent = u;
+
+  copy.addEventListener("click", async function () {
+    /* navigator.clipboard is not there on an insecure origin or an old
+       WebView, and a Copy button that silently does nothing is worse than
+       one that is not there. Falls back to selecting it, which at least
+       leaves them one long-press from the same result. */
+    try {
+      await navigator.clipboard.writeText(u);
+      copy.textContent = "Copied";
+      setTimeout(function () { copy.textContent = "Copy the link"; }, 2000);
+    } catch (e) {
+      var r = document.createRange();
+      r.selectNodeContents(box);
+      var sel = window.getSelection();
+      sel.removeAllRanges(); sel.addRange(r);
+      copy.textContent = "Long-press to copy";
+    }
+  });
+})();
+</script>
+</body>
+</html>

@@ -10489,6 +10489,30 @@ app.use("/china", webOnly, express.static("china", {
  */
 const CHINA = openChina(DIR);
 const CHINA_COOKIE = "china";
+/* Read off the header rather than through cookie-parser: this box does not
+   use it, and one regexp is a smaller thing than a dependency. */
+/* WHERE THE MONEY LANDS, FROM EITHER KIND OF ASKER.
+ *
+ * board.people holds members; china.json holds merchants who connected a
+ * Stripe account through /china and are not members of anything. Both can
+ * raise a request, so both have to answer this question, and the two callers
+ * that ask it were looking in one place only — which meant a merchant's
+ * payment page showed a correct amount and no way to pay it.
+ *
+ * The board is asked first and wins: a member who is also a merchant is a
+ * member, and their member row is the one they can see and change. */
+const askerPayee = async (board, q) => {
+  const p = board.people.find((x) => x.by === q.by);
+  if (p?.payee) return p.payee;
+  const m = await CHINA.byBy(q.by);
+  return m?.account || "";
+};
+
+const chinaToken = (req) => {
+  const m = new RegExp("(?:^|;\\s*)" + CHINA_COOKIE + "=([0-9a-f]{32})")
+    .exec(String(req.headers.cookie || ""));
+  return m ? m[1] : "";
+};
 
 app.post("/china/api/connect", express.json(), async (req, res) => {
   if (!stripe.configured()) return res.status(503).json({ error: "off" });
@@ -10591,14 +10615,60 @@ app.get("/china/linked", async (req, res) => {
   }
 });
 
+/* ASKING SOMEBODY TO PAY, WITHOUT BEING A MEMBER OF ANYTHING.
+ *
+ * The board already has all of this: a request row, the /pay/<id> page the
+ * payer opens, the code, the webhook that flips it to paid. What it does not
+ * have is a way in for somebody who is not on the board — /api/request wants
+ * a person row with a handle, and a merchant who connected Stripe through
+ * /china has neither. Pressed today, "Ask someone to pay" lands them on a
+ * sign-in sheet offering Google or an invite code, and if they got through
+ * it they would be asked to write a sentence about themselves and put up a
+ * photograph. To send an invoice.
+ *
+ * So the merchant asks as themselves. Same row, same link, same page for the
+ * payer — only `by` comes from china.json instead of a device hash, and the
+ * name is the one they typed rather than a board handle.
+ */
+app.post("/china/api/ask", express.json({ limit: "2kb" }), async (req, res) => {
+  const token = chinaToken(req);
+  const row = await CHINA.find(token);
+  if (!row) return res.status(401).json({ error: "who" });
+
+  const amount = String(req.body?.amount || "").trim();
+  if (!amount) return res.status(400).json({ error: "amount" });
+  /* THE NAME THEIR CLIENT READS, and the reason it is asked for here rather
+     than at connect time: at connect time nobody knows yet whether this is
+     "Sinclair & Wu" or "David". It is the first line of the page a stranger
+     in WeChat decides to trust, so it is theirs to choose and it is kept. */
+  const name = String(req.body?.name || row.name || "").trim();
+  if (!name) return res.status(400).json({ error: "name" });
+  if (name !== row.name) await CHINA.nameIt(token, name);
+
+  const out = await change((board) => {
+    const q = request.cleanRequest({
+      id: request.newRequestId(),
+      by: row.by,
+      from: name,
+      to: String(req.body?.to || ""),
+      way: "in",
+      amount,
+      cur: String(req.body?.cur || ""),
+      what: String(req.body?.what || ""),
+      at: new Date().toISOString(),
+    });
+    if (!q) return { error: "bad" };
+    board.requests.push(q);
+    return { ok: true, id: q.id };
+  });
+  if (out?.error) return res.status(400).json(out);
+  res.json({ ok: true, id: out.id, url: payLink(req, "/pay/" + out.id) });
+});
+
 /** Where this merchant has got to, for the Check again button. */
 app.get("/china/api/state", async (req, res) => {
   res.set("Cache-Control", "no-store");
-  /* Read off the header rather than through cookie-parser: this box does not
-     use it, and one regexp is a smaller thing than a dependency. */
-  const m = new RegExp("(?:^|;\\s*)" + CHINA_COOKIE + "=([0-9a-f]{32})")
-    .exec(String(req.headers.cookie || ""));
-  const row = await CHINA.find(m && m[1]);
+  const row = await CHINA.find(chinaToken(req));
   /* canLink on every answer, including the empty one: the connect screen asks
      this before anybody has done anything, to find out whether its primary
      button can work at all. */
@@ -10608,7 +10678,9 @@ app.get("/china/api/state", async (req, res) => {
   let ready = false;
   try { ready = await stripe.payeeReady(row.account); }
   catch (err) { console.error("china state:", err.message); }
-  res.json({ started: true, ready, canLink, email: row.email });
+  /* `name` so the ask screen can drop its name field once they have used it
+     once — see the note on nameIt in lib/china.js. */
+  res.json({ started: true, ready, canLink, email: row.email, name: row.name || "" });
 });
 
 app.get(["/dealio", "/dealio/"], webOnly, notesOff,
@@ -10695,6 +10767,7 @@ app.get("/api/request/:id", async (req, res) => {
   const q = board.requests.find((x) => x.id === id);
   if (!q || q.off) return res.status(404).json({ error: "gone" });
   const asker = board.people.find((p) => p.by === q.by);
+  const askerAcct = await askerPayee(board, q);
   /* WHOSE ACCOUNT THE MONEY LANDS IN DEPENDS ON WHICH WAY IT IS GOING.
      Asking: the person who made the row, and their account is on their
      member row. Sending: the person reading this page, who is usually not on
@@ -10714,7 +10787,7 @@ app.get("/api/request/:id", async (req, res) => {
   const qrWays = dealioWays(board, q);
   const stripeOk = stripe.configured() && ((q.way || "in") === "out"
     ? Boolean(q.acct && q.landed)
-    : Boolean(asker?.payee));
+    : Boolean(askerAcct));
   /* The stand-in, which draws all three because none of them is real. */
   const ways = (!qrWays.length && !stripeOk && PAY_DEMO)
     ? ["wechat", "alipay", "card"]
@@ -11140,10 +11213,9 @@ app.post("/api/request/:id/pay", express.json({ limit: "1kb" }), async (req, res
   }
 
   /* WHOSE ACCOUNT, BY DIRECTION — see the note in the read route above. */
-  const asker = board.people.find((p) => p.by === q.by);
   const dest = (q.way || "in") === "out"
     ? (q.landed ? q.acct : "")
-    : asker?.payee;
+    : await askerPayee(board, q);
   if (!dest) return res.status(400).json({ error: "payee" });
   if (!stripe.configured()) return res.json({ ok: true, demo: true, method });
 
