@@ -317,3 +317,28 @@ margin, and issues a 发票 per sale. Minting the codes is the easy half.
 
 Sources: <https://pay.weixin.qq.com/doc/v3/merchant/4012072195> (APIv3 key),
 <https://pay.weixin.qq.com/doc/global/v3/en/4012356795> (Native order).
+
+## H5支付: what switching it on actually needs
+
+Researched 23 September 2026 against WeChat Pay's merchant documentation.
+This is the product behind step two → three of the flow above: the payer is in
+an ordinary mobile browser, the page hands them to WeChat, they pay, they come
+back.
+
+**It is a separate application, after the merchant account exists.** Not on by
+default. Review is quoted at 1–5 working days, within 7.
+
+**What it asks for**, and most of it the WFOE has by existing: business
+licence, the 法人 or operator's ID, a corporate bank account, a description of
+what is being sold and where.
+
+**And one thing that is not free: a 备案'd top-level domain.** The application
+takes the H5 payment domain *and a screenshot of its ICP 备案*, and the paying
+domain has to match the authorised one. `thexchange.app` cannot be that
+domain. `thexchange.cn` under the WFOE can, once filed.
+
+So the filing is not a nice-to-have for the WeChat route — it is a field on
+the form. Everything in "What to do, in order" earlier on this page is on the
+critical path to taking a single payment.
+
+Source: <https://pay.weixin.qq.com/doc/v3/merchant/4012791841>
