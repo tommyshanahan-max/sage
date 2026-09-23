@@ -169,8 +169,16 @@ function draw() {
   const bits = [];
   if (pf.sent) bits.push([String(pf.sent), T("sh.pSent")]);
   if (pf.reviews) bits.push([String(pf.reviews), T("sh.pRev")]);
-  /* 2023-04 → 2023.04, the way a date is written on a Chinese screen. */
-  if (pf.since) bits.push([pf.since.replace("-", "."), T("sh.pSince")]);
+  /* WHEN THE OLD SHOP OPENED — shop.since, and NOT proof.since.
+     proof.since is the month of the first order on THIS board, which is weeks
+     old. On the one page whose whole job is answering "是上周才建的吧？",
+     printing that under 开店 says the exact opposite of the truth: it dates
+     the shop to the thing the buyer already suspects. The real year lives on
+     the shop row because only the seller knows it — 2017 cannot be counted
+     from anything this board holds. Free text, like a chapter's `when`, so
+     2017 and 2017年 are both sayable. Absent, the line simply does not
+     appear; a guessed year here would be worse than no year. */
+  if (SHOP?.since) bits.push([String(SHOP.since), T("sh.pSince")]);
   bits.forEach(([n, lab], i) => {
     if (i) sub.append(el("em", null, "·"));
     sub.append(el("i", null, n), document.createTextNode(" " + lab));

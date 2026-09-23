@@ -11591,6 +11591,8 @@ app.get("/api/shop/:handle", async (req, res) => {
          shop, and the 老店 page is where a doubting buyer is sent to check
          that this did not appear last week. */
       weidian: who.shop?.weidian || "",
+      /* The year the seller says the shop opened — see `since` in store.js. */
+      since: who.shop?.since || "",
       /* Whether there is a story behind the paragraph, so the shopfront
          knows whether to offer the door rather than opening an empty room. */
       hasStory: Boolean(who.shop?.chapters?.length),
@@ -12864,9 +12866,11 @@ app.post("/api/admin/shop-contact", admin, express.json({ limit: "2kb" }), async
          what the 老店 page sends a doubting buyer to look at. */
       weidian: req.body?.weidian !== undefined
         ? String(req.body.weidian).trim().slice(0, 300) : (now.weidian || ""),
+      since: req.body?.since !== undefined
+        ? String(req.body.since).trim().slice(0, 24) : (now.since || ""),
       ai: req.body?.ai !== undefined ? Boolean(req.body.ai) : Boolean(now.ai),
     };
-    return { ok: true, wechat: p.shop.wechat, qr: Boolean(p.shop.qr), weidian: p.shop.weidian, ai: p.shop.ai };
+    return { ok: true, wechat: p.shop.wechat, qr: Boolean(p.shop.qr), weidian: p.shop.weidian, since: p.shop.since, ai: p.shop.ai };
   });
   if (out?.error) return res.status(404).json({ error: "not on this board: " + who });
   res.json({ ok: true, ...out });

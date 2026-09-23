@@ -24,6 +24,8 @@ if (arg("qr")) body.qr = arg("qr");
    fact — where this shop was before it was here — and it is what the 老店
    page sends a buyer to check. */
 if (rest.includes("--weidian")) body.weidian = arg("weidian");
+/* The year the shop opened, as the seller says it — only they know it. */
+if (rest.includes("--since")) body.since = arg("since");
 if (rest.includes("--ai")) body.ai = arg("ai") === "1";
 
 const r = await fetch(base.replace(/\/$/, "") + "/api/admin/shop-contact", {
@@ -46,5 +48,6 @@ console.log("  " + who + " can be contacted.");
 console.log("    WeChat    " + (j.wechat || "—"));
 console.log("    QR code   " + (j.qr ? "on this board" : "—"));
 console.log("    微店      " + (j.weidian || "—"));
+console.log("    开店      " + (j.since || "—"));
 console.log("    Assistant " + (j.ai ? "on" : "off"));
 console.log("");

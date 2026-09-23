@@ -1932,6 +1932,13 @@ export function cleanPerson(raw) {
          this is not a page put up last week can go and look at the shop that
          has been there since 2019. Its address, nothing else. */
       const weidian = s(r.weidian, 300);
+      /* WHEN THE SHOP OPENED, AS THE SELLER SAYS IT.
+         Not countable from anything here: proof.since is the month of the
+         first order on THIS board, which is weeks old, and printing that on
+         the 老店 page dates the shop to exactly what a doubting buyer already
+         suspects. Free text for the same reason a chapter's `when` is —
+         2017, 2017年 and 我女儿出生那年 are all how people say it. */
+      const since = s(r.since, 24);
       /* Whether an assistant answers the常见 questions before she has to
          wait for a person. Off unless somebody turned it on — see
          lib/shopkeep.js for what it is allowed to know. */
@@ -1963,8 +1970,8 @@ export function cleanPerson(raw) {
         })
         .filter(Boolean)
         .slice(0, 12);
-      if (!name && !banner && !story && !wechat && !qr && !weidian && !ai && !chapters.length) return undefined;
-      return { name, banner, story, wechat, qr, weidian, ai, ...(chapters.length ? { chapters } : {}) };
+      if (!name && !banner && !story && !wechat && !qr && !weidian && !since && !ai && !chapters.length) return undefined;
+      return { name, banner, story, wechat, qr, weidian, since, ai, ...(chapters.length ? { chapters } : {}) };
     })(),
     /* TWO SHAPES, BECAUSE THERE ARE TWO PLACES A PERSON CAN BE.
      *
