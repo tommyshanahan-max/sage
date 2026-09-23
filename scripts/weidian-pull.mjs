@@ -140,18 +140,52 @@ try {
 
   /* ITEM LINKS. Weidian's item addresses are /item.html?itemID=… and the shop
      page is a grid of them. Collected by href rather than by class, because
-     class names on these pages are generated and change without notice. */
+     class names on these pages are generated and change without notice.
+
+     EXCEPT THE GRID IS NOT MADE OF ANCHORS. Reading only <a href> found zero
+     items on a shop that plainly has some — the run reported "0 items, 0
+     reviews" against a page that had rendered fine. These H5 shops route in
+     JavaScript: a tile is a div with a click handler, and the id lives in the
+     component's own state rather than in an href. So the anchors are still
+     tried first, because when they exist they are exact, and the id is dug
+     out of the rendered markup only when they turn up nothing.
+
+     Six digits or more, because short numbers on these pages are prices,
+     counts and pixel sizes, and a four-digit "id" would send this off to
+     fetch a page that does not exist. */
   const links = await page.evaluate(() => {
     const seen = new Set();
     for (const a of document.querySelectorAll("a[href]")) {
       const href = a.href || "";
       if (/item\.html|itemID=|\/item\//i.test(href)) seen.add(href.split("#")[0]);
     }
+    if (!seen.size) {
+      const html = document.documentElement.innerHTML;
+      const ids = new Set();
+      for (const m of html.matchAll(/itemI[dD]["':=\s]{1,4}(\d{6,})/g)) ids.add(m[1]);
+      for (const m of html.matchAll(/["']item_?id["']\s*:\s*["']?(\d{6,})/gi)) ids.add(m[1]);
+      for (const id of ids) seen.add("https://weidian.com/item.html?itemID=" + id);
+    }
     return [...seen];
   });
   console.error(`shop page: ${links.length} item links`);
 
-  if (!links.length) await evidence(page, "no-item-links");
+  /* A RUN THAT FINDS NOTHING HAS TO SAY WHAT IT SAW.
+     This wrote "0 items, 0 reviews" and stopped, which is indistinguishable
+     from a shop with nothing in it — and cost a round of guessing over
+     whether the page had loaded, whether the browser worked, or whether the
+     selectors were wrong. The screenshot already went to /data/evidence where
+     nobody was going to look, so the first lines of what the page actually
+     rendered go to the terminal too, where the person running it is. */
+  if (!links.length) {
+    const where = await evidence(page, "no-item-links");
+    const seen = await page.evaluate(() =>
+      (document.body?.innerText || "").replace(/\n{2,}/g, "\n").trim().slice(0, 400));
+    console.error("\nNo item links on that page. What it rendered:\n");
+    console.error(seen.split("\n").map((l) => "  " + l).join("\n"));
+    if (where) console.error(`\n  Screenshot: ${where}.png`);
+    console.error("");
+  }
 
   for (const [i, url] of links.slice(0, MAX).entries()) {
     const item = { url, name: "", price: "", photo: "", reviews: [] };
