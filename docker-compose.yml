@@ -940,6 +940,13 @@ services:
       # is how a working checkout call started being refused with nothing
       # changed on this side. Put the version the dashboard shows in here.
       BOARD_STRIPE_VERSION: ${TOMSCODING_BOARD_STRIPE_VERSION:-}
+      # THE OAUTH CLIENT ID, which is what lets somebody connect the Stripe
+      # account they ALREADY have instead of being given a new empty one.
+      # Public by design — it travels in the URL of the authorise page — so
+      # it is not a secret, and the secret key doubles as the client secret.
+      # Unset, /china/connect greys its first button and says so on the
+      # screen; make pay-check prints it either way.
+      BOARD_STRIPE_CLIENT_ID: ${TOMSCODING_BOARD_STRIPE_CLIENT_ID:-}
       # Stripe's webhook signing secret. Without it the hook route refuses
       # everything, which is the safe failure: an unsigned route that writes
       # "this was paid" is a route anybody on the internet can write to.

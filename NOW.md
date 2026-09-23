@@ -38,6 +38,37 @@ So the only untested thing is **real money**, and it is one line:
 `BOARD_WALLET_AIRWALLEX_SANDBOX=0`, which `make airwallex-keys … LIVE=1`
 writes when the live pair exists.
 
+**A second Stripe account, and Connect works on it (23 Sep, 00:15).**
+Opened as **Aozhou Baba**, `acct_1UIVjqJ1hAPEyck7`, AUD. Connect switched on
+through the dashboard wizard as a **platform, destination charges** — the
+shape `board/lib/stripe.js` already builds. Pressed the button on
+`/china/connect` and Stripe's onboarding opened. That is the premise of the
+whole thing standing up, and it had not been seen working before tonight.
+
+Its address is **stripe@aozhoubaba.com**, forwarded free at Porkbun into
+`tommyshanahan@gmail.com`. Both of the obvious addresses were refused — the
+iCloud one is on the rejected account, and Stripe answered "already in use"
+for the Gmail. `tom@aozhoubaba.com` is a *hosted mailbox* that never
+provisioned (`#pending-setup`), cannot be logged into and cannot be given a
+forward while it exists; a different local part was the way round it.
+
+**What is not settled, and it decides the shape of the product.** Door one
+says "I have a Stripe account". `makePayee` OPENS one — so Daniel or Brendan
+would have been handed a second empty account to onboard from scratch while
+the screen said "same as it does today". OAuth (`linkUrl`/`linkFinish` in
+stripe.js, `/china/api/link`) is written for it and inert: the dashboard
+shows no client ID for this account, on either the Connect settings page or
+`/settings/applications`. New platforms on Accounts v2 may simply not get
+one. **Two minutes settles it**: press the button, take Express onboarding
+through with Stripe's "Use test data", and see whether it lets somebody sign
+in to an account they already have. If it does, only the wording changes.
+
+**And Tom's own number for Express onboarding is an hour**, not the ten
+minutes assumed here. If that holds, nobody does it for a supplier who has
+not paid them yet — which makes door two (the WFOE, no merchant onboarding
+at all) the main door rather than the fallback, and the fork on
+`/china` the wrong way round. That is a decision, not a task.
+
 **Stripe Connect is gone too, test mode included (22 Sep, night).** The
 rejection of 20 Sep is on the platform account, not on a mode, so it answers
 every attempt to open a connected account — under `sk_test_` keys as readily

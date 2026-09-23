@@ -49,6 +49,11 @@ line("Stripe key", j.key ? "set · " + j.mode : "not set");
 line("Publishable key", yes(j.publishable));
 line("Webhook secret", yes(j.webhook));
 line("API version", j.apiVersion || "not pinned");
+/* The one that answers "why is the first button on /china/connect greyed
+   out". It is not a reason payments are off — without it the board still
+   opens accounts and still takes money; it just cannot connect an account
+   somebody already has. */
+line("Connect an existing account", j.canLink ? "yes" : "no — BOARD_STRIPE_CLIENT_ID is not set");
 line("Fee", j.feePct + "%" + (j.feePage ? ", with a page to pay it on" : ", no page to pay it on"));
 /* By name, because the next thing to type is `make ask WHO="…"` and a count
    leaves that command half-written. */
@@ -64,13 +69,27 @@ console.log("");
    codes and has no Stripe it was both true and useless: the thing that
    actually works did not appear anywhere on this screen. */
 const c = j.codes || {};
+/* "ARE ON" WAS A CLAIM THIS PAGE CANNOT MAKE, and it made it for two days
+   while Airwallex was dead. Everything here is read out of .env and
+   board.json: which provider is named, whether a handle matches, how many
+   codes were ever drawn. Not one of it is a question put to the provider.
+   On 22 Sep it printed "WECHAT AND ALIPAY CODES ARE ON — sandbox keys" with
+   17 codes beside it, on a box whose every request to Airwallex had been
+   answered with an HTML 403 since the night before.
+   So it says what it actually knows. `make wallet-why` is the one that
+   asks, and it is named here rather than left to be remembered. */
 console.log(c.on
-  ? "  WECHAT AND ALIPAY CODES ARE ON" + (c.sandbox ? " — sandbox keys, so the money is test money" : " — LIVE keys, real money")
+  ? "  WECHAT AND ALIPAY CODES ARE SET UP" + (c.sandbox ? " — sandbox keys, so the money would be test money" : " — LIVE keys, real money")
   : "  WECHAT AND ALIPAY CODES ARE OFF");
+if (c.on) console.log("  Whether the provider still answers is a different question: make wallet-why");
 console.log("");
 line("Provider", c.provider || "none");
 line("Whose requests", c.owner ? (c.ownerOnBoard ? c.owner : c.owner + " — NOT ON THIS BOARD") : "nobody named");
-line("Codes drawn so far", String(c.drawn ?? 0));
+/* The date, not just the total. A count with no date reads as a heartbeat,
+   and this one was seventeen codes none of which were from the last two
+   days. */
+line("Codes drawn so far", String(c.drawn ?? 0)
+  + (c.lastAt ? "  (last " + String(c.lastAt).slice(0, 10) + ")" : ""));
 /* The difference between a row that settles on its own and one that settles
    when somebody remembers to look. */
 line("Airwallex tells us", c.told ? "yes" : "no — a page has to ask");

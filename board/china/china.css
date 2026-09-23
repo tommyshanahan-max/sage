@@ -42,8 +42,23 @@ a{color:var(--go)}a:hover{color:var(--go-dark)}
 .top{flex-shrink:0;background:var(--ink);color:#fff;
   padding:calc(1.5rem + env(safe-area-inset-top,0px)) 1.3rem 1.6rem}
 .top.other{background:var(--other)}
-.top a.back{display:inline-block;padding:.5rem .2rem .4rem 0;font-size:.85rem;
-  color:rgba(255,255,255,.78);text-decoration:none}
+/* 44px ON EVERY SECONDARY LINK, not just the buttons.
+ *
+ * Back, "I don't have a Stripe account", "Skip the address for now",
+ * "Decide later" — each was a line of text about 30px tall, measured at
+ * three screen sizes. They are the quiet half of every screen and that is a
+ * reason to make them plain, not a reason to make them hard to hit; the
+ * person this whole box is built around cannot aim at a 30px target.
+ *
+ * inline-flex with a min-height rather than more padding, so the text stays
+ * where it was drawn and only the hittable box grows. */
+.top a.back,.under a,a.quietgo{display:inline-flex;align-items:center;
+  min-height:44px;padding:0 .3rem 0 0;font-size:.85rem;text-decoration:none}
+.top a.back{color:rgba(255,255,255,.78)}
+.under a,a.quietgo{color:var(--muted);text-decoration:underline;
+  text-underline-offset:.2em}
+/* The paragraph around them stops adding its own line-height box. */
+.under{display:flex;justify-content:center}
 .top h1{margin:.6rem 0 0;font-family:var(--serif);font-size:1.75rem;line-height:1.15;font-weight:400}
 .top p{margin:.5rem 0 0;font-size:.9rem;line-height:1.55;color:rgba(255,255,255,.76)}
 .chip{display:inline-flex;align-items:center;gap:.4rem;font-size:.74rem;font-weight:600;

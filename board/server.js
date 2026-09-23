@@ -12962,6 +12962,12 @@ app.get("/api/admin/pay", admin, async (req, res) => {
   }
   if (!FEE_SECRET) why.push("BOARD_DEAL_FEE_SECRET is not set — nothing flips a row to PAID");
   if (KEY && !payees.length) why.push("nobody has a payee account yet — Pay lands on \"not finished setting up\"");
+  /* NOT A REASON PAYMENTS ARE OFF, so it is not in `why`. Without it the
+     board can still open accounts and take money; it just cannot connect an
+     account somebody already has, and /china/connect says so on the screen
+     rather than failing at Stripe. Printed because "why is the first button
+     greyed out" is otherwise a question with no answer on this box. */
+  const canLink = Boolean(String(process.env.BOARD_STRIPE_CLIENT_ID || "").trim());
 
   /* THE CODE RAILS, WHICH ARE A DIFFERENT QUESTION FROM STRIPE'S.
      Whether a WeChat or Alipay code can be drawn turns on three things that
@@ -12985,6 +12991,16 @@ app.get("/api/admin/pay", admin, async (req, res) => {
     owner: codeOwner?.handle || DEALIO_OWNER,
     ownerOnBoard: Boolean(codeOwner),
     drawn: board.requests.filter((q) => q.pay?.ref).length,
+    /* WHEN THE LAST ONE WAS DRAWN, because the count on its own is a lie by
+       omission. On 22 Sep this line read "Codes drawn so far: 17" beside
+       "CODES ARE ON" — and Airwallex had terminated the account the evening
+       before, so the true count for the last two days was nought. A total
+       with no date reads as a heartbeat. */
+    lastAt: board.requests
+      .filter((q) => q.pay?.ref)
+      .map((q) => String(q.pay.at || q.at || ""))
+      .sort()
+      .pop() || "",
     /* Whether a row can settle with nobody looking. Without it the money
        still arrives and the row still goes green — but only once somebody
        opens a page, which is the bottleneck a webhook exists to remove. */
@@ -13011,6 +13027,7 @@ app.get("/api/admin/pay", admin, async (req, res) => {
        payment landed, so the money moves and the row still says DUE. */
     webhook: Boolean(FEE_SECRET),
     apiVersion: (process.env.BOARD_STRIPE_VERSION || "").trim(),
+    canLink,
     feePage: Boolean(DEAL_FEE_TO),
     feePct: store.FEE_PCT,
     payees,
