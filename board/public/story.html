@@ -44,6 +44,14 @@
   .hero p{margin:.5rem 0 0;font-size:.86rem;line-height:1.6;
     color:rgba(255,255,255,.7)}
 
+  /* THE PARAGRAPH, AND IT IS THE POINT OF THE PAGE. Bigger and looser than
+     body copy, the same treatment his words get on the shopfront, because it
+     is the one thing here a person wrote. No heading over it: a label above a
+     paragraph is two things to read where one would do, and the band already
+     says 一路走来. */
+  .lede{margin:0 0 1rem;font-size:1.08rem;line-height:1.85;color:var(--ink)}
+  .lede + .lede{margin-top:-.35rem}
+
   /* THE MOMENTS, DOWN A RULE.
      A left-hand line with the years hung off it, which is the shape of a
      timeline everywhere and needs no heading to explain it. The year is
@@ -125,11 +133,32 @@ $("back").href = SHOPHREF;
     $("sub").textContent = shop.name || shop.handle || "";
     $("backw").textContent = shop.name || T("sh.back");
 
-    /* A story page with no story on it is a page that should not have been
-       linked to. It is reachable by typing the address, so it says so
-       rather than showing an empty rule. */
-    if (!arc.length) {
+    /* THE PARAGRAPH IS THE STORY, AND THIS PAGE USED TO IGNORE IT.
+     *
+     * It rendered shop.chapters and nothing else, so it was empty for every
+     * shop on this board: `chapters` has no write path at all — no endpoint,
+     * no make target — while `shop.story`, which `make shop-story` writes, is
+     * what a shop actually has. Tom pressed 店主的故事 on his own live shop
+     * and got 还没有写 over a paragraph he had already written.
+     *
+     * What he wanted from this page was never a timeline. It is one paragraph
+     * about where the shop came from — so that leads, at reading size, and the
+     * years hang under it if anybody ever writes some. Split on blank lines
+     * the way the shopfront splits it, because that is how somebody typing
+     * into a box breaks a thought. */
+    const said = String(shop.story || "").split(/\n+/).map((s) => s.trim()).filter(Boolean);
+    for (const p of said) $("root").append(el("p", "lede", p));
+
+    /* Empty only when there is neither. Reachable by typing the address, so
+       it says so rather than showing an empty rule. */
+    if (!said.length && !arc.length) {
       $("root").append(el("p", "none", T("sh.arcNone")));
+      return;
+    }
+    if (!arc.length) {
+      const go0 = el("a", "go", T("sh.arcGo"));
+      go0.href = SHOPHREF;
+      $("root").append(go0);
       return;
     }
 

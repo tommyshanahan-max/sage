@@ -12819,6 +12819,54 @@ app.post("/api/admin/shop-brand", admin, express.json({ limit: "2kb" }), async (
   res.json({ ok: true, ...out });
 });
 
+/** A MOMENT IN THE STORY — the only way to write one.
+ *
+ *  `chapters` has been read by the shop API, cleaned on load and rendered by
+ *  story.html since the day it was added, and NOTHING HAS EVER WRITTEN ONE.
+ *  So 店主的故事 could not hold content, the door opened an empty room, and
+ *  the first person to press it was Tom on his own shop. A field with a
+ *  reader and no writer is a feature that does not exist.
+ *
+ *  ONE MOMENT PER CALL, APPENDED. A year and a line: `make shop-chapter`
+ *  twice is two moments, which is how somebody actually writes this — one
+ *  remembered thing at a time, not a form with five rows in it.
+ *
+ *  `when` is free text on purpose. 2019, 2019年 and "the year my daughter was
+ *  born" are all how people say when, and a date field would refuse the true
+ *  one. CLEAR=1 empties the lot, because the first draft of anything written
+ *  a line at a time is wrong and starting again should not need a new shop.
+ */
+app.post("/api/admin/shop-chapter", admin, express.json({ limit: "8kb" }), async (req, res) => {
+  const who = String(req.body?.who || "").trim();
+  if (!who) return res.status(400).json({ error: "who" });
+  const clear = Boolean(req.body?.clear);
+  const when = String(req.body?.when || "").trim().slice(0, 40);
+  const text = String(req.body?.text || "").trim().slice(0, 400);
+  if (!clear && !when && !text) return res.status(400).json({ error: "empty" });
+
+  let photo = "";
+  if (req.body?.photo) {
+    try { photo = await fetchPhoto(req.body.photo); } catch (err) {
+      console.error("chapter photo:", err.message);
+    }
+    if (!photo) return res.status(400).json({ error: "photo" });
+  }
+
+  const out = await change((b) => {
+    const p = b.people.find((x) => x.handle === who);
+    if (!p) return { error: "gone" };
+    const now = p.shop || {};
+    const chapters = clear ? [] : [...(now.chapters || []), { when, text, ...(photo ? { photo } : {}) }];
+    /* Spread first, like every other write to this row: `shop` also holds the
+       name, the banner, the WeChat code and the 微店 address, and a chapter
+       that quietly dropped one of those would be found by a buyer. */
+    p.shop = { ...now, chapters };
+    return { ok: true, n: chapters.length };
+  });
+  if (out?.error) return res.status(404).json({ error: "not on this board: " + who });
+  res.json({ ok: true, ...out });
+});
+
 /** WHAT KIND OF PICTURE THIS IS, READ OFF THE FIRST FEW BYTES.
  *
  *  A file arriving down a pipe has no content-type and the name it had on

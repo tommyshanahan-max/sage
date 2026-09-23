@@ -917,6 +917,11 @@ function draw() {
     a.textContent = word;
     doors.append(a);
   };
+  /* Either field is a room worth opening: the page leads on the paragraph
+     (shop.story, what `make shop-story` writes) and hangs the years under it
+     when there are any. It used to draw ONLY the years, so a shop with a
+     paragraph and no chapters — every shop shop-story has ever touched —
+     opened on 还没有写。That was a bug in story.html, not in this line. */
   if (SHOP?.hasStory || SHOP?.story) door("/story", T("sh.dStory"));
   door("/reviews", T("sh.allRev"));
   if (SHOP?.weidian) door("/wechat", T("sh.dOld"));

@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: try china app-state claire-episodes deal claire-key claire-count claire-seed claire-video listing invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who bells twice admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check post post-status post-run post-login post-code post-logins weidian-pull weidian-json weidian-reviews
+.PHONY: try china app-state claire-episodes deal claire-key claire-count claire-seed claire-video listing invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who bells twice admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check post post-status post-run post-login post-code post-logins weidian-pull weidian-json weidian-reviews shop-chapter
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -996,6 +996,21 @@ shop-story: ## His own words on the shopfront: make shop-story WHO="Tom" TEXT="�
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/shop-brand.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  --who "$(WHO)" --story "$(TEXT)"
+
+shop-chapter: ## One moment of the story: make shop-chapter WHO="Tom" WHEN="2019" TEXT="…" [PHOTO=url] [CLEAR=1]
+	@# 店主的故事 is the level below the paragraph on the shopfront: a year
+	@# and a line each, down a rule. Run it once per moment — that is how
+	@# somebody writes this, one remembered thing at a time.
+	@#
+	@# THE ONE THAT CLOSED IS THE POINT. A shop listing only its wins is
+	@# making claims; "在北京开了店，2023 年关了" is a person talking.
+	@#
+	@# WHEN is free text: 2019, 2019年, or 女儿出生那年. CLEAR=1 empties it.
+	@test -n "$(WHO)" || { echo 'make shop-chapter WHO="Tom" WHEN="2019" TEXT="在微信上卖第一罐奶粉"'; exit 1; }
+	@test -n "$(CLEAR)$(WHEN)$(TEXT)" || { echo 'make shop-chapter WHO="$(WHO)" WHEN="2019" TEXT="…"'; exit 1; }
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/shop-chapter.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  --who "$(WHO)" $(if $(CLEAR),--clear,--when "$(WHEN)" --text "$(TEXT)" $(if $(PHOTO),--photo "$(PHOTO)",))
 
 shop-banner: ## The picture, from a file: make shop-banner WHO="Tom" < dad.png
 	@# THE PICTURE IS ALREADY ON HIS MACHINE. Uploading it somewhere to get
