@@ -27,12 +27,25 @@ the board. Payment links are `paydealio.com/pay/…`. Inert unless
 `TOMSCODING_DEALIO_DOMAIN` is set in `.env` on the box.
 
 
-**APPLE CAME BACK ON THE SUBMISSION (22 Sep, 06:42).** *"There's an issue
-with your The Exchange 交换 (iOS) submission"* — submission
-`9c9fce5f-6b14-406c-b857-23122b6607d3`, submitted 17 Sep, App Version 1.0.
-**The email names no reason.** Apple puts the findings on the App Review page
-and sends a notice that carries only the item. `make app-state` on the Mac
-asks Apple and prints them. Unread as of 23 Sep afternoon.
+**APPLE REJECTED IT, THE REPLY IS WRITTEN, AND IT IS NOT SENT.** Submission
+`9c9fce5f-6b14-406c-b857-23122b6607d3`, The Exchange 交换 1.0, submitted
+17 Sep, rejected 22 Sep 06:42. The notice email carries the submission id and
+the item and **no reason at all** — Apple keeps the findings on the App Review
+page — so it reads like news every time somebody opens the inbox. It is not
+news. It is the rejection `app/store/APPLE-REPLY.md` was written for, and that
+file is headed with this same submission id.
+
+**What is blocking it is three screen recordings, on a physical iPhone.**
+Apple will not take the reply without them, however true the reply is. They
+are listed at the bottom of APPLE-REPLY.md:
+
+1. Terms before sign-in
+2. Flagging and blocking
+3. Account deletion, end to end
+
+**So the order is: `make app-ship` on the Mac, the three videos, then paste
+the reply.** Nothing in Stripe or QFPay is waiting on this and it is not
+waiting on them.
 
 ### The chain
 
@@ -381,9 +394,11 @@ and contains no payments authorisation.
 
 ## The app
 
-**Submitted and in Apple's queue, 21 Sep.** `make app-state` reads
-`1.0 · WAITING_FOR_REVIEW · build 1 VALID` — submitted before today, nobody
-has looked at it yet. Nothing to do but wait.
+**Rejected 22 Sep — this section said "nothing to do but wait" for a day
+after that stopped being true.** It read `1.0 · WAITING_FOR_REVIEW · build 1
+VALID` on 21 Sep, which was right then. See the entry at the top: the reply is
+written, unsent, and blocked on three recordings. `make app-state` is still the
+only honest reading of where the submission is.
 
 A second build went up on 21 Sep from `make app-ship`, which turned the seven
 Xcode steps into one line. It is not the build under review — build 1 is — and
