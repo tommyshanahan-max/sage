@@ -31,7 +31,14 @@
     <div class="card" style="margin-top:.8rem;padding:.2rem 1.15rem">
       <div class="kv"><span class="k">Accepts</span><span class="v">WeChat Pay &middot; Alipay</span></div>
       <div class="kv"><span class="k">Lands in</span><span class="v">Your Stripe, AUD</span></div>
-      <div class="kv"><span class="k">Fee</span><span class="v">2%, taken by Stripe on the way past</span></div>
+      <!-- 3.5%, NOT 2%, AND THE DIFFERENCE IS NOT ROUNDING. 2% is FEE_PCT in
+             lib/store.js, the platform's own cut and an internal number. 3.5%
+             is what actually leaves the payment: the wallet's fee for taking
+             it, the conversion out of yuan, and ours. Dealio quotes 3.5% with
+             a note beside the string saying why, in these words: "A payer told
+             2% and charged more than that is a payer who never comes back."
+             This screen said 2% for a day. -->
+      <div class="kv"><span class="k">Fee</span><span class="v">3.5%, all in</span></div>
     </div>
 
     <div class="card">
