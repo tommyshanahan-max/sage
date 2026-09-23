@@ -54,6 +54,20 @@ every link was repointed, and the one nobody links — the bare address Tom
 hands people — was missed. `index.html` is gone and the mount serves
 `home.html`.
 
+**The live account has one open task and a clock on it (23 Sep, 13:29).**
+`/account/status` on the Aozhou Baba account:
+
+- **Provide an identity document for an account representative (Zhu Liyuan)**
+  — *In review*, paused 22 Sep, "impacts payments and payouts". Submitted
+  already. Nothing to press; it is waiting on Stripe.
+- **Paused:** Cartes Bancaires. **Paused soon:** Payments. That second one is
+  the clock on the task above.
+- **Active** lists Afterpay, Bancontact, BLIK, EPS, Klarna, Link, MB WAY,
+  Pix and more behind "View more". **WeChat Pay and Alipay are not in the
+  part that is visible**, and they are the only two this product needs.
+  Not checked, not assumed: `make pay-try ID=…` asks Stripe per method and
+  prints its reason.
+
 **A second Stripe account, and Connect works on it (23 Sep, 00:15).**
 Opened as **Aozhou Baba**, `acct_1UIVjqJ1hAPEyck7`, AUD. Connect switched on
 through the dashboard wizard as a **platform, destination charges** — the
