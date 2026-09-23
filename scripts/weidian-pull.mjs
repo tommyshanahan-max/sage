@@ -301,7 +301,16 @@ try {
           document.querySelector('meta[property="og:title"]')?.content || "",
           (document.title || "").replace(/[-_|].*$/, "").trim(),
         ].map((s) => String(s || "").trim()).filter(Boolean);
-        const name = seen.find(han) || seen[0] || "";
+        /* AND NOT THE SITE'S OWN NAME. Preferring a Han title made
+           `[class*="title"]` the first thing asked, and on these pages that
+           matches a header element reading 微店首页 / "WEIDIAN Home Page" —
+           so a whole run came back with forty items all called WEIDIAN Home
+           Page, prices and reviews correct beside them. A name that is the
+           website is never the name of a thing in it, so those candidates are
+           dropped before the Han preference is applied rather than after. */
+        const chrome = /^\s*(weidian|微店)\b|home\s*page|首页|shop\s*home/i;
+        const real = seen.filter((s) => !chrome.test(s));
+        const name = real.find(han) || real[0] || "";
         const priceText = (document.body.innerText.match(/[¥￥]\s?\d+(\.\d+)?/) || [""])[0];
         /* THE BIGGEST PICTURE ON THE PAGE, NOT THE FIRST ONE.
            This took `document.querySelector(… , img)` — first match wins, and
@@ -389,6 +398,16 @@ try {
      so before anybody saw it. */
   const pics = new Set(out.items.map((i) => i.photo).filter(Boolean));
   console.error(`pictures: ${pics.size} different across ${out.items.length} items`);
+  /* THE SAME COUNT FOR NAMES, for the same reason and after the same
+     accident: a run came back with forty items every one of which was called
+     "WEIDIAN Home Page", with the right price and the right review count
+     beside it, which is exactly what a plausible disaster looks like. */
+  const names = new Set(out.items.map((i) => i.name).filter(Boolean));
+  console.error(`names: ${names.size} different across ${out.items.length} items`);
+  if (out.items.length > 2 && names.size <= 1) {
+    console.error("  ^ every item came back with the same name. That is the");
+    console.error("    site's own page title, not the goods — do not import these.");
+  }
   if (out.items.length > 2 && pics.size <= 1) {
     console.error("  ^ every item came back with the same picture. That is the");
     console.error("    shop's own logo, not the goods — do not import these.");
