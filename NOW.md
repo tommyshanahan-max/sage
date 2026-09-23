@@ -54,6 +54,27 @@ every link was repointed, and the one nobody links — the bare address Tom
 hands people — was missed. `index.html` is gone and the mount serves
 `home.html`.
 
+**THERE ARE TWO ACCOUNTS AND THEY DISAGREE (23 Sep, 14:18).** A live account
+and its own sandbox, both called Aozhou Baba:
+
+| | acct | WeChat Pay · Alipay |
+|---|---|---|
+| Live | `acct_1UIVjEJItwOUeslJ` | Pending approval |
+| Sandbox | `acct_1UIVjqJ1hAPEyck7` | **Enabled** |
+
+A sandbox lets you switch anything on — Stripe says so in its own banner — so
+Enabled there is worth nothing as a prediction about live. What it IS worth:
+**the whole flow can be walked against real Stripe**, with real WeChat Pay
+test codes, using that sandbox's test key. Nothing else on this box can do
+that today.
+
+**`make wallets` could not have told you which one it asked, and now says.**
+It printed "Default (the default) · test" and no account name or id. Two
+accounts, one name between them, and an answer about money wearing neither.
+It now leads with the display name, the `acct_` and the mode, and prints the
+`pmc_` beside each configuration — because an account and its sandbox each
+have a "Default".
+
 **BOTH WALLETS ARE APPLIED FOR AND PENDING (23 Sep, 13:39).** Settings →
 Payment methods, the Default configuration on the platform account
 (`pmc_1UIVjkJItwOUeslJr1As0u9C`):

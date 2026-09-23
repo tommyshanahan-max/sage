@@ -49,16 +49,37 @@ const WANT = [
   ["card", "Card"],
 ];
 
-const res = await fetch("https://api.stripe.com/v1/payment_method_configurations", {
-  headers: {
-    Authorization: "Bearer " + KEY,
-    ...(VERSION ? { "Stripe-Version": VERSION } : {}),
-  },
-  signal: AbortSignal.timeout(20_000),
-});
-const text = await res.text();
-let j = null;
-try { j = text ? JSON.parse(text) : null; } catch { /* Stripe sent prose */ }
+const get = async (path) => {
+  const res = await fetch("https://api.stripe.com/v1" + path, {
+    headers: {
+      Authorization: "Bearer " + KEY,
+      ...(VERSION ? { "Stripe-Version": VERSION } : {}),
+    },
+    signal: AbortSignal.timeout(20_000),
+  });
+  const text = await res.text();
+  let body = null;
+  try { body = text ? JSON.parse(text) : null; } catch { /* Stripe sent prose */ }
+  return { res, body, text };
+};
+
+/* WHOSE ACCOUNT THIS ANSWER IS ABOUT, SAID ON THE SCREEN.
+ *
+ * It printed "Default (the default) · test" and nothing more, which is one
+ * account's answer wearing no name. On 23 Sep the dashboard showed WeChat Pay
+ * and Alipay Pending approval on one page and Enabled on another — a live
+ * account and its own sandbox, two acct_ ids, both called Aozhou Baba — and
+ * nothing in this command's output could have told you which of them it had
+ * just asked. An answer about money that does not name the account is the
+ * same failure as go-live writing the wrong variable name: every screen
+ * truthful, none of them about the same thing.
+ *
+ * A failure here is not fatal. The methods are the answer; the name is what
+ * makes it readable, and a command that refuses to answer because it could
+ * not fetch a label is worse than one that says "this account". */
+const who = (await get("/account")).body;
+
+const { res, body: j, text } = await get("/payment_method_configurations");
 if (!res.ok) {
   /* Stripe's own sentence, which names the thing it disliked. A status code
      on its own is the answer thrown away. */
@@ -71,6 +92,12 @@ const configs = Array.isArray(j?.data) ? j.data : [];
 const mode = /^sk_live/.test(KEY) ? "live" : /^sk_test/.test(KEY) ? "test" : "unknown";
 
 console.log("");
+/* THE NAME AND THE ID, because a name alone does not separate an account from
+   its own sandbox: both of these answer to "Aozhou Baba". */
+console.log("  "
+  + (who?.settings?.dashboard?.display_name || who?.business_profile?.name || "this account")
+  + "   " + (who?.id || "account unknown") + "   " + mode);
+console.log("");
 if (!configs.length) {
   console.log("  This account has no payment method configurations at all.");
   console.log("  Nothing can be offered to a payer until it has one.");
@@ -80,7 +107,9 @@ if (!configs.length) {
 
 for (const c of configs) {
   const name = c.name || c.id;
-  console.log("  " + name + (c.is_default ? "  (the default)" : "") + " · " + mode);
+  /* The configuration id as well: an account and its sandbox each have a
+     Default, and only the pmc_ tells the two apart on a screen. */
+  console.log("  " + name + (c.is_default ? "  (the default)" : "") + "   " + c.id);
   for (const [key, label] of WANT) {
     const m = c[key];
     /* A method Stripe does not mention at all is not the same as one it
