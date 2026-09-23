@@ -274,6 +274,41 @@ payment: 网页授权 only calls back to a 备案'd domain.
 merchant application requires the merchant's site to be 备案'd. Nobody has
 asked. `thexchange.cn` under the WFOE is bought and would settle it.
 
+## The payer is already inside WeChat, and that changes which flow is right
+
+Tom's question, 23 Sep, and it is the one that decides the design: the payer
+opens the board's link *in WeChat*, sees a code on the page — can they
+long-press it and pay without leaving?
+
+**It worked once, watched, and that is the strongest evidence here.** 20 Sep:
+the link opened in WeChat on a phone, a real Airwallex code was long-pressed,
+and Airwallex recorded it paid. See the chain in `NOW.md`. So "no" is wrong.
+
+**But it is not the flow the rail is built for, and the adapter already says
+so.** `board/lib/wallet/providers/airwallex.js` picks `flow: "qrcode"` and
+the comment beside it names the alternatives — `official_account`,
+`mini_program`, `mobile_app`, `mobile_web` — as *"handoffs inside WeChat
+itself"*. WeChat Pay's own position is the same: a payment code is for 扫一扫
+with the camera, from another screen, and payment by long-press recognition is
+not supported.
+
+So the code-on-a-page flow is built for a payer looking at a **desktop** or a
+**second device**. It happens to survive a long-press today. That is a thing
+to depend on carefully, not a thing to design around.
+
+**The right flow for a payer already in WeChat has no QR in it at all.**
+JSAPI — `official_account` at Airwallex, 公众号支付 direct — opens WeChat's own
+payment sheet on the page. One tap, no code, no leaving. It is what every
+Chinese site does to somebody arriving from a chat.
+
+**And it needs the openid, which needs 网页授权, which needs a 备案'd domain.**
+
+That is the finding. The ICP filing is not cosmetic for payments and it is not
+about the warning screen: it is the difference between showing a Chinese payer
+a QR code to long-press at their own phone, and handing them the payment sheet
+they expect. `thexchange.cn` under the WFOE is already bought.
+
+
 **And it does not answer the structural objection.**
 `docs/cross-border-payments.md` examined this same WFOE-buys-and-resells route
 on 18 September and concluded it fits one business and not a platform — the
