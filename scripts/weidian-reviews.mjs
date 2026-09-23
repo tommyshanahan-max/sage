@@ -80,18 +80,32 @@ const key0 = (s) => String(s || "")
   .replace(/[\s　()（）[\]【】·・,，.。/\\|-]+/g, "")
   .toLowerCase();
 
+/* THE SCRAPED NAME CARRIES THE DESCRIPTION WITH IT.
+   The item page has no clean title element, so the puller comes back with
+   "贝拉米 有机婴儿米粉\n\nBellamy's 贝拉米 婴幼儿有机米粉（4个月以上）" — the
+   name, then the first line of the blurb. Flattened, that is one long key
+   that no board product is a substring of, and nine real reviews were
+   refused against a product that is plainly on the shelf. The first line is
+   the name; everything after the first newline is prose. Both are tried,
+   because a shop whose titles happen to be clean loses nothing by it. */
+const head = (s) => String(s || "").split("\n")[0].trim();
+
 function match(name) {
-  const k = key0(name);
-  if (!k) return { row: null, how: "empty name" };
-  const exact = products.filter((p) => key0(p.name) === k || key0(p.en) === k);
-  if (exact.length === 1) return { row: exact[0], how: "name" };
-  if (exact.length > 1) return { row: null, how: "two products with that name" };
-  const part = products.filter((p) => {
-    const a = key0(p.name), b = key0(p.en);
-    return (a && (a.includes(k) || k.includes(a))) || (b && (b.includes(k) || k.includes(b)));
-  });
-  if (part.length === 1) return { row: part[0], how: "contains" };
-  if (part.length > 1) return { row: null, how: part.length + " products could be it" };
+  const keys = [...new Set([key0(name), key0(head(name))])].filter(Boolean);
+  if (!keys.length) return { row: null, how: "empty name" };
+  for (const k of keys) {
+    const exact = products.filter((p) => key0(p.name) === k || key0(p.en) === k);
+    if (exact.length === 1) return { row: exact[0], how: "name" };
+    if (exact.length > 1) return { row: null, how: "two products with that name" };
+  }
+  for (const k of keys) {
+    const part = products.filter((p) => {
+      const a = key0(p.name), b = key0(p.en);
+      return (a && (a.includes(k) || k.includes(a))) || (b && (b.includes(k) || k.includes(b)));
+    });
+    if (part.length === 1) return { row: part[0], how: "contains" };
+    if (part.length > 1) return { row: null, how: part.length + " products could be it" };
+  }
   return { row: null, how: "nothing like it in the catalogue" };
 }
 
@@ -146,10 +160,26 @@ if (missed.length) {
   console.log("");
   console.log("  NOT MATCHED — their reviews stayed out rather than going somewhere wrong:");
   for (const [name, n, how] of missed) {
-    console.log("    " + name.slice(0, 40).padEnd(42) + n + " reviews   " + how);
+    console.log("    " + head(name).slice(0, 40).padEnd(42) + n + " reviews   " + how);
   }
+  /* WHAT IT WAS MATCHING AGAINST, said in the same breath.
+     "nothing like it in the catalogue" named the 微店 side and not ours, so
+     the one fact needed to act on it — what this board calls that product —
+     meant a second command and another round trip. Both sides, one screen. */
   console.log("");
-  console.log("  Fix by renaming the product on this board to the 微店 name, then run it again.");
+  console.log("  What is on this board to match against:");
+  products.forEach((p, i) => {
+    console.log("    " + String(i + 1).padStart(3) + "  " + (p.name || "—")
+      + (p.en ? "   (" + p.en + ")" : ""));
+  });
+  /* Only commands that exist. An earlier draft of this line offered
+     `make shop-rename`, which is not a target on this box — there is no way
+     to edit a product's name today, only to add one. Pointing somebody at a
+     command that does not exist is worse than pointing at nothing. */
+  console.log("");
+  console.log("  The names have to line up. If the thing is not on this board yet:");
+  console.log("    make product NAME=\"<the 微店 name>\" PRICE=\"¥199\"");
+  console.log("  and if it is there under another name, that name is the one to change.");
 }
 console.log("");
 if (!DRY) console.log("  All of them show 来自老店（微信店）.");
