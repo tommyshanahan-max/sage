@@ -13,8 +13,15 @@ RUN npm install --omit=dev --no-audit --no-fund
 COPY server.js ./
 COPY lib ./lib
 COPY public ./public
-# China Business Solutions: six static pages served at /china, kept as their
-# own folder so the whole thing can be lifted out. See the note in server.js.
+# China Business Solutions: the merchant screens served at /china, kept as
+# their own folder so the whole thing can be lifted out. See the note in
+# server.js.
+#
+# china-demo/ IS DELIBERATELY NOT COPIED. It holds the stand-in that `make
+# try-china` puts where Stripe's own pages go, and the route that serves it is
+# off unless BOARD_PAY_DEMO=1. Leaving it out of the image is the second lock:
+# if that flag were ever wrong on the box, the answer is a 404 and not a
+# drawing of a payment provider.
 COPY china ./china
 
 # The data directory, owned by the user the container runs as.

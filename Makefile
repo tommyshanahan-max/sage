@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: try china app-state claire-episodes deal claire-key claire-count claire-seed claire-video listing invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who bells twice admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check post post-status post-run post-login post-code post-logins weidian-pull weidian-json weidian-reviews shop-chapter
+.PHONY: try try-china china app-state claire-episodes deal claire-key claire-count claire-seed claire-video listing invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who bells twice admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check post post-status post-run post-login post-code post-logins weidian-pull weidian-json weidian-reviews shop-chapter
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -2295,6 +2295,75 @@ try: ## Open the board on THIS machine, with a room in it, before deploying: mak
 	  echo "  $$url"; \
 	  echo; \
 	  echo "  Tap Macau, March, then Pay on the balance. Ctrl-C when you have seen enough."; \
+	  echo; \
+	  wait $$pid
+
+try-china: ## Walk the whole China Business Solutions widget on THIS machine: make try-china
+	@# NOT `china`, WHICH IS TAKEN — that one builds the static site the
+	@# mainland domain serves for the filing, from china/ at the repo root.
+	@# This is board/china, the merchant widget, and it is named after `try`
+	@# because it is the same kind of thing: stand it up here, look at it,
+	@# Ctrl-C.
+	@# THE SAME MACHINERY AS `try`, POINTED AT THE OTHER PRODUCT. It needs node
+	@# and nothing else — no docker, no .env, no Stripe key, no network path to
+	@# the box — and it never touches the box.
+	@#
+	@# WHY IT IS ITS OWN TARGET AND NOT A FLAG ON `try`. They open on different
+	@# screens and stand for different things: `try` is a room with two people
+	@# talking in it, this is a stranger deciding whether to take money through
+	@# us. Sharing one command would mean a flag to remember, and a flag to
+	@# remember is the step that gets left off.
+	@#
+	@# BOARD_PAY_DEMO=1 IS WHAT MAKES IT WALKABLE. Without a key the first
+	@# button answers "payments are not switched on here yet" and the five
+	@# screens behind it can only be reached by typing their addresses one at a
+	@# time — which is looking at pictures, not walking through anything, and is
+	@# how a dead link between two of them survives. In demo the trip to Stripe
+	@# lands on a stand-in that says on itself that it is one. Nothing here can
+	@# take money: there is no key behind it and no account to take money into.
+	@#
+	@# BOARD_INVITE=read, WHICH IS WHAT THE BOX RUNS. It was `off` here, and
+	@# `off` opens every path — so /china missing from OPEN_PATHS passed every
+	@# local test and served the door to everybody on the box. A local run set
+	@# up more permissively than the real one is a local run that agrees with
+	@# you.
+	@command -v node >/dev/null || { \
+	  echo "No node on this machine, and the board is a node program."; \
+	  echo "Run it where you run 'make listing'."; exit 1; }
+	@branch=$$(git rev-parse --abbrev-ref HEAD); \
+	  if [ -n "$$(git status --porcelain)" ]; then \
+	    echo "  (uncommitted changes here — showing them rather than fetching)"; \
+	  elif git fetch origin "$$branch" -q 2>/dev/null; then \
+	    git reset --hard -q "origin/$$branch"; echo "  fetched origin/$$branch"; \
+	  else \
+	    echo "  (could not reach GitHub — showing what is on this disk)"; \
+	  fi
+	@test -d board/node_modules || { \
+	  echo "  installing what the board needs (once on this machine)"; \
+	  npm install --prefix board --silent --no-audit --no-fund; }
+	@set -e; \
+	  dir=$$(mktemp -d); port=$${PORT:-8392}; \
+	  sed 's/; Secure//g' board/server.js > board/server.nosec.mjs; \
+	  trap 'kill $$pid 2>/dev/null; rm -f board/server.nosec.mjs; rm -rf "$$dir"; \
+	        echo; echo "  Stopped. Nothing was kept, and nothing was deployed."; echo' EXIT; \
+	  trap 'exit 0' INT TERM; \
+	  ( cd board && exec env BOARD_DIR="$$dir" BOARD_SALT=china BOARD_INVITE=read PORT="$$port" \
+	      BOARD_PAY_DEMO=1 \
+	      node server.nosec.mjs > "$$dir/board.log" 2>&1 ) & pid=$$!; \
+	  for i in $$(seq 1 60); do \
+	    curl -fsS -o /dev/null "http://127.0.0.1:$$port/china/home.html" 2>/dev/null && break; \
+	    sleep 0.25; \
+	  done; \
+	  curl -fsS -o /dev/null "http://127.0.0.1:$$port/china/home.html" 2>/dev/null || { \
+	    echo "  It did not start:"; sed 's/^/    /' "$$dir/board.log"; exit 1; }; \
+	  url="http://127.0.0.1:$$port/china/home.html"; \
+	  (command -v open >/dev/null && open "$$url" 2>/dev/null) \
+	    || (command -v xdg-open >/dev/null && xdg-open "$$url" 2>/dev/null) \
+	    || true; \
+	  echo "  $$url"; \
+	  echo; \
+	  echo "  Either button. Both doors, the stand-in for Stripe, and the page"; \
+	  echo "  their client opens. Ctrl-C when you have seen enough."; \
 	  echo; \
 	  wait $$pid
 

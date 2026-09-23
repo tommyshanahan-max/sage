@@ -1,0 +1,64 @@
+<!doctype html>
+<!-- WHERE STRIPE WOULD BE, WHEN THERE IS NO STRIPE.
+     Served only by `make china` — the route that serves it is off unless
+     BOARD_PAY_DEMO=1, and this folder is not copied into the image, so it
+     cannot exist on the box. See the long note over the route in server.js.
+
+     IT SAYS SO IN THE FIRST LINE ON THE SCREEN. A convincing drawing of a
+     payment provider is the one thing this page must not be: somebody has to
+     be able to tell, from a screenshot with no address bar, that the money
+     part was skipped.
+
+     THREE WAYS OUT, BECAUSE STRIPE HAS THREE. Finish and the wallets are
+     still off, which is the ordinary outcome and the reason switch.html
+     exists. Finish with them on, which is the short path to live.html.
+     Close the tab, which is refresh_url and lands on stopped.html. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Stand-in for Stripe — China Business Solutions</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif&display=swap">
+<link rel="stylesheet" href="/china/china.css">
+</head>
+<body>
+<main class="sheet">
+  <header class="top other">
+    <h1>This is not Stripe.</h1>
+    <p>Stripe's own pages go here. This one takes nothing and can take nothing.</p>
+  </header>
+
+  <div class="body">
+    <div class="card flag other">
+      <b>What is being skipped</b>
+      <p>One call to Stripe to open the account, and the pages the merchant fills in. Everything either side of them is the real thing.</p>
+    </div>
+
+    <p class="note">Pick how it comes back. Each of these is a real return from Stripe.</p>
+
+    <a class="door" href="/china/switch">
+      <div class="head"><span class="dot"></span><b>Finished</b></div>
+      <p>The wallets are still off, which is what happens on every new account.</p>
+      <div class="when">Goes to: one switch left</div>
+    </a>
+
+    <a class="door" href="/china/stand-in/on">
+      <div class="head"><span class="dot"></span><b>Finished, wallets on</b></div>
+      <p>WeChat Pay and Alipay switched on in the dashboard.</p>
+      <div class="when">Goes to: you can take payment</div>
+    </a>
+
+    <a class="door" href="/china/stopped">
+      <div class="head"><span class="dot other"></span><b>Closed the tab</b></div>
+      <p>Backed out halfway. Stripe sends them to the refresh address.</p>
+      <div class="when other">Goes to: you stopped partway</div>
+    </a>
+    <div class="grow"></div>
+  </div>
+
+  <footer class="foot">
+    <p class="under"><a href="/china/home.html">Back to the start</a></p>
+  </footer>
+</main>
+</body>
+</html>

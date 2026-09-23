@@ -38,6 +38,22 @@ So the only untested thing is **real money**, and it is one line:
 `BOARD_WALLET_AIRWALLEX_SANDBOX=0`, which `make airwallex-keys … LIVE=1`
 writes when the live pair exists.
 
+**The whole widget walks on a laptop now: `make try-china` (23 Sep).** One
+command, no Stripe key, no docker, nothing touching the box. It stands
+`board/china` up with `BOARD_PAY_DEMO=1`, so where Stripe's own pages go
+there is a stand-in that says on itself that it is one and offers the three
+real returns — finished, finished with the wallets on, closed the tab. Both
+doors, all six screens, the ask, and the page the payer opens. It takes no
+money and can take none: no key behind it and no account to take money into.
+`board/china-demo/` is not copied into the image, so it cannot exist on the
+box.
+
+It found one thing on the first walk: **`/china` was still serving the
+deleted fork.** The fork became the two buttons on `home.html` a day ago,
+every link was repointed, and the one nobody links — the bare address Tom
+hands people — was missed. `index.html` is gone and the mount serves
+`home.html`.
+
 **A second Stripe account, and Connect works on it (23 Sep, 00:15).**
 Opened as **Aozhou Baba**, `acct_1UIVjqJ1hAPEyck7`, AUD. Connect switched on
 through the dashboard wizard as a **platform, destination charges** — the

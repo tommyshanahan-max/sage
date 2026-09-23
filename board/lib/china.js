@@ -131,6 +131,26 @@ export function openChina(dir) {
       for (const row of Object.values(d.byToken)) if (row && row.by === b) return row;
       return null;
     },
+    /* THE ONE THING BOARD_PAY_DEMO HAS TO REMEMBER, and it is a flag.
+     *
+     * With no Stripe key the widget cannot ask Stripe whether WeChat Pay is
+     * on, so the stand-in page sets it here and the switch screen's poller
+     * reads it back through api/state — the same two screens, in the same
+     * order, over a file instead of a network call. It is written by a route
+     * that only exists when BOARD_PAY_DEMO=1, which is never true on the box,
+     * and a real key makes it unreadable: chinaReady asks Stripe and never
+     * looks at this. */
+    async switchOn(token) {
+      const t = String(token || "");
+      if (!/^[0-9a-f]{32}$/.test(t)) return null;
+      const d = await read();
+      const row = d.byToken[t];
+      if (!row) return null;
+      row.on = true;
+      await write(d);
+      return row;
+    },
+
     /** The account behind a cookie, or null. Never throws on a bad value. */
     async find(token) {
       const t = String(token || "");

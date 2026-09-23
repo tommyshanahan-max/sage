@@ -36,6 +36,11 @@
   <footer class="foot">
     <button class="go" id="again" type="button">Check again</button>
     <p class="under" id="under">We check again by ourselves every few seconds.</p>
+    <!-- ONLY UNDER `make china`, where there is no Stripe dashboard to go
+         and switch anything on in. The server says so — see `demo` in
+         api/state — and says so to nobody else: BOARD_PAY_DEMO is not set on
+         the box, so this line is not on the deployed screen. -->
+    <p class="under" id="standin" hidden><a href="/china/stand-in">Stand-in: the Stripe dashboard</a></p>
   </footer>
 </main>
 <script>
@@ -52,6 +57,7 @@
 (function () {
   var btn = document.getElementById("again");
   var under = document.getElementById("under");
+  var standin = document.getElementById("standin");
   var tries = 0, timer = null;
 
   async function look(byHand) {
@@ -59,6 +65,7 @@
     try {
       var r = await fetch("api/state", { headers: { Accept: "application/json" } });
       var j = await r.json();
+      if (j && j.demo) standin.hidden = false;
       if (j && j.ready) { location.href = "live.html"; return true; }
       if (byHand) under.textContent = "Still off. Stripe can take a moment to catch up.";
     } catch (e) {
@@ -69,6 +76,12 @@
   }
 
   btn.addEventListener("click", function () { look(true); });
+
+  /* ASK ONCE ON ARRIVAL, not in five seconds' time. Somebody who switched the
+     wallets on before finishing — which Stripe lets them do — lands here on a
+     screen telling them to go and do the thing they have done, and it stays
+     wrong for a poll. */
+  look(false);
 
   timer = setInterval(function () {
     if (document.hidden) return;          // not while the tab is in the background

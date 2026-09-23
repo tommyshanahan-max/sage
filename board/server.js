@@ -10478,15 +10478,52 @@ const webOnly = (req, res, next) =>
 app.get(["/china/connect", "/china/connect.html"], webOnly, async (req, res, next) => {
   const row = await CHINA.find(chinaToken(req));
   if (!row) return next();
-  let ready = false;
-  if (stripe.configured()) {
-    try { ready = await stripe.payeeReady(row.account); }
-    catch (err) { console.error("china connect ready:", err.message); }
-  }
-  res.redirect(302, ready ? "/china/ask" : "/china/switch");
+  res.redirect(302, await chinaReady(row) ? "/china/ask" : "/china/switch");
 });
 
+/* WHERE STRIPE'S OWN PAGES GO WHEN THERE IS NO STRIPE.
+ *
+ * `make china` stands this widget up on a laptop with no key and no account,
+ * and without these two routes the walk-through ends at the first button —
+ * which is the button everything after it is reached through. So the demo
+ * hands over to a page that draws the shape of Stripe's hosted onboarding,
+ * says on itself that it is a stand-in, and offers the three ways out that
+ * Stripe really has: finished, switched the wallets on, or closed the tab.
+ *
+ * IT CANNOT BE SERVED FROM china/. That folder is the widget, it is what the
+ * Dockerfile copies, and a stand-in for a payment provider sitting in it is
+ * one static mount away from being live on the box. It lives in china-demo/,
+ * which is not copied into the image at all — so the failure mode if this
+ * guard were ever wrong is a 404, not a fake Stripe.
+ *
+ * A GET THAT WRITES, for the switch. It is a link on a page that exists only
+ * under BOARD_PAY_DEMO, and the thing it writes is a boolean nothing outside
+ * the demo reads. Making it a form to be correct about a verb would be
+ * ceremony on a prop. */
+app.get(["/china/stand-in", "/china/stand-in.html"], webOnly, (req, res, next) => {
+  if (!chinaDemo()) return next();
+  res.set("Cache-Control", "no-store");
+  res.sendFile(path.resolve("china-demo/stand-in.html"), (err) => { if (err) next(); });
+});
+
+app.get("/china/stand-in/on", webOnly, async (req, res, next) => {
+  if (!chinaDemo()) return next();
+  await CHINA.switchOn(chinaToken(req));
+  res.redirect(302, "/china/live");
+});
+
+/* index: "home.html" BECAUSE /china WAS SERVING THE SCREEN THAT WAS REPLACED.
+ *
+ * The widget began with a fork — one question, two doors — and that fork was
+ * index.html, so it was what a bare /china served. Then the fork was deleted
+ * from the flow: the two doors moved onto home.html, under the paragraphs
+ * that explain them, because a person was reading the explanation and then
+ * being asked the question it had just answered. Every link into the widget
+ * was repointed and the one nobody links was missed, which is the address
+ * Tom hands people. Found by walking it with `make try-china` — /china opened
+ * on a screen that had been out of the product for a day. */
 app.use("/china", webOnly, express.static("china", {
+  index: "home.html",
   extensions: ["html"],
   setHeaders: (res) => res.set("Cache-Control", "no-cache"),
 }));
@@ -10530,6 +10567,29 @@ const CHINA_COOKIE = "china";
  *
  * The board is asked first and wins: a member who is also a merchant is a
  * member, and their member row is the one they can see and change. */
+/* IS THIS MERCHANT READY TO TAKE MONEY, ASKED IN ONE PLACE.
+ *
+ * Three screens ask it — the connect guard above, the poller on switch.html
+ * and the ask screen — and each had its own copy of "call payeeReady, swallow
+ * whatever it throws". Three copies of a question is where the answers start
+ * to differ.
+ *
+ * BOARD_PAY_DEMO ANSWERS IT FROM THE FILE INSTEAD. Without a Stripe key the
+ * widget stops dead at the first button, so the five screens after it could
+ * only be looked at one at a time by typing their addresses — which is not
+ * walking through anything, and is exactly how a dead link between two of
+ * them survives being reviewed. In demo the row carries the flag Stripe would
+ * have carried. It is the same stand-in the payment screens already use and
+ * it says so on itself; it is never set on the box, and a real key makes this
+ * branch unreachable. */
+const chinaDemo = () => PAY_DEMO && !stripe.configured();
+const chinaReady = async (row) => {
+  if (!row) return false;
+  if (!stripe.configured()) return chinaDemo() ? Boolean(row.on) : false;
+  try { return await stripe.payeeReady(row.account); }
+  catch (err) { console.error("china ready:", err.message); return false; }
+};
+
 const askerPayee = async (board, q) => {
   const p = board.people.find((x) => x.by === q.by);
   if (p?.payee) return p.payee;
@@ -10544,12 +10604,24 @@ const chinaToken = (req) => {
 };
 
 app.post("/china/api/connect", express.json(), async (req, res) => {
-  if (!stripe.configured()) return res.status(503).json({ error: "off" });
+  if (!stripe.configured() && !chinaDemo()) return res.status(503).json({ error: "off" });
   /* An address, because an account with no owner is an account nobody can be
      told anything about. Stripe wants it too and asks again on its own page —
      this one is so the row here means something. */
   const email = String(req.body?.email || "").trim().slice(0, 120);
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return res.status(400).json({ error: "email" });
+  /* THE STAND-IN TAKES OVER HERE AND NOWHERE EARLIER. The address is checked
+     first, by the same line, so the refusal a mistyped address gets in the
+     demo is the refusal it gets on the box. What is skipped is the call to
+     Stripe and the trip to Stripe's pages; everything on either side of them
+     is the real thing. */
+  if (chinaDemo()) {
+    const token = await CHINA.remember({ account: "acct_stand_in", email });
+    res.cookie(CHINA_COOKIE, token, {
+      httpOnly: true, sameSite: "Lax", secure: true, maxAge: 180 * 24 * 3600 * 1000, path: "/china",
+    });
+    return res.json({ ok: true, url: backHere(req, "/china/stand-in") });
+  }
   try {
     const made = await stripe.makePayee({ country: "au", email });
     const account = String(made?.id || "");
@@ -10604,6 +10676,16 @@ app.post("/china/api/connect", express.json(), async (req, res) => {
  * page is an ordinary link.
  */
 app.get("/china/api/link", async (req, res) => {
+  /* The other button, standing in as well — otherwise the demo can only walk
+     the door somebody WITHOUT a Stripe account comes through, and the one
+     this screen makes the default is the one that goes untested. */
+  if (chinaDemo()) {
+    const token = await CHINA.remember({ account: "acct_stand_in", email: "" });
+    res.cookie(CHINA_COOKIE, token, {
+      httpOnly: true, sameSite: "Lax", secure: true, maxAge: 180 * 24 * 3600 * 1000, path: "/china",
+    });
+    return res.redirect(302, "/china/stand-in");
+  }
   if (!stripe.canLink()) return res.redirect(302, "/china/connect?e=nolink");
   try {
     const state = await CHINA.beginLink();
@@ -10701,15 +10783,18 @@ app.get("/china/api/state", async (req, res) => {
   /* canLink on every answer, including the empty one: the connect screen asks
      this before anybody has done anything, to find out whether its primary
      button can work at all. */
-  const canLink = stripe.canLink();
-  if (!row) return res.json({ started: false, ready: false, canLink });
-  if (!stripe.configured()) return res.json({ started: true, ready: false, canLink });
-  let ready = false;
-  try { ready = await stripe.payeeReady(row.account); }
-  catch (err) { console.error("china state:", err.message); }
+  const demo = chinaDemo();
+  const canLink = stripe.canLink() || demo;
+  if (!row) return res.json({ started: false, ready: false, canLink, demo });
   /* `name` so the ask screen can drop its name field once they have used it
-     once — see the note on nameIt in lib/china.js. */
-  res.json({ started: true, ready, canLink, email: row.email, name: row.name || "" });
+     once — see the note on nameIt in lib/china.js.
+     `demo` so the switch screen can show the way to flip the stand-in's
+     switch. Nothing reads it when BOARD_PAY_DEMO is unset, which is every
+     board that is deployed. */
+  res.json({
+    started: true, ready: await chinaReady(row), canLink, demo,
+    email: row.email, name: row.name || "",
+  });
 });
 
 app.get(["/dealio", "/dealio/"], webOnly, notesOff,
