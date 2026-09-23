@@ -27,6 +27,13 @@ the board. Payment links are `paydealio.com/pay/…`. Inert unless
 `TOMSCODING_DEALIO_DOMAIN` is set in `.env` on the box.
 
 
+**APPLE CAME BACK ON THE SUBMISSION (22 Sep, 06:42).** *"There's an issue
+with your The Exchange 交换 (iOS) submission"* — submission
+`9c9fce5f-6b14-406c-b857-23122b6607d3`, submitted 17 Sep, App Version 1.0.
+**The email names no reason.** Apple puts the findings on the App Review page
+and sends a notice that carries only the item. `make app-state` on the Mac
+asks Apple and prints them. Unread as of 23 Sep afternoon.
+
 ### The chain
 
 The whole chain was **watched finish on 20 September 2026**: request minted
@@ -53,6 +60,21 @@ deleted fork.** The fork became the two buttons on `home.html` a day ago,
 every link was repointed, and the one nobody links — the bare address Tom
 hands people — was missed. `index.html` is gone and the mount serves
 `home.html`.
+
+**STRIPE TURNED CHARGES ON THIS MORNING (23 Sep, 05:18).** Email to
+`stripe@aozhoubaba.com`, about `acct_1UIVjEJItwOUeslJ`, subject *"You can now
+accept payments with Stripe"*:
+
+> Thanks for providing information about your business. You can start
+> accepting payments while we review your information. Payouts to your bank
+> account will be enabled when our review is successfully completed.
+
+So **charges yes, payouts not yet** — the review is still running, which is
+the identity document. The "Payments paused soon" warning seen at 13:29 is
+about that same review, not a separate thing.
+
+It does not move the wallets: they were still Pending approval on the live
+account at 13:39, hours after this email.
 
 **THERE ARE TWO ACCOUNTS AND THEY DISAGREE (23 Sep, 14:18).** A live account
 and its own sandbox, both called Aozhou Baba:
