@@ -74,6 +74,36 @@ every link was repointed, and the one nobody links — the bare address Tom
 hands people — was missed. `index.html` is gone and the mount serves
 `home.html`.
 
+**THE ACCOUNT IS IN SOMEBODY ELSE'S NAME, AND THAT IS THE WHOLE BLOCKAGE
+(23 Sep, 23:00).** Not a login problem. The live account's representative is
+**Zhu Liyuan**, the two-step passkey is **"Zhu's passkey"**, and Stripe
+refused the identity document with, in Tom's words, *"the identity was
+wrong"* — the document did not match the name on the account.
+
+So three things are all one thing:
+
+- Tom cannot sign in. Touch ID on his Mac does nothing, because the passkey
+  is not his.
+- The document keeps being refused, because Stripe wants the representative's
+  and the representative is Zhu.
+- Charges, payouts and both wallets are frozen behind that refusal.
+
+Stripe's own way out of the passkey — *Remove two-step authentication → take a
+photo of your identity document* — is the same trap with a different label: it
+asks for a document that has to match a name that is not Tom's.
+
+**ONE QUESTION DECIDES IT, AND IT IS NOT A TASK.** Is Zhu the representative
+this account should have?
+
+- **Yes** → Zhu sends Zhu's document and Zhu signs in. Tom is a user on the
+  account, not its holder, and every future identity request goes to Zhu.
+- **No** → change the representative to Tom first, then send Tom's document.
+  The passkey stops mattering the moment the name changes.
+
+Nothing on Stripe moves until the name and the document are the same person.
+**Do not upload a document before that is decided** — a third refusal on an
+account that already carries one rejection is not free.
+
 **AND PAUSED THEM AGAIN EIGHT HOURS LATER (23 Sep, 13:05).** Email to
 `stripe@aozhoubaba.com`, subject *"[Action required] Provide information about
 Aozhou Baba"*:
