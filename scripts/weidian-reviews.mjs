@@ -39,6 +39,9 @@ if (!base || !key) {
 const API = base.replace(/\/$/, "");
 const arg = (n) => { const i = rest.indexOf("--" + n); return i >= 0 ? String(rest[i + 1] ?? "") : ""; };
 const DRY = rest.includes("--dry");
+/* --add creates the products the 微店 shop has and this board does not. See
+   the long note over add(). Never implied by --dry, which writes nothing. */
+const ADD = rest.includes("--add") && !DRY;
 
 let pulled;
 try {
@@ -53,8 +56,14 @@ try {
    carrying `item`. Either shape is accepted: the flat list is what somebody
    hand-editing the file tends to leave behind. */
 const byItem = new Map();
+/* The price and picture travel beside the reviews, for --add below. Kept
+   separately so the review path is untouched when nothing is being created. */
+const meta = new Map();
 for (const it of (pulled.items || [])) {
-  if (it?.name && it.reviews?.length) byItem.set(it.name, [...it.reviews]);
+  if (it?.name && it.reviews?.length) {
+    byItem.set(it.name, [...it.reviews]);
+    meta.set(it.name, { price: it.price || "", photo: it.photo || "" });
+  }
 }
 for (const r of (pulled.reviews || [])) {
   if (!r?.item || !r.text) continue;
@@ -131,8 +140,47 @@ function match(name) {
 let added = 0, sent = 0, done = 0;
 const missed = [];
 
+/* --add: PUT THE THING ON THE SHELF, THEN ITS REVIEWS ON THE THING.
+ *
+ * Every review was being refused and the refusals were all correct: the 微店
+ * shop carries far more than the eight products listed here, and the items
+ * that have reviews are ones nobody has added yet. "Products matched 0" was
+ * the honest answer to a question nobody wanted asked — there was no fault
+ * left to fix, only a catalogue to fill.
+ *
+ * So this creates the missing row from what the pull already read: the name
+ * (first line, not the blurb), the 微店 price, and the 微店 photograph. They
+ * are his own products at his own prices off his own shop, which is why this
+ * is defensible at all — nothing here is invented.
+ *
+ * BEHIND A FLAG, AND IT WILL ALWAYS BE BEHIND A FLAG. It puts live rows on a
+ * storefront that takes money, priced in yuan off another platform. That is
+ * a commercial decision and not one a review importer gets to make quietly.
+ * An item with no price is skipped rather than guessed at: a product with
+ * the wrong number on it is worse than a product that is not there. */
+async function add(name) {
+  const m = meta.get(name) || {};
+  const price = String(m.price || "").trim();
+  if (!price) return { row: null, how: "no price on the 微店 page — not added" };
+  const r = await fetch(API + "/api/admin/product", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "x-admin-secret": key },
+    body: JSON.stringify({ name: head(name), price, photo: m.photo || "" }),
+  });
+  const j = await r.json().catch(() => null);
+  if (!r.ok || !j?.ok) {
+    /* The board's own words, because "price" and "photo" are the two it
+       refuses on and both are things the pull may have read badly. */
+    return { row: null, how: "could not add it: " + (j?.error || r.status) };
+  }
+  return { row: { id: j.id, name: head(name) }, how: "added to the shop" };
+}
+
 for (const [name, rows] of byItem) {
-  const { row, how } = match(name);
+  let { row, how } = match(name);
+  if (!row && ADD && how === "nothing like it in the catalogue") {
+    ({ row, how } = await add(name));
+  }
   if (!row) { missed.push([name, rows.length, how]); continue; }
 
   /* stars defaults to 5 — 好评100% is what the old shop actually carried, and

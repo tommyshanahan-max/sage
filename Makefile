@@ -868,7 +868,7 @@ weidian-json: ## Print what weidian-pull read: make weidian-json
 	@$(COMPOSE) --profile post run --rm --no-deps -T post-browser \
 	  node -e 'const d=require("fs").readFileSync("/data/weidian.json","utf8");process.stdout.write(d)'
 
-weidian-reviews: ## Old 微店 reviews onto the matching products: make weidian-reviews SHOP=https://weidian.com/s/1202970134 [MAX=40] [DRY=1]
+weidian-reviews: ## Old 微店 reviews onto the matching products: make weidian-reviews SHOP=https://weidian.com/s/1202970134 [MAX=40] [DRY=1] [ADD=1]
 	@# ONE COMMAND, BECAUSE THE JOIN USED TO BE FORTY.
 	@# weidian-pull writes every item and its reviews into /data/weidian.json;
 	@# review-import takes ONE product, by its number in `make catalogue`, and
@@ -888,7 +888,7 @@ weidian-reviews: ## Old 微店 reviews onto the matching products: make weidian-
 	@# root. It runs no browser, but the file is the whole point of it.
 	@$(COMPOSE) --profile post run --rm --no-deps -T -v "$(CURDIR)/scripts:/app/seed:ro" post-browser \
 	  node /app/seed/weidian-reviews.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
-	  --file /data/weidian.json $(if $(DRY),--dry,)
+	  --file /data/weidian.json $(if $(DRY),--dry,) $(if $(ADD),--add,)
 
 review-import: ## All the old reviews at once: make review-import N=1 FILE=scripts/reviews-1.json
 	@# The file is a JSON array: [{"who":"李娜","stars":5,"text":"…","at":"2024-11-02"}, …]
