@@ -853,6 +853,14 @@ weidian-pull: ## Read the old 微店 shop: make weidian-pull SHOP=https://weidia
 	@# walking up from the importing FILE — from /seed that is /seed then /,
 	@# so it never saw it and every run died with ERR_MODULE_NOT_FOUND. One
 	@# directory deeper inside /app and the ordinary walk finds it.
+	@#
+	@# AS ROOT, AND WITH THE BROWSER PATH SAID OUT LOUD. browser.Dockerfile
+	@# runs `npx playwright install` on line 21 as root, then drops to
+	@# USER 1000:1000 on line 31 — so Chromium sits in /root/.cache, which
+	@# mode-700 keeps uid 1000 out of. Playwright then reports it as "just
+	@# installed, run npx playwright install", which sends you off to fix the
+	@# image when the image is fine and only the reader is wrong. Naming the
+	@# path removes the guess from HOME as well.
 	@$(COMPOSE) --profile post run --rm --no-deps -T -v "$(CURDIR)/scripts:/app/seed:ro" post-browser \
 	  node /app/seed/weidian-pull.mjs --shop "$(SHOP)" --out /data/weidian.json --max "$(or $(MAX),40)"
 
@@ -876,6 +884,8 @@ weidian-reviews: ## Old 微店 reviews onto the matching products: make weidian-
 	@# somebody's words about formula filed under a jar of honey would never
 	@# be found again. DRY=1 shows what it would match and writes nothing.
 	@if [ -n "$(SHOP)" ]; then $(MAKE) weidian-pull SHOP="$(SHOP)" MAX="$(or $(MAX),40)"; fi
+	@# Root here too, so it can read the weidian.json the pull just wrote as
+	@# root. It runs no browser, but the file is the whole point of it.
 	@$(COMPOSE) --profile post run --rm --no-deps -T -v "$(CURDIR)/scripts:/app/seed:ro" post-browser \
 	  node /app/seed/weidian-reviews.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  --file /data/weidian.json $(if $(DRY),--dry,)
