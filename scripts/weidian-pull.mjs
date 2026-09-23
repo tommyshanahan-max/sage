@@ -381,6 +381,19 @@ try {
     await wait(1500); /* politeness, and it keeps this well under any rate limit */
   }
 
+  /* HOW MANY DIFFERENT PICTURES CAME BACK — because forty items wearing one
+     photograph is the shape of a selector that found the site's own logo, and
+     that shipped to a live shopfront once already. It read "3 items, 9
+     reviews" and looked like success; only hashing the images afterwards
+     showed all fourteen were the same 5KB mark. One line here would have said
+     so before anybody saw it. */
+  const pics = new Set(out.items.map((i) => i.photo).filter(Boolean));
+  console.error(`pictures: ${pics.size} different across ${out.items.length} items`);
+  if (out.items.length > 2 && pics.size <= 1) {
+    console.error("  ^ every item came back with the same picture. That is the");
+    console.error("    shop's own logo, not the goods — do not import these.");
+  }
+
   await fs.writeFile(OUT, JSON.stringify(out, null, 2));
   console.error(`\nwrote ${OUT}: ${out.items.length} items, ${out.reviews.length} reviews`);
 } finally {
