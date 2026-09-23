@@ -18,7 +18,7 @@
 <body>
 <main class="sheet">
   <header class="top">
-    <a class="back" href="index.html">&larr; Back</a>
+    <a class="back" href="home.html">&larr; Back</a>
     <h1>Connect your account</h1>
     <p>Already have a Stripe account? It offers to reuse what Stripe has already verified.</p>
   </header>
@@ -132,6 +132,29 @@
   fetch("api/state", { headers: { Accept: "application/json" } })
     .then(function (r) { return r.json(); })
     .then(function (j) {
+      /* ALREADY CONNECTED, AND THE BUTTON ON THIS SCREEN OPENS ANOTHER ONE.
+         Somebody who set up last week and came back here would have been
+         given a second Stripe connected account, silently, for pressing the
+         button the page offered him. */
+      if (j && j.started) {
+        link.hidden = true; go.hidden = true; newbox.hidden = true; alt.hidden = true;
+        var done = document.createElement("div");
+        done.className = "card";
+        done.innerHTML = "<b>You are already set up.</b>";
+        var pp = document.createElement("p");
+        pp.textContent = j.ready
+          ? "Your Stripe account is connected and can take payment."
+          : "Your Stripe account is connected. WeChat Pay may still need switching on.";
+        done.appendChild(pp);
+        var onward = document.createElement("a");
+        onward.className = "go";
+        onward.href = j.ready ? "ask.html" : "switch.html";
+        onward.textContent = j.ready ? "Ask someone to pay" : "Finish setting up";
+        onward.style.marginTop = "1rem";
+        done.appendChild(onward);
+        say.parentNode.insertBefore(done, say);
+        return;
+      }
       if (j && j.canLink === false) {
         showNew(false);
         var say2 = document.createElement("p");

@@ -113,8 +113,21 @@
        first for the reason written on the fork it replaces: a contract
        wants a signature, Stripe wants identity and a bank account before
        anybody has been paid. -->
-  <a class="go" href="beijing.html">Let us invoice for you</a>
-  <a class="go alt" href="connect.html">Use my own Stripe</a>
+  <div id="new">
+    <a class="go" href="beijing.html">Let us invoice for you</a>
+    <a class="go alt" href="connect.html">Use my own Stripe</a>
+  </div>
+
+  <!-- THE SAME PAGE, FOR SOMEBODY WHO HAS ALREADY BEEN. It showed the two
+       buttons to everybody, so a merchant who had connected last week came
+       back to a sales page inviting him to sign up — and pressing "Use my
+       own Stripe" would have opened him a SECOND connected account. The
+       server knew: api/state has answered started:true all along and
+       nothing asked it. -->
+  <div id="back" hidden>
+    <a class="go" href="ask.html">Ask someone to pay</a>
+    <a class="see" href="live.html">Your setup &rsaquo;</a>
+  </div>
 
   <div class="ways">
     <span class="way"><i></i>WeChat Pay 微信支付</span>
@@ -174,5 +187,20 @@
     <a href="/dealio/terms">Terms</a><a href="/privacy">What is kept</a>
   </footer>
 </div>
+<script>
+  /* Two states, one page. The fetch is the only thing between them, and a
+     failed fetch leaves the page exactly as drawn — a stranger seeing the
+     buttons is right, and it is the worse error to make in the other
+     direction. */
+  fetch("api/state", { headers: { Accept: "application/json" } })
+    .then(function (r) { return r.json(); })
+    .then(function (j) {
+      if (j && j.started) {
+        document.getElementById("new").hidden = true;
+        document.getElementById("back").hidden = false;
+      }
+    })
+    .catch(function () {});
+</script>
 </body>
 </html>
