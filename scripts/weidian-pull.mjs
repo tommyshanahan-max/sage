@@ -92,6 +92,27 @@ async function toTheBottom(page, rounds = 25) {
 const out = { shop: SHOP, at: new Date().toISOString(), items: [], reviews: [] };
 const page = await ctx.newPage();
 
+/* LISTEN TO WHAT THE PAGE ASKS FOR, RATHER THAN READING WHAT IT DREW.
+ *
+ * The shop draws itself from JSON it fetches, and the item ids are in those
+ * answers even when they never appear in the markup — which is what two
+ * failed attempts at parsing the page established. A response listener costs
+ * four lines, is attached before the first navigation, and cannot be wrong
+ * about a route it never has to name: whatever the shop asks for, we read.
+ *
+ * Six digits or more for the same reason as everywhere else here: the short
+ * numbers in these payloads are prices, counts and pixel sizes. */
+const heard = new Set();
+page.on("response", async (res) => {
+  try {
+    const type = res.headers()["content-type"] || "";
+    if (!/json|javascript|text/.test(type)) return;
+    const body = await res.text();
+    if (!body || body.length > 2_000_000) return;
+    for (const m of body.matchAll(/["']?item(?:_?id|ID)["']?\s*[:=]\s*["']?(\d{6,})/gi)) heard.add(m[1]);
+  } catch { /* a response that cannot be read is not a reason to stop */ }
+});
+
 try {
   await page.goto(SHOP, { waitUntil: "domcontentloaded" });
   await wait(4000);
@@ -168,6 +189,19 @@ try {
     }
     return [...seen];
   });
+
+  /* WHAT THE PAGE ASKED FOR, BEFORE ANY TAPPING. The listener above has been
+     collecting item ids out of the shop's own JSON since before the first
+     navigation, and an id heard on the wire is worth more than one guessed
+     from markup: it is what the shop itself uses. Tapping stays below as the
+     fallback, because a shop that renders entirely from a cached bundle may
+     ask for nothing at all. */
+  if (!links.length && heard.size) {
+    for (const id of [...heard].slice(0, MAX)) {
+      links.push("https://weidian.com/item.html?itemID=" + id);
+    }
+    console.error(`heard on the wire: ${links.length} item ids`);
+  }
 
   /* STOP GUESSING AT THE MARKUP AND DO WHAT A CUSTOMER DOES: TAP A TILE.
    *
