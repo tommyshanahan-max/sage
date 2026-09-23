@@ -114,14 +114,34 @@
     if (t) try { say.scrollIntoView({ block: "center", behavior: "smooth" }); } catch (e) {}
   }
 
-  none.addEventListener("click", function (e) {
-    e.preventDefault();
+  function showNew(focus) {
     link.hidden = true;
     alt.hidden = true;
     newbox.hidden = false;
     go.hidden = false;
-    document.getElementById("email").focus();
-  });
+    if (focus) document.getElementById("email").focus();
+  }
+  none.addEventListener("click", function (e) { e.preventDefault(); showNew(true); });
+
+  /* IF THE PRIMARY BUTTON CANNOT WORK, IT IS NOT THE PRIMARY BUTTON.
+     Without BOARD_STRIPE_CLIENT_ID "Connect my Stripe" can only refuse, and
+     it sat at the bottom of the screen in green while the thing that does
+     work was hidden behind a grey link. Reported as "the part where I enter
+     my email is gone". So the screen asks first and arranges itself around
+     the answer. */
+  fetch("api/state", { headers: { Accept: "application/json" } })
+    .then(function (r) { return r.json(); })
+    .then(function (j) {
+      if (j && j.canLink === false) {
+        showNew(false);
+        var say2 = document.createElement("p");
+        say2.className = "note";
+        say2.style.textAlign = "center";
+        say2.textContent = "Connecting an account you already have is not switched on here yet.";
+        alt.parentNode.insertBefore(say2, alt);
+      }
+    })
+    .catch(function () { /* leave the screen as drawn */ });
 
   /* A refusal the server could only say by redirecting — it had nowhere to
      put a sentence on a page it was sending somebody away from. */

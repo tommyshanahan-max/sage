@@ -10587,12 +10587,16 @@ app.get("/china/api/state", async (req, res) => {
   const m = new RegExp("(?:^|;\\s*)" + CHINA_COOKIE + "=([0-9a-f]{32})")
     .exec(String(req.headers.cookie || ""));
   const row = await CHINA.find(m && m[1]);
-  if (!row) return res.json({ started: false, ready: false });
-  if (!stripe.configured()) return res.json({ started: true, ready: false });
+  /* canLink on every answer, including the empty one: the connect screen asks
+     this before anybody has done anything, to find out whether its primary
+     button can work at all. */
+  const canLink = stripe.canLink();
+  if (!row) return res.json({ started: false, ready: false, canLink });
+  if (!stripe.configured()) return res.json({ started: true, ready: false, canLink });
   let ready = false;
   try { ready = await stripe.payeeReady(row.account); }
   catch (err) { console.error("china state:", err.message); }
-  res.json({ started: true, ready, email: row.email });
+  res.json({ started: true, ready, canLink, email: row.email });
 });
 
 app.get(["/dealio", "/dealio/"], webOnly, notesOff,
