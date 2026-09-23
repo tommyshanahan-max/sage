@@ -64,6 +64,11 @@ const ctx = await chromium.launchPersistentContext("/tmp/weidian-profile", {
   locale: "zh-CN",
   timezoneId: "Asia/Shanghai",
   userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1",
+  /* ASKED FOR IN CHINESE, OUT LOUD. `locale` sets this in most cases and the
+     first pull still came back in English, so it is stated rather than
+     assumed — the page may be deciding by header, by IP, or by neither, and
+     one header costs nothing to rule out. */
+  extraHTTPHeaders: { "Accept-Language": "zh-CN,zh;q=0.9" },
 });
 ctx.setDefaultTimeout(45_000);
 
@@ -270,8 +275,24 @@ try {
 
       Object.assign(item, await page.evaluate(() => {
         const t = (sel) => document.querySelector(sel)?.textContent?.trim() || "";
-        const name = t('[class*="title"], h1, [class*="name"]') ||
-          (document.title || "").replace(/[-_|].*$/, "").trim();
+        /* THE CHINESE TITLE, WHEN THERE IS ONE.
+           The first pull took whichever title element came first and got
+           English: "A 2 New Zealand formula milk powder 1 paragraph" — 1段
+           run through a translator — onto a storefront every one of whose
+           buyers is Chinese. Worse, the matcher then compared that against a
+           catalogue written in Chinese, found nothing alike, and ADD=1
+           created a second row for a tin already on the shelf.
+           So: gather the candidates and prefer one that actually contains
+           Han characters. Falling back to the English one is right when the
+           page has nothing else — a name in the wrong language beats no
+           product — but it is the fallback, not the first answer. */
+        const han = (s) => /[\u4e00-\u9fff]/.test(s || "");
+        const seen = [
+          t('[class*="title"]'), t("h1"), t('[class*="name"]'),
+          document.querySelector('meta[property="og:title"]')?.content || "",
+          (document.title || "").replace(/[-_|].*$/, "").trim(),
+        ].map((s) => String(s || "").trim()).filter(Boolean);
+        const name = seen.find(han) || seen[0] || "";
         const priceText = (document.body.innerText.match(/[¥￥]\s?\d+(\.\d+)?/) || [""])[0];
         const img = document.querySelector('[class*="swiper"] img, [class*="banner"] img, img');
         return { name, price: priceText.replace(/\s/g, ""), photo: img?.src || "" };

@@ -11965,6 +11965,48 @@ const isJunk = (text) => {
   return JUNK.some((re) => re.test(t));
 };
 
+/** MOVE REVIEWS FROM ONE PRODUCT TO ANOTHER, AND RETIRE THE ONE THEY LEFT.
+ *
+ *  The import created a second row for a tin already on the shelf: it read
+ *  the 微店 name in English, compared it against a catalogue written in
+ *  Chinese, found nothing alike, and added. Two rows for one product, and the
+ *  obvious repair — take the English one off — silently takes its reviews
+ *  with it, because the reviews page lists only products that are on the
+ *  shelf. So the words move first, and only then does the row go.
+ *
+ *  ONE DIRECTION, BOTH NAMED. No merging by guesswork: whoever runs this has
+ *  looked at two rows and decided they are the same tin, which is a judgement
+ *  a string comparison has already got wrong once here.
+ */
+app.post("/api/admin/review-move", admin, express.json({ limit: "2kb" }), async (req, res) => {
+  const from = shop.cleanId(req.body?.from);
+  const to = shop.cleanId(req.body?.to);
+  if (!from || !to || from === to) return res.status(400).json({ error: "two different products" });
+  const out = await change((b) => {
+    const a = b.products.find((p) => p.id === from);
+    const z = b.products.find((p) => p.id === to);
+    if (!a || !z) return { error: "gone" };
+    let moved = 0;
+    for (const r of b.reviews) {
+      if (r.product !== from) continue;
+      /* The same words already on the destination are the same review seen
+         twice, not two customers agreeing — the import dropped duplicates on
+         the way in and this keeps that true across a move. */
+      if (b.reviews.some((x) => x.product === to && x.text && x.text === r.text)) { r.product = ""; continue; }
+      r.product = to;
+      moved++;
+    }
+    b.reviews = b.reviews.filter((r) => r.product);
+    /* Off rather than deleted, like everything else about a product here: a
+       storefront that linked to it has to be able to say 已售完 rather than
+       show a page that is gone. */
+    if (req.body?.retire !== false) a.off = true;
+    return { ok: true, moved, from: a.name, to: z.name, retired: Boolean(a.off) };
+  });
+  if (out?.error) return res.status(404).json(out);
+  res.json({ ok: true, ...out });
+});
+
 app.post("/api/admin/review-tidy", admin, express.json({ limit: "2kb" }), async (req, res) => {
   const go = Boolean(req.body?.go);
   const board = await store.load(FILE);
