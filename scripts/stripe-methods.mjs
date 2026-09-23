@@ -15,11 +15,18 @@
  * them to go and switch WeChat Pay on was removed. So this one account's
  * answer is the answer for every payment the product will ever take.
  *
- * TWO DIFFERENT NOS. `available: false` is Stripe saying it will not give
- * this account the method at all — an application, or a refusal, and nothing
- * in a dashboard will change it. `value: "off"` is a switch that is simply
- * not flipped. They read alike on a screen and mean entirely different days'
- * work, so they are printed as different words.
+ * TWO DIFFERENT NOS, AND THE FIRST ONE IS NOT A REFUSAL. `available: false`
+ * means the method is not available to this account YET. `value: "off"` is a
+ * switch that is simply not flipped. They read alike and mean entirely
+ * different days' work, so they are printed as different words.
+ *
+ * THE FIRST VERSION OF THIS PRINTED "Stripe will not give this account the
+ * method", and that was a sentence this script cannot say. The dashboard for
+ * the same account, the same minute, showed WeChat Pay and Alipay as
+ * **Pending approval** — applied for, waiting on Stripe, which is the
+ * opposite conclusion. The API field does not carry the difference between
+ * pending and refused; only Settings → Payment methods does. So this says
+ * what it knows and names the page that knows the rest.
  *
  * NOTHING SECRET COMES BACK and nothing is written: one GET, and the key
  * comes through the environment rather than argv, which is visible in `ps`.
@@ -80,7 +87,7 @@ for (const c of configs) {
        mentions and refuses, and saying "off" for both would hide the
        difference that matters. */
     const say = !m ? "not offered on this account"
-      : m.available === false ? "NOT AVAILABLE — Stripe will not give this account the method"
+      : m.available === false ? "NOT YET — Stripe has not made it available to this account"
       : m.display_preference?.value === "on" ? "on"
       : "off — available, not switched on";
     console.log("    " + label.padEnd(12) + " " + say);
@@ -101,4 +108,12 @@ console.log(wallets.length === 2
   : wallets.length === 1
   ? "  ONLY ONE WALLET IS ON (" + wallets[0].replace("_", " ") + "). Half the payers cannot pay."
   : "  NEITHER WALLET IS ON. Nobody in China can pay through this platform.");
+/* AND WHETHER THAT IS TEMPORARY IS NOT IN THIS ANSWER. "Not yet" covers an
+   application Stripe is still reading and one it has turned down, and those
+   are a week apart in what they mean. Naming the page rather than guessing. */
+if (["wechat_pay", "alipay"].some((k) => def?.[k]?.available === false)) {
+  console.log("");
+  console.log("  NOT YET is either pending approval or refused, and this cannot");
+  console.log("  tell them apart. Settings \u2192 Payment methods says which.");
+}
 console.log("");

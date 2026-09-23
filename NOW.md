@@ -54,43 +54,36 @@ every link was repointed, and the one nobody links — the bare address Tom
 hands people — was missed. `index.html` is gone and the mount serves
 `home.html`.
 
-**STRIPE WILL NOT GIVE THIS ACCOUNT THE TWO WALLETS (23 Sep, 13:40).**
-`make wallets` on the box, against the **test** key:
+**BOTH WALLETS ARE APPLIED FOR AND PENDING (23 Sep, 13:39).** Settings →
+Payment methods, the Default configuration on the platform account
+(`pmc_1UIVjkJItwOUeslJr1As0u9C`):
 
 ```
-  Default  (the default) · test
-    WeChat Pay   NOT AVAILABLE — Stripe will not give this account the method
-    Alipay       NOT AVAILABLE — Stripe will not give this account the method
-    Card         on
-
-  NEITHER WALLET IS ON. Nobody in China can pay through this platform.
+  Alipay        Pending approval    Digital wallet   China
+  WeChat Pay    Pending approval    Digital wallet   China
+  Card          Enabled
 ```
 
-Not a switch nobody flipped — `available: false`, which is Stripe withholding
-the method. Card is the only thing this platform can offer a payer, and a
-card form is not the product: the payer is in WeChat.
+**Nothing to do in Stripe.** The application is in. It is waiting on them.
 
-**What is not yet known, and it decides what to do:**
+**`make wallets` said the wrong thing about this and has been fixed.** Against
+the test key it printed *"NOT AVAILABLE — Stripe will not give this account the
+method"*, which is a refusal, and the dashboard for the same account the same
+minute said **Pending approval**. The API's `available: false` does not carry
+the difference between pending and refused; only that page does. It now says
+"NOT YET" and names the page. One more unchecked thing stated as fact, and the
+fourth time this week — the pattern is always the same, a plausible reading of
+a field turned into a sentence.
 
-- **This is the test key.** The live answer may differ, and there is no way to
-  read it from here without putting live keys on the box. Live mode's
-  Settings → Payment methods is the one place it shows.
-- **It may be the same blocker as everything else.** The identity document
-  for Zhu Liyuan is in review, Payments is marked "paused soon", and Cartes
-  Bancaires is already paused. Stripe withholding extra methods from an
-  account it has not finished verifying is the ordinary explanation. Run
-  `make wallets` again the day that document clears, before concluding
-  anything.
+What is still true from that run: **card is the only method this platform can
+offer today**, and a card form is not the product — the payer is in WeChat.
+And it read the **test** key; the live answer is the dashboard's.
 
-**So do not apply for the wallets yet.** Asking Stripe for two payment methods
-on an account whose identity document it is still reading is the wrong
-question in the wrong week.
-
-**And it is the second provider to withhold them.** Airwallex is gone, Stripe
-holds the wallets back. Door two — the Beijing WFOE, where we are the merchant
-of record and nobody has to grant us a wallet — is the only route that does not
-depend on somebody saying yes. The note below about the fork being the wrong
-way round now has a second reason under it.
+**Three providers deep and none of them has said yes yet.** Airwallex gone,
+Stripe's two wallets pending. Door two — the Beijing WFOE, where we are the
+merchant of record and nobody has to grant us a wallet — is still the only
+route that does not wait on somebody's permission. Not a reason to abandon
+door one, which is now one approval away.
 
 **The merchant was being told to switch on something that is not theirs
 (23 Sep).** `switch.html` read "One switch left — WeChat Pay is off on your
