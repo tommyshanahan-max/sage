@@ -63,8 +63,12 @@ one. **Two minutes settles it**: press the button, take Express onboarding
 through with Stripe's "Use test data", and see whether it lets somebody sign
 in to an account they already have. If it does, only the wording changes.
 
-**And Tom's own number for Express onboarding is an hour**, not the ten
-minutes assumed here. If that holds, nobody does it for a supplier who has
+**Nobody has timed Express onboarding**, and three different figures were
+written down as though somebody had: a minute, then ten minutes, then an
+hour. The one run of it (23 Sep) used an address with no Stripe account
+behind it, so it was ordinary onboarding and says nothing about an existing
+Stripe user. The screens quote no figure now. One person with an account
+pressing the button closes it. If that holds, nobody does it for a supplier who has
 not paid them yet — which makes door two (the WFOE, no merchant onboarding
 at all) the main door rather than the fallback, and the fork on
 `/china` the wrong way round. That is a decision, not a task.

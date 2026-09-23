@@ -22,13 +22,26 @@
 
   <div class="body">
     <!-- THE CHEAP DOOR FIRST, and it used to be second.
-         It led with "I have a Stripe account — about a minute", which was
-         measured and is not true: Stripe will not reuse an account it
-         already knows, so anybody with one still fills in identity and bank
-         details from scratch, and the figure from doing it is an hour.
-         Nobody spends an hour on bank forms for a supplier who has not paid
-         them yet. They will sign something. So the order follows what it
-         costs the person reading, not what is tidiest for us. -->
+         It led with "I have a Stripe account — about a minute".
+
+         NOTHING ABOUT THAT SENTENCE WAS EVER MEASURED, and it is worth
+         writing down how close it came to being treated as fact. "About a
+         minute" was a guess. "Ten minutes" was the next guess. "An hour"
+         was the one after that, and it spent an hour on this screen as
+         though somebody had timed it. Express onboarding was run once, on
+         an address with no Stripe account behind it — which is ordinary
+         onboarding and says nothing about somebody who already has one.
+
+         SO NO FIGURE IS QUOTED HERE, and the claim on the second door is
+         only what the code does: Stripe collects identity and bank details
+         itself. Whether it shortcuts for an existing Stripe user is still
+         open, and the way to close it is one person with an account
+         pressing the button.
+
+         THE ORDER DOES NOT DEPEND ON IT. Stripe wants identity and a bank
+         account before anybody has been paid; a contract wants a signature.
+         That holds at any duration, and it is why the cheap door is
+         first. -->
     <a class="door" href="beijing.html">
       <span class="head"><span class="dot"></span><b>We invoice your client, you get paid</b></span>
       <p>Sign one contract. Your client pays our Beijing company in WeChat, we pay you in your own currency. Nothing to set up.</p>
@@ -37,7 +50,7 @@
 
     <a class="door" href="connect.html">
       <span class="head"><span class="dot other"></span><b>I&rsquo;d rather use my own Stripe</b></span>
-      <p>Money lands in your own account and we never touch it. Stripe asks for your identity and bank details first &mdash; put aside an hour.</p>
+      <p>Money lands in your own account and we never touch it. Stripe asks for your identity and bank details first, even if you already have an account with them.</p>
       <div class="when other">Set it up &rsaquo;</div>
     </a>
 
