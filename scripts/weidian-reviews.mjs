@@ -70,8 +70,27 @@ if (!byItem.size) {
 const list = await fetch(API + "/api/admin/products", { headers: { "x-admin-secret": key } });
 const j0 = await list.json().catch(() => null);
 if (!list.ok || !j0?.ok) { console.error("\n  the board said " + list.status + "\n"); process.exit(1); }
-const products = j0.products || j0.rows || [];
-if (!products.length) { console.error("\n  Nothing in the catalogue to match against.\n"); process.exit(1); }
+/* ROWS THAT ARE OFF THE SHOPFRONT ARE NOT CANDIDATES.
+ *
+ * /api/admin/products returns everything, `off` rows included — it is the
+ * admin view, and that is correct for it. This read the lot, so after
+ * `catalogue-tidy` took two of three duplicate 爱他美金装 3段 off the shelf,
+ * the matcher still saw three, called it a tie and refused the reviews. The
+ * tidy had worked; the reader had not.
+ *
+ * It would also have been wrong on its own terms: /api/shop/:handle/reviews
+ * builds its list from products with !off, so a review filed against a
+ * retired row is a review nobody can ever read. */
+const all0 = j0.products || j0.rows || [];
+const products = all0.filter((p) => !p.off);
+if (!products.length) {
+  console.error("\n  Nothing in the catalogue to match against"
+    + (all0.length ? ` (${all0.length} rows, all off the shopfront)` : "") + ".\n");
+  process.exit(1);
+}
+if (all0.length !== products.length) {
+  console.log(`  ${products.length} on the shelf, ${all0.length - products.length} taken off — matching against the ${products.length}.`);
+}
 
 /* Punctuation, spacing and full-width brackets out; case folded. A 微店 name
    and the same thing typed into this board differ by exactly this much far
