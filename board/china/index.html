@@ -17,23 +17,31 @@
   <header style="flex-shrink:0;padding:calc(2rem + env(safe-area-inset-top,0px)) 1.4rem 1.5rem">
     <p style="margin:0;font-size:.8rem;font-weight:600;letter-spacing:.02em;color:var(--muted)">China Business Solutions</p>
     <h1 style="margin:.9rem 0 0;font-family:var(--serif);font-size:2.1rem;line-height:1.12;font-weight:400">Get paid from China.</h1>
-    <p style="margin:.7rem 0 0;font-size:.97rem;line-height:1.6;color:var(--body)">One question decides how. It takes a minute either way.</p>
+    <p style="margin:.7rem 0 0;font-size:.97rem;line-height:1.6;color:var(--body)">One question decides how. Neither answer is a form you fill in today.</p>
   </header>
 
   <div class="body">
-    <a class="door" href="connect.html">
-      <span class="head"><span class="dot"></span><b>I have a Stripe or Airwallex account</b></span>
-      <p>One button. Money lands in your own account, same as it does today. We never touch it.</p>
-      <div class="when">About a minute &rsaquo;</div>
-    </a>
-
+    <!-- THE CHEAP DOOR FIRST, and it used to be second.
+         It led with "I have a Stripe account — about a minute", which was
+         measured and is not true: Stripe will not reuse an account it
+         already knows, so anybody with one still fills in identity and bank
+         details from scratch, and the figure from doing it is an hour.
+         Nobody spends an hour on bank forms for a supplier who has not paid
+         them yet. They will sign something. So the order follows what it
+         costs the person reading, not what is tidiest for us. -->
     <a class="door" href="beijing.html">
-      <span class="head"><span class="dot other"></span><b>I don&rsquo;t, or I&rsquo;ve been declined</b></span>
-      <p>We invoice your client through our Beijing company and pay you as our supplier. Slower, and there&rsquo;s a contract.</p>
-      <div class="when other">Talk to us &rsaquo;</div>
+      <span class="head"><span class="dot"></span><b>We invoice your client, you get paid</b></span>
+      <p>Sign one contract. Your client pays our Beijing company in WeChat, we pay you in your own currency. Nothing to set up.</p>
+      <div class="when">Start today &rsaquo;</div>
     </a>
 
-    <p class="note">Not sure? Take the first one. Stripe approves ordinary businesses in a day &mdash; it&rsquo;s payment platforms they turn down.</p>
+    <a class="door" href="connect.html">
+      <span class="head"><span class="dot other"></span><b>I&rsquo;d rather use my own Stripe</b></span>
+      <p>Money lands in your own account and we never touch it. Stripe asks for your identity and bank details first &mdash; put aside an hour.</p>
+      <div class="when other">Set it up &rsaquo;</div>
+    </a>
+
+    <p class="note">Most people take the first one, get paid, and move to their own account later. The second is there whenever you want it.</p>
     <div class="grow"></div>
   </div>
 
