@@ -48,6 +48,11 @@
   .go{display:flex;align-items:center;justify-content:center;min-height:52px;
     margin:1.6rem 0 0;padding:1rem;border-radius:999px;background:var(--acc);
     color:var(--accink);font-size:1rem;font-weight:600;text-decoration:none}
+  /* The second route, drawn as a choice and not a lesser one: an outline,
+     the same size and the same weight. Somebody who already has Stripe is
+     not taking the consolation prize. */
+  .go.alt{margin-top:.7rem;background:none;color:var(--ink);
+    border:1px solid var(--line)}
   .see{display:inline-flex;align-items:center;min-height:44px;margin-top:.9rem;
     font-size:.92rem;color:var(--ink2);text-decoration:none}
 
@@ -99,8 +104,17 @@
   <p class="lede">Your client pays the way they already pay for everything. You get the money in your own currency.</p>
   <p class="corridor">Cross-border payments for services &mdash; mainland China to Australia.</p>
 
-  <a class="go" href="index.html">Get set up</a><br>
-  <a class="see" href="beijing.html">Or let us invoice for you &rsaquo;</a>
+  <!-- TWO BUTTONS AND NO FORK. There was one button saying "Get set up",
+       and it led to a screen asking which of the two routes you wanted —
+       the two routes this page had just finished explaining. He read the
+       answer and was then asked the question.
+       So the choice is made here, where it is described, and each button
+       says what happens rather than what it is called. The cheap one is
+       first for the reason written on the fork it replaces: a contract
+       wants a signature, Stripe wants identity and a bank account before
+       anybody has been paid. -->
+  <a class="go" href="beijing.html">Let us invoice for you</a>
+  <a class="go alt" href="connect.html">Use my own Stripe</a>
 
   <div class="ways">
     <span class="way"><i></i>WeChat Pay 微信支付</span>
@@ -119,10 +133,10 @@
   </section>
 
   <section>
-    <p class="lab">Two ways in</p>
+    <p class="lab">The two buttons</p>
     <h2>Your account, or ours.</h2>
-    <p><b style="color:var(--ink)">Your own Stripe.</b> The money lands in your account and we never touch it. Stripe collects your identity and bank details itself &mdash; and if you already have an account with them, it offers to reuse what it has already verified.</p>
-    <p><b style="color:var(--ink)">Our Beijing company.</b> Sign one contract. Your client pays us in WeChat against a 发票, and we pay you as our supplier. Nothing to set up, and you can move to your own account later.</p>
+    <p><b style="color:var(--ink)">Let us invoice for you.</b> Sign one contract. Your client pays our Beijing company in WeChat against a 发票, and we pay you as our supplier. Nothing to set up, and you can move to your own account later.</p>
+    <p><b style="color:var(--ink)">Use my own Stripe.</b> The money lands in your account and we never touch it. Stripe collects your identity and bank details itself &mdash; and if you already have an account with them, it offers to reuse what it has already verified.</p>
   </section>
 
   <section>
