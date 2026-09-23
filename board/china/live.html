@@ -31,14 +31,15 @@
     <div class="card" style="margin-top:.8rem;padding:.2rem 1.15rem">
       <div class="kv"><span class="k">Accepts</span><span class="v">WeChat Pay &middot; Alipay</span></div>
       <div class="kv"><span class="k">Lands in</span><span class="v">Your Stripe, AUD</span></div>
-      <!-- 3.5%, NOT 2%, AND THE DIFFERENCE IS NOT ROUNDING. 2% is FEE_PCT in
-             lib/store.js, the platform's own cut and an internal number. 3.5%
-             is what actually leaves the payment: the wallet's fee for taking
-             it, the conversion out of yuan, and ours. Dealio quotes 3.5% with
-             a note beside the string saying why, in these words: "A payer told
-             2% and charged more than that is a payer who never comes back."
-             This screen said 2% for a day. -->
-      <div class="kv"><span class="k">Fee</span><span class="v">3.5%, all in</span></div>
+      <!-- NO FEE ROW, BECAUSE THE FEE IS NOT KNOWN.
+             It said 2% (FEE_PCT — the platform's cut alone, which is not a
+             price), then 3.5% (Dealio's all-in figure). Both were written
+             here without the one thing that decides it: which provider takes
+             the payment. Airwallex is gone, Stripe Connect is newly open on a
+             second account, and QFPay, Pockyt and Adyen are unasked. Every
+             number is a different wallet fee and a different conversion.
+             A number on a money screen is a promise. This one goes back when
+             somebody can stand behind it. -->
     </div>
 
     <div class="card">
