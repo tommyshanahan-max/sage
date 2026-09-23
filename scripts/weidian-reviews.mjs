@@ -190,12 +190,42 @@ async function add(name) {
   return { row: { id: j.id, name: head(name) }, how: "added to the shop" };
 }
 
+/* A PRODUCT THAT MATCHED BUT HAS NO PICTURE, WHEN 微店 HAS ONE.
+ *
+ * The shopfront draws a named card where a photograph is missing, and that
+ * card is deliberate — but a shelf of them is still a shop with no pictures
+ * on it, and the pictures exist: the pull reads one per item and we are
+ * already holding it. Tom saw the first product on his own shopfront as a
+ * blank square for exactly this reason.
+ *
+ * ONLY INTO AN EMPTY SLOT. It never replaces a photograph somebody chose —
+ * `photo` comes back from the admin list as a Boolean, so "has one" is the
+ * only question asked, and a product that has one is left alone. A failure
+ * here is a shrug: the reviews are the job, and a missing picture is not a
+ * reason to fail the row that carries them. */
+async function fillPhoto(row, name) {
+  const m = meta.get(name) || {};
+  if (!m.photo || row.photo) return "";
+  try {
+    const r = await fetch(API + "/api/admin/product/" + encodeURIComponent(row.id), {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-admin-secret": key },
+      body: JSON.stringify({ photo: m.photo }),
+    });
+    const j = await r.json().catch(() => null);
+    return (r.ok && j?.ok) ? "  + picture" : "";
+  } catch { return ""; }
+}
+
 for (const [name, rows] of byItem) {
   let { row, how } = match(name);
   if (!row && ADD && how === "nothing like it in the catalogue") {
     ({ row, how } = await add(name));
   }
   if (!row) { missed.push([name, rows.length, how]); continue; }
+  /* Newly added rows already carry their picture from add(); this is for the
+     ones that were here first and never had one. */
+  if (!DRY && row.photo === false) how += await fillPhoto(row, name);
 
   /* stars defaults to 5 — 好评100% is what the old shop actually carried, and
      the puller cannot read a star count off those pages. Said here rather

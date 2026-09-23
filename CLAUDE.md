@@ -37,6 +37,15 @@ and `make deploy` refused with "Diverging branches".
 `make rebuild` rebuilds only the workspace. `make up` and `make deploy` build
 everything. Reaching for `rebuild` after a change to `board/` is the mistake.
 
+**A GIT PULL ON THE BOX DOES NOT UPDATE `board/`.** Everything under `board/`
+— `server.js`, every page in `public/`, `lib/` — is COPYed into the image at
+build time, so a `git reset --hard` leaves the running container serving the
+old file and nothing says so. Only `scripts/` is bind-mounted, which is why a
+`make` target that runs a script picks up a pull immediately and a change to a
+page does not. This cost several rounds in one afternoon, three separate
+times: a Chromium path in an image, a new field in `server.js`, and a colour
+in `shop.html`. If a change is under `board/`, it needs `make deploy`.
+
 ## Offers and invites
 
 **`WHO` is a first name, everywhere, on every target.** `make cfm-offer`,
