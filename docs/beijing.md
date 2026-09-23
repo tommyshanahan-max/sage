@@ -337,8 +337,16 @@ takes the H5 payment domain *and a screenshot of its ICP 备案*, and the paying
 domain has to match the authorised one. `thexchange.app` cannot be that
 domain. `thexchange.cn` under the WFOE can, once filed.
 
-So the filing is not a nice-to-have for the WeChat route — it is a field on
-the form. Everything in "What to do, in order" earlier on this page is on the
-critical path to taking a single payment.
+**AND IT IS NOT AN H5 THING, WHICH IS WHERE THIS WAS FIRST WRITTEN WRONG.**
+The obvious dodge is to skip H5 and use a scanned code instead. It does not
+work: Native 支付 is applied for as a **PC 网站** scenario and asks for the
+site's domain, its 授权函 and the 公众号 APPID, and an unfiled domain does not
+pass WeChat's risk review for the merchant account at all. The filing is a
+precondition of the 商户号, not of one product on it.
 
-Source: <https://pay.weixin.qq.com/doc/v3/merchant/4012791841>
+So there is no WeChat route — QR or handoff — without `thexchange.cn` filed.
+Everything in "What to do, in order" earlier on this page is on the critical
+path to taking a single payment.
+
+Sources: <https://pay.weixin.qq.com/doc/v3/merchant/4012791841> (H5),
+<https://pay.weixin.qq.com/doc/v3/merchant/4012791875> (Native).
