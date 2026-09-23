@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: try china app-state claire-episodes deal claire-key claire-count claire-seed claire-video listing invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who bells twice admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check post post-status post-run post-login post-code post-logins weidian-pull weidian-json
+.PHONY: try china app-state claire-episodes deal claire-key claire-count claire-seed claire-video listing invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who bells twice admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check post post-status post-run post-login post-code post-logins weidian-pull weidian-json weidian-reviews
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -854,6 +854,26 @@ weidian-pull: ## Read the old 微店 shop: make weidian-pull SHOP=https://weidia
 weidian-json: ## Print what weidian-pull read: make weidian-json
 	@$(COMPOSE) --profile post run --rm --no-deps -T post-browser \
 	  node -e 'const d=require("fs").readFileSync("/data/weidian.json","utf8");process.stdout.write(d)'
+
+weidian-reviews: ## Old 微店 reviews onto the matching products: make weidian-reviews SHOP=https://weidian.com/s/1202970134 [MAX=40] [DRY=1]
+	@# ONE COMMAND, BECAUSE THE JOIN USED TO BE FORTY.
+	@# weidian-pull writes every item and its reviews into /data/weidian.json;
+	@# review-import takes ONE product, by its number in `make catalogue`, and
+	@# a flat file. Filling forty of those in by hand, each with a number that
+	@# has to be right, is the work this box exists to delete. This pulls (when
+	@# SHOP is given), matches 微店 item to board product BY NAME, and posts the
+	@# lot. It runs in post-browser because that is where /data/weidian.json
+	@# is; it reaches the board over the compose network, so the board must be
+	@# up.
+	@#
+	@# A NAME IT CANNOT PLACE IS LEFT OUT AND PRINTED, never guessed at. The
+	@# reviews are the one thing on that shopfront asking to be believed, and
+	@# somebody's words about formula filed under a jar of honey would never
+	@# be found again. DRY=1 shows what it would match and writes nothing.
+	@if [ -n "$(SHOP)" ]; then $(MAKE) weidian-pull SHOP="$(SHOP)" MAX="$(or $(MAX),40)"; fi
+	@$(COMPOSE) --profile post run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" post-browser \
+	  node /seed/weidian-reviews.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  --file /data/weidian.json $(if $(DRY),--dry,)
 
 review-import: ## All the old reviews at once: make review-import N=1 FILE=scripts/reviews-1.json
 	@# The file is a JSON array: [{"who":"李娜","stars":5,"text":"…","at":"2024-11-02"}, …]
