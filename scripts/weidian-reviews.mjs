@@ -162,12 +162,26 @@ async function add(name) {
   const m = meta.get(name) || {};
   const price = String(m.price || "").trim();
   if (!price) return { row: null, how: "no price on the 微店 page — not added" };
-  const r = await fetch(API + "/api/admin/product", {
+  const post = (photo) => fetch(API + "/api/admin/product", {
     method: "POST",
     headers: { "Content-Type": "application/json", "x-admin-secret": key },
-    body: JSON.stringify({ name: head(name), price, photo: m.photo || "" }),
-  });
-  const j = await r.json().catch(() => null);
+    body: JSON.stringify({ name: head(name), price, photo }),
+  }).then(async (r) => ({ r, j: await r.json().catch(() => null) }));
+
+  let { r, j } = await post(m.photo || "");
+  /* A PICTURE THAT WILL NOT FETCH IS NOT A REASON TO LOSE THE PRODUCT.
+     /api/admin/product fetches the image before writing the row and refuses
+     the whole thing with {error:"photo"} when it cannot — which is right for
+     somebody adding one product by hand, and wrong here: it would drop a
+     real product and its real reviews because a CDN in Shanghai did not
+     answer a box in Tokyo. The shopfront already draws a named card where a
+     picture is missing (see .noimg in shop.html), so a row without one is a
+     shelf that still reads. The picture can be added later; the reviews
+     cannot be re-scraped for free. */
+  if (!r.ok && j?.error === "photo" && m.photo) {
+    ({ r, j } = await post(""));
+    if (r.ok && j?.ok) return { row: { id: j.id, name: head(name) }, how: "added, without its picture" };
+  }
   if (!r.ok || !j?.ok) {
     /* The board's own words, because "price" and "photo" are the two it
        refuses on and both are things the pull may have read badly. */
