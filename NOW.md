@@ -109,18 +109,37 @@ Payment methods, the Default configuration on the platform account
 
 **Nothing to do in Stripe.** The application is in. It is waiting on them.
 
-**`make wallets` said the wrong thing about this and has been fixed.** Against
-the test key it printed *"NOT AVAILABLE — Stripe will not give this account the
-method"*, which is a refusal, and the dashboard for the same account the same
-minute said **Pending approval**. The API's `available: false` does not carry
-the difference between pending and refused; only that page does. It now says
-"NOT YET" and names the page. One more unchecked thing stated as fact, and the
-fourth time this week — the pattern is always the same, a plausible reading of
-a field turned into a sentence.
+**`make wallets` HAS BEEN ANSWERING ABOUT THE SANDBOX ALL DAY.** The box's
+`BOARD_STRIPE_KEY` belongs to `acct_1UIVjqJ1hAPEyck7` — the **sandbox** — and
+nothing in this session ever changed it. Three readings, all of the sandbox,
+all read as though they were live:
 
-What is still true from that run: **card is the only method this platform can
-offer today**, and a card form is not the product — the payer is in WeChat.
-And it read the **test** key; the live answer is the dashboard's.
+| time | it said | what was actually true |
+|---|---|---|
+| 13:36 | NOT AVAILABLE, both wallets | the sandbox, before they were switched on |
+| 14:18 | — | Tom clicked Enable in the sandbox |
+| 14:35 | both wallets on | the sandbox, after |
+
+So *"Stripe withholds the wallets from this account"*, written down at 13:40,
+was about an account nobody was asking about. **Nothing in this repo has ever
+read the live account's wallet status.** The only reading of it is the
+dashboard at 13:39: Pending approval.
+
+Two fixes, both in: the command now names the account and the `pmc_` before
+anything else, and **`make wallets ASK=1`** reads a key from the terminal and
+answers about whatever account that key belongs to, keeping nothing:
+
+```
+ssh -t root@45.77.8.166 'cd ~/tc && make wallets ASK=1'
+```
+
+That is the one that can answer whether the approval has come through, because
+the box does not hold a key for the account it is on.
+
+It also said *"NOT AVAILABLE — Stripe will not give this account the method"*,
+which is a refusal, when the dashboard for that same account said **Pending
+approval**. `available: false` does not separate pending from refused; only
+that page does. It now says "NOT YET" and names the page.
 
 **Three providers deep and none of them has said yes yet.** Airwallex gone,
 Stripe's two wallets pending. Door two — the Beijing WFOE, where we are the

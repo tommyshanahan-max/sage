@@ -1259,9 +1259,21 @@ wallets: ## Will Stripe let this platform offer WeChat Pay and Alipay: make wall
 	@# come into it — which is why the screen telling them to go and switch
 	@# WeChat Pay on is gone.
 	@#
-	@# Read-only, and it names no account. Safe at any time.
-	@$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
-	  /seed/stripe-methods.mjs
+	@# ASK=1 ASKS ABOUT AN ACCOUNT THIS BOX DOES NOT HOLD, and that is the
+	@# case that matters. The key in .env is one account's. The approval being
+	@# waited on is on another — and on 23 Sep this command answered about a
+	@# SANDBOX three times while everybody read it as the live account, which
+	@# is how "Stripe withholds the wallets" got written down about an account
+	@# nobody was asking about.
+	@#
+	@# The key is READ, NOT PASSED. A key in a make argument is a key in the
+	@# shell's history and in `ps` for as long as the call lasts; read -rs puts
+	@# it in neither. Same reason scripts/stripe-keys.sh is a script.
+	@#
+	@# Read-only either way. It writes nothing and changes nothing.
+	@$(if $(ASK),bash scripts/wallets-ask.sh,\
+	  $(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	    /seed/stripe-methods.mjs)
 
 hook-make: ## Make the Stripe webhook and print its secret: used by make go-live
 	@# NOT FOR TYPING. `make go-live` calls it and catches the secret in a
