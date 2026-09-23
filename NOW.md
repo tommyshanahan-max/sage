@@ -74,6 +74,35 @@ every link was repointed, and the one nobody links — the bare address Tom
 hands people — was missed. `index.html` is gone and the mount serves
 `home.html`.
 
+**AND PAUSED THEM AGAIN EIGHT HOURS LATER (23 Sep, 13:05).** Email to
+`stripe@aozhoubaba.com`, subject *"[Action required] Provide information about
+Aozhou Baba"*:
+
+> Provide a valid ID document
+> Due: **Overdue**
+> Incoming charges are paused as of 23 Sept 2026 until the requested
+> information is reviewed.
+> Payouts to your bank are paused as of 23 Sept 2026 until the requested
+> information is reviewed.
+
+**"A valid ID document"** — the one already submitted for Zhu Liyuan was not
+accepted. So the "In review" seen on the status page at 13:29 is not the whole
+story, and **charges are off**, not merely payouts.
+
+**THE ORDER MATTERS AND IS EASY TO GET WRONG.** In one day Stripe said, about
+the same account: charges on (05:18), a document in review (13:29 status
+page), charges and payouts paused, overdue (13:05 — *before* that status
+page). Reading any one of them alone gives the wrong answer, which happened
+twice today. The account is paused until a valid document is accepted.
+
+**This is the blocker under everything else Stripe.** The two wallets will not
+move while the account is paused, and neither will the live keys be worth
+putting on the box.
+
+```
+dashboard.stripe.com/acct_1UIVjEJItwOUeslJ/account/status
+```
+
 **STRIPE TURNED CHARGES ON THIS MORNING (23 Sep, 05:18).** Email to
 `stripe@aozhoubaba.com`, about `acct_1UIVjEJItwOUeslJ`, subject *"You can now
 accept payments with Stripe"*:
