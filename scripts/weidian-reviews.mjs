@@ -42,6 +42,8 @@ const DRY = rest.includes("--dry");
 /* --add creates the products the 微店 shop has and this board does not. See
    the long note over add(). Never implied by --dry, which writes nothing. */
 const ADD = rest.includes("--add") && !DRY;
+/* --photos: put the right picture over the wrong one. See fillPhoto(). */
+const REPHOTO = rest.includes("--photos") && !DRY;
 
 let pulled;
 try {
@@ -229,7 +231,14 @@ async function add(name) {
  * reason to fail the row that carries them. */
 async function fillPhoto(row, name) {
   const m = meta.get(name) || {};
-  if (!m.photo || row.photo) return "";
+  /* PHOTOS=1 REPLACES, the plain run only fills.
+     Normally a photograph somebody chose is never overwritten. But fourteen
+     products were given the 微店 logo by a bad selector in the puller, and
+     without a way to put a better one over the top the only remedy would be
+     retiring the row — which takes its reviews with it. So the override
+     exists, and it is a flag rather than the default. */
+  if (!m.photo) return "";
+  if (row.photo && !REPHOTO) return "";
   try {
     const r = await fetch(API + "/api/admin/product/" + encodeURIComponent(row.id), {
       method: "POST",
@@ -249,7 +258,7 @@ for (const [name, rows] of byItem) {
   if (!row) { missed.push([name, rows.length, how]); continue; }
   /* Newly added rows already carry their picture from add(); this is for the
      ones that were here first and never had one. */
-  if (!DRY && row.photo === false) how += await fillPhoto(row, name);
+  if (!DRY && (row.photo === false || REPHOTO)) how += await fillPhoto(row, name);
 
   /* stars defaults to 5 — 好评100% is what the old shop actually carried, and
      the puller cannot read a star count off those pages. Said here rather

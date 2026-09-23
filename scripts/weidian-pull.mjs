@@ -294,8 +294,26 @@ try {
         ].map((s) => String(s || "").trim()).filter(Boolean);
         const name = seen.find(han) || seen[0] || "";
         const priceText = (document.body.innerText.match(/[¥￥]\s?\d+(\.\d+)?/) || [""])[0];
-        const img = document.querySelector('[class*="swiper"] img, [class*="banner"] img, img');
-        return { name, price: priceText.replace(/\s/g, ""), photo: img?.src || "" };
+        /* THE BIGGEST PICTURE ON THE PAGE, NOT THE FIRST ONE.
+           This took `document.querySelector(… , img)` — first match wins, and
+           the first <img> on a 微店 item page is the site's own header mark.
+           So all fourteen imported products went onto the shopfront carrying
+           the same 5,121-byte 微店 logo, and the lower half of the shop read
+           as a column of identical 店 squares. Every one of them hashed
+           identically, which is how it was found.
+           The product shot is the largest image on the page and nothing else
+           comes close, so size decides it. Anything under 200px square is a
+           chrome icon, a rating star or a spacer. */
+        let photo = "", best = 0;
+        for (const im of document.querySelectorAll("img")) {
+          const src = im.currentSrc || im.src || "";
+          if (!src || src.startsWith("data:")) continue;
+          const w = im.naturalWidth || im.width || 0;
+          const h = im.naturalHeight || im.height || 0;
+          if (w < 200 || h < 200) continue;
+          if (w * h > best) { best = w * h; photo = src; }
+        }
+        return { name, price: priceText.replace(/\s/g, ""), photo };
       }));
 
       /* THE REVIEWS. 评价 sits behind a tab on the item page and the list is
