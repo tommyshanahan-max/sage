@@ -24,24 +24,31 @@
     <!-- THE CHEAP DOOR FIRST, and it used to be second.
          It led with "I have a Stripe account — about a minute".
 
-         NOTHING ABOUT THAT SENTENCE WAS EVER MEASURED, and it is worth
-         writing down how close it came to being treated as fact. "About a
-         minute" was a guess. "Ten minutes" was the next guess. "An hour"
-         was the one after that, and it spent an hour on this screen as
-         though somebody had timed it. Express onboarding was run once, on
-         an address with no Stripe account behind it — which is ordinary
-         onboarding and says nothing about somebody who already has one.
+         FOUR GUESSES AND THEN THE DOCUMENTATION. "About a minute", then
+         "ten minutes", then "an hour", then "asks again even if you have an
+         account" — every one of them written onto this screen as a fact and
+         not one of them measured. The single run of Express onboarding used
+         an address with no Stripe account behind it, which is ordinary
+         onboarding and settles nothing about somebody who has one.
 
-         SO NO FIGURE IS QUOTED HERE, and the claim on the second door is
-         only what the code does: Stripe collects identity and bank details
-         itself. Whether it shortcuts for an existing Stripe user is still
-         open, and the way to close it is one person with an account
-         pressing the button.
+         WHAT STRIPE ACTUALLY DOCUMENTS is networked onboarding
+         (docs.stripe.com/connect/networked-onboarding): an owner creating a
+         new connected account can pick an existing legal entity and reuse
+         verified information rather than resubmitting KYC, and shared
+         fields stay synchronised afterwards. It needs
+         controller.requirement_collection = stripe, which is what Express
+         accounts are, and it is on by default for platforms.
 
-         THE ORDER DOES NOT DEPEND ON IT. Stripe wants identity and a bank
-         account before anybody has been paid; a contract wants a signature.
-         That holds at any duration, and it is why the cheap door is
-         first. -->
+         So the second door says that, and no duration at all. It is read
+         from the documentation, not from a run — nobody here has watched it
+         happen, and the person to watch is somebody who already has an
+         account.
+
+         THE ORDER STANDS ON WHAT IT COSTS, not on minutes: the first door
+         wants a signature, the second sends somebody to a third party to
+         pick a bank account and accept terms before they have been paid.
+         Worth revisiting if it turns out most of these people already have
+         Stripe. -->
     <a class="door" href="beijing.html">
       <span class="head"><span class="dot"></span><b>We invoice your client, you get paid</b></span>
       <p>Sign one contract. Your client pays our Beijing company in WeChat, we pay you in your own currency. Nothing to set up.</p>
@@ -50,7 +57,7 @@
 
     <a class="door" href="connect.html">
       <span class="head"><span class="dot other"></span><b>I&rsquo;d rather use my own Stripe</b></span>
-      <p>Money lands in your own account and we never touch it. Stripe asks for your identity and bank details first, even if you already have an account with them.</p>
+      <p>Money lands in your own account and we never touch it. Already have a Stripe account? It offers to reuse what Stripe has already verified.</p>
       <div class="when other">Set it up &rsaquo;</div>
     </a>
 

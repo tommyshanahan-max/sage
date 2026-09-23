@@ -63,12 +63,25 @@ one. **Two minutes settles it**: press the button, take Express onboarding
 through with Stripe's "Use test data", and see whether it lets somebody sign
 in to an account they already have. If it does, only the wording changes.
 
-**Nobody has timed Express onboarding**, and three different figures were
-written down as though somebody had: a minute, then ten minutes, then an
-hour. The one run of it (23 Sep) used an address with no Stripe account
-behind it, so it was ordinary onboarding and says nothing about an existing
-Stripe user. The screens quote no figure now. One person with an account
-pressing the button closes it. If that holds, nobody does it for a supplier who has
+**Nobody has timed Express onboarding**, and four claims were written onto
+the screens as facts without one: a minute, ten minutes, an hour, and "asks
+again even if you already have an account". The single run (23 Sep) used an
+address with no Stripe account behind it — ordinary onboarding, settling
+nothing.
+
+**Stripe documents the opposite of the pessimistic one.** Networked
+onboarding (`docs.stripe.com/connect/networked-onboarding`) lets somebody
+creating a new connected account pick an existing legal entity and reuse
+verified information instead of resubmitting KYC, with shared fields staying
+in sync afterwards. Conditions: `controller.requirement_collection = stripe`
+(what Express accounts are), authentication through Stripe-hosted onboarding
+(what `onboardLink` does), and API version 2019-02-19 or later. On by
+default for platforms.
+
+So Daniel, who has an account, should be offered his existing entity rather
+than a blank form — **read from the docs, not watched happening**. The
+screens now say that and quote no duration. Somebody with a real Stripe
+account pressing the button is still what settles it. If that holds, nobody does it for a supplier who has
 not paid them yet — which makes door two (the WFOE, no merchant onboarding
 at all) the main door rather than the fallback, and the fork on
 `/china` the wrong way round. That is a decision, not a task.
