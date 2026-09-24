@@ -11937,6 +11937,36 @@ app.get("/api/requests", notesOff, async (req, res) => {
        somebody else's phone. Off until this process is restarted — see
        sendBroken. */
     canSend: stripe.configured() && !sendBroken,
+    /* EARNED AND STILL TO COME, the two numbers worth a glance on a money
+       screen that holds nothing.
+       ONE TOTAL PER CURRENCY, NEVER ADDED TOGETHER. ¥30,000 and A$2,000 are
+       two numbers, and one of them needs a rate this board would have to
+       invent — the same rule the Earned card on Profile has always followed.
+       IN ONLY. A request going out is money this person owes, and an Earned
+       figure that quietly includes it is wrong in the direction that
+       flatters. */
+    money: (() => {
+      const pots = new Map();
+      for (const q of mine) {
+        if ((q.way || "in") !== "in" || q.off || !q.cur) continue;
+        const minor = store.toMinor(q.amount, q.cur);
+        if (!minor) continue;
+        const st = request.requestState(q);
+        const key = q.cur;
+        const pot = pots.get(key) || { cur: key, earnedMinor: 0, pendingMinor: 0 };
+        /* "waiting" is one side having said they paid and the other not having
+           agreed yet. It is not earned until both have — see requestState. */
+        if (st === "paid") pot.earnedMinor += minor;
+        else if (st === "due" || st === "waiting") pot.pendingMinor += minor;
+        pots.set(key, pot);
+      }
+      return [...pots.values()]
+        .filter((p) => p.earnedMinor || p.pendingMinor)
+        .map((p) => ({ cur: p.cur, earned: store.fromMinor(p.earnedMinor, p.cur),
+          pending: store.fromMinor(p.pendingMinor, p.cur),
+          earnedMinor: p.earnedMinor, pendingMinor: p.pendingMinor }))
+        .sort((a, b) => b.earnedMinor + b.pendingMinor - (a.earnedMinor + a.pendingMinor));
+    })(),
     /* STARTED BUT NOT FINISHED IS ITS OWN STATE, and it is the commonest one:
        Stripe's onboarding is several screens and people leave in the middle
        of it. "You have not said where the money should land" is untrue to

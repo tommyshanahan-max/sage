@@ -146,6 +146,12 @@
   /* THE HEADING AND THE WAY OUT OF IT, on one line. A back arrow in the
      corner is a place on a screen; a word beside the heading is a word. */
   .hrow{display:flex;align-items:baseline;gap:.9rem}
+  /* Two figures side by side, hairline between, nothing boxed. A card would
+     make them a thing to tap; they are only something to read. */
+  .mrow{display:flex;gap:2rem;padding:1.1rem .2rem 1.2rem;border-top:1px solid var(--line)}
+  .mcol span{display:block;font-size:.72rem;letter-spacing:.11em;text-transform:uppercase;color:var(--muted);margin:0 0 .3rem}
+  .mcol b{display:block;font-size:1.75rem;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1}
+  .mcol b.pend{font-weight:600;color:var(--muted)}
   .hrow h1{flex:1 1 auto;min-width:0}
   .hlink{flex:0 0 auto;border:0;background:none;color:var(--acc);font:inherit;
     font-size:.88rem;padding:.25rem 0;cursor:pointer}
@@ -964,6 +970,24 @@ function empty() {
    chevron; the explanation is one tap behind it like everything else here.
    The box shouted the same sentence at somebody every time they opened the
    app, which is how a warning becomes furniture. */
+/** Earned and still to come, in one currency. */
+function moneyRow(m) {
+  const box = el("div", "mrow");
+  const a = el("div", "mcol");
+  a.append(el("span", null, T("earn.lab")));
+  a.append(el("b", null, m.earned));
+  box.append(a);
+  /* Only when there is some. A second figure reading 0 beside the first is
+     the empty these screens are already full of. */
+  if (m.pendingMinor) {
+    const b2 = el("div", "mcol");
+    b2.append(el("span", null, T("earn.waiting")));
+    b2.append(el("b", "pend", m.pending));
+    box.append(b2);
+  }
+  return box;
+}
+
 function payoutRow() {
   const b = el("button", "spec warnrow");
   b.type = "button";
@@ -1069,6 +1093,16 @@ function list() {
      whose only open request was money going OUT it read as a remark about
      that request, which it is not. */
   if (STATE && !STATE.ready) root.append(payoutRow());
+
+  /* EARNED AND STILL TO COME — the two numbers this screen was missing.
+     The pad above says what you are about to ask for; the list below says
+     what is outstanding one row at a time. Neither answers "how am I doing",
+     which is the question somebody opens a money screen to ask.
+     ONE PAIR PER CURRENCY, never added together: ¥30,000 and A$2,000 are two
+     numbers and one of them needs a rate this board would have to invent.
+     The server sends nothing when there is nothing — see `money` in
+     /api/requests — so this draws no empty row. */
+  for (const m of (STATE.money || [])) root.append(moneyRow(m));
 
   const h = el("div", "hrow");
   h.append(el("h2", "lhead", T("dl.sub")));
