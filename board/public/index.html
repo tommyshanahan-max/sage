@@ -1784,6 +1784,23 @@
   /* Already following: the button is still there to undo it, and stops
      shouting to be pressed. */
   .pacts .primary.on{background:var(--raise);border-color:var(--line);color:var(--ink-2)}
+
+  /* THE SAME ROW, ON THE PHOTOGRAPH. Not a second set of buttons — the same
+     element, re-parented into the card's scrim; see personCard.
+     Grey on grey disappears over a picture, so the quiet one becomes white on
+     a wash of the photograph behind it and the loud one keeps the accent. */
+  .pc .scrim .pacts{margin:.9rem 0 0}
+  .pc .scrim .pacts button,.pc .scrim .pacts a{
+    border-color:rgba(255,255,255,.55);background:rgba(255,255,255,.16);
+    color:#fff;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+  .pc .scrim .pacts .primary{background:var(--accent);border-color:var(--accent);
+    color:var(--accent-ink);backdrop-filter:none;-webkit-backdrop-filter:none}
+  /* Already following: the loud one stands down to match the quiet one, the
+     same swap the row made under the deck. */
+  .pc .scrim .pacts .primary.on{background:rgba(255,255,255,.16);
+    border-color:rgba(255,255,255,.55);color:#fff}
+  .pc .scrim .pacts button:focus-visible,.pc .scrim .pacts a:focus-visible{
+    outline:2px solid #fff;outline-offset:2px}
   .pcount{margin:.7rem 0 0;text-align:center;font-size:.82rem;color:var(--muted);
     font-variant-numeric:tabular-nums}
   /* THE DOOR, FROM THE INSIDE. Above the first face rather than under the
@@ -3265,7 +3282,8 @@ function fitDeck() {
   if (!deck || deck.hidden || !deck.offsetParent) return;
   const above = deck.getBoundingClientRect().top + window.scrollY;
   let below = 0;
-  for (const id of ["pacts", "pcount", "bar"]) {
+  // pacts is on the card now — see personCard — so it is no longer below it.
+  for (const id of ["pcount", "bar"]) {
     const el = document.getElementById(id);
     if (el && !el.hidden) below += el.offsetHeight;
   }
@@ -8333,6 +8351,10 @@ function drawFeedDoor() {
   if (MEMBERS) box.append(document.createTextNode(inside(MEMBERS)));
 }
 
+/* Where #pacts lives when it is not on a card — read from the markup once, so
+   moving it in the HTML does not silently strand it. */
+const PACTS_HOME = document.getElementById("pacts").parentElement;
+
 function drawDeck() {
   $("brwlabel").textContent = T("brw.title");
 
@@ -8341,6 +8363,17 @@ function drawDeck() {
   drawSays();
 
   const deck = $("deck");
+  /* THE BUTTON ROW GOES HOME BEFORE THE DECK IS EMPTIED.
+   *
+   * personCard re-parents #pacts onto the top card, so clearing the deck
+   * takes the row down with it — and every later $("pacts") answers null,
+   * because getElementById only finds what is still in the document. That
+   * threw on the very next draw: "Cannot set properties of null".
+   *
+   * So it is put back where the markup has it first, and personCard moves it
+   * on again. One node, always attached, never a second copy. */
+  const acts0 = document.getElementById("pacts");
+  if (acts0 && acts0.closest(".deck")) PACTS_HOME.append(acts0);
   fill(deck);
   const people = PEOPLE.length;
   const n = deckLen();
@@ -8482,6 +8515,29 @@ function drawDeck() {
 
   const acts = $("pacts");
   fill(acts);
+  /* THE TWO BUTTONS LIVE ON THE PHOTOGRAPH NOW.
+   *
+   * They used to sit under the deck, and everything above the deck could push
+   * them off the bottom of the screen: on the tutor board — the same code
+   * under another name, with an invite strip and a "you are in Browse" row
+   * above the card — Follow and Next came out sliced in half by the tab bar.
+   * Capping the card so they always fitted is what made the picture a 240px
+   * stamp, so that trade is not available.
+   *
+   * The card and its two buttons are one object instead. Nothing above can
+   * separate them, because there is nothing between them.
+   *
+   * THE ELEMENT MOVES; THE HANDLERS DO NOT. #pacts is rebuilt on every draw
+   * and always belongs to the top card, so it is the same node re-parented —
+   * not a second copy of the follow logic living on the card, which is the
+   * version of this that drifts. */
+  const onCard = top.querySelector(".scrim");
+  if (onCard) onCard.append(acts);
+  /* THE CARD UNDER THEM IS A DRAG SURFACE. Without this a press on Follow
+     starts a flick and the tap lands on whoever comes next — the same reason
+     Share and the following mark already stop this event. Once, on the row,
+     rather than on each button: the branches below all append into it. */
+  acts.addEventListener("pointerdown", (ev) => ev.stopPropagation());
   if (mine) {
     // One button, and it is the picker. Nobody to follow on this card.
     const add = el("button", "primary", T("brw.mine"));
