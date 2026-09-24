@@ -1416,6 +1416,16 @@ export const STRINGS = {
     "{n} people are waiting. Open a room to read what they wrote, or write to one of them.",
     "有 {n} 个人在等。点开看他们写了什么，也可以直接找他们说话。"],
   "note.waitMore":     [" and {n} more", "，还有 {n} 个"],
+  /* THE SWITCH OVER THE CARDS. Rooms somebody was put into by hand, whose
+     people have all been let in — and the rooms at the door, where some have
+     not. Two words each, because it is a switch and not a sentence. */
+  "note.roomsMine":    ["Your rooms", "你的群"],
+  "note.roomsOpen":    ["Public", "公开"],
+  /* ON THE WAY INTO A ROOM AT THE DOOR. "Not everyone", never "nobody": the
+     members who answer in these rooms are in them too, and the line has to
+     be true of the room and not only of the queue. */
+  "dr.unvet":          ["Not everyone here is vetted", "这里有人还没审核"],
+  "dr.unvetSub":       ["Some haven't been vouched for yet.", "有些人还没人担保。"],
   "note.waitVouched":  ["{n} vouched", "{n} 人担保"],
   "waitroom.film":     ["Film & TV", "影视"],
   "waitroom.invest":   ["Investing", "投资"],

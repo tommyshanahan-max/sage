@@ -572,9 +572,26 @@
      and the rooms were six grey rows that looked exactly like conversations.
      Now the difference is the shape, and it is seen before anything is read. */
   .hero{display:flex;gap:.6rem;overflow-x:auto;margin:0 -1.15rem .3rem;
-    padding:.8rem 1.15rem .9rem;scroll-snap-type:x mandatory;scrollbar-width:none;
+    padding:.6rem 1.15rem .9rem;scroll-snap-type:x mandatory;scrollbar-width:none;
     border-bottom:.45rem solid var(--hair)}
   .hero::-webkit-scrollbar{display:none}
+  /* The switch between the two kinds of room, over the cards it switches. */
+  .seg{display:flex;gap:.4rem;padding:.75rem 0 0}
+  .seg button{border:0;border-radius:99px;padding:.45rem 1rem;font:inherit;
+    font-size:.88rem;font-weight:600;background:var(--raise);color:var(--ink-2);
+    border:1px solid var(--line)}
+  .seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper);
+    border-color:var(--ink)}
+  .seg b{font-weight:700;opacity:.75;margin-left:.3rem}
+  /* THE WARNING IN A ROOM AT THE DOOR. Amber, not red: nothing is wrong, it
+     is a fact about who is listening, said once where the typing happens. */
+  .unvet{display:flex;gap:.6rem;align-items:flex-start;margin:0 0 .9rem;
+    padding:.7rem .85rem;border-radius:.8rem;background:color-mix(in srgb,var(--t3) 16%,var(--card));
+    border:1px solid color-mix(in srgb,var(--t3) 40%,transparent);font-size:.9rem;line-height:1.4}
+  .unvet svg{flex:0 0 auto;width:1.2rem;height:1.2rem;margin-top:.05rem;stroke:var(--t3);
+    fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .unvet b{display:block;font-weight:700;color:var(--ink)}
+  .unvet span{color:var(--ink-2)}
   .hcard{flex:0 0 9.4rem;min-height:7.2rem;border:0;border-radius:1rem;
     padding:.8rem .85rem;color:#fff;text-align:left;font:inherit;cursor:pointer;
     display:flex;flex-direction:column;justify-content:space-between;gap:.4rem;
@@ -912,6 +929,10 @@
       <div class="can" id="can"></div>
     </div>
 
+    <div class="seg" id="seg" hidden>
+      <button type="button" id="segmine" aria-pressed="true"></button>
+      <button type="button" id="segopen" aria-pressed="false"></button>
+    </div>
     <div class="hero" id="hero" hidden></div>
 
     <div class="rule" id="listrule"><span id="rulelabel"></span><i></i></div>
@@ -982,6 +1003,10 @@
     <div class="pinwrap" id="tpin" hidden></div>
     <!-- Who opened this, when it was not a match. See note.fromStaff. -->
     <p class="tstaff" id="tstaff" hidden></p>
+    <p class="unvet" id="tunvet" hidden>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l9.5 17h-19z"/><path d="M12 10v4M12 17.3v.2"/></svg>
+      <span><b id="tunvetk"></b><span id="tunvets"></span></span>
+    </p>
     <div class="talk" id="talk"></div>
     <p class="left" id="tleft" hidden></p>
     <p class="shut" id="tshut" hidden></p>
@@ -1371,6 +1396,8 @@ let LANGBTN = null;
 
 function paint() {
   const who = openWho();
+  // Only a room at the door says it; drawDoor puts it back.
+  $("tunvet").hidden = true;
   homeLang();
   if (INVITED) return drawInvited();
   const T0 = threads();
@@ -1466,6 +1493,20 @@ function drawWaiting() {
     byRoom.set(k, [...(byRoom.get(k) || []), w]);
   }
 
+  /* TWO KINDS OF ROOM, AND A SWITCH BETWEEN THEM.
+   *
+   * "Your rooms" are the ones kept by hand — somebody was put in each of
+   * them on purpose, and everybody in them has been let in. "Public" are the
+   * rooms at the door, where some of the people talking have not been vetted
+   * or vouched for yet. Both were cards in one row, and one row made them
+   * look like the same kind of place; they are not, and the difference is
+   * who is listening. So they are two sets of cards with a switch, and the
+   * public ones say so again on the way in — see #tunvet.
+   *
+   * The hand-kept rooms leave the list below: a room is a card or a row,
+   * never both. */
+  const mine = GROUPS.filter((g) => g.hand);
+  const open = [];
   /* THE REWARDS ROOM FIRST — open to everybody at the door at once, so it
      has no count and no pile of its own.
      #d:rewards, the real room, never /rewards: that is a self-contained demo
@@ -1476,23 +1517,58 @@ function drawWaiting() {
      server.js), the server answers {on:false} there, and a card would open a
      room with its whole contents missing. */
   if (!NATIVE) {
-    card(0, "", T("waitroom.rewards"), T("wr.roomsAll"),
-      () => { location.hash = "#d:rewards"; });
+    open.push((i) => card(i, "", T("waitroom.rewards"), T("wr.roomsAll"),
+      () => { location.hash = "#d:rewards"; }));
   }
-  /* THEN A CARD PER ROOM WITH ANYBODY IN IT: how many, the room, and the
-     first names — "Nadia, Liza" is a card somebody opens because one of them
-     might be a person they know. The room itself is where the full list is. */
-  let i = 1;
+  /* THEN A CARD PER ROOM WITH ANYBODY WAITING IN IT: how many, the room, and
+     the first names — "Nadia, Liza" is a card somebody opens because one of
+     them might be a person they know. */
   for (const key of WAITROOMS) {
     const rows = byRoom.get(key) || [];
     if (!rows.length) continue;
-    card(i++, String(rows.length), T("waitroom." + key),
+    open.push((i) => card(i, String(rows.length), T("waitroom." + key),
       rows.slice(0, 2).map((w) => w.name).join(", ")
         + (rows.length > 2 ? T("note.waitMore", { n: rows.length - 2 }) : ""),
-      () => { location.hash = "#d:" + key; });
+      () => { location.hash = "#d:" + key; }));
+  }
+
+  /* The switch only when there is something on both sides of it. */
+  const both = mine.length > 0 && open.length > 0;
+  const tab = both ? (ROOMTAB === "open" ? "open" : "mine") : (mine.length ? "mine" : "open");
+  $("seg").hidden = !both;
+  $("segmine").textContent = T("note.roomsMine");
+  fill($("segopen"));
+  $("segopen").append(document.createTextNode(T("note.roomsOpen")));
+  if (QUEUE.length) $("segopen").append(el("b", null, String(QUEUE.length)));
+  $("segmine").setAttribute("aria-pressed", String(tab === "mine"));
+  $("segopen").setAttribute("aria-pressed", String(tab === "open"));
+
+  if (tab === "mine") {
+    mine.forEach((g, i) => {
+      const says = Array.isArray(g.says) ? g.says : [];
+      const last = says[says.length - 1];
+      const who = (Array.isArray(g.who) ? g.who : []).filter((q) => q && !q.bot);
+      const line = !last ? T("grp.inIt", { n: who.length })
+        : (last.mine ? T("note.youSaid") + " " : last.handle ? last.handle + ": " : "")
+          + (last.text || "");
+      card(i + 3, "", g.name || T("grp.title"), line,
+        () => { location.href = "/groups?g=" + encodeURIComponent(g.id); });
+    });
+  } else {
+    open.forEach((draw, i) => draw(i));
   }
 
   box.hidden = !box.children.length;
+}
+
+/* WHICH SIDE OF THE SWITCH, remembered on this phone only. A convenience —
+   an empty or blocked store just means "Your rooms" again. */
+let ROOMTAB = "";
+try { ROOMTAB = localStorage.getItem("board:roomtab") || ""; } catch { /* private window */ }
+function roomTab(t) {
+  ROOMTAB = t;
+  try { localStorage.setItem("board:roomtab", t); } catch { /* private window */ }
+  drawWaiting();
 }
 
 function drawList(T0) {
@@ -1521,7 +1597,8 @@ function drawList(T0) {
        newest note's — so every two-person row sorted as "" and sank below
        every group, however old the group and however new the message. */
     ...T0.map((t) => ({ at: (t.last && t.last.at) || "", row: () => listRow(t) })),
-    ...GROUPS.map((g) => ({ at: lastAt(g), row: () => groupRow(g) })),
+    // Not the hand-kept rooms: they are cards in the banner — see drawWaiting.
+    ...GROUPS.filter((g) => !g.hand).map((g) => ({ at: lastAt(g), row: () => groupRow(g) })),
   ].sort((a, b) => String(b.at).localeCompare(String(a.at)));
 
   $("none").hidden = rows.length > 0;
@@ -2648,6 +2725,14 @@ async function drawDoor(key) {
   $("twhoname").textContent = T("waitroom." + key)
     + (DOOR.n > 0 ? "  (" + DOOR.n + ")" : "");
   $("twhosub").textContent = T("dr.sub");
+  /* NOT EVERYBODY HERE HAS BEEN LET IN. Said to a member, on the way into
+     every room at the door, because these are the rooms where somebody not
+     yet vetted or vouched for can read what is written. Not to somebody
+     waiting — they are the unvetted person, and telling them so is a door
+     shut in their face. */
+  $("tunvetk").textContent = T("dr.unvet");
+  $("tunvets").textContent = " " + T("dr.unvetSub");
+  $("tunvet").hidden = WAITING;
 
   /* THE LEDGER, ACROSS THE TOP OF THE ROOM. Dark unless the box has
      BOARD_LEDGER_GOAL set, in which case this is silent and the room is
@@ -3266,6 +3351,8 @@ $("tmore").addEventListener("click", () => {
   m.hidden = !m.hidden;
   $("tmore").setAttribute("aria-expanded", String(!m.hidden));
 });
+$("segmine").addEventListener("click", () => roomTab("mine"));
+$("segopen").addEventListener("click", () => roomTab("open"));
 $("plus").addEventListener("click", () => peopleSheet(true));
 $("scrim").addEventListener("click", () => peopleSheet(false));
 /* Anything tapped in the sheet goes somewhere — a face, "Someone", Groups —
