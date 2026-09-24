@@ -7084,11 +7084,16 @@ export const STRINGS = {
   "wl.add":            ["Add", "充值"],
   "wl.withdraw":       ["Withdraw", "提现"],
   "wl.balance":        ["Balance", "余额"],
-  "wl.straightToBank": ["Money you receive goes straight to your bank", "收到的钱直接到账你的银行卡"],
+  /* Under the Earned figure, where it is followed by the account itself —
+     so it is a label for what comes next, not a sentence that collides with
+     it. It read "…goes straight to your bank No bank account yet". */
+  "wl.straightToBank": ["Straight to", "直接到账"],
   "wl.noBankYet":      ["No bank account yet", "还没绑定银行卡"],
   "wl.verified":       ["verified", "已实名"],
   "wl.notVerifiedYet": ["identity not confirmed yet", "未实名"],
-  "wl.confirmToMove":  ["Confirm your identity to send, add or withdraw money. ", "实名后才能转账、充值和提现。"],
+  /* Add and withdraw are gone — there is no balance to put money into or
+     take it out of. Two verbs, and they are the two on the screen. */
+  "wl.confirmToMove":  ["Confirm your identity to send or receive money. ", "实名后才能转账、收款。"],
   "wl.confirmNow":     ["Confirm now", "去实名"],
   "wl.needsYou":       ["Needs you", "待处理"],
   "wl.recent":         ["Recent", "最近"],

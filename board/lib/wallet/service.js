@@ -91,12 +91,32 @@ export function createWalletService({ ledger, provider, people, now = () => Date
       const ben = w.beneficiaryId ? data.beneficiaries[w.beneficiaryId] : null;
       const incoming = Object.values(data.transfers).filter((t) => t.to === me.by && t.state === "waiting").map((t) => lineFor(data, me, t));
       const requests = Object.values(data.requests).filter((q) => q.state === "open" && (q.to === me.by || q.from === me.by)).map((q) => requestLine(me, q));
+
+      /* EARNED AND STILL TO COME — the only two numbers that are true about a
+         wallet that holds nothing.
+         A balance was the headline until 24 Sep, and on a board that cannot
+         legally hold money it was both a zero and a claim about what this is.
+         These two are honest: what has reached you, and what is on its way.
+         The same pair the deals card on Profile has used all along, whose own
+         note reads "Never a balance, and the card says so in the same breath
+         as the number."
+         IN ONLY. The other side of a transfer is money spent, and an Earned
+         figure that quietly includes it is wrong in the direction that
+         flatters. `buy` is what ARRIVES — `sell` is what the payer was
+         charged, and the two differ by the fee and the rate, so counting the
+         wrong one overstates what somebody actually got. */
+      const toMe = Object.values(data.transfers).filter((t) => t.to === me.by && t.buy?.currency === w.currency);
+      const sum = (rows) => rows.reduce((n, t) => n + (t.buy?.minor || 0), 0);
+      const earnedMinor = sum(toMe.filter((t) => ["accepted", "completed", "paid"].includes(t.state)));
+      const pendingMinor = sum(toMe.filter((t) => ["waiting", "charging", "charged", "processing", "sent"].includes(t.state)));
       return {
         ...base,
         wallet: {
           region: w.region, regionName: r.name, currency: w.currency, verified: w.verified, status: w.status,
           holdsBalance: r.balance, reasonRequired: r.reasonRequired,
           balance: { minor: w.balance, text: format(w.balance, w.currency) },
+          earned: { minor: earnedMinor, text: format(earnedMinor, w.currency) },
+          pending: { minor: pendingMinor, text: format(pendingMinor, w.currency) },
           payout: w.payout, payoutLabel: ben ? ben.label : "",
           limits: { sendDay: { minor: r.send, text: format(r.send, w.currency) }, sentToday: { minor: sentToday(data, me.by), text: format(sentToday(data, me.by), w.currency) }, receiveMonth: { text: format(r.recv, w.currency) } },
           passkeys: (data.credentials[me.by] || []).length,

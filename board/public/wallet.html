@@ -410,13 +410,19 @@ SCREENS.home = async () => {
   const recent = rows.slice(0, 5).map((x) => activityRow(x));
   return { title: T("wl.title"), action: { label: T("wl.settings"), icon: "gear", run: () => go("settings") }, body: frag(
     h("section", { class: "balance", "aria-label": T("wl.balance") },
-      /* WHERE IT LANDS, NOT WHAT IS SITTING HERE. The slab read "Balance
-         A$0.00" — the biggest thing on the screen, a zero, and a claim that
-         this board holds money. It says where money goes instead, which is
-         the true and more useful fact. A balance that still exists on an old
-         wallet is shown under it rather than as the headline. */
-      h("p", { text: T("wl.straightToBank") }),
-      h("p", { class: "v", style: "font-size:1.3rem", text: w.payoutLabel || T("wl.noBankYet") }),
+      /* EARNED AND STILL TO COME. The slab read "Balance A$0.00" — the
+         biggest thing on the screen, a zero, and a claim that this board
+         holds money. These two are true of a wallet that holds nothing: what
+         has reached you, and what is on its way. The same pair the deals card
+         on Profile has used all along.
+         STILL TO COME ONLY WHEN THERE IS SOME. A second number reading 0.00
+         beside the first is the empty this screen was full of. */
+      h("p", { text: T("earn.lab") }),
+      h("p", { class: "v", text: (w.earned || w.balance).text }),
+      w.pending && w.pending.minor
+        ? h("p", { style: "font-size:.95rem;opacity:.92", text: T("earn.waiting") + " " + w.pending.text })
+        : null,
+      h("p", { style: "font-size:.85rem;opacity:.8", text: T("wl.straightToBank") + " \u00b7 " + (w.payoutLabel || T("wl.noBankYet")) }),
 
       h("p", { style: "font-size:.9rem;opacity:.9", text: `${regionName(w.region, w.regionName)} · ${w.currency} · ${w.verified === "verified" ? T("wl.verified") : T("wl.notVerifiedYet")}` })),
     acts,
