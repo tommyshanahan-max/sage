@@ -198,9 +198,27 @@ tax bureau's own system and a supplier's invoice arrives as a PDF in somebody's
 email. Neither event touches this board, so neither can be worked out here —
 and a books screen that guessed would be worse than one that asks.
 
-**What has NOT been established:** whether the WFOE can actually issue fapiao
-today — that is a registration question, not a code one. The data collected is
-the same either way, for a fapiao or a plain commercial invoice.
+**THE WFOE CAN ISSUE FAPIAO — confirmed by Tom, 24 Sep.** So the payer's half
+of a deal is a real 发票 and not a commercial invoice with a tax number
+stapled to it, and `开票信息` is being collected because it is genuinely
+needed rather than as paperwork.
+
+**Two things that follows from, and neither is built:**
+
+- **一般纳税人 or 小规模纳税人 is not recorded anywhere, and it decides a
+  promise on the payer's screen.** The paste box offers a 增值税专用发票
+  checkbox. Only a 一般纳税人 issues one itself; a 小规模纳税人 has to ask
+  the bureau to 代开, and cannot always. So if the WFOE is 小规模, that
+  checkbox is a promise made to a finance clerk before they pay and broken
+  after. Nothing in the code knows which it is.
+- **VAT is not modelled at all, and it is larger than the margin.** Every
+  figure in the books is the amount as written. On a 6% services fapiao the
+  output VAT inside a ¥100 invoice is about ¥5.66 — more than the 5% gap the
+  screen calls the margin. Some of it comes back as input credit against the
+  VAT withheld on the payment out, but that is an accountant's question and
+  not one to answer in a comment. **What matters for reading the screen: the
+  margin shown is gross, before any tax.** Nobody should be planning off it
+  as though it were profit.
 
 ## Next: Dealio absorbs the wallet
 
