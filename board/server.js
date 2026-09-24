@@ -9313,11 +9313,31 @@ app.get("/api/groups", notesOff, async (req, res) => {
      list with one word on it. `who` is drawn from members either way, so a
      guest is not in the faces along the top and nobody in there sees a
      stranger who has not said who they are. */
-  /* THE DOORMAN IS IN EVERY ROOM, and he is in `who` rather than in members:
-     he holds no seat, cannot be counted against the cap, cannot leave and
-     cannot be left with. A row in the file would be a member with none of a
-     member's properties, which is the kind of second meaning that goes wrong
-     quietly. He is drawn, not stored. */
+  /* THE DOORMAN IS IN THE ROOMS, AND NOT IN A GROUP CHAT.
+   *
+   * He is in `who` rather than in members: he holds no seat, cannot be
+   * counted against the cap, cannot leave and cannot be left with. A row in
+   * the file would be a member with none of a member's properties, which is
+   * the kind of second meaning that goes wrong quietly. He is drawn, not
+   * stored.
+   *
+   * BUT HE WAS DRAWN INTO EVERY ONE OF THEM, and a two-person chat is not a
+   * room with a doorman in it. The list read "Axel, Mo", "Hugo, Mo", "Chen,
+   * Damon, Mo" — his name on the end of every private conversation somebody
+   * had, and his face in the avatars beside it. Two people talking do not
+   * need a doorman standing in the corner.
+   *
+   * SO: the rooms, and only the rooms. A room kept by hand is a room —
+   * somebody runs it, and he is part of how it is run; the rooms at the door
+   * are his by definition and are served elsewhere. A group somebody made out
+   * of their own matches is a conversation, and he is not in it.
+   *
+   * WHAT THIS DOES NOT TURN OFF. He still reads every line in every room for
+   * contact details — see the tripwire in /api/group/say — and still marks
+   * what it catches. That is the board watching, not a participant talking,
+   * and it is the one thing in here that protects somebody who does not know
+   * they are being worked. Taking his name off a chat must not take that
+   * off with it. */
   const mo = { who: store.MO, handle: MO_NAME, photo: "", bot: true };
   /* The reader's own handle, read once — dealOut needs it per group and
      finding it inside the map would be a scan of `people` per room. */
@@ -9407,7 +9427,7 @@ app.get("/api/groups", notesOff, async (req, res) => {
       who: [...g.members.map((h) => {
         const n = name(h);
         return n && { ...n, self: h === me };
-      }).filter(Boolean), mo],
+      }).filter(Boolean), ...(g.hand ? [mo] : [])],
       says: board.says.filter((m) => m.group === g.id)
         .sort((a, b) => String(a.at).localeCompare(String(b.at)))
         .map((m) => ({ id: m.id, at: m.at, text: m.text,
