@@ -1302,19 +1302,29 @@ rate: ## What a yuan is worth in dollars at the till: make rate RATE=0.21 (or ma
 	  printf 'TOMSCODING_BOARD_AUD_PER_CNY=%s\n' "$(RATE)" >> .env; \
 	  echo ""; echo "  Set. Now: make up"; \
 	fi
+	@#
+	@# NO DOLLAR SIGN IN THIS OUTPUT, ON PURPOSE. `A$$$$r` in a recipe becomes
+	@# `$$r` in the shell, which is the PID — it printed "A yuan is worth
+	@# A2903720r". And an awk program in double quotes inside a recipe ran
+	@# into the shell looking for a closing quote and killed the target with
+	@# it, so `make up` never ran after it. Plain words and a single-quoted
+	@# awk program, and neither can happen again.
 	@echo ""
 	@r=$$(grep -E '^TOMSCODING_BOARD_AUD_PER_CNY=' .env | tail -1 | cut -d= -f2-); \
 	if [ -n "$$r" ]; then \
-	  echo "  A yuan is worth A$$$$r at the till."; \
-	  echo "  So \xc2\xa531 is charged as about A$$$$(awk "BEGIN{printf \"%.2f\", 31*$$r}")."; \
-	  echo ""; \
-	  echo "  In the container right now:"; \
-	  echo "    $$($(COMPOSE) exec -T board printenv BOARD_AUD_PER_CNY 2>/dev/null || echo "not set \xe2\x80\x94 run make up")"; \
+	  echo "  Rate in .env      $$r  Australian dollars per yuan"; \
+	  echo "  So 31 yuan        $$(awk -v r="$$r" 'BEGIN{printf "%.2f", 31*r}') AUD at the till"; \
+	  c=$$($(COMPOSE) exec -T board printenv BOARD_AUD_PER_CNY 2>/dev/null); \
+	  if [ -n "$$c" ]; then \
+	    echo "  In the container  $$c"; \
+	  else \
+	    echo "  In the container  NOTHING YET  --  run: make up"; \
+	  fi; \
 	else \
-	  echo "  No rate set, so the shop still charges yuan \xe2\x80\x94 which Alipay"; \
+	  echo "  No rate set, so the shop still charges yuan, which Alipay"; \
 	  echo "  refuses on an Australian account. Set one:"; \
 	  echo ""; \
-	  echo "    make rate RATE=0.21"; \
+	  echo "    make rate RATE=0.21 && make up"; \
 	fi
 	@echo ""
 
