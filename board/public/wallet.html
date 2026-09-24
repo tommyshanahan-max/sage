@@ -579,7 +579,17 @@ SCREENS.payout = async (_, q) => {
      anything is sent, so a typo is caught on this screen. */
   const fields = w.region === "AU" ? [["abn", T("wl.abn"), "text", T("wl.abnHint")], ["accountName", T("wl.accountName"), "text", T("wl.asOnAbn")], ["bsb", T("wl.bsb"), "text", T("wl.sixDigits")], ["accountNumber", T("wl.accountNumber"), "text", ""]]
     : w.region === "CN" ? [["accountName", T("wl.accountName"), "text", T("wl.asOnYourId")], ["bankName", T("wl.bankLabel"), "text", T("wl.bankEg")], ["accountNumber", T("wl.cnAccount"), "text", ""]]
-    : [["accountName", T("wl.accountName"), "text", ""], ["bankName", T("wl.bankLabel"), "text", ""], ["iban", w.region === "FI" ? "IBAN" : T("wl.ibanOr"), "text", ""]];
+    /* EVERYWHERE ELSE, AND THIS IS THE ONE THAT ACTUALLY WIRES MONEY. It
+       asked for a name, a bank and an IBAN, which is not enough to send a
+       payment anywhere — and half the world has no IBAN at all. SWIFT is how
+       the money finds the bank; the address is why a correspondent bank lets
+       it through. Both were missing. */
+    : [["accountName", T("wl.accountName"), "text", ""],
+       ["bankName", T("wl.bankLabel"), "text", ""],
+       ["swift", T("wl.swift"), "text", T("wl.swiftHint")],
+       ["iban", w.region === "FI" ? "IBAN" : T("wl.ibanOr"), "text", T("wl.ibanHint")],
+       ["country", T("wl.bankCountry"), "text", ""],
+       ["address", T("wl.yourAddress"), "text", T("wl.addressWhy")]];
   /* ALWAYS A BANK. It offered "keep it in your wallet" against "pay it out",
      and the first of those is the float this board cannot hold. */
   let mode = "bank";
@@ -587,7 +597,7 @@ SCREENS.payout = async (_, q) => {
   const inputs = {};
   for (const [key, label, type, hint] of fields) {
     const id = "f_" + key;
-    inputs[key] = h("input", { id, type, autocomplete: key === "accountName" ? "name" : "off", inputmode: ["bsb", "accountNumber", "abn"].includes(key) ? "numeric" : null });
+    inputs[key] = h("input", { id, type, autocomplete: key === "accountName" ? "name" : key === "address" ? "street-address" : key === "country" ? "country-name" : "off", inputmode: ["bsb", "accountNumber", "abn"].includes(key) ? "numeric" : null });
     form.append(h("div", { class: "field" }, h("label", { for: id, text: label }), inputs[key], hint ? h("span", { class: "hint", text: hint }) : null));
   }
   /* GST IS A YES OR NO AND BOTH ARE NORMAL. Registered, they add 10% and it

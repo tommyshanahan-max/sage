@@ -7205,6 +7205,19 @@ export const STRINGS = {
   "wl.invNeeds":       ["What your invoice needs", "发票上要写什么"],
   "wl.invNeedsSub":    ["The words \"Tax invoice\", your ABN, the date, what it was for, and the GST — or \"Total price includes GST\".",
                         "写上 Tax invoice、你的 ABN、日期、服务内容，以及 GST 金额（或注明含 GST）。"],
+  /* SWIFT IS THE ONE THAT CANNOT BE MISSED — it is how the money finds the
+     bank, and without it a wire comes back days later minus the fees, with
+     the person who did the work waiting. The example is a real bank's, so
+     the shape is obvious without explaining it. */
+  "wl.swift":          ["SWIFT / BIC", "SWIFT / BIC"],
+  "wl.swiftHint":      ["8 or 11 characters, like CTBAAU2S. On your statement, or ask your bank.",
+                        "8 位或 11 位，例如 CTBAAU2S。账单上有，或问银行。"],
+  "wl.ibanHint":       ["IBAN where your country uses one. Otherwise the plain account number.",
+                        "有 IBAN 的国家填 IBAN，没有的就填账号。"],
+  "wl.bankCountry":    ["Country the account is in", "账户所在国家"],
+  "wl.yourAddress":    ["Your address", "你的地址"],
+  "wl.addressWhy":     ["Banks hold international payments without one.",
+                        "没有地址，国际汇款会被银行卡住。"],
   "wl.bsb":            ["BSB", "BSB"],
   "wl.sixDigits":      ["Six digits", "六位数字"],
   "wl.accountNumber":  ["Account number", "银行账号"],

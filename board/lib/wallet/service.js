@@ -217,6 +217,19 @@ export function createWalletService({ ledger, provider, people, now = () => Date
     });
   }
 
+  /** An IBAN's own checksum: first four characters to the end, letters to
+   *  numbers (A=10 … Z=35), and the whole thing mod 97 is 1. Done in chunks
+   *  because the number is far too large for a float. */
+  function validIban(v) {
+    const moved = v.slice(4) + v.slice(0, 4);
+    let rest = 0;
+    for (const ch of moved) {
+      const n = /[A-Z]/.test(ch) ? String(ch.charCodeAt(0) - 55) : ch;
+      for (const digit of n) rest = (rest * 10 + Number(digit)) % 97;
+    }
+    return rest === 1;
+  }
+
   /** The ABN's own checksum. Eleven digits, first one less one, weighted,
    *  and the total divides by 89. */
   function validAbn(abn) {
@@ -264,9 +277,46 @@ export function createWalletService({ ledger, provider, people, now = () => Date
       if (!t(d.bankName)) fail("bank_bank", "Enter the bank's name.");
       return { accountName: name, accountNumber: acc, bankName: t(d.bankName) };
     }
+    /* EVERYWHERE ELSE — AND THIS IS THE BRANCH THAT ACTUALLY WIRES MONEY.
+     *
+     * It took an IBAN and nothing else, which is not enough to send a payment
+     * anywhere. A correspondent bank needs to know WHICH bank, and half the
+     * world has no IBAN at all: the United States, Canada, Australia, China,
+     * India, Japan, most of south-east Asia. A form that only accepts an IBAN
+     * refuses most of the people it was built for.
+     *
+     * SWIFT/BIC IS THE ONE THAT CANNOT BE MISSED. It is how the money finds
+     * the bank; without it a wire is returned days later, minus fees, and the
+     * person who did the work is the one who waits. Eight characters or
+     * eleven, and the shape is fixed — four for the bank, two for the country,
+     * two for the place, and an optional three for the branch — so a typo is
+     * caught here.
+     *
+     * THE ADDRESS IS NOT BUREAUCRACY. Correspondent banks screen payments and
+     * a beneficiary with no address is the commonest reason one is held.
+     *
+     * AN IBAN IS CHECKED IF IT LOOKS LIKE ONE. Two letters, two digits, then
+     * the rest: move the first four characters to the end, turn letters into
+     * numbers, and the whole thing mod 97 is 1. Offline, like the ABN. If it
+     * does not look like an IBAN it is taken as a plain account number, which
+     * is what most of the world has. */
     const iban = digits(d.iban || d.accountNumber).toUpperCase();
-    if (!/^[A-Z0-9]{8,34}$/.test(iban)) fail("bank_account", "Enter the IBAN or account number.");
-    return { accountName: name, iban, bankName: t(d.bankName) || "Bank account" };
+    if (!iban) fail("bank_account", "Enter the IBAN or account number.");
+    if (/^[A-Z]{2}\d{2}[A-Z0-9]{10,30}$/.test(iban) && !validIban(iban)) {
+      fail("bank_account", "That IBAN does not look right. Check it against your statement.");
+    }
+    if (!/^[A-Z0-9]{5,34}$/.test(iban)) fail("bank_account", "Enter the IBAN or account number.");
+    const swift = String(d.swift ?? "").replace(/\s/g, "").toUpperCase();
+    if (!/^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$/.test(swift)) {
+      fail("bank_swift", "A SWIFT/BIC is 8 or 11 characters, like CTBAAU2S.");
+    }
+    const bankName = t(d.bankName);
+    if (bankName.length < 2) fail("bank_bank", "Enter the bank's name.");
+    const address = t(d.address, 160);
+    if (address.length < 6) fail("bank_address", "Enter your address. Banks hold payments without one.");
+    const country = t(d.country, 60);
+    if (country.length < 2) fail("bank_country", "Which country is the account in?");
+    return { accountName: name, iban, swift, bankName, address, country };
   }
 
   /* ---- quote ------------------------------------------------------------ */
