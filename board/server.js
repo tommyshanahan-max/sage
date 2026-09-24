@@ -705,14 +705,30 @@ app.post("/api/hook/fee", express.raw({ type: "application/json", limit: "64kb" 
     if (ref.startsWith("order:")) {
       const oid = shop.cleanId(ref.slice(6));
       if (!oid) return res.json({ ok: true });
-      await change((board) => {
+      const out = await change((board) => {
         const o = board.orders.find((x) => x.id === oid);
         if (!o || o.off || o.paid) return { ok: true };   // Stripe retries; once only.
         o.paid = true;
         o.pay = { ref: String(session.id || ""), how: "alipay",
                   at: new Date().toISOString() };
-        return { ok: true, tell: o.by || "" };
+        /* THE SELLER, NOT THE BUYER. This returned `o.by`, which is the
+           BUYER's hashed device — so the one person who did not need telling
+           got the notification and the one with a parcel to pack got
+           nothing. The same line in /api/order/:id/check has always looked
+           the seller up by handle; the two ways of paying have to end the
+           same way or a sale is silent depending on which button she
+           pressed. */
+        const seller = board.people.find((x) => x.handle === o.shop);
+        return { ok: true, tell: seller?.by || "" };
       });
+      if (out?.tell) tellThem(out.tell).catch(() => {});
+      /* AND NO payCut HERE, deliberately. The sibling in /check pays the
+         storefront its share out of the Airwallex balance the sale landed
+         in. A Stripe sale does not land there — it lands in this platform's
+         Stripe account — so calling it would send a cut out of a balance
+         that never received the money. When the shop sells its own goods
+         there is no cut to pay; the day it settles for somebody else, this
+         is a licence question before it is a code one. See NOW.md. */
       return res.json({ ok: true });
     }
 
@@ -11312,6 +11328,35 @@ function dealioQr() {
   return p;
 }
 
+/** THE BUTTONS THE ORDER PAGE IS ALLOWED TO DRAW.
+ *
+ *  It drew two, always — 微信支付 and 支付宝 — and only one of them has ever
+ *  been able to take a fen. The native rail needs the WFOE's bank, which
+ *  Airwallex refused on 21 Sep, so dealioQr() is empty; Stripe stands in, and
+ *  on this account Stripe has Alipay on and WeChat Pay INELIGIBLE (ask it
+ *  yourself with `make wallets`). So every press of 微信支付 came back "off"
+ *  and the screen said "没生成出来，再试一次" — try again, at somebody whose
+ *  second try will fail the same way.
+ *
+ *  A dead button on a payment screen is worse than one button: she cannot
+ *  tell whether the shop is broken or she is, and the shop is the thing she
+ *  was deciding whether to trust.
+ *
+ *  ASKED OF THE SERVER, NOT GUESSED IN THE PAGE. Neither of these two facts
+ *  is visible to a browser and both move without the page changing — the
+ *  bank connects, or Stripe's category review turns WeChat on — so the page
+ *  that hard-codes two buttons is wrong again the day either happens.
+ *
+ *  It does not ask Stripe whether Alipay is switched on this minute: that is
+ *  a network call on the way to drawing a button, and the answer changes
+ *  about once a quarter. If Stripe refuses the session anyway the press
+ *  falls back to the same sentence it always did.
+ */
+function orderWays() {
+  if (dealioQr()) return ["wechat", "alipay"];
+  return stripe.configured() ? ["alipay"] : [];
+}
+
 /** Whether this request was made by the person whose account the money goes
  *  to. The handle is read from the board rather than trusted from anywhere
  *  else, and an asker with no published row is nobody. */
@@ -12008,7 +12053,11 @@ app.get("/api/order/:id", async (req, res) => {
   const board = await store.load(FILE);
   const o = board.orders.find((x) => x.id === id);
   if (!o) return res.status(404).json({ error: "gone" });
-  res.json({ ok: true, order: shop.orderView(o) });
+  /* AND WHICH BUTTONS IT MAY DRAW — see orderWays. Sent with the order
+     rather than fetched separately: the page needs both before it can paint
+     the 待付款 screen, and two requests is one more chance to draw a payment
+     screen with nothing on it. */
+  res.json({ ok: true, order: shop.orderView(o), ways: orderWays() });
 });
 
 /** 确认收货 — THE STATE NOBODY COULD REACH.

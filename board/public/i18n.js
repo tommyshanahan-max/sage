@@ -6771,6 +6771,17 @@ export const STRINGS = {
   "od.to":             ["Straight from Australia · {who}", "澳洲直邮 · {who}"],
   "od.wechat":         ["WeChat Pay", "微信支付"],
   "od.alipay":         ["Alipay", "支付宝"],
+  /* THE LONE BUTTON SAYS WHAT IT DOES. With two wallets side by side the
+     brand IS the choice, so 微信支付 / 支付宝 is right. With one, a button
+     reading 支付宝 is a logo standing where a verb belongs — see payBox in
+     order.html, and orderWays() in server.js for why there is usually one. */
+  "od.payAlipay":      ["Pay with Alipay", "支付宝支付"],
+  "od.payWechat":      ["Pay with WeChat Pay", "微信支付"],
+  /* Said instead of a button that cannot work. The order is real and she has
+     already typed her address into it, which is the half worth telling her. */
+  "od.noWay":          ["Payment is off right now. Your order is saved.",
+                        "暂时收不了款，订单已保存。"],
+  "od.noNet":          ["No connection. Try again.", "网络没通，再试一次。"],
   "od.making":         ["One moment…", "正在生成…"],
   /* Press and hold is how anybody opens a code sent to them in a chat. It
      leads, because a line that opens with a problem they do not have is a
@@ -6780,6 +6791,10 @@ export const STRINGS = {
                         "或者截屏，再长按那张图"],
   "od.already":        ["This one is already paid.", "这笔已经付过了。"],
   "od.noQr":           ["No code came back. Try again.", "没生成出来，再试一次。"],
+  /* The other refusal, and it is a different screen: the Stripe rail opens a
+     form rather than drawing a 收款码, so "no code came back" describes
+     something that was never going to appear. */
+  "od.payNo":          ["That would not open. Try again.", "支付打不开，再试一次。"],
   "od.track":          ["Tracking", "快递单号"],
   "od.gone":           ["That order would not open.", "这个订单打不开了。"],
   /* 确认收货 — the state nothing could reach until now, and the one click

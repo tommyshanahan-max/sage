@@ -129,9 +129,13 @@ half too — `acct_1UIVjEJItwOUeslJ`, Aozhou Baba, live:
   still ineligible, WeChat Pay through Stripe is closed to this business and
   the WFOE's own merchant account is the route — which is what the ICP work
   below was for.
-- **There is no bank account on it.** `lands in NOWHERE`, and payouts are
-  manual. So money can be taken and cannot leave: adding a bank account is
-  the next thing, and it is a thing Tom can do rather than a thing to wait on.
+- **There IS a bank account on it.** This said `lands in NOWHERE` and that
+  was the command lying, not the account: `external_accounts` is not on
+  Stripe's `/v1/account` unless it is expanded, so a missing field was read
+  as an empty list — the worst shape of wrong, because it does not look like
+  a failure, it looks like an answer. `make wallets` now asks for the bank
+  separately and says so when it cannot read it. Money can be taken and can
+  leave.
 
 **ALIPAY HAS NOT TAKEN A REAL PAYMENT. A SESSION CLAIMED IT HAD, 24 Sep, AND
 WAS WRONG.**
@@ -146,8 +150,18 @@ The evidence was on screen the whole time and was read the wrong way round:
 the URL in the Alipay warning was `/pay/…/wallet`, which is the demo route
 and nothing else. It was taken for a Stripe return.
 
-**`BOARD_DEALIO_DEMO` is now out of `.env` on the box, 24 Sep 17:54** —
-removed and confirmed gone. So the next `make ask` link is a real charge.
+**The demo is off, 24 Sep 18:02, confirmed from inside the container.**
+`docker compose exec -T board printenv BOARD_DEALIO_DEMO` prints nothing, and
+`make ask` prints no ⚠ beside the link. So a `make ask` link is a real charge.
+
+This took two goes and the first one is the lesson. The names in `.env` are
+`TOMSCODING_*` and the container sees `BOARD_*` — `docker-compose.yml` maps
+them. The command that was supposed to switch the demo off deleted
+`BOARD_DEALIO_DEMO=` from `.env`, a line that had never existed; `grep -c`
+answered 0, which is the number you want for entirely the wrong reason; and
+this file was updated to say it was off while the next payment was still a
+demo. Ask the container, which cannot answer for a name nobody set. In
+CLAUDE.md now.
 
 **And `make ask` now says which it is, beside the link.** A banner on the
 page was not enough: the link is what gets carried off and pasted into a
@@ -643,6 +657,23 @@ and 提现, commission accounting, hand-payment lists.
 
 Not built: the AI assistant behind the AI REP ON/OFF switch (the switch stays
 hidden until it exists), and the 微店 review import.
+
+**The checkout button is Alipay, one button, 24 Sep.** 待付款 drew 微信支付
+and 支付宝 side by side from the day it was written, and the WeChat one has
+never been able to take a fen — no bank behind the native rail, and Stripe
+marks WeChat Pay ineligible on this account. Every press answered `off` and
+the screen said *再试一次* to somebody whose second try would fail the same
+way. The server now says which wallets can actually mint something
+(`orderWays()` in `server.js`, sent with the order) and the page draws only
+those: one full-width 支付宝支付 today, both the day the bank connects or
+Stripe's category review turns WeChat on, and a sentence instead of a button
+when neither can. Money for a shop sale is a plain charge into the platform's
+own Stripe account — no `transfer_data`, no fee — because the shop sells its
+own goods. **The day it settles for somebody else that is a 二清 licence
+question before it is a code question.**
+
+**Not yet proven with a real order.** The Stripe rail has taken a real ¥1
+through Dealio; nobody has bought a product through the shop's own button.
 
 Its payments are **not** on Airwallex and must not be until the conversation
 above has happened. `aozhoubaba.com` is its domain.
