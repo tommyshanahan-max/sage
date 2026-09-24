@@ -202,7 +202,20 @@ test("the rules that say no", async () => {
     await w.ready(newbie, "HK");
     await assert.rejects(w.svc.quote(aus, { toMemberId: aus.id, amount: "10" }), (e) => e.code === "self");
     await assert.rejects(w.svc.quote(aus, { toMemberId: newbie.id, amount: "10", sourceId: "wallet" }).then((q) => w.svc.send(aus, { quoteId: q.quoteId })), (e) => e.code === "balance");
-    await assert.rejects(w.svc.setPayout(aus, { mode: "bank", details: { accountName: "Mia", bsb: "12", accountNumber: "123" } }), (e) => e.code === "bank_bsb");
+    /* A FULL AUSTRALIAN WIRE WITH ONE BAD FIELD. It used to send a name, a
+       BSB and an account number, which was the whole Australian form back
+       when a payout to Australia was treated as a domestic payment. It is a
+       wire out of China now, so the bank and the SWIFT are needed too — and
+       without them this failed on the missing bank name and never reached
+       the assertion it was written for. */
+    const auWire = { accountName: "Mia", bankName: "CBA", swift: "CTBAAU2S", bsb: "063000", accountNumber: "12345678", address: "12 Smith St, Melbourne" };
+    await assert.rejects(w.svc.setPayout(aus, { mode: "bank", details: { ...auWire, bsb: "12" } }), (e) => e.code === "bank_bsb");
+    /* THE SWIFT IS THE ONE THIS WHOLE BRANCH EXISTS FOR. An Australian
+       account was once offered no SWIFT field at all, on a payment that
+       cannot be sent without one. A test so it cannot quietly come back. */
+    await assert.rejects(w.svc.setPayout(aus, { mode: "bank", details: { ...auWire, swift: "" } }), (e) => e.code === "bank_swift");
+    /* And the address, which is what a correspondent bank screens on. */
+    await assert.rejects(w.svc.setPayout(aus, { mode: "bank", details: { ...auWire, address: "" } }), (e) => e.code === "bank_address");
     await assert.rejects(w.svc.setPayout(cn, { mode: "wallet" }), (e) => e.code === "no_wallet");
     await w.ready(cn, "CN");
     await assert.rejects(w.svc.setPayout(cn, { mode: "wallet" }), (e) => e.code === "no_balance_here");
