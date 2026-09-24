@@ -1802,6 +1802,27 @@
     font-size:.7rem;font-weight:500;background:rgba(255,255,255,.16);color:rgba(255,255,255,.6)}
   .pc .pdays b.on{background:#fff;color:#14203a}
 
+  /* The peek — see the function of that name. Dark enough that serif text on
+     any photograph reads, and it fills the card rather than the screen. */
+  .pc .peek{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;
+    justify-content:center;padding:1.2rem;border-radius:1.3rem;
+    background:rgba(8,11,18,.9);-webkit-backdrop-filter:blur(3px);
+    backdrop-filter:blur(3px);animation:peekin .16s ease}
+  @keyframes peekin{from{opacity:0}to{opacity:1}}
+  @media (prefers-reduced-motion:reduce){.pc .peek{animation:none}}
+  .pc .peekx{position:absolute;top:.55rem;right:.6rem;width:2.1rem;height:2.1rem;
+    border-radius:50%;border:1px solid rgba(255,255,255,.4);
+    background:rgba(255,255,255,.12);color:#fff;font-size:1.1rem;line-height:1;
+    cursor:pointer;display:grid;place-items:center}
+  .pc .peekbody{max-height:100%;overflow-y:auto}
+  .pc .peekbody h3{margin:0 0 .5rem;font-family:var(--serif);font-weight:400;
+    font-size:1.3rem;color:#fff}
+  .pc .peekbody p{margin:0 0 1rem;font-family:var(--serif);font-size:1rem;
+    line-height:1.55;color:rgba(255,255,255,.92);white-space:pre-wrap}
+  .pc .peekgo{width:100%;padding:.8rem 1rem;border:0;border-radius:99px;
+    background:var(--accent);color:var(--accent-ink);font:inherit;font-size:1rem;
+    cursor:pointer}
+  .pc .peekgo:focus-visible{outline:2px solid #fff;outline-offset:2px}
   .pacts{display:flex;gap:.6rem;width:100%}
   /* Flex hands a child its longest word before it takes space from a sibling,
      so both need telling they may be narrower than their content. */
@@ -8601,14 +8622,28 @@ function drawDeck() {
   }
   const top = at(AT, true);
   deck.append(top);
-  /* THE CARD OPENS THEIR PAGE. Only where there is a page to open: somebody
-     invited straight into a room has no handle and no profile, and a tap
-     that leads to a 404 is worse than one that does nothing. */
+  /* A TAP PEEKS; IT DOES NOT LEAVE.
+   *
+   * It used to go straight to their page, and on a deck that is the wrong
+   * gesture: you are flicking through seven people, and walking off the
+   * screen to read two lines about one of them costs you your place in the
+   * deck and a tap to get back. Most of the time the answer to "who is this"
+   * is two lines long.
+   *
+   * So the bio comes up over the photograph, inside the card's own frame, and
+   * closes again. The page is still one press away on it, for when the answer
+   * is yes. Coarse first, finer on a tap, and the tap does not take the
+   * screen away.
+   *
+   * NOTHING TO PEEK AT IS NOT A PEEK. Somebody with no bio gets the page
+   * directly — an overlay holding one button is a step, not a screen. And
+   * somebody invited into a room has no handle and no page, so their card
+   * does nothing rather than opening a 404. */
   const q0 = PEOPLE[AT];
   const handle = !mine && q0 && q0.handle ? String(q0.handle).toLowerCase() : "";
-  dragCard(top, handle
-    ? () => { location.href = "/p/" + encodeURIComponent(handle); }
-    : null);
+  const bio = q0 ? pick(q0.goal, q0.goalAlt, q0.goalAlt2, q0.goalLang) : "";
+  const goPage = () => { location.href = "/p/" + encodeURIComponent(handle); };
+  dragCard(top, !handle ? null : (bio ? () => peek(top, q0, bio, goPage) : goPage));
   // Now that there is a card to measure — see the note in fitDeck.
   fitDeck();
 
@@ -8765,34 +8800,93 @@ function drawDeck() {
 /* Flick to move on. Pointer events rather than touch events, so a mouse on a
  * laptop behaves the same as a thumb — and the card follows the finger, because
  * a gesture that only acts at the end of itself feels broken on the way. */
+/* THE PEEK: THEIR BIO, OVER THEIR PHOTOGRAPH, INSIDE THE CARD.
+ *
+ * A tap used to leave for their page. On a deck that is the wrong gesture —
+ * you are going through seven people, and most of the time the answer to "who
+ * is this" is two lines long. This keeps you where you are: the bio comes up
+ * over the picture, and closing it puts you back on the same card with Next
+ * still under your thumb.
+ *
+ * INSIDE THE CARD'S OWN FRAME, not over the screen. A sheet from the bottom
+ * would read as another screen and take the deck away; this reads as the card
+ * turning over, which is what it is.
+ *
+ * THREE WAYS OUT, because a thing that covers a face has to be easy to get
+ * rid of: the ×, anywhere off the words, and the Escape key. Two of those are
+ * the ones people try first without being told.
+ *
+ * IT STOPS ITS OWN POINTER EVENTS. The card under it is a drag surface and a
+ * swipe started on this overlay would flick to the next person with their bio
+ * still open. */
+function peek(card, q, bio, goPage) {
+  if (card.querySelector(".peek")) return;
+  const wrap = el("div", "peek");
+  const shut = () => { wrap.remove(); document.removeEventListener("keydown", esc); };
+  const esc = (e) => { if (e.key === "Escape") shut(); };
+
+  const x = el("button", "peekx", "\u00d7");
+  x.type = "button";
+  x.setAttribute("aria-label", T("brw.shutPeek"));
+  x.addEventListener("click", (e) => { e.stopPropagation(); shut(); });
+
+  const body = el("div", "peekbody");
+  body.append(el("h3", null, q.handle || ""));
+  body.append(el("p", null, bio));
+  const go = el("button", "peekgo", T("brw.theirPage"));
+  go.type = "button";
+  go.addEventListener("click", (e) => { e.stopPropagation(); goPage(); });
+  body.append(go);
+  // Off the words closes it; on them does not, or reading scrolls it away.
+  body.addEventListener("click", (e) => e.stopPropagation());
+
+  wrap.append(x, body);
+  wrap.addEventListener("click", shut);
+  wrap.addEventListener("pointerdown", (e) => e.stopPropagation());
+  document.addEventListener("keydown", esc);
+  card.append(wrap);
+  go.focus({ preventScroll: true });
+}
+
 function dragCard(box, onTap) {
-  let x0 = null, dx = 0;
+  let x0 = null, y0 = 0, dx = 0, dy = 0, t0 = 0;
   const go = (e) => {
     if (e.button !== undefined && e.button !== 0) return;
-    x0 = e.clientX; dx = 0;
+    x0 = e.clientX; y0 = e.clientY; dx = 0; dy = 0; t0 = Date.now();
     box.style.transition = "none";
     box.setPointerCapture?.(e.pointerId);
   };
   const move = (e) => {
     if (x0 === null) return;
     dx = e.clientX - x0;
+    dy = e.clientY - y0;
     box.style.transform = `translateX(${dx}px) rotate(${dx / 34}deg)`;
   };
   const end = () => {
     if (x0 === null) return;
     const far = Math.abs(dx) > 90;
     box.style.transition = "";
-    /* A TAP IS A DRAG THAT WENT NOWHERE, and it opens their page.
+    /* A TAP IS STILL IN BOTH DIRECTIONS, AND QUICK.
      *
-     * The bio came off the card, so there has to be somewhere for it to be —
-     * "one tap deeper" needs the tap to exist, and this card had none.
+     * This measured sideways movement only, so scrolling the page counted as
+     * a tap: a finger goes down on the card, drags UP to scroll, and lets go
+     * — dx is zero the whole way, and the card opened. Reported as exactly
+     * that: "I just touch the screen and it goes to profile." The card fills
+     * most of the screen, so it is the thing under the thumb whenever
+     * anybody scrolls Browse at all, which made it constant.
      *
-     * Six pixels, not zero: a thumb on glass always moves a little, and a
-     * threshold of nothing means the gesture works with a mouse and never on
-     * a phone. Controls on the card stop pointerdown before this ever starts
-     * — Share, the following mark and the two buttons all do — so x0 is null
+     * Ten pixels each way, not six and nothing: a thumb on glass always
+     * moves a little, and the axis nobody was watching is the one people
+     * actually move along.
+     *
+     * And under half a second, because a finger resting on a photograph is
+     * not a request either.
+     *
+     * Controls on the card stop pointerdown before any of this starts —
+     * Share, the following mark and the two buttons all do — so x0 is null
      * for them and this returns above. */
-    if (!far && Math.abs(dx) < 6 && typeof onTap === "function") {
+    const still = Math.abs(dx) < 10 && Math.abs(dy) < 10;
+    if (!far && still && Date.now() - t0 < 500 && typeof onTap === "function") {
       x0 = null;
       box.style.transform = "";
       onTap();

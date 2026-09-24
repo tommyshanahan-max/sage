@@ -4826,6 +4826,10 @@ export const STRINGS = {
     "人就这些了。把你自己的照片放上来，你也就在名单上了。",
   ],
   "brw.next":          ["Next", "下一个"],
+  /* THE PEEK OVER THE PHOTOGRAPH. "Their page" and not "profile": a profile
+     is what a form calls it, and a page is what somebody has. */
+  "brw.theirPage":     ["Their page", "他的主页"],
+  "brw.shutPeek":      ["Close", "关闭"],
   "brw.none":          ["Nobody on the list yet", "名单上还没有人"],
   // Named the study-buddy list, which is not in V1 — and said "nobody", which
   // is wrong for the commonest case: somebody whose own page exists and is
