@@ -5219,18 +5219,11 @@ export const STRINGS = {
   "pm.wallet":         ["Wallet", "钱包"],
   "pm.walletSet":      ["Set up your wallet", "开通钱包"],
   // Closed, the wallet row says only what is owed to you — see money-card.js.
-  "pm.owed":           ["{amount} owed", "待收 {amount}"],
-  "pm.owedN":          ["{n} owed", "{n} 笔待收"],
-  "pm.owedHead":       ["Owed", "待收"],
-  "pm.walletOwed":     ["Wallet — {amount}", "钱包 — {amount}"],
-  "pm.nobodyOwes":     ["Nobody owes you anything.", "没有人欠你钱。"],
   // The three tiles in the opened wallet — see money-card.js.
-  "pm.earned":         ["Earned", "累计收到"],
+  "pm.owedToYou":     ["owed to you", "待收"],
+  "pm.reqsOwed":      ["requests owed to you", "笔待收"],
+  "pm.earnedMonth":    ["{amount} earned this month", "本月收到 {amount}"],
   "pm.inMonth":        ["In this month", "本月收到"],
-  "pm.pending":        ["Pending", "待收"],
-  "pm.req1":           ["1 request", "1 笔"],
-  "pm.reqN":           ["{n} requests", "{n} 笔"],
-  "pm.nPaid":          ["{n} paid", "{n} 笔已付"],
   /* THE FOLD ON YOUR OWN PAGE: the key, Google, and the safety note, one tap
      down. They are read once; the page is opened every day. */
   "me.keyFold":        ["Your key & sign-in", "你的钥匙和登录"],
