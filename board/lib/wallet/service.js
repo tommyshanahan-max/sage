@@ -22,6 +22,10 @@
 //              does not use this twice.
 
 import { REGIONS, CURRENCIES, toMinor, format, bps, isRegion } from "./money.js";
+/* The same table the payout screen reads, so the fields it collects and the
+   fields this accepts cannot drift apart. It lives in public/ for exactly
+   that reason — the arrangement public/off.js already uses. */
+import { bankFields } from "../../public/territory.js";
 import { newId } from "./ledger.js";
 
 export const FEES = { wallet: 0, bank: 0, card: 290, paypal: 340, wechat: 0 };
@@ -230,93 +234,93 @@ export function createWalletService({ ledger, provider, people, now = () => Date
     return rest === 1;
   }
 
-  /** The ABN's own checksum. Eleven digits, first one less one, weighted,
-   *  and the total divides by 89. */
-  function validAbn(abn) {
-    if (!/^\d{11}$/.test(abn)) return false;
-    const w = [10, 1, 3, 5, 7, 9, 11, 13, 15, 17, 19];
-    const n = abn.split("").map(Number);
-    n[0] -= 1;
-    return n.reduce((sum, d2, i) => sum + d2 * w[i], 0) % 89 === 0;
-  }
-
+  /* WHAT A WIRE TO THIS TERRITORY NEEDS, AND NOTHING ABOUT ANYBODY'S TAX.
+   *
+   * This required a valid ABN from every Australian and stored a GST flag
+   * beside it. Both are gone. The reasoning was "without an ABN the payer
+   * must withhold 47% and send it to the ATO" — true of an AUSTRALIAN payer,
+   * and we are a Chinese company. A WFOE wiring money to an Australian
+   * supplier has no ATO withholding obligation, so we never had a reason to
+   * hold their ABN. What a supplier owes their own revenue office is between
+   * them and it. See public/territory.js.
+   *
+   * THE FIELDS COME FROM THE TERRITORY so the screen and this cannot drift:
+   * a form that collects a routing number the server then drops is worse than
+   * one that never asked.
+   *
+   * EVERY CHECK HERE IS OFFLINE AND SELF-CONTAINED. A BSB is six digits, a
+   * SWIFT is eight or eleven in a fixed shape, an IBAN carries its own mod-97
+   * checksum. All of them catch a typo on the screen it was made on, rather
+   * than by a bank three days later — with no key, no network and no third
+   * party.
+   */
   function checkBankDetails(region, d) {
     const t = (v, n = 80) => String(v ?? "").trim().slice(0, n);
     const digits = (v) => String(v ?? "").replace(/[\s-]/g, "");
-    const name = t(d.accountName);
-    if (name.length < 2) fail("bank_name", "Enter the name on the account.");
-    if (region === "AU") {
-      const bsb = digits(d.bsb), acc = digits(d.accountNumber);
-      if (!/^\d{6}$/.test(bsb)) fail("bank_bsb", "A BSB is six digits.");
-      if (!/^\d{5,10}$/.test(acc)) fail("bank_account", "Enter the account number.");
-      /* AN ABN, BECAUSE WITHOUT ONE 47% OF THE PAYMENT IS WITHHELD.
-       *
-       * Not a preference: no-ABN withholding is the law, and a supplier who
-       * leaves this blank is paid 53 cents in the dollar with the rest sent
-       * to the ATO. Asked here, once, rather than discovered on the first
-       * payment.
-       *
-       * CHECKED WITHOUT ASKING ANYBODY. An ABN carries its own checksum —
-       * subtract 1 from the first digit, weight the eleven digits by
-       * 10,1,3,5,7,9,11,13,15,17,19 and the sum divides by 89. So a typo is
-       * caught here rather than by a bank three days later, and it needs no
-       * key, no network and no third party to do it.
-       *
-       * GST IS A YES OR NO AND BOTH ARE NORMAL. Registered, they add 10% and
-       * we claim it back; not registered — under the $75k threshold — they
-       * charge none. A form that assumes one is a form that makes half its
-       * users wrong. */
-      const abn = digits(d.abn);
-      if (!validAbn(abn)) fail("bank_abn", "That ABN does not look right. Eleven digits, from your invoice.");
-      return { accountName: name, bsb, accountNumber: acc, abn, gst: Boolean(d.gst),
-        bankName: t(d.bankName) || "Bank account" };
+    const out = {};
+    for (const key of bankFields(region)) {
+      const raw = key === "swift" || key === "iban"
+        ? digits(d[key]).toUpperCase() : key === "accountName" || key === "bankName"
+        || key === "country" || key === "address" ? t(d[key], key === "address" ? 160 : 80)
+        : digits(d[key]);
+      switch (key) {
+        case "accountName":
+          if (raw.length < 2) fail("bank_name", "Enter the name on the account.");
+          break;
+        case "bankName":
+          if (raw.length < 2) fail("bank_bank", "Enter the bank's name.");
+          break;
+        case "bsb":
+          if (!/^\d{6}$/.test(raw)) fail("bank_bsb", "A BSB is six digits.");
+          break;
+        /* Nine digits, and the last one is a checksum — but it is a weighted
+           sum nobody can quote and a wrong ninth digit is caught by the bank
+           anyway. The length is what catches the common mistake, which is
+           pasting an account number into it. */
+        case "routing":
+          if (!/^\d{9}$/.test(raw)) fail("bank_routing", "A routing number is nine digits.");
+          break;
+        case "accountNumber":
+          if (region === "CN") {
+            if (!/^\d{12,19}$/.test(raw)) fail("bank_account", "Enter the bank account or UnionPay card number.");
+          } else if (!/^[A-Za-z0-9]{4,20}$/.test(raw)) {
+            fail("bank_account", "Enter the account number.");
+          }
+          break;
+        /* THE ONE THAT CANNOT BE MISSED where it is asked for. Without it a
+           wire is returned days later, minus the fees, and the person who did
+           the work is the one who waits. */
+        case "swift":
+          if (!/^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$/.test(raw)) {
+            fail("bank_swift", "A SWIFT/BIC is 8 or 11 characters, like CTBAAU2S.");
+          }
+          break;
+        /* CHECKED ONLY IF IT LOOKS LIKE AN IBAN. Half the world has none —
+           the US, Canada, Australia, China, most of south-east Asia — so
+           anything that is not IBAN-shaped is taken as a plain account
+           number rather than refused. */
+        case "iban":
+          if (!raw) fail("bank_account", "Enter the IBAN or account number.");
+          if (/^[A-Z]{2}\d{2}[A-Z0-9]{10,30}$/.test(raw) && !validIban(raw)) {
+            fail("bank_account", "That IBAN does not look right. Check it against your statement.");
+          }
+          if (!/^[A-Z0-9]{5,34}$/.test(raw)) fail("bank_account", "Enter the IBAN or account number.");
+          break;
+        case "country":
+          if (raw.length < 2) fail("bank_country", "Which country is the account in?");
+          break;
+        /* NOT BUREAUCRACY. Correspondent banks screen payments, and a
+           beneficiary with no address is the commonest reason one is held. */
+        case "address":
+          if (raw.length < 6) fail("bank_address", "Enter your address. Banks hold payments without one.");
+          break;
+        default:
+          break;
+      }
+      out[key] = raw;
     }
-    if (region === "CN") {
-      const acc = digits(d.accountNumber);
-      if (!/^\d{12,19}$/.test(acc)) fail("bank_account", "Enter the bank account or UnionPay card number.");
-      if (!t(d.bankName)) fail("bank_bank", "Enter the bank's name.");
-      return { accountName: name, accountNumber: acc, bankName: t(d.bankName) };
-    }
-    /* EVERYWHERE ELSE — AND THIS IS THE BRANCH THAT ACTUALLY WIRES MONEY.
-     *
-     * It took an IBAN and nothing else, which is not enough to send a payment
-     * anywhere. A correspondent bank needs to know WHICH bank, and half the
-     * world has no IBAN at all: the United States, Canada, Australia, China,
-     * India, Japan, most of south-east Asia. A form that only accepts an IBAN
-     * refuses most of the people it was built for.
-     *
-     * SWIFT/BIC IS THE ONE THAT CANNOT BE MISSED. It is how the money finds
-     * the bank; without it a wire is returned days later, minus fees, and the
-     * person who did the work is the one who waits. Eight characters or
-     * eleven, and the shape is fixed — four for the bank, two for the country,
-     * two for the place, and an optional three for the branch — so a typo is
-     * caught here.
-     *
-     * THE ADDRESS IS NOT BUREAUCRACY. Correspondent banks screen payments and
-     * a beneficiary with no address is the commonest reason one is held.
-     *
-     * AN IBAN IS CHECKED IF IT LOOKS LIKE ONE. Two letters, two digits, then
-     * the rest: move the first four characters to the end, turn letters into
-     * numbers, and the whole thing mod 97 is 1. Offline, like the ABN. If it
-     * does not look like an IBAN it is taken as a plain account number, which
-     * is what most of the world has. */
-    const iban = digits(d.iban || d.accountNumber).toUpperCase();
-    if (!iban) fail("bank_account", "Enter the IBAN or account number.");
-    if (/^[A-Z]{2}\d{2}[A-Z0-9]{10,30}$/.test(iban) && !validIban(iban)) {
-      fail("bank_account", "That IBAN does not look right. Check it against your statement.");
-    }
-    if (!/^[A-Z0-9]{5,34}$/.test(iban)) fail("bank_account", "Enter the IBAN or account number.");
-    const swift = String(d.swift ?? "").replace(/\s/g, "").toUpperCase();
-    if (!/^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$/.test(swift)) {
-      fail("bank_swift", "A SWIFT/BIC is 8 or 11 characters, like CTBAAU2S.");
-    }
-    const bankName = t(d.bankName);
-    if (bankName.length < 2) fail("bank_bank", "Enter the bank's name.");
-    const address = t(d.address, 160);
-    if (address.length < 6) fail("bank_address", "Enter your address. Banks hold payments without one.");
-    const country = t(d.country, 60);
-    if (country.length < 2) fail("bank_country", "Which country is the account in?");
-    return { accountName: name, iban, swift, bankName, address, country };
+    if (!out.bankName) out.bankName = "Bank account";
+    return out;
   }
 
   /* ---- quote ------------------------------------------------------------ */

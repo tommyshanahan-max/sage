@@ -7367,6 +7367,14 @@ export const STRINGS = {
   "wl.dOut":           ["Paid out", "付出"],
   "wl.dGap":           ["Margin", "毛利"],
   "wl.dInvTo":         ["Invoice to", "发票抬头"],
+  /* THE UNITED STATES. Nine digits; the common mistake is pasting an account
+     number in, and the length catches that. */
+  "wl.routing":        ["Routing number", "路由号"],
+  "wl.routingHint":    ["Nine digits, on your cheque or in your banking app.",
+                        "9 位数字，支票上或网银里能找到。"],
+  /* NOT "as registered against the ABN" — the ABN is gone, and the only name
+     that matters is the one the bank will bounce it against. */
+  "wl.asAtBank":       ["Exactly as the bank has it", "与银行登记的完全一致"],
   "wl.bsb":            ["BSB", "BSB"],
   "wl.sixDigits":      ["Six digits", "六位数字"],
   "wl.accountNumber":  ["Account number", "银行账号"],

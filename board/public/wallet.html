@@ -232,6 +232,7 @@
    silently put somebody back into English. Set before the first paint,
    because every screen below reads T at draw time. */
 import { T, STRINGS, lang, setLang, pickLang, langButton } from "/i18n.js";
+import { territoryOf } from "/territory.js";
 setLang(pickLang());
 
 const $ = (id) => document.getElementById(id);
@@ -596,7 +597,14 @@ SCREENS.setup = async () => {
   const terms = h("input", { type: "checkbox", id: "terms" });
   const start = btn(T("wl.setUp"), "", async () => {
     start.disabled = true;
-    try { await api("/api/wallet/setup", { region: guessRegion(), acceptedTerms: true }); await load(); say(T("wl.walletCreated")); go("verify"); }
+    /* NOT go("verify"). Finishing setup used to hand somebody straight to
+       "Confirm it's you" — photograph your passport, take a selfie — when
+       all they had done was ask where their money should go. Nothing at this
+       level needs it: setPayout takes no `verified` flag, so the bank
+       details save without it. Identity belongs where money actually moves,
+       and it is still one row down in Settings and still the answer the send
+       flow gives when it needs one. */
+    try { await api("/api/wallet/setup", { region: guessRegion(), acceptedTerms: true }); await load(); say(T("wl.walletCreated")); replace("payout"); }
     catch (err) { start.disabled = false; showError(err); }
   }, { disabled: true });
   terms.addEventListener("change", () => { start.disabled = !terms.checked; });
@@ -690,6 +698,39 @@ function payoutFirst() {
   ) };
 }
 
+/* A FIELD'S NAME AND ITS ONE LINE OF HELP.
+ *
+ * Kept beside the territory table rather than inside it: the table is facts
+ * about a country and these are words on a screen, and the two are edited by
+ * different people for different reasons. A key with no entry falls back to
+ * its own name, which is ugly on purpose — a missing string should be
+ * obvious on the screen rather than invisible. */
+const FIELD_LABEL = {
+  accountName: "wl.accountName", bsb: "wl.bsb", accountNumber: "wl.accountNumber",
+  bankName: "wl.bankLabel", swift: "wl.swift", iban: "wl.ibanOr",
+  routing: "wl.routing", country: "wl.bankCountry", address: "wl.yourAddress",
+};
+const FIELD_HINT = {
+  bsb: "wl.sixDigits", swift: "wl.swiftHint", iban: "wl.ibanHint",
+  routing: "wl.routingHint", address: "wl.addressWhy",
+};
+function fieldLabel(key, region) {
+  /* Finland's account IS an IBAN, so calling it "IBAN or account number"
+     there is a choice it does not have. */
+  if (key === "iban" && region === "FI") return "IBAN";
+  if (key === "accountNumber" && region === "CN") return T("wl.cnAccount");
+  return T(FIELD_LABEL[key] || key);
+}
+function fieldHint(key, region) {
+  /* NOT "as registered against the ABN" any more — see public/territory.js
+     for why the ABN went. Whatever the bank has it as is the only thing that
+     matters, because it is the bank that will bounce it. */
+  if (key === "accountName") return T(region === "CN" ? "wl.asOnYourId" : "wl.asAtBank");
+  if (key === "bankName" && region === "CN") return T("wl.bankEg");
+  const k = FIELD_HINT[key];
+  return k ? T(k) : "";
+}
+
 SCREENS.payout = async (_, q) => {
   /* ARRIVED HERE FROM "WHERE DO WE SEND YOUR MONEY", WITH NO WALLET.
    *
@@ -706,44 +747,31 @@ SCREENS.payout = async (_, q) => {
   if (!W.wallet) return payoutFirst();
   const w = W.wallet;
   const setup = q.get("setup") === "1";
-  /* AN ABN FIRST, BECAUSE WITHOUT ONE 47% OF THE PAYMENT IS WITHHELD.
-     Not a preference — no-ABN withholding is the law, and a supplier who
-     leaves it blank is paid 53 cents in the dollar. Asked once, here, rather
-     than discovered on the first payment. Its own checksum is checked before
-     anything is sent, so a typo is caught on this screen. */
-  const fields = w.region === "AU" ? [["abn", T("wl.abn"), "text", T("wl.abnHint")], ["accountName", T("wl.accountName"), "text", T("wl.asOnAbn")], ["bsb", T("wl.bsb"), "text", T("wl.sixDigits")], ["accountNumber", T("wl.accountNumber"), "text", ""]]
-    : w.region === "CN" ? [["accountName", T("wl.accountName"), "text", T("wl.asOnYourId")], ["bankName", T("wl.bankLabel"), "text", T("wl.bankEg")], ["accountNumber", T("wl.cnAccount"), "text", ""]]
-    /* EVERYWHERE ELSE, AND THIS IS THE ONE THAT ACTUALLY WIRES MONEY. It
-       asked for a name, a bank and an IBAN, which is not enough to send a
-       payment anywhere — and half the world has no IBAN at all. SWIFT is how
-       the money finds the bank; the address is why a correspondent bank lets
-       it through. Both were missing. */
-    : [["accountName", T("wl.accountName"), "text", ""],
-       ["bankName", T("wl.bankLabel"), "text", ""],
-       ["swift", T("wl.swift"), "text", T("wl.swiftHint")],
-       ["iban", w.region === "FI" ? "IBAN" : T("wl.ibanOr"), "text", T("wl.ibanHint")],
-       ["country", T("wl.bankCountry"), "text", ""],
-       ["address", T("wl.yourAddress"), "text", T("wl.addressWhy")]];
+  /* THE FIELDS COME FROM THE TERRITORY, NOT FROM AN `if`.
+   *
+   * This was two branches — Australia, mainland China, everywhere else — with
+   * the GST question welded into the Australian one. An Australian got the
+   * right questions; a Hong Konger got none, which was right by accident; and
+   * a Finn was asked for an IBAN and nothing about VAT, which is simply
+   * wrong, because a VAT number belongs on their invoice and we never
+   * collected it. See lib/wallet/territory.js, including why `salesTax: null`
+   * for Hong Kong and the United States is a deliberate answer and not a gap.
+   */
+  const terr = territoryOf(w.region);
+  const fields = terr.bank.map((k) => [k, fieldLabel(k, w.region), fieldHint(k, w.region)]);
+
   /* ALWAYS A BANK. It offered "keep it in your wallet" against "pay it out",
      and the first of those is the float this board cannot hold. */
   let mode = "bank";
   const form = h("div", { class: "stack" });
   const inputs = {};
-  for (const [key, label, type, hint] of fields) {
+  for (const [key, label, hint] of fields) {
     const id = "f_" + key;
-    inputs[key] = h("input", { id, type, autocomplete: key === "accountName" ? "name" : key === "address" ? "street-address" : key === "country" ? "country-name" : "off", inputmode: ["bsb", "accountNumber", "abn"].includes(key) ? "numeric" : null });
+    inputs[key] = h("input", { id, type: "text",
+      autocomplete: key === "accountName" ? "name" : key === "address" ? "street-address" : key === "country" ? "country-name" : "off",
+      inputmode: ["bsb", "accountNumber", "abn", "routing"].includes(key) ? "numeric" : null });
     form.append(h("div", { class: "field" }, h("label", { for: id, text: label }), inputs[key], hint ? h("span", { class: "hint", text: hint }) : null));
   }
-  /* GST IS A YES OR NO AND BOTH ARE NORMAL. Registered, they add 10% and it
-     is claimed back; under the $75,000 threshold they charge none. A form
-     that assumes one makes half its users wrong, so it is a question rather
-     than a default. */
-  const gst = h("input", { type: "checkbox", id: "f_gst" });
-  if (w.region === "AU") {
-    form.append(h("label", { class: "check" }, gst, h("span", { text: T("wl.gstReg") })));
-    form.append(h("p", { class: "hint", text: T("wl.gstWhy") }));
-  }
-
   const list = h("div", { class: "list", role: "radiogroup", "aria-label": T("wl.whereShouldGo") });
   const draw = () => {
     list.textContent = "";
@@ -759,7 +787,6 @@ SCREENS.payout = async (_, q) => {
       if (mode === "wallet") await api("/api/wallet/payout", { mode: "wallet" });
       else if (showNew) await api("/api/wallet/payout", { mode: "bank", details: {
         ...Object.fromEntries(Object.entries(inputs).map(([k, i]) => [k, i.value])),
-        ...(w.region === "AU" ? { gst: gst.checked } : {}),
       } });
       await load(); say(T("wl.saved"));
       if (setup) go("ready"); else history.back();
@@ -771,8 +798,8 @@ SCREENS.payout = async (_, q) => {
     /* WHAT THEIR INVOICE HAS TO SAY, said here rather than after the first
        one is rejected. Four things, and a supplier who gets them wrong is
        paid late for a reason nobody explained. */
-    w.region === "AU" ? h("div", { class: "list" },
-      row({ title: T("wl.invNeeds"), sub: T("wl.invNeedsSub") })) : null,
+    /* NO INVOICE ROW AND NO TAX FIELDS. What a supplier owes their own
+       revenue office is between them and it — see public/territory.js. */
     h("p", { class: "small", text: T("wl.detailsToProv") }),
     h("div", { class: "push" }, save, setup ? btn(T("wl.skipForNow"), "ghost", () => go("ready")) : null)) };
 };

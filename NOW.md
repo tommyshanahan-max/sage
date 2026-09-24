@@ -157,6 +157,51 @@ the prompt. It never touched the box's configuration.
 history and into a screenshot on 24 Sep. A leaked live key on a public server
 is a likelier route to a terminated account than anything in this repo.
 
+## Tax came out of the supplier side — 25 Sep, never deployed
+
+**"Tax is really none of our business. We are in China."** And that undid the
+reasoning the whole thing was built on. The payout screen collected an ABN and
+a GST registration because *without an ABN the payer must withhold 47% and
+send it to the ATO* — which is true **of an Australian payer**. The WFOE is a
+Chinese company. A WFOE wiring money to an Australian supplier has no ATO
+withholding obligation, so we never had a reason to hold their ABN, and none
+at all for the VAT and EIN that had started to follow it by analogy.
+
+Out: the ABN and its checksum, the GST question, the "what your invoice needs"
+row, and a half-built table of tax identifiers for six territories. What a
+supplier owes their own revenue office is between them and it.
+
+**What stays is `public/territory.js` — bank fields only, per territory.**
+That part is real and it is ours: Australia uses a BSB, the United States a
+routing number, Europe an IBAN, and the rest of the world needs a SWIFT/BIC
+before anything can be sent at all. It lives in `public/` so the screen and
+the server read the same table and cannot drift — the arrangement
+`public/off.js` already uses.
+
+| | |
+|---|---|
+| AU | name · BSB · account |
+| CN | name · bank · account |
+| HK | name · bank · account · SWIFT |
+| US | name · bank · routing · account |
+| FI | name · bank · IBAN · SWIFT |
+| Anywhere else | name · bank · SWIFT · IBAN or account · country · address |
+
+All six walked on a real board: each draws its own fields, none shows a tax
+word, and the server accepts each shape and refuses a short routing number
+and a one-digit IBAN typo.
+
+**AND NO IDENTITY CHECK AT THIS LEVEL.** Finishing setup used to hand somebody
+straight to *"Confirm it's you"* — photograph your passport, take a selfie —
+when all they had done was ask where their money should go. Nothing there
+needs it: `setPayout` takes no `verified` flag, so the bank details save
+without one. Identity is still a row in Settings and still what the send flow
+asks for when it genuinely needs it.
+
+**THE PAYER'S HALF IS NOT AFFECTED.** The 开票信息 in `lib/fapiao.js` stays:
+that is not somebody's tax affairs, it is the invoice **we** issue **them**,
+in the country we are registered in.
+
 ## The two invoices — built 24 Sep, never deployed
 
 A deal through the WFOE is **two invoices and one of them is ours**. The payer
