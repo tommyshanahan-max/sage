@@ -182,8 +182,44 @@ being declined.
 
 **TWO THINGS TO DO, AND NEITHER IS BUILT YET.**
 
-1. **IT IS ALMOST CERTAINLY THE CURRENCY, and Stripe's own documentation
-   says so.** Alipay's presentment currencies are AUD, CAD, CNY, EUR, GBP,
+**AUD FAILS IDENTICALLY. 24 Sep 19:15, and it settles the question.**
+
+```
+11:15   6.51 AUD   alipay   requires_payment_method
+                            payment_intent_payment_attempt_failed · invalid_request_error
+11:02  31.00 CNY   alipay   (the same)
+10:49  31.00 CNY   alipay   (the same)
+```
+
+So the currency was not it, and neither were the two guesses before it. Three
+theories, three wrong, each one costing a round of somebody's evening. **The
+next session should not offer a fourth.** Everything in this repo that can be
+checked has been checked: the rail, the destination, the keys, the mode, the
+currency. What is left is an Alipay payment that this Stripe account will not
+complete, in either currency, on Stripe's own hosted form.
+
+**This is Stripe support's question now, not a code question.** Ready to
+paste:
+
+> Live Australian account. Alipay is enabled and appears on the payment
+> sheet. Checkout Sessions with `payment_method_types: ["alipay"]` create
+> normally, but every attempt fails on submission with
+> `payment_intent_payment_attempt_failed` / `invalid_request_error`.
+> Reproduced 24 Sep in CNY (31.00) and AUD (6.51), same result. What makes
+> the attempt invalid?
+
+**The AUD change stays.** Stripe's own currency table says CNY is not a
+presentment currency for an Australian account, so it would have bitten later
+even though it is not biting now. Stripe's adaptive pricing offers the payer
+both currencies on the sheet regardless; ours decides the base the sheet is
+built from.
+
+---
+
+### The currency theory, kept because it was reasoned well and still wrong
+
+1. **The currency, which Stripe's documentation supports and the box does
+   not.** Alipay's presentment currencies are AUD, CAD, CNY, EUR, GBP,
    HKD, JPY, MYR, NZD, SGD and USD — *depending on business location* — and
    **AUD is the one listed for Australia**. Taking a currency at all requires
    being able to settle it, which means a bank account per settlement
