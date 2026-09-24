@@ -17,7 +17,7 @@ through, and add the date to anything that changes.
 | **Airwallex — the account** | **REJECTED, 21 Sep.** "Unable to support your account at this time. After careful review, this decision is final." No reason given. Business verification had passed; this is the activation decision, and it came four hours after Ian was told the timing was tight. Stripe declined the same week, 20 Sep, also inside a day, also on risk. |
 | **Airwallex — Connected Accounts** | Moot now. Raised in their chat, routed to Ian, then **parked on purpose**: it is the reps-with-storefronts product, and describing it means describing the goods business. Revisit once the base account is live and has volume. |
 | **Airwallex — the goods business** | Not disclosed yet. Deliberate. To be raised with Ian **before** anything from the shop runs through the account. |
-| **Stripe** | **DECLINED at application, 20 Sep** — "too high risk", inside a day. There was never an account: nothing was onboarded, nothing was terminated, and there is no chargeback history or MATCH listing behind it. This file said "closed the account" and that was wrong; a session repeated it into an email to a prospective partner before Tom caught it. The distinction is the whole thing in payments — a decline is a category judgement on an individual applying for cross-border China, a termination is a verdict on how you traded. |
+| **Stripe** | **A LIVE ACCOUNT EXISTS AND TOOK A REAL PAYMENT, 24 Sep.** See the Stripe section below — Aozhou Baba, `acct_1UIVjEJItwOUeslJ`, charges and payouts enabled, Alipay on, ¥1 paid through Dealio from a phone. Everything after this sentence is the 20 Sep application that was declined, and it is kept because the wording matters, not because it is the current state. **DECLINED at application, 20 Sep** — "too high risk", inside a day. There was never an account: nothing was onboarded, nothing was terminated, and there is no chargeback history or MATCH listing behind it. This file said "closed the account" and that was wrong; a session repeated it into an email to a prospective partner before Tom caught it. The distinction is the whole thing in payments — a decline is a category judgement on an individual applying for cross-border China, a termination is a verdict on how you traded. |
 
 ## Dealio — the payment half, on `paydealio.com`
 
@@ -124,9 +124,22 @@ half too — `acct_1UIVjEJItwOUeslJ`, Aozhou Baba, live:
   manual. So money can be taken and cannot leave: adding a bank account is
   the next thing, and it is a thing Tom can do rather than a thing to wait on.
 
-The two open questions are now WeChat Pay and a bank account. What follows is
-kept because the passkey is still Zhu's and that still decides who can sign
-in — but it is no longer blocking the money.
+**AND ALIPAY TOOK REAL MONEY, 24 Sep 17:31 — watched on Tom's phone.**
+`make ask WHO="Tom" AMOUNT="¥1" FOR="Alipay test"` minted
+`paydealio.com/pay/bdbdbd21a5637b57e66f`, opened on a phone, Alipay chosen,
+paid. Through the live account, through Dealio, end to end.
+
+So the thing this product exists to do — take money from a Chinese payer —
+works today. It has been the assumption of every conversation since August
+that it did not.
+
+**WeChat Pay is now a second door, not the door.** Wanting it open is right;
+waiting on it is not. Alipay is 700m-odd people and it is on.
+
+The two open questions are now WeChat Pay and a bank account — money can be
+taken and, with nothing for it to land in, sits in the Stripe balance. What
+follows is kept because the passkey is still Zhu's and that still decides who
+can sign in — but it is no longer blocking the money.
 
 **THE ACCOUNT IS IN SOMEBODY ELSE'S NAME (23 Sep, 23:00 — see above).** Not a login problem. The live account's representative is
 **Zhu Liyuan**, the two-step passkey is **"Zhu's passkey"**, and Stripe
