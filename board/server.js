@@ -11400,6 +11400,43 @@ function dealioQr() {
  *  about once a quarter. If Stripe refuses the session anyway the press
  *  falls back to the same sentence it always did.
  */
+/* WHAT A YUAN IS WORTH IN AUSTRALIAN DOLLARS, WHEN SOMEBODY HAS SAID.
+ *
+ * WHY THE SHOP CANNOT CHARGE YUAN. Stripe's Alipay takes a presentment
+ * currency that depends on the business location, and for an Australian
+ * account that is AUD — CNY belongs to accounts in China and Hong Kong, and
+ * taking a currency at all means being able to settle it, which needs a bank
+ * account per settlement currency. This one settles AUD. So every CNY charge
+ * came back `payment_intent_payment_attempt_failed · invalid_request_error`
+ * from inside Stripe's own payment sheet, twice, on 24 Sep. An evening went
+ * on guessing at it; it is two lines of Stripe's currency table.
+ *
+ * THE PRICES STAY IN YUAN. That is what the shelf says and what she decided
+ * to spend; the conversion happens at the charge and nowhere else, and she
+ * sees RMB again inside Alipay, which converts on its own side. That is the
+ * ordinary cross-border experience and the reason the shop needs no second
+ * set of prices.
+ *
+ * SET BY HAND, AND UNSET MEANS UNCHANGED. There is no rate source on this box
+ * any more — Airwallex quoted it and Airwallex is gone — so inventing a
+ * default would be inventing what somebody is charged. With nothing set the
+ * shop charges yuan exactly as before and fails exactly as before, which is
+ * a visible wrong rather than a silent one. `make rate` sets it.
+ *
+ * ROUNDED UP. A rate a week old is a rate that is wrong by a little, and the
+ * seller should not be the one who wears it. A fraction of a cent per order.
+ */
+const AUD_PER_CNY = Number(process.env.BOARD_AUD_PER_CNY || "");
+const audRate = () => (Number.isFinite(AUD_PER_CNY) && AUD_PER_CNY > 0 ? AUD_PER_CNY : 0);
+
+/** Fen to Australian cents at that rate, never rounding down. */
+function audCents(fen) {
+  const r = audRate();
+  if (!r) return 0;
+  const c = Math.ceil(fen * r);
+  return c > 0 ? c : 0;
+}
+
 function orderWays() {
   if (dealioQr()) return ["wechat", "alipay"];
   return stripe.configured() ? ["alipay"] : [];
@@ -12171,7 +12208,11 @@ app.get("/api/order/:id", async (req, res) => {
      rather than fetched separately: the page needs both before it can paint
      the 待付款 screen, and two requests is one more chance to draw a payment
      screen with nothing on it. */
-  res.json({ ok: true, order: shop.orderView(o), ways: orderWays() });
+  /* AND WHAT SHE WILL ACTUALLY BE CHARGED IN. The page says ¥31 and Stripe's
+     sheet says A$6.51, and a payer who meets that without warning has every
+     reason to close the tab. Said before she presses, not after. */
+  res.json({ ok: true, order: shop.orderView(o), ways: orderWays(),
+    payCur: audCents(shop.orderTotal(o)) ? "aud" : "" });
 });
 
 /** 确认收货 — THE STATE NOBODY COULD REACH.
@@ -12940,9 +12981,12 @@ app.post("/api/order/:id/pay", express.json({ limit: "1kb" }), async (req, res) 
     if (method !== "alipay" || !stripe.configured()) {
       return res.status(400).json({ error: "off" });
     }
+    /* THE CURRENCY STRIPE IS ASKED FOR — see audRate above. The order stays
+       priced in yuan everywhere else; this is the only place it changes. */
+    const cents = audCents(total);
     try {
       const session = await stripe.checkout({
-        amount: total, currency: "cny", fee: 0, destination: "",
+        amount: cents || total, currency: cents ? "aud" : "cny", fee: 0, destination: "",
         method: "alipay",
         /* A THIRD SHAPE OF REFERENCE — see the webhook. `order:` because a
            bare id there already means a room's own fee, and two things

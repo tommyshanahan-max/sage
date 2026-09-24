@@ -935,6 +935,7 @@ services:
       # and is only sent to somebody who has pressed Pay.
       BOARD_STRIPE_KEY: ${TOMSCODING_BOARD_STRIPE_KEY:-}
       BOARD_STRIPE_PK: ${TOMSCODING_BOARD_STRIPE_PK:-}
+      BOARD_AUD_PER_CNY: ${TOMSCODING_BOARD_AUD_PER_CNY:-}
       # WHICH API VERSION EVERY CALL ASKS FOR. Unset, Stripe serves whatever
       # the dashboard is set to, and that moves without a commit here — which
       # is how a working checkout call started being refused with nothing

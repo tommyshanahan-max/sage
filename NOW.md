@@ -194,10 +194,19 @@ being declined.
    Alipay — it converts on their side, which is the ordinary cross-border
    flow and the reason the ¥ price on the shelf can stay as it is.
 
-   The only real decision is **the rate**: something must turn ¥31 into
-   Australian dollars at the moment of charge. Not built. A fixed rate in
-   `.env` is the small honest version; a quote per order is the right one and
-   needs a source now that Airwallex is out.
+   **BUILT, 24 Sep 19:10, and not yet run on the box.** The shelf stays in
+   yuan; the till converts. `make rate RATE=0.21` writes
+   `TOMSCODING_BOARD_AUD_PER_CNY` into `.env`, `make up`, and the shop's
+   Stripe charge is AUD — rounded up, so a stale rate is never the seller's
+   loss. Nothing set means nothing changes: it charges yuan and fails exactly
+   as before, which is a visible wrong rather than a silent one.
+
+   The payer is told before she presses, because the shelf says ¥31 and
+   Stripe's sheet will say A$6.51: *支付宝按澳元扣款，汇率以支付宝当日为准。*
+
+   **A fixed rate is the small honest version, not the right one.** A quote
+   per order is right and needs a source now that Airwallex is gone. Until
+   then somebody has to remember to move it.
 
    This took an evening because three sessions guessed instead of reading
    Stripe's currency table. It is two searches.

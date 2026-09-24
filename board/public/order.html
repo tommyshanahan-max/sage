@@ -117,6 +117,7 @@ function device() {
 
 let O = null;
 let WAYS = [];
+let PAYCUR = "";
 
 function draw() {
   const root = $("root");
@@ -203,6 +204,12 @@ function payBox() {
     box.append(el("p", "else", T("od.noWay")));
     return box;
   }
+
+  /* WHAT SHE WILL BE CHARGED IN, when it is not what the shelf said. The
+     server decides it — see audRate() in server.js — because the rate lives
+     in .env and a page cannot see it. Above the button rather than below:
+     it is a thing to know before pressing, not a footnote afterwards. */
+  if (PAYCUR === "aud") box.append(el("p", "else", T("od.audNote")));
 
   const ways = el("div", "ways" + (WAYS.length === 1 ? " one" : ""));
   const buttons = WAYS.map((how) => {
@@ -429,7 +436,13 @@ async function load() {
        in server.js. An older server sends no list; two buttons was the old
        behaviour and one of them was dead, so the safe reading of silence is
        the one that can actually mint a code today. */
-    if (r.ok && j?.ok) { O = j.order; WAYS = Array.isArray(j.ways) ? j.ways : ["alipay"]; draw(); return; }
+    if (r.ok && j?.ok) {
+      O = j.order;
+      WAYS = Array.isArray(j.ways) ? j.ways : ["alipay"];
+      PAYCUR = String(j.payCur || "");
+      draw();
+      return;
+    }
   } catch { }
   $("root").append(el("p", "foot", T("od.gone")));
 }

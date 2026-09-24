@@ -1276,6 +1276,48 @@ wallets: ## Who can pay you, and whether Stripe will pay it out: make wallets
 	  $(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	    /seed/stripe-methods.mjs)
 
+rate: ## What a yuan is worth in dollars at the till: make rate RATE=0.21 (or make rate to read it)
+	@# WHY THE SHOP NEEDS ONE AT ALL. Stripe's Alipay takes the presentment
+	@# currency your business location allows, and for an Australian account
+	@# that is AUD — CNY belongs to accounts in China and Hong Kong. Every
+	@# yuan charge came back invalid_request_error from inside Stripe's own
+	@# payment sheet. The shelf stays in yuan; this is what the till converts
+	@# at, and the payer sees RMB again inside Alipay because Alipay converts
+	@# on its own side.
+	@#
+	@# NOT A SECRET, so it is an argument rather than a prompt — unlike the
+	@# keys, which is why those are a script.
+	@#
+	@# NOTHING SET MEANS NOTHING CHANGES: the shop charges yuan exactly as it
+	@# did, and fails exactly as it did. A default here would be inventing
+	@# what somebody is charged.
+	@if [ -n "$(RATE)" ]; then \
+	  case "$(RATE)" in \
+	    0.[0-9]*|[0-9].[0-9]*|[0-9]) ;; \
+	    *) echo ""; echo "  RATE looks wrong: $(RATE)"; \
+	       echo "  It is dollars per yuan, so about 0.21 — not 4.7."; echo ""; exit 1 ;; \
+	  esac; \
+	  cp .env .env.before-rate; \
+	  sed -i "/^TOMSCODING_BOARD_AUD_PER_CNY=/d" .env; \
+	  printf 'TOMSCODING_BOARD_AUD_PER_CNY=%s\n' "$(RATE)" >> .env; \
+	  echo ""; echo "  Set. Now: make up"; \
+	fi
+	@echo ""
+	@r=$$(grep -E '^TOMSCODING_BOARD_AUD_PER_CNY=' .env | tail -1 | cut -d= -f2-); \
+	if [ -n "$$r" ]; then \
+	  echo "  A yuan is worth A$$$$r at the till."; \
+	  echo "  So \xc2\xa531 is charged as about A$$$$(awk "BEGIN{printf \"%.2f\", 31*$$r}")."; \
+	  echo ""; \
+	  echo "  In the container right now:"; \
+	  echo "    $$($(COMPOSE) exec -T board printenv BOARD_AUD_PER_CNY 2>/dev/null || echo "not set \xe2\x80\x94 run make up")"; \
+	else \
+	  echo "  No rate set, so the shop still charges yuan \xe2\x80\x94 which Alipay"; \
+	  echo "  refuses on an Australian account. Set one:"; \
+	  echo ""; \
+	  echo "    make rate RATE=0.21"; \
+	fi
+	@echo ""
+
 pay-last: ## Why Stripe turned the last few payments down: make pay-last [N=5]
 	@# THE FOUR WORDS INSIDE STRIPE'S OWN FRAME, ANSWERED.
 	@#

@@ -6783,6 +6783,15 @@ export const STRINGS = {
      reading 支付宝 is a logo standing where a verb belongs — see payBox in
      order.html, and orderWays() in server.js for why there is usually one. */
   "od.payAlipay":      ["Pay with Alipay", "支付宝支付"],
+  /* SAID BEFORE SHE PRESSES, NOT AFTER. The shelf is in yuan and Stripe's
+     sheet will be in Australian dollars, because that is the only currency
+     Alipay takes from an Australian account. Meeting that with no warning is
+     a reason to close the tab.
+     Written for somebody who already knows how their wallet works: 扣款 and
+     当日汇率 are the words Alipay itself uses on a cross-border payment, so
+     this reads as the ordinary thing it is rather than as an explanation. */
+  "od.audNote":        ["Alipay charges in Australian dollars, at its rate on the day.",
+                        "支付宝按澳元扣款，汇率以支付宝当日为准。"],
   "od.payWechat":      ["Pay with WeChat Pay", "微信支付"],
   /* Said instead of a button that cannot work. The order is real and she has
      already typed her address into it, which is the half worth telling her. */
