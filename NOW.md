@@ -486,10 +486,17 @@ have a Stripe account with trading history, and would you run a Connect
 platform on it". Their deck is tax structuring — SA, SARL, SPF, SCSp, RAIF —
 and contains no payments authorisation.
 
-## Voice messages in a room — live 24 Sep
+## Voice messages — live 24 Sep
 
-Hold the round button beside Send in a room, speak, let go. No calls: Tom
-asked for calls, then said voice messages only, twice.
+Hold the round button beside Send, speak, let go. No calls: Tom asked for
+calls, then said voice messages only, twice.
+
+**In all three places two people talk**, which took two goes. It shipped in
+group rooms first, and the screen Tom actually opens from Messages is
+`notes.html` — a one-to-one thread — so he pressed the tab and there was no
+microphone on it. Rooms are `groups.html`, threads and door rooms are
+`notes.html`, and the two pages draw the same kind of message from different
+stores. A change to one of them is not a change to the other.
 
 The audio is gated on being in the room, so the page **fetches the bytes with
 the device header and plays a blob** — it is not an `<audio src>`. A plain src

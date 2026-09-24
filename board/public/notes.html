@@ -453,6 +453,40 @@
     margin-left:-.1rem}
   .send:disabled{opacity:.45}
 
+  /* HOLD TO TALK, BESIDE THE BOX — the same button the rooms have, because a
+     gesture that exists in one of the two places two people talk and not the
+     other is a gesture people stop trying. It does nothing on a tap: a voice
+     note sent by accident is worse than one not sent. */
+  .write button.mic{flex:0 0 auto;width:2.4rem;height:2.4rem;padding:0;
+    border-radius:50%;border:1px solid var(--line);
+    background:var(--raise);color:var(--ink);font-size:.8rem;cursor:pointer;
+    display:grid;place-items:center;touch-action:none;user-select:none}
+  .write button.mic.on{background:var(--t5);border-color:var(--t5);color:#fff}
+  /* The count, where the box was. It replaces the box rather than sitting
+     beside it: while a thumb is down there is nothing to type into. */
+  .micsay{flex:1;min-width:0;display:flex;align-items:center;gap:.5rem;
+    height:2.4rem;padding:0 .9rem;border-radius:999px;background:var(--raise);
+    border:1px solid var(--t5);font-size:.85rem;color:var(--ink)}
+  .micsay b{font-variant-numeric:tabular-nums;font-weight:600}
+  .micsay i{font-style:normal;color:var(--t2);font-size:.78rem;margin-left:auto}
+
+  /* A VOICE NOTE IN A THREAD. The width says the length, the way it does in
+     every chat app on this phone: a three-second note is a short pill and a
+     minute is a long one, so a run of them reads at a glance before anything
+     is played. Drawn instead of the bubble, never above it — a voice note has
+     no text and an empty grey bubble over it looks broken. */
+  .vn{align-self:flex-start;display:flex;align-items:center;gap:.6rem;
+    min-width:6.5rem;max-width:82%;padding:.55rem .8rem;border-radius:1.05rem;
+    background:var(--raise);border:1px solid var(--line);cursor:pointer}
+  .vn.mine{align-self:flex-end;background:var(--accent);
+    border-color:var(--accent);color:var(--accent-ink)}
+  .vn .play{flex:none;width:1.4rem;height:1.4rem;display:grid;place-items:center;
+    font-size:.8rem}
+  .vn .bars{flex-grow:1;display:flex;align-items:center;gap:2px;height:1rem}
+  .vn .bars s{display:block;width:2px;border-radius:2px;background:currentColor;
+    opacity:.55;text-decoration:none}
+  .vn .secs{flex:none;font-size:.78rem;opacity:.8;font-variant-numeric:tabular-nums}
+
   /* The bar, copied from index.html so the four tabs sit in the same places on
      every screen that has them. Same rules, same breakpoints. */
   .bar{position:fixed;left:50%;transform:translateX(-50%);bottom:0;z-index:35;
@@ -903,6 +937,10 @@
     </button>
     <div class="write" id="twrite" hidden>
       <textarea id="tbox" rows="1" maxlength="600"></textarea>
+      <!-- HOLD TO TALK. Between the box and Send, the order a room uses, so
+           the thumb finds it in the same place on both screens. Shown only
+           where the phone can actually record — see canHear. -->
+      <button class="mic" id="tmic" type="button" hidden>&#9679;</button>
       <button class="send" id="tsend" aria-label="Send">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4l16 8-16 8 3-8z"/></svg>
       </button>
@@ -985,6 +1023,7 @@ async function pin() {
 }
 
 import { atText, atPicker } from "/at.js";
+import { canHear, recordBlob } from "/speak.js";
 import { sheet } from "/share.js";
 import { mountRoomMoney } from "/wallet-card.js";
 
@@ -1638,6 +1677,7 @@ function drawInvited() {
     talk.append(el("p", "when",
       T({ spent: "wn.spentBody", old: "wn.oldBody" }[key] || "wn.badBody")));
     $("twrite").hidden = true;
+    micShow();
     $("tshut").hidden = false;
     $("tshut").textContent = T({ spent: "wn.spentHead", old: "wn.oldHead" }[key]
       || "wn.badCode");
@@ -1657,6 +1697,7 @@ function drawInvited() {
   talk.append(el("p", "when", T("wn.next", { who: NOTE.from || T("board.someone") })));
 
   $("twrite").hidden = false;
+  micShow();
   $("tshut").hidden = true;
   /* SHORT. wn.replyPh is an example of what to say — two lines, right in a
      form with room for it and clipped mid-word in a one-line composer. Two
@@ -1927,6 +1968,7 @@ function drawWriteNew() {
   }
 
   $("twrite").hidden = false;
+  micShow();
   $("tshut").hidden = true;
   $("tbox").placeholder = T("wn.mkLine");
   $("tsaid").hidden = true;
@@ -2518,6 +2560,7 @@ async function drawDoor(key) {
   if (!DOOR) {
     $("twhosub").textContent = T("note.gone", { who: "" });
     $("twrite").hidden = true;
+    micShow();
     $("tmore").hidden = true;
     return;
   }
@@ -2573,6 +2616,7 @@ async function drawDoor(key) {
     pin().then((m) => m && m.hideLedgerPin($("tpin")));
     talk.append(doorPeople(key));
     $("twrite").hidden = true;
+    micShow();
     $("tshut").hidden = true;
     $("tsaid").hidden = true;
     window.scrollTo(0, 0);
@@ -2626,17 +2670,84 @@ async function drawDoor(key) {
        which is off. A person's message read aloud by a machine is a different
        and worse idea — it is his line, in his voice, or nothing. */
     if (m.bot && said) hearable(bub, said);
-    col.append(bub);
+    /* A voice note carries no words, so it takes the bubble's place rather
+       than sitting under an empty one — the same rule the thread follows. */
+    if (m.voice) col.append(voiceNote(m, "/api/say/" + m.id + "/voice"));
+    else col.append(bub);
     row.append(col);
     talk.append(row);
   }
   $("twrite").hidden = false;
+  micShow();
   $("tshut").hidden = true;
   $("tsaid").hidden = true;
   /* Money in this room: a button in the box, and payments you're part of. */
   mountRoomMoney({ talk, write: $("twrite"), room: key, device });
   window.scrollTo(0, document.body.scrollHeight);
   doorWatch(key);
+}
+
+/* A VOICE NOTE, DRAWN THE SAME IN BOTH PLACES THIS PAGE SHOWS MESSAGES.
+ *
+ * A one-to-one thread and a room at the door are two different stores with
+ * two different routes, and they are one gesture to whoever is holding the
+ * phone. One function, two urls.
+ *
+ * THE BYTES ARE FETCHED, NOT SRC'd, AND THAT IS NOT A PREFERENCE. Both routes
+ * are gated on being one of the people the note is for, and the only thing
+ * they can read is the x-board-device header. An <audio src> cannot carry a
+ * header, and this board keeps the device in localStorage rather than a
+ * cookie, so every one of those GETs is a 400 and every note on the screen is
+ * a button that does nothing. The rooms shipped that way for an hour on
+ * 24 Sep. Do not simplify it back, and do not put the device in the query
+ * string instead — that writes it into every access log.
+ */
+function voiceNote(m, url) {
+  const v = el("div", "vn" + (m.mine ? " mine" : ""));
+  const play = el("span", "play", "\u25B6");
+  const bars = el("div", "bars");
+  /* A DRAWING, NOT A WAVEFORM. The real shape of the audio would mean
+     decoding every note on every redraw for a picture nobody reads as data —
+     and this screen redraws itself every twenty seconds. Seeded off the id so
+     a given note always looks like itself rather than flickering. */
+  let seed = 0;
+  for (const ch of m.id) seed = (seed * 31 + ch.charCodeAt(0)) % 9973;
+  const n = Math.max(8, Math.min(26, Math.round(m.voice.secs * 1.6) + 6));
+  for (let i = 0; i < n; i++) {
+    seed = (seed * 1103515245 + 12345) % 2147483648;
+    const b = document.createElement("s");
+    b.style.height = (3 + (seed % 11)) + "px";
+    bars.append(b);
+  }
+  const secs = el("span", "secs", m.voice.secs + "\u2033");
+  v.append(play, bars, secs);
+  let audio = null, getting = false;
+  v.addEventListener("click", async () => {
+    if (getting) return;
+    if (!audio) {
+      getting = true;
+      secs.textContent = "\u2026";
+      let src;
+      try {
+        const r = await fetch(url, { cache: "no-store",
+          headers: device ? { "x-board-device": device } : {} });
+        if (!r.ok) throw new Error(String(r.status));
+        src = URL.createObjectURL(await r.blob());
+      } catch (err) {
+        getting = false;
+        secs.textContent = T("act.again");
+        return;
+      }
+      getting = false;
+      secs.textContent = m.voice.secs + "\u2033";
+      audio = new Audio(src);
+      audio.addEventListener("ended", () => { play.textContent = "\u25B6"; });
+      audio.addEventListener("error", () => { secs.textContent = T("act.again"); });
+    }
+    if (audio.paused) { audio.play().catch(() => {}); play.textContent = "\u275A\u275A"; }
+    else { audio.pause(); play.textContent = "\u25B6"; }
+  });
+  return v;
 }
 
 /* A ROOM THAT IS OPEN HAS TO KEEP BEING TRUE.
@@ -2866,6 +2977,11 @@ function drawThread(t) {
      * No names passed: @ is a room's gesture and there are two people in here,
      * so there is nobody to mark. The room shape is the whole reason for the
      * call — see the long note over DOOR in at.js. */
+    if (n.voice) {
+      // Instead of the bubble, not above it — see voiceNote.
+      talk.append(voiceNote(n, "/api/note/" + n.id + "/voice"));
+      continue;
+    }
     atText(bub, n.text || "", []);
     talk.append(bub);
   }
@@ -2877,6 +2993,7 @@ function drawThread(t) {
   }
   const can = Boolean(last.canAnswer);
   $("twrite").hidden = !can;
+  micShow();
   $("tshut").hidden = can;
   /* FOUR KINDS OF SHUT, FOUR SENTENCES. It picked between two off `open`, so a
      thread that had spent its one message each read "Carry on where you
@@ -3143,6 +3260,110 @@ $("tsend").addEventListener("click", async () => {
   }
   $("tsend").disabled = false;
 });
+
+/* HOLD TO TALK, IN BOTH KINDS OF CONVERSATION THIS SCREEN OPENS.
+ *
+ * One button over one composer, and openWho() already knows which of them is
+ * in front of somebody — the same branch the Send arrow takes. A thread and a
+ * room at the door are different stores and different routes; to the thumb
+ * they are the same gesture, and this is the only place that has to know they
+ * are not.
+ *
+ * NOT OFFERED WHERE THERE IS NOTHING TO SPEAK INTO. Writing to somebody for
+ * the first time and answering an invitation both compose a message before a
+ * conversation exists, and a microphone on those is a recording with nowhere
+ * to go.
+ *
+ * POINTER EVENTS AND NOT touchstart/mousedown: one pair covers a thumb, a
+ * mouse and a stylus, and setPointerCapture means letting go anywhere on the
+ * screen still ends the recording — without it, sliding a thumb off the
+ * button leaves the microphone open.
+ */
+function micTarget() {
+  const who = openWho();
+  if (who === "new" || INVITED || !who) return null;
+  if (who.startsWith("d:")) {
+    return DOOR ? { url: "/api/group/voice", body: { group: DOOR.id } } : null;
+  }
+  return { url: "/api/note/voice", body: { who } };
+}
+
+/** Shown or hidden with whatever the composer is pointed at, and asked again
+ *  on every redraw — the composer outlives the conversation under it. */
+function micShow() {
+  const m = $("tmic");
+  if (m) m.hidden = !canHear() || !micTarget();
+}
+
+if (canHear()) {
+  const mic = $("tmic");
+  let rec = null, tick = null, t0 = 0;
+  const meter = el("div", "micsay");
+  const num = el("b", null, "0\u2033");
+  meter.append(num, el("i", null, T("grp.letGo")));
+  mic.setAttribute("aria-label", T("grp.hold"));
+  const stopUi = () => {
+    mic.classList.remove("on");
+    if (tick) { clearInterval(tick); tick = null; }
+    if (meter.parentNode) meter.replaceWith($("tbox"));
+  };
+  mic.addEventListener("pointerdown", (e) => {
+    const target = micTarget();
+    if (!target || rec) return;
+    e.preventDefault();
+    try { mic.setPointerCapture(e.pointerId); } catch (err) { /* older browser */ }
+    mic.classList.add("on");
+    $("tbox").replaceWith(meter);
+    t0 = Date.now();
+    num.textContent = "0\u2033";
+    tick = setInterval(() => {
+      num.textContent = Math.round((Date.now() - t0) / 1000) + "\u2033";
+    }, 200);
+    rec = recordBlob({
+      onError: (why) => {
+        rec = null; stopUi();
+        say(T(why === "not-allowed" ? "grp.noMic" : "act.again"), true);
+      },
+      onBlob: async (blob, secs) => {
+        rec = null; stopUi();
+        // A tap rather than a hold. Nothing was said, so nothing is sent.
+        if (!blob) return;
+        try {
+          const b64 = await new Promise((ok, no) => {
+            const fr = new FileReader();
+            fr.onload = () => ok(String(fr.result).split(",")[1] || "");
+            fr.onerror = no;
+            fr.readAsDataURL(blob);
+          });
+          const r = await fetch(target.url, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ device, ...target.body,
+                                   audio: b64, audioType: blob.type, secs }),
+          });
+          const d = await r.json().catch(() => ({}));
+          if (!r.ok) throw new Error(d.error || "no");
+          $("tsaid").hidden = true;
+          const who = openWho();
+          if (who.startsWith("d:")) await drawDoor(who.slice(2));
+          else await load();
+          window.scrollTo(0, document.body.scrollHeight);
+        } catch (err) {
+          const known = { enough: "note.enough", gone: "note.gone",
+                          closed: "note.closed", spent: "note.linesSpent" };
+          say(T(known[String(err.message)] || "act.again"), true);
+        }
+      },
+    });
+  });
+  mic.addEventListener("pointerup", (e) => {
+    if (!rec) return;
+    e.preventDefault();
+    const r = rec; rec = null; r.stop();
+  });
+  mic.addEventListener("pointercancel", () => {
+    if (rec) { const r = rec; rec = null; r.drop(); stopUi(); }
+  });
+}
 
 /** Saying something in a room at the door. The same route a group uses — a
  *  door room's lines live in `says` beside everybody else's, which is why the

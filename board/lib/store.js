@@ -2419,6 +2419,15 @@ export function cleanNote(raw) {
     seen: Boolean(raw.seen),
     // Somebody said this should not have been sent. Carries their words.
     report: s(raw.report, 400),
+    /* SOMETHING SAID RATHER THAN TYPED. The same shape a line in a room
+       carries — see cleanSay — because it is the same thing in the other
+       place two people talk, and two shapes for one idea is how the two
+       drift. Dropped unless both halves are right: an id that is not an id
+       is a bubble pointing at nothing. */
+    ...(/^[a-f0-9]{20}$/.test(String(raw.voice?.id || ""))
+      ? { voice: { id: String(raw.voice.id),
+                   secs: Math.max(1, Math.min(120, Math.round(Number(raw.voice.secs) || 1))) } }
+      : {}),
   };
 }
 

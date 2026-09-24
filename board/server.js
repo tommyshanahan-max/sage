@@ -8470,6 +8470,74 @@ app.post("/api/push/off", express.json({ limit: "8kb" }), async (req, res) => {
   res.json({ ok: true });
 });
 
+/* THE GATE ON WRITING TO SOMEBODY, ASKED IN ONE PLACE.
+ *
+ * Typed and spoken are the same act — the same people may do it, to the same
+ * people, under the same daily count — and they were two routes. Two copies
+ * of a rule this load-bearing is how one of them quietly stops matching the
+ * other: the first version of the voice route was written by copying this and
+ * would have drifted the first time any of it changed.
+ *
+ * It answers { error } or everything the caller needs to write the row. What
+ * it does NOT decide is anything about the content — that is the caller's,
+ * because a typed message and a recording are checkable in different ways and
+ * pretending otherwise is the thing to avoid. */
+function notePermit(board, me, who) {
+  const target = who.startsWith("w:")
+    ? (() => {
+        const w = board.waits.find((x) => x.id === who.slice(2) && !x.done);
+        /* TWO WAYS TO BE REACHABLE WITHOUT A PAGE, and no third. Somebody a
+           member wrote to, who is answering them; and somebody who followed
+           this person in a room and was followed back. Anybody else on the
+           list is not addressable, which is what the door is for. */
+        if (!w || !w.by) return null;
+        if (!w.fromWrite && !bothFollow(board, me, w.by)) return null;
+        // Shaped like a person for the checks below, and deliberately
+        // without an id: there is no page and nothing to open.
+        return { id: "", by: w.by, handle: w.name, state: "published" };
+      })()
+    : board.people.find((x) => x.id === who && x.state === "published");
+  // The same answer for a person who does not exist and one who has taken
+  // themselves down, so this cannot be used to ask which ids are real.
+  if (!target) return { error: "gone" };
+  if (target.by === me) return { error: "self" };
+
+  /* YOU NEED A PROFILE TO WRITE TO SOMEBODY. Not a rule for its own sake:
+     an introduction from a name that does not exist is not one, and the
+     person receiving it has nothing to decide about.
+     EXCEPT THE PERSON A MEMBER WROTE TO. They have no profile by
+     definition — they are on the list — and they are not introducing
+     themselves to a stranger; they are answering somebody who wrote to them
+     by name and knows exactly who they are. Their name is on the waiting
+     row, which is what the member reads. Any other pair still needs one,
+     and writePair is false for every other pair. */
+  /* OR THE TWO OF THEM FOLLOWED EACH OTHER IN A ROOM — see bothFollow.
+     The profile rule is about an introduction from a name that does not
+     exist; two people who read each other in a room and both pressed follow
+     are not introducing themselves to a stranger either. */
+  const mine = board.people.find((q) => q.by === me);
+  if ((!mine || !mine.handle) && !writePair(board, me, target.by)
+      && !bothFollow(board, me, target.by)) {
+    return { error: "profile" };
+  }
+
+  const state = threadState(board, me, target.by);
+  if (!state.can) return { error: state.why };
+  /* THE DAILY COUNT IS ABOUT INTRODUCTIONS, NOT CONVERSATIONS.
+     It exists to stop somebody writing to every woman on the list in one
+     evening. Neither half of that applies inside an open thread: the other
+     person chose to be in it and can leave with one press, and counting a
+     conversation against it would mean the fifth message of the day to
+     somebody you matched with is refused. */
+  if (!state.answering && !state.open
+    && store.sentToday(board.notes, me, new Date(),
+      (to) => threadState(board, me, to).open) >= NOTES_A_DAY) {
+    return { error: "enough" };
+  }
+
+  return { target, state, mine };
+}
+
 app.post("/api/note", notesOff, express.json({ limit: "16kb" }), async (req, res) => {
   const me = hashDevice(String(req.body?.device || ""), SALT);
   const who = String(req.body?.who || "");
@@ -8486,57 +8554,9 @@ app.post("/api/note", notesOff, express.json({ limit: "16kb" }), async (req, res
   }
 
   const out = await change((board) => {
-    const target = who.startsWith("w:")
-      ? (() => {
-          const w = board.waits.find((x) => x.id === who.slice(2) && !x.done);
-          /* TWO WAYS TO BE REACHABLE WITHOUT A PAGE, and no third. Somebody a
-             member wrote to, who is answering them; and somebody who followed
-             this person in a room and was followed back. Anybody else on the
-             list is not addressable, which is what the door is for. */
-          if (!w || !w.by) return null;
-          if (!w.fromWrite && !bothFollow(board, me, w.by)) return null;
-          // Shaped like a person for the checks below, and deliberately
-          // without an id: there is no page and nothing to open.
-          return { id: "", by: w.by, handle: w.name, state: "published" };
-        })()
-      : board.people.find((x) => x.id === who && x.state === "published");
-    // The same answer for a person who does not exist and one who has taken
-    // themselves down, so this cannot be used to ask which ids are real.
-    if (!target) return { error: "gone" };
-    if (target.by === me) return { error: "self" };
-
-    /* YOU NEED A PROFILE TO WRITE TO SOMEBODY. Not a rule for its own sake:
-       an introduction from a name that does not exist is not one, and the
-       person receiving it has nothing to decide about.
-       EXCEPT THE PERSON A MEMBER WROTE TO. They have no profile by
-       definition — they are on the list — and they are not introducing
-       themselves to a stranger; they are answering somebody who wrote to them
-       by name and knows exactly who they are. Their name is on the waiting
-       row, which is what the member reads. Any other pair still needs one,
-       and writePair is false for every other pair. */
-    /* OR THE TWO OF THEM FOLLOWED EACH OTHER IN A ROOM — see bothFollow.
-       The profile rule is about an introduction from a name that does not
-       exist; two people who read each other in a room and both pressed follow
-       are not introducing themselves to a stranger either. */
-    const mine = board.people.find((q) => q.by === me);
-    if ((!mine || !mine.handle) && !writePair(board, me, target.by)
-        && !bothFollow(board, me, target.by)) {
-      return { error: "profile" };
-    }
-
-    const state = threadState(board, me, target.by);
-    if (!state.can) return { error: state.why };
-    /* THE DAILY COUNT IS ABOUT INTRODUCTIONS, NOT CONVERSATIONS.
-       It exists to stop somebody writing to every woman on the list in one
-       evening. Neither half of that applies inside an open thread: the other
-       person chose to be in it and can leave with one press, and counting a
-       conversation against it would mean the fifth message of the day to
-       somebody you matched with is refused. */
-    if (!state.answering && !state.open
-      && store.sentToday(board.notes, me, new Date(),
-        (to) => threadState(board, me, to).open) >= NOTES_A_DAY) {
-      return { error: "enough" };
-    }
+    const got = notePermit(board, me, who);
+    if (got.error) return got;
+    const { target, state, mine } = got;
 
     /* THE SAME RULE, IN THE OTHER PLACE TWO PEOPLE TALK. See the long note in
        /api/group/say: a rule that holds in a room and not in a thread is a
@@ -8588,6 +8608,103 @@ app.post("/api/note", notesOff, express.json({ limit: "16kb" }), async (req, res
      request is gone. */
   mailThem(out.note.to, out.from, backHere(req, "/notes#" + encodeURIComponent(out.from)))
     .catch((err) => console.error("note mail:", err.message));
+});
+
+/* SOMETHING SAID INTO A THREAD, RATHER THAN TYPED.
+ *
+ * The same act as /api/note and gated by the same notePermit — who may write
+ * to whom, the profile rule, the state of the thread, and the three-a-day on
+ * introductions. A voice note that slipped past the daily count would be the
+ * whole rule with a microphone-shaped hole in it.
+ *
+ * WHAT CANNOT BE CHECKED, AND IT IS WRITTEN DOWN RATHER THAN QUIETLY
+ * MISSING. contactShaped reads a typed line for a phone number or a WeChat id
+ * and takes it out. Nothing here reads speech, so a number spoken aloud goes
+ * through. That is not an oversight to fix with a transcription bill on every
+ * note — it is the honest size of the rule: it keeps contact details from
+ * being pasted, and it never claimed to keep them from being said. The same
+ * is already true of the rooms.
+ */
+app.post("/api/note/voice", notesOff, express.json({ limit: "12mb" }), async (req, res) => {
+  const me = hashDevice(String(req.body?.device || ""), SALT);
+  const who = String(req.body?.who || "");
+  if (!me) return res.status(400).json({ error: "no" });
+  if (!/^(?:[a-f0-9]{20}|w:[a-f0-9]{20})$/.test(who)) {
+    return res.status(400).json({ error: "gone" });
+  }
+
+  const data = String(req.body?.audio || "");
+  if (!data) return res.status(400).json({ error: "none" });
+  const buf = Buffer.from(data, "base64");
+  if (!buf.length) return res.status(400).json({ error: "none" });
+  /* Four megabytes, the same ceiling a room uses: two minutes of speech is
+     about one, so anything past this is a file and this is not a file
+     transfer. */
+  if (buf.length > 4 * 1024 * 1024) return res.status(413).json({ error: "tooBig" });
+  const type = String(req.body?.audioType || "").split(";")[0].trim();
+  if (!type.startsWith("audio/")) return res.status(415).json({ error: "badType" });
+
+  /* THE BYTES ARE STORED BEFORE THE GATE IS ASKED, and that order is on
+     purpose: putMedia is the only await in here, and doing it inside change()
+     would hold the board's write lock across a disk write. A recording put
+     down for a refused note is an orphan of a few hundred kilobytes, which is
+     the cheaper of the two problems. */
+  const media = await putMedia(buf, type);
+  if (!media) return res.status(415).json({ error: "badType" });
+  const secs = Math.max(1, Math.min(120, Math.round(Number(req.body?.secs) || 1)));
+
+  const out = await change((board) => {
+    const got = notePermit(board, me, who);
+    if (got.error) return got;
+    const { target, state, mine } = got;
+    const note = store.cleanNote({
+      id: store.newId(), at: new Date().toISOString(),
+      by: me, to: target.by, re: "", text: "", voice: { id: media, secs },
+    });
+    if (!note) return { error: "no" };
+    board.notes.push(note);
+    const waiting = mine?.handle ? null : board.waits.find((w) => w.by === me && w.name);
+    return { note, from: mine?.handle || waiting?.name || "",
+             answering: Boolean(state.answering) };
+  });
+
+  if (out.error) {
+    const code = out.error === "gone" ? 404 : (out.error === "enough" ? 429 : 400);
+    return res.status(code).json({ error: out.error });
+  }
+  res.status(201).json({ ok: true, id: out.note.id, answering: out.answering });
+  // The same two nudges a typed note sends, for the same reasons — see above.
+  tellThem(out.note.to).catch(() => { /* a push that failed is a push that did not arrive */ });
+  mailThem(out.note.to, out.from, backHere(req, "/notes#" + encodeURIComponent(out.from)))
+    .catch((err) => console.error("note mail:", err.message));
+});
+
+/* THE AUDIO ON A LINE IN A THREAD. The two people in it and nobody else.
+ *
+ * A picture on this board is served by an unguessable id alone, because a
+ * photograph on a public announcement is public. A voice note is not: it is
+ * one person talking to one other, and the id being long is not a reason to
+ * hand it to anybody who asks.
+ *
+ * FETCHED BY THE PAGE, NOT POINTED AT BY AN <audio src>. The device arrives
+ * in a header and an <audio src> cannot carry one — this board keeps the
+ * device in localStorage rather than a cookie, so a plain GET has nothing for
+ * this to read and gets the 400 below. The page fetches the bytes and plays a
+ * blob; see the note beside it in notes.html. Do not "fix" that by accepting
+ * the device in the query string, which writes it into every access log. */
+app.get("/api/note/:id/voice", notesOff, async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const me = hashDevice(String(req.get("x-board-device") || ""), SALT);
+  if (!me) return res.status(400).end();
+  const board = await store.load(FILE);
+  const n = board.notes.find((x) => x.id === String(req.params.id || ""));
+  if (!n || !n.voice) return res.status(404).end();
+  if (n.by !== me && n.to !== me) return res.status(403).end();
+  const found = await findMedia(n.voice.id);
+  if (!found) return res.status(404).end();
+  res.set("Content-Type", found.type);
+  res.set("X-Content-Type-Options", "nosniff");
+  res.sendFile(found.file);
 });
 
 /* AND THE EMAIL, BECAUSE THE BUZZ REACHES ALMOST NOBODY.
@@ -8752,6 +8869,10 @@ app.get("/api/notes", notesOff, async (req, res) => {
     const st = state.get(other(n)) || { can: false, open: false };
     return {
       id: n.id, at: n.at, text: n.text, re: n.re, mine,
+      /* Something said rather than typed. The audio itself is a route — see
+         /api/note/:id/voice — so what goes over here is how long it is,
+         which is what the bubble is drawn from before anybody plays it. */
+      voice: n.voice || null,
       ...them,
       // Only ever shown to the person who received it: "they have read it" is
       // a fact about the reader, and the sender is not owed it.
