@@ -74,28 +74,40 @@ every link was repointed, and the one nobody links — the bare address Tom
 hands people — was missed. `index.html` is gone and the mount serves
 `home.html`.
 
-**A CODE ON THE BOARD'S PAGE IS RECOGNISED BY LONG-PRESS INSIDE WECHAT
-(24 Sep, watched).** Mo posted one into the Film door room, Tom opened
-`thexchange.app/r/film` in WeChat on his phone, long-pressed it, and WeChat
-opened it. Not read from a doc — watched.
+**WECHAT WILL NOT LET YOU PAY A CODE IT IS SHOWING YOU (24 Sep, watched).**
+Three runs on a phone, all of them looked at rather than read:
 
-**What it does NOT settle, and the difference is the whole product.** That was
-a **URL** code. WeChat's own position is that a **payment** code can no longer
-be paid by long-press recognition and wants 扫一扫 instead — a different code
-and possibly a different answer. The same command tests it:
+| the code | where | long-press |
+|---|---|---|
+| a URL | the board's page, inside WeChat | **opens** |
+| `wxp://f2f0…`, a real 收款码 | the board's page, inside WeChat | **refused** |
+| the same `wxp://` | WeChat's own 扫一扫 | **pays** |
 
-```
-make mo-code ROOM=film WHAT="长按二维码识别" CODE="<the wxp://… the 收款码 encodes>"
-```
+So the block is deliberate and it is specifically about paying: WeChat
+recognises a code on our page perfectly well, and declines when the code is a
+payment. The "自己扫自己" guard.
 
-The string is what the 收款码 encodes, not the picture. Nothing else changes.
+**It also settles the contradiction this file has carried since 20 Sep.** The
+Airwallex code long-pressed and paid that night must have been an https link,
+not a raw `wxp://`. Both observations are now true and neither has to be
+explained away.
 
-**The machinery it runs on**, built overnight: a line in a room can carry a
-code (`qr` on a say), the board draws it at `/api/say/<id>/qr.png`, and both
-room pages render it as an `<img>` — which is the only thing a long-press menu
-reads. Members cannot attach one; `/api/mo/say` is behind the admin key. A
-line can also carry a payment request (`pay`), which draws as a card with the
-figure and a Pay button read fresh on every load.
+**The workaround exists and it costs six taps:** long-press, 保存图片, out to
+WeChat, 扫一扫, 相册, pick, pay. That is not a payment flow, it is a puzzle.
+
+**AND IT IS THE ARGUMENT FOR THE ICP FILING, ARRIVED AT FROM THE OTHER
+DIRECTION.** A payer already inside WeChat should never be shown a code at
+all — JSAPI opens WeChat's own payment sheet on the page, one tap. JSAPI needs
+the openid, which needs 网页授权, which needs a 备案'd domain. Every route into
+this ends at `thexchange.cn` being filed; this one ends there from the payer's
+thumb rather than from a form.
+
+**The machinery, built overnight and now proven end to end:** a line in a room
+can carry a code (`qr` on a say), the board draws it at
+`/api/say/<id>/qr.png`, and both room pages render it as an `<img>` — the only
+thing a long-press menu reads. Members cannot attach one; `/api/mo/say` is
+behind the admin key. A line can also carry a payment request (`pay`), drawn
+as a card whose figure and paid state are read fresh on every load.
 
 **THE ACCOUNT IS IN SOMEBODY ELSE'S NAME, AND THAT IS THE WHOLE BLOCKAGE
 (23 Sep, 23:00).** Not a login problem. The live account's representative is
