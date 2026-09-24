@@ -92,6 +92,12 @@
   .said .col{display:flex;flex-direction:column;min-width:0;max-width:82%}
   .who{margin:0 0 .2rem;font-size:.72rem;color:var(--muted)}
   .who .reach{color:var(--accent);text-decoration:none}
+  /* A CODE IN THE ROOM. White ground at every size — the quiet zone is part
+     of the code, not decoration, and a code on a dark bubble is one a camera
+     and a long-press both refuse. */
+  .qrline{display:block;width:11rem;height:11rem;margin:.4rem 0 0;
+    background:#fff;border-radius:.7rem;padding:.55rem}
+
   .bub{padding:.6rem .8rem;border-radius:1.05rem;font-size:.95rem;line-height:1.5;
     background:var(--raise);color:var(--ink);border:1px solid var(--line);
     border-bottom-left-radius:.35rem;white-space:pre-wrap;overflow-wrap:anywhere}
@@ -475,7 +481,21 @@ function paint() {
     bub.textContent = said;
     // His lines are tappable and nobody else's are — see hearable().
     if (m.bot && said) hearable(bub, said);
-    col.append(bub);
+    if (said) col.append(bub);
+    /* THE CODE, IF THE LINE CARRIES ONE — see the `qr` note in cleanSay and
+       the route at /api/say/<id>/qr.png.
+       THIS PAGE WAS MISSED THE FIRST TIME AND THE MISS WAS INVISIBLE. A door
+       room is read here and a group room in groups.html, both off the same
+       `says` rows; the render went into one of them, and a code posted into a
+       door room drew nothing at all with no error anywhere. Two pages off one
+       shape is two places to change, every time. */
+    if (m.qr) {
+      const img = document.createElement("img");
+      img.className = "qrline";
+      img.src = "/api/say/" + m.id + "/qr.png";
+      img.alt = "";
+      col.append(img);
+    }
     row.append(col);
     talk.append(row);
   }
