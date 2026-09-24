@@ -2545,13 +2545,40 @@ function paintRoom(g) {
       const secs = el("span", "secs", m.voice.secs + "\u2033");
       v.append(play, bars, secs);
       let audio = null;
-      v.addEventListener("click", () => {
+      let getting = false;
+      /* THE BYTES ARE FETCHED, NOT SRC'd, AND THIS IS NOT A PREFERENCE.
+       *
+       * The route is gated on being in the room — see voiceGate — and the
+       * only thing it has to read is the x-board-device header. An <audio
+       * src> cannot carry a header, and this board keeps the device in
+       * localStorage rather than a cookie, so there is nothing on a plain GET
+       * for the gate to find: every one of them answers 400 and every note on
+       * the screen is a button that does nothing.
+       *
+       * The first tap fetches the audio with the header and plays a blob.
+       * Written down because the first version was the obvious one and it was
+       * wrong in a way that only shows on a device, after a recording, at the
+       * last step — and because the fix people reach for instead is putting
+       * the device in the query string, which puts it in every access log. */
+      v.addEventListener("click", async () => {
+        if (getting) return;
         if (!audio) {
-          audio = new Audio("/api/say/" + m.id + "/voice");
-          /* The device header cannot go on an <audio> src, so the gate on the
-             route reads the cookie-free case the same way every other page
-             does — see voiceGate. If it refuses, say so once rather than
-             leaving a button that does nothing. */
+          getting = true;
+          secs.textContent = "\u2026";
+          let url;
+          try {
+            const r = await fetch("/api/say/" + m.id + "/voice",
+              { cache: "no-store", headers: device ? { "x-board-device": device } : {} });
+            if (!r.ok) throw new Error(String(r.status));
+            url = URL.createObjectURL(await r.blob());
+          } catch (err) {
+            getting = false;
+            secs.textContent = T("act.again");
+            return;
+          }
+          getting = false;
+          secs.textContent = m.voice.secs + "\u2033";
+          audio = new Audio(url);
           audio.addEventListener("ended", () => { play.textContent = "▶"; });
           audio.addEventListener("error", () => { secs.textContent = T("act.again"); });
         }

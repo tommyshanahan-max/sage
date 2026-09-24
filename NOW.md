@@ -486,6 +486,20 @@ have a Stripe account with trading history, and would you run a Connect
 platform on it". Their deck is tax structuring — SA, SARL, SPF, SCSp, RAIF —
 and contains no payments authorisation.
 
+## Voice messages in a room — live 24 Sep
+
+Hold the round button beside Send in a room, speak, let go. No calls: Tom
+asked for calls, then said voice messages only, twice.
+
+The audio is gated on being in the room, so the page **fetches the bytes with
+the device header and plays a blob** — it is not an `<audio src>`. A plain src
+cannot carry a header and the device lives in localStorage rather than a
+cookie, so every one of those GETs is a 400 and every note is a button that
+does nothing. That was shipped that way for about an hour on 24 Sep and caught
+by reading the route, not by a phone. Do not "simplify" it back, and do not
+put the device in the query string instead — that writes it into every access
+log.
+
 ## The app
 
 **Rejected 22 Sep — this section said "nothing to do but wait" for a day
