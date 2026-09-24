@@ -119,7 +119,12 @@ export async function mountMoneyCard(container, { device, T }) {
   const tot = el("div", "mtot");
   const a = total(got), b = total(dueIn);
   const t1 = el("div");
-  t1.append(el("b", null, a.big), el("small", null, T(a.mixed ? "pm.gotN" : "pm.got")));
+  /* A DASH, NOT A ZERO. An empty month printed a bare "0" next to ¥38,500,
+     which reads as a figure that failed to load rather than as nothing having
+     come in. Nothing is not a quantity; it is said in words. */
+  t1.append(got.length
+    ? el("b", null, a.big) : el("b", null, "\u2014"),
+    el("small", null, T(got.length ? (a.mixed ? "pm.gotN" : "pm.got") : "pm.gotNone")));
   const t2 = el("div", "due");
   t2.append(el("b", null, b.big), el("small", null, T(b.mixed ? "pm.dueN" : "pm.due", { n: dueIn.length })));
   tot.append(t1, t2);

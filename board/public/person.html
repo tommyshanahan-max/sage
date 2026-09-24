@@ -1341,11 +1341,17 @@ function paint() {
   /* MONEY, on your own page only — asking, sending, what is owed and the
      wallet in one card. See money-card.js. The app keeps the old wallet card:
      /dealio is web-only, so every button on the new one would bounce there. */
+  /* FIRST ON THE PAGE, NOT LAST. It sat 1074px down — past the photograph,
+     the card, Share and Edit, the tags and the bio — so the one screen that
+     is about you put your own money below everything you show other people.
+     "Is anybody paying me" is the question this page gets opened to answer.
+     The card stays where it is for a stranger's page, because a stranger has
+     no money card at all: this whole branch is q.mine. */
   if (q.mine) {
     if (NATIVE) mountWalletCard(box, device);
     else {
       const slot = el("div");
-      box.append(slot);
+      box.prepend(slot);
       mountMoneyCard(slot, { device, T });
     }
   }

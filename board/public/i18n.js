@@ -5222,6 +5222,10 @@ export const STRINGS = {
   "pm.wallet":         ["Wallet", "钱包"],
   "pm.walletSet":      ["Set up your wallet", "开通钱包"],
   "pm.all":            ["See all", "查看全部"],
+  /* NOTHING CAME IN IS NOT A NUMBER. A big "0" beside "¥38,500" reads as a
+     broken figure rather than an empty month, so the tile says so in words
+     and puts a dash where the number would be. */
+  "pm.gotNone":        ["nothing in yet", "本月还没进账"],
   /* THE FOLD ON YOUR OWN PAGE: the key, Google, and the safety note, one tap
      down. They are read once; the page is opened every day. */
   "me.keyFold":        ["Your key & sign-in", "你的钥匙和登录"],
