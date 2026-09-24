@@ -91,7 +91,6 @@
   .push{margin-top:auto;display:grid;gap:.55rem}
   .note{border-radius:12px;padding:.7rem .8rem;font-size:.94rem;border:1px solid var(--line)}
   .note.info{background:var(--accent-soft)} .note.warn{background:var(--money-soft)} .note.bad{background:var(--bad-soft)} .note.good{background:var(--good-soft)}
-  .steps{display:flex;gap:.3rem} .steps i{flex:1;height:4px;border-radius:99px;background:var(--line)} .steps i.on{background:var(--accent)}
   .field{display:grid;gap:.3rem}
   .field label{font-size:.94rem;font-weight:600}
   .field input,.field select{font:inherit;font-size:1rem;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.7rem .75rem;width:100%}
@@ -203,7 +202,6 @@ function row(o) {
   b.append(o.radio !== undefined ? svg("check", "tick") : svg("chev", "chev"));
   return b;
 }
-const steps = (n, of) => h("div", { class: "steps", role: "img", "aria-label": `Step ${n} of ${of}` }, ...Array.from({ length: of }, (_, i) => h("i", { class: i < n ? "on" : "" })));
 const spinner = (label) => frag(h("div", { class: "spin", role: "img", "aria-label": label }), h("p", { class: "center lead", text: label }));
 
 /* ---- talking to the server ---- */
@@ -430,31 +428,53 @@ function activityRow(x) {
 }
 
 /* SETUP — region, terms, then identity, Face ID, a way to pay, where money goes. */
+/* WHERE SOMEBODY LIVES IS A QUESTION THE PROVIDER ASKS, NOT US.
+ *
+ * This opened with six radio rows — Finland, Australia, Mainland China, Hong
+ * Kong, United States, Somewhere else — as the first thing a stranger saw,
+ * before they knew what the wallet was. It decides real things (the currency,
+ * whether a balance can be held at all, which bank fields, the daily limit)
+ * and not one of them bites until the first payment.
+ *
+ * And under Stripe or Airwallex it is THEIR question. They run the identity
+ * check, they set the limits, they take the bank details on their own page,
+ * they decide what is allowed where. Asking it here was us re-implementing
+ * the regulated party's onboarding in front of the customer — and a product
+ * that collects identity and sets limits looks like the thing holding the
+ * money, which is the one impression this board must not give.
+ *
+ * So it is guessed from the phone and changeable in Settings. A guess that is
+ * wrong costs one tap later; a question on the door costs the person.
+ */
+function guessRegion() {
+  const zone = (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch { return ""; } })();
+  if (/^Australia\//.test(zone)) return "AU";
+  if (/^Asia\/(Shanghai|Chongqing|Urumqi|Harbin)$/.test(zone)) return "CN";
+  if (zone === "Asia/Hong_Kong") return "HK";
+  if (zone === "Europe/Helsinki") return "FI";
+  if (/^America\//.test(zone)) return "US";
+  /* The language's region is a weaker signal than the clock — a phone set to
+     en-AU in Beijing is commoner than a clock set to Melbourne there — so it
+     is only read when the clock said nothing. */
+  const tag = String((navigator.languages && navigator.languages[0]) || navigator.language || "");
+  const m = /-([A-Z]{2})\b/.exec(tag.toUpperCase());
+  if (m && W.regions && W.regions[m[1]]) return m[1];
+  return "OTHER";
+}
+
 SCREENS.setup = async () => {
   if (W.wallet) { replace("home"); return { title: T("wl.title"), body: frag() }; }
   const waiting = W.waitingForYou || [];
-  let region = "";
-  const list = h("div", { class: "list", role: "radiogroup", "aria-label": T("wl.whereYouLive") });
   const terms = h("input", { type: "checkbox", id: "terms" });
   const start = btn(T("wl.setUp"), "", async () => {
     start.disabled = true;
-    try { await api("/api/wallet/setup", { region, acceptedTerms: true }); await load(); say(T("wl.walletCreated")); go("verify"); }
+    try { await api("/api/wallet/setup", { region: guessRegion(), acceptedTerms: true }); await load(); say(T("wl.walletCreated")); go("verify"); }
     catch (err) { start.disabled = false; showError(err); }
   }, { disabled: true });
-  const upd = () => { start.disabled = !(region && terms.checked); };
-  const draw = () => {
-    list.textContent = "";
-    for (const [id, r] of Object.entries(W.regions)) {
-      list.append(row({ radio: region === id, title: regionName(id, r.name), sub: r.balance ? T("wl.walletIn", { cur: r.currency }) : T("wl.paidStraight", { cur: r.currency }), onclick: () => { region = id; draw(); upd(); list.querySelector('[aria-checked="true"]').focus(); } }));
-    }
-  };
-  draw();
-  terms.addEventListener("change", upd);
+  terms.addEventListener("change", () => { start.disabled = !terms.checked; });
   return { title: T("wl.setUp"), body: frag(
-    steps(1, 5),
     h("p", { class: "hero", text: T("wl.setUpHero") }),
     waiting.length ? note("warn", T("wl.setUpWaiting", { who: waiting[0].with.handle, amt: waiting[0].amount.text })) : null,
-    h("p", { class: "k", text: T("wl.whereYouLive") }), list,
     h("div", { class: "list" },
       row({ title: T("wl.provHolds"), sub: T("wl.provHoldsSub") }),
       row({ title: T("wl.noReverse"), sub: T("wl.noReverseSub") }),
@@ -469,19 +489,23 @@ SCREENS.verify = async () => {
   const w = W.wallet;
   if (!w) { replace("setup"); return { title: T("wl.title"), body: frag() }; }
   if (w.verified === "verified") return { title: T("wl.confirmed"), body: frag(h("div", { class: "done" }, svg("check")), h("p", { class: "hero center", text: T("wl.youreVerified") }),
-    h("p", { class: "center lead", text: T("wl.canSendUpTo", { amt: w.limits.sendDay.text }) }), h("div", { class: "push" }, btn(T("wl.continue"), "", () => go("security")))) };
+    h("p", { class: "center lead", text: T("wl.canSendUpTo", { amt: w.limits.sendDay.text }) }), h("div", { class: "push" }, btn(T("wl.continue"), "", () => replace("home")))) };
   const b = btn(T("wl.toProvider"), "", async () => {
     b.disabled = true;
     try { const { url } = await api("/api/wallet/verify", { returnUrl: "/wallet#verify" }); leaveFor(url, "verify"); }
     catch (err) { b.disabled = false; showError(err); }
   });
+  /* NO STEP BAR. There is no longer a numbered march to the end of — the
+     wallet opens after this, and a card, a bank and a passkey are things to
+     add when they are first needed, each on its own screen, reached from the
+     row that wants them. "Step 2 of 5" in front of somebody who is two taps
+     from done is a wall drawn where there is none. */
   return { title: T("wl.confirmIt"), body: frag(
-    steps(2, 5),
     w.verified === "pending" ? note("info", T("wl.checkUnfinished")) : null,
     h("p", { class: "lead", text: T("wl.whyVerify") }),
     h("div", { class: "list" }, row({ lead: badge("1"), title: T("wl.idPhoto") }), row({ lead: badge("2"), title: T("wl.selfie") })),
     h("p", { class: "small", text: T("wl.onlyPassFail") }),
-    h("div", { class: "push" }, b, btn(T("wl.doLater"), "ghost", () => go("security")))) };
+    h("div", { class: "push" }, b, btn(T("wl.doLater"), "ghost", () => replace("home")))) };
 };
 
 SCREENS.security = async () => {
@@ -489,15 +513,14 @@ SCREENS.security = async () => {
   const has = w?.passkeys > 0;
   const add = btn(T("wl.faceOn"), "", async () => {
     add.disabled = true;
-    try { await addPasskey(); await load(); say(T("wl.faceIsOn")); go("sources"); }
+    try { await addPasskey(); await load(); say(T("wl.faceIsOn")); history.back(); }
     catch (err) { add.disabled = false; showError(err instanceof ApiError ? err : new ApiError(400, { message: T("wl.faceFailed") })); }
   });
   return { title: T("wl.keepSafe"), body: frag(
-    steps(3, 5),
     h("p", { class: "lead", text: T("wl.faceWhy") }),
     has ? note("good", T("wl.faceIsOn")) : null,
     !canPasskey() ? note("info", W.testConfirm ? T("wl.noPasskeyTest") : T("wl.noPasskey")) : null,
-    h("div", { class: "push" }, has || !canPasskey() ? btn(T("wl.continue"), "", () => go("sources")) : add, !has && canPasskey() && W.testConfirm ? btn(T("wl.skipTest"), "ghost", () => go("sources")) : null)) };
+    h("div", { class: "push" }, has || !canPasskey() ? btn(T("wl.continue"), "", () => history.back()) : add, !has && canPasskey() && W.testConfirm ? btn(T("wl.skipTest"), "ghost", () => history.back()) : null)) };
 };
 
 SCREENS.sources = async () => {
@@ -505,11 +528,10 @@ SCREENS.sources = async () => {
   const kinds = w.region === "CN" ? [["card", T("wl.unionpay"), T("wl.feePct", { p: "2.9" })], ["wechat", T("wl.wechatPay"), T("wl.noFee")]] : [["card", T("wl.cardKind"), T("wl.feePct", { p: "2.9" })], ["bank", T("wl.bankKind"), T("wl.noFee")], ["paypal", T("wl.paypal"), T("wl.feePct", { p: "3.4" })]];
   const connect = async (kind) => { try { const { url } = await api("/api/wallet/sources/connect", { kind, returnUrl: "/wallet#sources" }); leaveFor(url, "sources"); } catch (err) { showError(err); } };
   return { title: T("wl.howPay"), body: frag(
-    steps(4, 5),
     h("p", { class: "lead", text: T("wl.connectSomething") }),
     w.sources.length ? h("div", { class: "list" }, ...w.sources.map((s) => row({ lead: badge(s.kind === "card" ? "CARD" : s.kind === "bank" ? "BANK" : s.kind === "paypal" ? "PP" : "WX"), title: s.label, sub: T("wl.connected") }))) : null,
     h("div", { class: "list" }, ...kinds.map(([k, t, fee]) => row({ lead: badge(k === "card" ? "CARD" : k === "bank" ? "BANK" : k === "paypal" ? "PP" : "WX"), title: t, sub: fee, onclick: () => connect(k) }))),
-    h("div", { class: "push" }, btn(w.sources.length ? T("wl.continue") : T("wl.skipForNow"), w.sources.length ? "" : "ghost", () => go("payout?setup=1")))) };
+    h("div", { class: "push" }, btn(T("wl.continue"), "", () => history.back()))) };
 };
 
 SCREENS.payout = async (_, q) => {
@@ -546,7 +568,6 @@ SCREENS.payout = async (_, q) => {
     } catch (err) { save.disabled = false; showError(err); }
   });
   return { title: T("wl.gettingPaid"), body: frag(
-    setup ? steps(5, 5) : null,
     h("p", { class: "lead", text: T("wl.whereShouldGo") }),
     list, change, form,
     h("p", { class: "small", text: T("wl.detailsToProv") }),
