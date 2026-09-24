@@ -109,8 +109,26 @@ thing a long-press menu reads. Members cannot attach one; `/api/mo/say` is
 behind the admin key. A line can also carry a payment request (`pay`), drawn
 as a card whose figure and paid state are read fresh on every load.
 
-**THE ACCOUNT IS IN SOMEBODY ELSE'S NAME, AND THAT IS THE WHOLE BLOCKAGE
-(23 Sep, 23:00).** Not a login problem. The live account's representative is
+**MOST OF THE BLOCKAGE BELOW IS GONE, 24 Sep 17:28.** Asked of the live
+account with its own key — `make wallets ASK=1`, which now answers the payout
+half too — `acct_1UIVjEJItwOUeslJ`, Aozhou Baba, live:
+
+- **Charges and payouts are both enabled.** Not frozen. The paragraph below
+  saying they are was true on 23 Sep and is not true now.
+- **Stripe is waiting for nothing.** No requirements outstanding, so the
+  identity document is no longer what is holding this account.
+- **Alipay and card are on. WeChat Pay is NOT** — "Stripe has not made it
+  available to this account", which is either still pending or refused, and
+  the API cannot tell those apart. Settings → Payment methods says which.
+- **There is no bank account on it.** `lands in NOWHERE`, and payouts are
+  manual. So money can be taken and cannot leave: adding a bank account is
+  the next thing, and it is a thing Tom can do rather than a thing to wait on.
+
+The two open questions are now WeChat Pay and a bank account. What follows is
+kept because the passkey is still Zhu's and that still decides who can sign
+in — but it is no longer blocking the money.
+
+**THE ACCOUNT IS IN SOMEBODY ELSE'S NAME (23 Sep, 23:00 — see above).** Not a login problem. The live account's representative is
 **Zhu Liyuan**, the two-step passkey is **"Zhu's passkey"**, and Stripe
 refused the identity document with, in Tom's words, *"the identity was
 wrong"* — the document did not match the name on the account.
