@@ -232,11 +232,26 @@ most of the time and a country dropdown above the short Chinese form is one
 more thing to read past. What is typed survives the switch, or changing
 country reads as the app having eaten it.
 
-**AND ONE MISMATCH IT EXPOSED, NOT FIXED.** The beneficiary is saved with the
-**wallet's** currency, so an Australian account added by a member whose wallet
-is CNY is stored as CNY. A wire to an Australian bank denominated in yuan is
-not a thing. The currency should follow the account's country, the same way
-the fields now do.
+**AND THEN THE TABLE ITSELF WAS WRONG.** It was written as if each payment
+were domestic to its own country: Australia got a BSB and an account number,
+the United States a routing number, and **neither was asked for a SWIFT**.
+Right for an Australian paying an Australian. Wrong for us — **the payer is
+always the WFOE, in China**, so every payout except a Chinese one is a
+cross-border wire and needs a SWIFT/BIC whatever country it lands in. Reported
+the moment somebody tried to add an Australian account and found no SWIFT
+field anywhere.
+
+The local number stays and the SWIFT sits above it: a BSB or a routing number
+is what gets the money the last step to the branch, once the SWIFT has got it
+to the bank. Both, not either. The beneficiary address comes with them, for
+the reason it was always on the international branch — correspondent banks
+screen, and no address is the commonest reason a payment is held. Mainland
+China is the one exception, and it is the WFOE paying inside its own country.
+
+**The same wrong assumption had put the wrong currency on the account** — the
+wallet's, so an Australian account on a CNY wallet was stored as CNY. Fixed
+with it: the currency follows the account's country. Verified: AUD stored, the
+wallet still CNY.
 
 **Two things on the Chinese payout branch:**
 

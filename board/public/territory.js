@@ -19,28 +19,45 @@
  * lib/fapiao.js. That is not their tax affairs, it is the invoice WE issue
  * THEM, in the country we are registered in.)
  *
- * SO WHY A TABLE AT ALL. Because how you reach a bank genuinely differs by
- * country and getting it wrong means the money does not arrive: Australia
- * uses a BSB, the United States a routing number, Europe an IBAN, and the
- * rest of the world needs a SWIFT/BIC before anything can be sent at all.
- * That is about delivering money, which is our business entirely.
+ * SO WHY A TABLE AT ALL. Because the last step differs by country and
+ * getting it wrong means the money does not arrive: Australia uses a BSB,
+ * the United States a routing number, Europe an IBAN. The SWIFT is what they
+ * all share, because they are all wires out of China. That is about
+ * delivering money, which is our business entirely.
  *
  * BUILT TO LEAVE, and it lives in public/ rather than lib/ so the screen and
  * the server read the same table — the same arrangement public/off.js has.
  */
 
+/* THE PAYER IS ALWAYS THE WFOE, IN CHINA. So every payout except a Chinese
+ * one is a CROSS-BORDER WIRE, and a cross-border wire needs a SWIFT/BIC
+ * whatever country it lands in.
+ *
+ * This table was first written as if each payment were domestic to its own
+ * country — Australia got a BSB and an account number, the United States a
+ * routing number, and neither was asked for a SWIFT. That is right for an
+ * Australian paying an Australian. It is wrong for us, and it was reported
+ * the moment somebody tried to add an Australian account: no SWIFT field
+ * anywhere, on a payment that cannot be sent without one.
+ *
+ * So the local number stays — a BSB or a routing number is what gets the
+ * money the last step, to the branch, once the SWIFT has got it to the bank —
+ * and the SWIFT sits above it. Both, not either.
+ *
+ * AND THE ADDRESS, for the same reason it was always on the international
+ * branch: correspondent banks screen payments, and a beneficiary with no
+ * address is the commonest reason one is held.
+ *
+ * Mainland China is the exception and the only one: that is the WFOE paying
+ * inside its own country, domestic CNY, no border and no correspondent.
+ */
 export const TERRITORIES = {
-  AU: { name: "Australia", bank: ["accountName", "bsb", "accountNumber"] },
   CN: { name: "Mainland China", bank: ["accountName", "bankName", "accountNumber"] },
-  /* Hong Kong's own clearing uses a bank code and account, but anything
-     arriving from outside comes by wire, so the SWIFT is not optional. */
-  HK: { name: "Hong Kong", bank: ["accountName", "bankName", "accountNumber", "swift"] },
-  US: { name: "United States", bank: ["accountName", "bankName", "routing", "accountNumber"] },
-  FI: { name: "Finland", bank: ["accountName", "bankName", "iban", "swift"] },
-  /* THE BRANCH THAT ACTUALLY WIRES MONEY, and the longest for a reason. The
-     SWIFT is how the money finds the bank; the address is why a correspondent
-     bank lets it through rather than holding it for screening. Both were
-     missing once and it cost days. */
+  AU: { name: "Australia", bank: ["accountName", "bankName", "swift", "bsb", "accountNumber", "address"] },
+  US: { name: "United States", bank: ["accountName", "bankName", "swift", "routing", "accountNumber", "address"] },
+  HK: { name: "Hong Kong", bank: ["accountName", "bankName", "swift", "accountNumber", "address"] },
+  FI: { name: "Finland", bank: ["accountName", "bankName", "swift", "iban", "address"] },
+  /* The one that names its own country, because "Somewhere else" does not. */
   OTHER: { name: "Somewhere else", bank: ["accountName", "bankName", "swift", "iban", "country", "address"] },
 };
 

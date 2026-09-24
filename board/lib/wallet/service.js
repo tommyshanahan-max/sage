@@ -225,13 +225,21 @@ export function createWalletService({ ledger, provider, people, now = () => Date
       return ledger.change((data, log) => { data.wallets[me.by].payout = "wallet"; log("payout.mode", { by: me.by, mode }); return true; });
     }
     if (mode !== "bank") fail("bad_mode", "Choose where your money goes.");
+    /* THE ACCOUNT'S OWN CURRENCY, NOT THE WALLET'S.
+     *
+     * This sent w.currency, so an Australian account added by a member whose
+     * wallet is CNY was stored as CNY — a wire to a Melbourne bank
+     * denominated in yuan, which is not a thing any bank will do. It followed
+     * the same wrong assumption the fields did: that where somebody is and
+     * where their money lands are one fact. */
+    const money = (REGIONS[where] || REGIONS[w.region]).currency;
     const clean = checkBankDetails(where, details || {});
-    const ben = await provider.createBeneficiary({ accountId: w.accountId, currency: w.currency, country: where, details: clean });
+    const ben = await provider.createBeneficiary({ accountId: w.accountId, currency: money, country: where, details: clean });
     return ledger.change((data, log) => {
       const id = newId("ben");
       /* The country is kept on the beneficiary so the screen can open on the
          one that was chosen rather than guessing the clock all over again. */
-      data.beneficiaries[id] = { id, by: me.by, providerRef: ben.beneficiaryId, label: ben.label, currency: w.currency, region: where, createdAt: iso() };
+      data.beneficiaries[id] = { id, by: me.by, providerRef: ben.beneficiaryId, label: ben.label, currency: money, region: where, createdAt: iso() };
       data.wallets[me.by].beneficiaryId = id;
       data.wallets[me.by].payout = "bank";
       log("payout.bank", { by: me.by, ref: id, label: ben.label });
