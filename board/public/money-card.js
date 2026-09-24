@@ -1,4 +1,4 @@
-/* MONEY, ON YOUR OWN PAGE — one big number and who owes you.
+/* MONEY, ON YOUR OWN PAGE — a wallet card and who owes you.
 
    There were two money screens and neither was here. Dealio (the Money tab)
    asks somebody for money and lists what is still owed; the wallet
@@ -10,9 +10,9 @@
    a dark block of totals (the loudest thing on the page), a folding row (the
    numbers hidden behind a tap), a row that opened into tiles, a list, two
    buttons and a setup row (everything at once). What Tom drew last is the
-   nearly this; then two tiles; then, from three options, one white card
-   with a single big number — what is owed — over the people who owe it,
-   each with the amount and a pill. The invoice numbers and "where your money lands" are on the
+   nearly this; then two tiles; then, from three options, one big number on
+   white — and then, the same minute, the option beside it: a blue card like
+   the ones in Apple Wallet, over a white card of the people who owe it. The invoice numbers and "where your money lands" are on the
    Money tab, one tap behind the chevron, which is where the detail of a
    thing belongs.
 
@@ -27,17 +27,19 @@
    than a card with a zero on it that refuses to open. */
 
 const STYLE = `
+  .mbank{display:flex;flex-direction:column;justify-content:space-between;gap:.9rem;
+    margin:.8rem 1.15rem 0;min-height:10rem;padding:1.1rem 1.15rem;border-radius:1.25rem;
+    color:#fff;text-decoration:none;background:linear-gradient(135deg,#1B2A8C,#3F68D8);
+    box-shadow:0 8px 24px rgba(27,42,140,.25)}
+  .mbank .mbtop{display:flex;justify-content:space-between;font-weight:600;opacity:.92}
+  .mbank small{display:block;font-size:.85rem;opacity:.8}
+  .mbank b{display:block;font-size:2.3rem;font-weight:800;line-height:1.1;
+    font-variant-numeric:tabular-nums}
+  .mbank .mbfoot{display:flex;gap:1.2rem;font-size:.85rem;opacity:.9}
+  .mbank .mbfoot:empty{display:none}
   .mcard{margin:.7rem 1.15rem 0;border-radius:1.1rem;background:var(--card,#fff);
     color:var(--ink,#151B28);padding:.4rem 1rem .9rem;
     box-shadow:0 1px 3px rgba(21,27,40,.05),0 6px 18px rgba(21,27,40,.06)}
-  .mcard a.mhead{display:flex;align-items:center;gap:.6rem;padding:.7rem 0 .3rem;
-    color:inherit;text-decoration:none}
-  .mcard .mchv{flex:0 0 auto;color:var(--muted,#8A939F);font-size:1.5rem;line-height:1}
-  .mcard .mlab{flex:1;font-size:.78rem;font-weight:600;letter-spacing:.14em;
-    text-transform:uppercase;color:var(--muted,#8A939F)}
-  .mcard .mbig{margin:.1rem 0 0;font-size:2.4rem;font-weight:800;line-height:1.1;
-    font-variant-numeric:tabular-nums}
-  .mcard .msub{margin:.25rem 0 .5rem;font-size:.92rem;color:var(--ink-2,#4E5968)}
   .mcard a.mrow{display:flex;align-items:center;gap:.8rem;padding:.7rem 0;
     color:inherit;text-decoration:none}
   .mcard a.mrow + a.mrow{border-top:1px solid var(--hair,#EAECF1)}
@@ -115,24 +117,27 @@ export async function mountMoneyCard(container, { device, T }) {
   // An empty tile in the money this person usually asks in — "¥0", not "0".
   const cur = (reqs[0] && reqs[0].cur) || "cny";
 
-  /* ONE BIG NUMBER — what is owed to you — and one quiet line under it.
-     Tom picked this over tiles, a bank-card and a strip: the number anybody
-     opens this for, as the largest thing on the screen, and everything else
-     a line or a tap away. The WALLET label and its chevron go to the Money
-     tab, where the invoice numbers and the rest live.
+  /* A CARD, LIKE THE ONES IN APPLE WALLET — Tom's pick of three, after
+     one big number on white. Blue, the size of a bank card: "Owed to you"
+     and the amount, large; earned and this month along the foot. It is the
+     way to the Money tab, where the invoice numbers and the rest live.
+     Under it, one white card with the people who owe it and the buttons.
      Nothing owed, and the big number is what came in this month instead.
      Mixed currencies are counted, never added — see total(). */
+  const owed = total(dueIn, cur), got = total(paidMonth, cur), all = total(paidIn, cur);
+  const bank = link("mbank", undefined, "/dealio?in=1");
+  const top = el("div", "mbtop");
+  top.append(el("span", null, T("pm.wallet")), el("span", null, T("site.title")));
+  const mid = el("div");
+  mid.append(el("small", null, T(dueIn.length ? (owed.mixed ? "pm.reqsOwed" : "pm.owedTo") : "pm.inMonth")),
+    el("b", null, dueIn.length ? owed.big : got.big));
+  const foot = el("div", "mbfoot");
+  if (!all.mixed) foot.append(el("span", null, T("pm.earnedAll", { amount: all.big })));
+  if (dueIn.length && !got.mixed) foot.append(el("span", null, T("pm.thisMonth", { amount: got.big })));
+  bank.append(top, mid, foot);
+  container.append(bank);
+
   const card = el("section", "mcard");
-  const head = link("mhead", undefined, "/dealio?in=1");
-  head.append(el("span", "mlab", T("pm.wallet")), el("span", "mchv", "\u203A"));
-  card.append(head);
-  const owed = total(dueIn, cur), got = total(paidMonth, cur);
-  card.append(el("p", "mbig", dueIn.length ? owed.big : got.big));
-  const sub = dueIn.length
-    ? [T(owed.mixed ? "pm.reqsOwed" : "pm.owedToYou"),
-       paidMonth.length && !got.mixed ? T("pm.earnedMonth", { amount: got.big }) : ""]
-    : [T("pm.inMonth")];
-  card.append(el("p", "msub", sub.filter(Boolean).join(" \u00b7 ")));
 
   if (dueIn.length) {
     for (const q of dueIn.slice(0, 3)) {

@@ -5220,9 +5220,11 @@ export const STRINGS = {
   "pm.walletSet":      ["Set up your wallet", "开通钱包"],
   // Closed, the wallet row says only what is owed to you — see money-card.js.
   // The three tiles in the opened wallet — see money-card.js.
-  "pm.owedToYou":     ["owed to you", "待收"],
-  "pm.reqsOwed":      ["requests owed to you", "笔待收"],
-  "pm.earnedMonth":    ["{amount} earned this month", "本月收到 {amount}"],
+  // On the blue wallet card — see money-card.js.
+  "pm.owedTo":         ["Owed to you", "待收"],
+  "pm.earnedAll":      ["Earned {amount}", "累计 {amount}"],
+  "pm.thisMonth":      ["This month {amount}", "本月 {amount}"],
+  "pm.reqsOwed":       ["Requests owed to you", "待收笔数"],
   "pm.inMonth":        ["In this month", "本月收到"],
   /* THE FOLD ON YOUR OWN PAGE: the key, Google, and the safety note, one tap
      down. They are read once; the page is opened every day. */
