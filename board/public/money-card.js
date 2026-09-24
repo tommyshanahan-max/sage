@@ -42,7 +42,22 @@ const STYLE = `
   /* OPENED, IT IS THE MOCKUP TOM DREW: "Owed", a white list of people with a
      face, the amount and a chevron, the two buttons under it, and the wallet
      as a row of its own. */
-  .mcard .mlab{margin:.9rem 0 .5rem;font-size:.95rem;color:var(--ink-2,#4E5968)}
+  .mcard .mtiles{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin:.9rem 0 .3rem}
+  .mcard .mtiles div{background:var(--card,#fff);border:1px solid var(--line,#E3E6EC);
+    border-radius:.9rem;padding:.75rem .4rem;text-align:center;min-width:0}
+  .mcard .mti{display:block;color:var(--accent,#3F68D8)}
+  .mcard .mti svg{width:1.3rem;height:1.3rem;fill:none;stroke:currentColor;stroke-width:2;
+    stroke-linecap:round;stroke-linejoin:round}
+  .mcard .mtiles div:first-child .mti{color:#2A9D63}
+  .mcard .mtiles .pend .mti,.mcard .mtiles .pend b{color:#B8661A}
+  .mcard .mtiles small{display:block;font-size:.75rem;color:var(--ink-2,#4E5968);margin:.3rem 0 .1rem}
+  .mcard .mtiles b{display:block;font-size:1.1rem;font-weight:700;font-variant-numeric:tabular-nums;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .mcard .mtiles em{display:block;font-style:normal;font-size:.7rem;color:var(--muted,#8A939F)}
+  .mcard .mohead{display:flex;justify-content:space-between;align-items:baseline;margin:.9rem .1rem .5rem}
+  .mcard .mohead b{font-size:1.05rem}
+  .mcard .mohead a{font-size:.88rem;font-weight:600;color:var(--accent,#3F68D8);text-decoration:none}
+  .mcard .mrow .mamt{flex:0 0 auto;font-weight:700;font-variant-numeric:tabular-nums}
   .mcard .mlist{background:var(--card,#fff);border-radius:1rem;overflow:hidden;
     box-shadow:0 1px 3px rgba(21,27,40,.06),0 6px 18px rgba(21,27,40,.06)}
   .mcard .mlist a.mrow{padding:.85rem 1rem;border-top:1px solid var(--hair,#EAECF1)}
@@ -50,7 +65,6 @@ const STYLE = `
   .mcard .mface{flex:0 0 auto;width:2.6rem;height:2.6rem;border-radius:50%;color:#fff;
     display:grid;place-items:center;font-weight:700;font-size:1.15rem}
   .mcard .mrow .mid{flex:1;min-width:0}
-  .mcard .mrow .mdue{display:block;font-size:.92rem;color:#C0503C;font-weight:500}
   .mcard .mrow .mchv{flex:0 0 auto;color:var(--muted,#8A939F);font-size:1.4rem;line-height:1}
   .mcard .mi{display:inline-grid;place-items:center}
   .mcard .mi svg{width:1.15rem;height:1.15rem;fill:none;stroke:currentColor;stroke-width:2;
@@ -67,8 +81,6 @@ const STYLE = `
   .mcard a.mset b{display:block;font-size:1rem}
   .mcard a.mset small{display:block;font-size:.85rem;color:var(--ink-2,#4E5968)}
   .mcard a.mset > span:nth-child(2){flex:1;min-width:0}
-  .mcard a.mall{display:block;text-align:center;padding:.8rem 0 0;font-size:.9rem;
-    font-weight:600;color:var(--accent,#3F68D8);text-decoration:none}
   .mcard .mgo{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin:.9rem 0 .2rem}
   .mcard .mgo.one{grid-template-columns:1fr}
   .mcard .mgo a{display:block;text-align:center;text-decoration:none;font-weight:600;
@@ -130,8 +142,8 @@ const num = (q) => parseFloat(String(q.amount || "").replace(/[^\d.]/g, "")) || 
 
 /** A total, but only when every row is in the same money. ¥2,000 plus $100 is
  *  not a number, so a mixed list is counted instead of added. */
-function total(rows) {
-  if (!rows.length) return { big: "0", mixed: false };
+function total(rows, cur = "") {
+  if (!rows.length) return { big: (SIGN[cur] || "") + "0", mixed: false };
   const curs = new Set(rows.map((q) => q.cur || ""));
   if (curs.size > 1) return { big: String(rows.length), mixed: true };
   const n = rows.reduce((s, q) => s + num(q), 0);
@@ -158,6 +170,9 @@ export async function mountMoneyCard(container, { device, T }) {
   const reqs = (st.requests || []).filter((q) => !q.off);
   const open = reqs.filter((q) => q.state !== "paid");
   const dueIn = open.filter((q) => (q.way || "in") === "in");
+  const paidIn = reqs.filter((q) => q.state === "paid" && (q.way || "in") === "in");
+  const month = new Date().toISOString().slice(0, 7);
+  const paidMonth = paidIn.filter((q) => String(q.at || "").slice(0, 7) === month);
 
   /* ONE ROW, CLOSED, AND IT OPENS DOWNWARD. The first version was a dark
      block of totals and buttons near the top of the page, and on a phone it
@@ -180,10 +195,33 @@ export async function mountMoneyCard(container, { device, T }) {
 
   const body = el("div", "mbody");
 
-  /* OWED, FIRST — the people, not the buttons. What is owed is why this was
+  /* THREE NUMBERS ACROSS THE TOP — earned, in this month, pending. Added up
+     only within one currency; a mixed list is counted instead, and the tile
+     says "paid" or "requests" so a count never passes for an amount. */
+  const tiles = el("div", "mtiles");
+  const tile = (cls, ico, label, rows, sub) => {
+    // An empty tile in the money this person usually asks in — "¥0", not "0".
+    const t = total(rows, (reqs[0] && reqs[0].cur) || "cny");
+    const d = el("div", cls);
+    const i = el("span", "mti");
+    i.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + ico + "</svg>";
+    d.append(i, el("small", null, label), el("b", null, t.big));
+    const under = t.mixed ? T("pm.nPaid", { n: rows.length }) : sub;
+    if (under) d.append(el("em", null, under));
+    tiles.append(d);
+  };
+  tile("", '<path d="M4 17l6-6 4 4 6-7"/><path d="M15 8h5v5"/>', T("pm.earned"), paidIn, "");
+  tile("", '<path d="M12 4v12"/><path d="M6 11l6 6 6-6"/><path d="M5 20h14"/>', T("pm.inMonth"), paidMonth, "");
+  tile("pend", '<circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/>', T("pm.pending"), dueIn,
+    dueIn.length ? T(dueIn.length === 1 ? "pm.req1" : "pm.reqN", { n: dueIn.length }) : "");
+  body.append(tiles);
+
+  /* OWED — the people, not the buttons. What is owed is why this was
      opened; the buttons are for next time. */
   if (open.length) {
-    body.append(el("p", "mlab", T("pm.owedHead")));
+    const oh = el("div", "mohead");
+    oh.append(el("b", null, T("pm.owedHead")), link("", T("pm.all") + " \u203A", "/dealio?in=1"));
+    body.append(oh);
     const list = el("div", "mlist");
     for (const q of open.slice(0, 3)) {
       const r = link("mrow", undefined, "/dealio?in=1");
@@ -192,11 +230,11 @@ export async function mountMoneyCard(container, { device, T }) {
       face.style.background = tint(title);
       const mid = el("div", "mid");
       mid.append(el("b", null, title));
-      /* The amount and its state as one line, in the colour of money not yet
-         in — and the invoice number beside it when there is one. */
-      mid.append(el("span", "mdue", shown(q) + " " + T("dl.st." + q.state)
-        + (q.no ? " · " + T("rq.no", { n: String(q.no).padStart(4, "0") }) : "")));
-      r.append(face, mid, el("span", "mchv", "\u203A"));
+      /* Its state and its invoice number under the name; the amount on the
+         right, where the eye goes for a number. */
+      mid.append(el("small", null, [T("dl.st." + q.state),
+        q.no ? T("rq.no", { n: String(q.no).padStart(4, "0") }) : ""].filter(Boolean).join(" \u00b7 ")));
+      r.append(face, mid, el("span", "mamt", shown(q)), el("span", "mchv", "\u203A"));
       list.append(r);
     }
     body.append(list);
@@ -224,7 +262,6 @@ export async function mountMoneyCard(container, { device, T }) {
   if (wal && !wal.wallet) stx.append(el("small", null, T("pm.walletSet")));
   set.append(sico, stx, el("span", "mchv", "\u203A"));
   body.append(set);
-  if (open.length > 3) body.append(link("mall", T("pm.all") + " \u203A", "/dealio?in=1"));
   card.append(body);
 
   container.append(card);

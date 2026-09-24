@@ -5223,6 +5223,13 @@ export const STRINGS = {
   "pm.owed":           ["{amount} owed", "待收 {amount}"],
   "pm.owedN":          ["{n} owed", "{n} 笔待收"],
   "pm.owedHead":       ["Owed", "待收"],
+  // The three tiles in the opened wallet — see money-card.js.
+  "pm.earned":         ["Earned", "累计收到"],
+  "pm.inMonth":        ["In this month", "本月收到"],
+  "pm.pending":        ["Pending", "待收"],
+  "pm.req1":           ["1 request", "1 笔"],
+  "pm.reqN":           ["{n} requests", "{n} 笔"],
+  "pm.nPaid":          ["{n} paid", "{n} 笔已付"],
   /* THE FOLD ON YOUR OWN PAGE: the key, Google, and the safety note, one tap
      down. They are read once; the page is opened every day. */
   "me.keyFold":        ["Your key & sign-in", "你的钥匙和登录"],
