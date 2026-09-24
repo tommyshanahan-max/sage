@@ -2038,6 +2038,21 @@ who: ## Who has a page, and who is actually in Browse
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/who.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)"
 
+books: ## Both invoices of every deal, and what is left between them: make books [WHO="Tom"]
+	@# THE TWO-INVOICE LEDGER, IN A TERMINAL. A deal through the WFOE is two
+	@# invoices — the payer is invoiced by the company they paid, the supplier
+	@# invoices that same company — and the margin is what is left between
+	@# them. The app has the same screen; this is here because a column of
+	@# figures is the hardest thing on a phone held close, and a ledger is read
+	@# down rather than glanced at.
+	@#
+	@# THE MARGIN IS NOT WORKED OUT TWICE. It comes off the same lib/books.js
+	@# the screen uses, through the admin route, so this cannot quietly
+	@# disagree with what the app says. Two places that each compute money is
+	@# the bug this is written to avoid.
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/books.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" "$(WHO)"
+
 standing: ## Who can bring somebody in, and who cannot yet
 	@# The companion to `who`. A rule nobody can see the effect of is a rule
 	@# that gets argued about instead of read — this says, per member, whether

@@ -33,6 +33,8 @@ import path from "node:path";
 import * as store from "./lib/store.js";
 import * as memo from "./lib/memo.js";
 import * as request from "./lib/request.js";
+import * as fapiao from "./lib/fapiao.js";
+import * as books from "./lib/books.js";
 import * as shop from "./lib/shop.js";
 import * as sealed from "./lib/sealed.js";
 import * as terms from "./lib/terms.js";
@@ -9207,6 +9209,35 @@ const STRIPE_PK = (process.env.BOARD_STRIPE_PK || "").trim();
  * still runs, so what is skipped is the call to Stripe and nothing else. */
 const PAY_DEMO = process.env.BOARD_PAY_DEMO === "1";
 
+/* THE TRADING MARGIN ON A TWO-INVOICE DEAL.
+ *
+ * NOT store.FEE_PCT, WHICH IS 2 AND SITS RIGHT BESIDE IT. That one is the
+ * processing fee on a straight Dealio payment — what Stripe and the wallets
+ * cost, grossed up. This one is the gap between two invoices on a deal that
+ * goes through the WFOE. Different product, different path, different number,
+ * and if these two ever get confused the books will be out by 3% on every
+ * deal and every individual figure will look plausible. Hence the name.
+ *
+ * It is the gap between the two invoices of a deal and nothing else: the
+ * payer is invoiced for the whole, the supplier invoices for this much less,
+ * and the difference is trading margin rather than a cut held on somebody
+ * else's behalf. That distinction is not cosmetic — a platform that holds
+ * other people's money and pays it on is doing 二清, and doing it without a
+ * licence is what gets accounts closed in China.
+ *
+ * SO IT IS NEVER WRITTEN ONTO EITHER INVOICE and it is never stored on a
+ * deal. It decides what the supplier's row is made for, once, and after that
+ * the books subtract. See lib/books.js.
+ *
+ * Five per cent, and an env var only so it can be moved without a deploy —
+ * not so it can vary per deal. A rate that varies per deal is a rate nobody
+ * can quote on a page before somebody commits, and quoting it beforehand is
+ * the thing that makes it fair. */
+const MARGIN_PCT = (() => {
+  const n = Number((process.env.BOARD_MARGIN_PCT || "").trim());
+  return Number.isFinite(n) && n > 0 && n < 50 ? n : 5;
+})();
+
 /* WHAT HE SAYS WHEN THE WIRE TRIPS. Stored like anybody else's line, so it is
  * written once in one language rather than being a key the page resolves —
  * see the note over MO_NAME. It is the sentence already printed under every
@@ -11847,6 +11878,221 @@ app.post("/api/request/:id/off", notesOff, express.json({ limit: "1kb" }), async
   res.json({ ok: true });
 });
 
+/* ===========================================================================
+ * THE TWO INVOICES
+ *
+ * A deal is two of them and one of them is ours. The payer is invoiced by the
+ * company they paid; the supplier invoices that same company. Nobody is paid
+ * across a border in either direction, and what is left between the two
+ * numbers is the margin. See lib/books.js for why the margin is never stored.
+ *
+ * These five routes are the paperwork half. The money half already existed
+ * and is untouched.
+ * ======================================================================== */
+
+/** 开票信息, FROM THE PAYER, ON THE PAGE THEY ALREADY HAVE OPEN.
+ *
+ *  NO DEVICE AND NO MEMBERSHIP. The paying company has never heard of this
+ *  board and never will — the same reasoning as every other route on a pay
+ *  link. The address is eighty bits and that is the whole guard.
+ *
+ *  ONE BOX. They paste the block they already keep, the server reads it, and
+ *  what it read comes straight back so they can see it was read right. See
+ *  lib/fapiao.js for why this is not six labelled fields.
+ *
+ *  ONCE IT IS ISSUED IT IS SHUT. An invoice that has gone out cannot be
+ *  quietly re-pointed at a different company by whoever the link was
+ *  forwarded to — that is the shape of every invoice fraud there is, and it
+ *  is worth the one refusal it costs somebody who genuinely changed their
+ *  mind. They ask, and a human reissues.
+ */
+app.post("/api/request/:id/invoice", notesOff, express.json({ limit: "4kb" }), async (req, res) => {
+  const id = request.cleanId(req.params.id);
+  if (!id) return res.status(400).json({ error: "no" });
+  const text = String(req.body?.text || "");
+  /* Typed beats pasted where both came: somebody who corrected a field on the
+     screen meant the correction. */
+  const read = text ? fapiao.readFapiao(text) : {};
+  const want = {
+    kind: req.body?.kind === "special" ? "special" : "plain",
+    title: String(req.body?.title || read.title || ""),
+    taxId: String(req.body?.taxId || read.taxId || ""),
+    addr: String(req.body?.addr || read.addr || ""),
+    tel: String(req.body?.tel || read.tel || ""),
+    bank: String(req.body?.bank || read.bank || ""),
+    acct: String(req.body?.acct || read.acct || ""),
+    to: String(req.body?.to || ""),
+    at: new Date().toISOString(),
+  };
+  const inv = fapiao.cleanFapiao(want);
+  if (!inv) {
+    /* WHICH OF THE TWO IS WRONG, because "that did not work" on a paste box
+       is a dead end. A tax number that fails its own checksum is a different
+       problem from one that is missing, and only one of them is a typo. */
+    return res.status(400).json({
+      error: "read", read: text ? read : null,
+      why: !want.title ? "title" : fapiao.taxIdState(want.taxId),
+    });
+  }
+  const out = await change((board) => {
+    const q = board.requests.find((x) => x.id === id);
+    if (!q || q.off) return { error: "no" };
+    if ((q.way || "in") === "out") return { error: "way" };
+    if (q.inv?.done) return { error: "issued" };
+    q.inv = inv;
+    return { ok: true };
+  });
+  if (out?.error) return res.status(400).json(out);
+  res.json({ ok: true, inv: { kind: inv.kind, title: inv.title, taxId: inv.taxId },
+    missing: fapiao.fapiaoMissing(inv), taxIdState: fapiao.taxIdState(inv.taxId) });
+});
+
+/** THE SUPPLIER'S SIDE OF THE SAME DEAL, MADE FROM THE PAYER'S SIDE.
+ *
+ *  ONE PRESS, AND THE NUMBER IS NOT TYPED. That is the entire point. The
+ *  margin is what the platform takes and it is disclosed before anybody
+ *  commits, so it is a setting, not a thing to work out on a calculator at
+ *  the moment of making a row. Typing 1,900 next to 2,000 is how a deal ends
+ *  up at 4.7% and nobody notices for a quarter.
+ *
+ *  BOTH ROWS IN THE SUPPLIER'S CURRENCY, because a subtraction across two
+ *  currencies means nothing. The yuan the payer actually handed over is
+ *  already on the row from when the code was drawn, and the books carry it
+ *  beside these two rather than folded into them.
+ */
+app.post("/api/request/:id/supplier", notesOff, express.json({ limit: "2kb" }), async (req, res) => {
+  const me = hashDevice(String(req.body?.device || ""), SALT);
+  const id = request.cleanId(req.params.id);
+  if (!me || !id) return res.status(400).json({ error: "no" });
+  const out = await change((board) => {
+    const q = board.requests.find((x) => x.id === id);
+    if (!q || q.by !== me || q.off) return { error: "no" };
+    if ((q.way || "in") === "out") return { error: "way" };
+    if (q.deal && board.requests.some((x) => x.deal === q.deal && (x.way || "in") === "out" && !x.off)) {
+      return { error: "already" };
+    }
+    const mine = board.people.find((p) => p.by === me);
+    if (!mine?.handle) return { error: "profile" };
+    const to = String(req.body?.to || "").trim();
+    if (!to) return { error: "who" };
+    /* THE AMOUNT IS WORKED OUT AND ONLY THEN OVERRIDDEN. A supplier who
+       agreed a different number is a normal thing; a supplier row with no
+       number at all is not. */
+    const cur = request.CURRENCIES.includes(String(req.body?.cur || "")) ? String(req.body.cur) : q.cur;
+    const typed = String(req.body?.amount || "").trim();
+    const inMinor = q.cur ? store.toMinor(q.amount, q.cur) : 0;
+    const amount = typed
+      || (cur === q.cur && inMinor
+        ? store.fromMinor(books.supplierMinor(inMinor, MARGIN_PCT), cur) : "");
+    if (!amount) return { error: "amount" };
+    const deal = q.deal || request.newRequestId();
+    const row = request.cleanRequest({
+      id: request.newRequestId(), no: nextNo(board, me), by: me, from: mine.handle,
+      to, way: "out", amount, cur,
+      /* The same line as the money coming in. Two rows of one deal that
+         describe different jobs are two rows somebody will one day fail to
+         recognise as a pair. */
+      what: q.what || "", when: "", at: new Date().toISOString(), deal,
+    });
+    if (!row) return { error: "bad" };
+    q.deal = deal;
+    board.requests.push(row);
+    return { ok: true, id: row.id, no: row.no, deal };
+  });
+  if (out?.error) return res.status(400).json(out);
+  res.json({ ok: true, id: out.id, no: out.no, deal: out.deal,
+    url: payLink(req, "/pay/" + out.id) });
+});
+
+/** THE TWO TICKS, AND THEY ARE TICKS BECAUSE NOTHING ELSE CAN KNOW.
+ *
+ *  A fapiao is issued in the tax bureau's own system and a supplier's invoice
+ *  arrives as a PDF in somebody's email. Neither event touches this board, so
+ *  neither can be worked out here — and a books screen that guessed would be
+ *  worse than one that asks. Which tick is meant is decided by the row, not
+ *  by the caller: `issued` on the money coming in, `billed` on the money
+ *  going out.
+ */
+app.post("/api/request/:id/paper", notesOff, express.json({ limit: "1kb" }), async (req, res) => {
+  const me = hashDevice(String(req.body?.device || ""), SALT);
+  const id = request.cleanId(req.params.id);
+  if (!me || !id) return res.status(400).json({ error: "no" });
+  const on = req.body?.on !== false;
+  const out = await change((board) => {
+    const q = board.requests.find((x) => x.id === id);
+    if (!q || q.by !== me || q.off) return { error: "no" };
+    if ((q.way || "in") === "out") {
+      if (on) q.billed = true; else delete q.billed;
+      return { ok: true, what: "billed", on };
+    }
+    /* Nothing to issue against. Said rather than silently ticked, because a
+       books screen reading "issued" over an empty company name is the one
+       state that would send somebody looking for a document that was never
+       made. */
+    if (!q.inv) return { error: "noInv" };
+    if (on) q.inv.done = true; else delete q.inv.done;
+    return { ok: true, what: "issued", on };
+  });
+  if (out?.error) return res.status(400).json(out);
+  res.json(out);
+});
+
+/** THE BOOKS. Both invoices of every deal on one line, which is the whole
+ *  point and the thing two separate exports cannot do. */
+async function myBooks(req) {
+  const me = hashDevice(String(req.get("x-board-device") || ""), SALT);
+  if (!me) return null;
+  const board = await store.load(FILE);
+  return books.books(board.requests.filter((q) => q.by === me),
+    { toMinor: store.toMinor, fromMinor: store.fromMinor }, { feePct: MARGIN_PCT });
+}
+
+app.get("/api/books", notesOff, async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const b = await myBooks(req);
+  if (!b) return res.json({ deals: [], totals: [] });
+  res.json(b);
+});
+
+/** THE SAME THING AS A FILE, because the person who needs it most does not
+ *  use this app. An accountant is sent one attachment and opens it in a
+ *  spreadsheet, and every figure in it is a plain number — see booksCsv. */
+app.get("/api/books.csv", notesOff, async (req, res) => {
+  const b = await myBooks(req);
+  res.set("Cache-Control", "no-store");
+  if (!b) return res.status(400).type("text/plain").send("no device\n");
+  res.set("Content-Disposition",
+    'attachment; filename="deals-' + new Date().toISOString().slice(0, 10) + '.csv"');
+  /* THE BYTE ORDER MARK IS NOT DECORATION. Excel on Windows opens a UTF-8 CSV
+     as the system code page unless one is there, and every Chinese company
+     name in the file becomes mojibake — on the one screen whose entire job is
+     to be readable by somebody else's accountant. */
+  res.type("text/csv; charset=utf-8").send("﻿" + books.booksCsv(b));
+});
+
+/** THE BOOKS FROM THE TERMINAL — `make books`.
+ *
+ *  The same figures as the screen, for somebody who would rather read them in
+ *  a terminal than hold a phone up close. That is not a convenience here; it
+ *  is the difference between a number being readable and not.
+ *
+ *  BY HANDLE, because a device hash is not a thing anybody can type. */
+app.get("/api/admin/books", admin, async (req, res) => {
+  const want = String(req.query.who || "").trim().toLowerCase();
+  const board = await store.load(FILE);
+  const people = board.people.filter((p) => p.handle
+    && (!want || p.handle.toLowerCase() === want
+      || p.handle.toLowerCase().split(/\s+/)[0] === want));
+  if (want && !people.length) return res.status(404).json({ error: "who" });
+  res.json({
+    who: people.map((p) => ({
+      handle: p.handle,
+      ...books.books(board.requests.filter((q) => q.by === p.by),
+        { toMinor: store.toMinor, fromMinor: store.fromMinor }, { feePct: MARGIN_PCT }),
+    })).filter((x) => x.deals.length),
+  });
+});
+
 /** THE ONES YOU HAVE SENT. Yours only, newest first. */
 /** CAN STRIPE ACTUALLY PAY THIS ACCOUNT — cached for a minute.
  *
@@ -11994,6 +12240,10 @@ app.get("/api/requests", notesOff, async (req, res) => {
          was taken back, and the address to send again. */
       off: Boolean(q.off),
       url: payLink(req, "/pay/" + q.id),
+      /* WHICH DEAL THIS ROW IS HALF OF, so the list screen knows whether the
+         books are worth offering at all. Never on the payer's view — it is
+         the address of the other side of a deal they are not part of. */
+      deal: q.deal || "",
     })),
   });
 });

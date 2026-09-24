@@ -157,6 +157,51 @@ the prompt. It never touched the box's configuration.
 history and into a screenshot on 24 Sep. A leaked live key on a public server
 is a likelier route to a terminated account than anything in this repo.
 
+## The two invoices — built 24 Sep, never deployed
+
+A deal through the WFOE is **two invoices and one of them is ours**. The payer
+is invoiced by the company they paid; the supplier invoices that same company.
+Nobody is paid across a border in either direction. What is left between the
+two numbers is the margin, and it is trading profit rather than a cut held on
+somebody else's behalf — which is the line that keeps this out of 二清.
+
+**The supplier's half was already there** (the payout screen in the wallet:
+ABN, GST, and since today SWIFT/BIC, IBAN with its own checksum, bank, country
+and beneficiary address). **The payer's half is new.**
+
+| | |
+|---|---|
+| **开票信息** | On the payer's own pay page, as **one paste box**. Every Chinese company keeps its invoicing block as text and hands it over by long-press-copy-paste; six labelled fields would ask a finance clerk to retype an eighteen-character tax number on a phone. `board/lib/fapiao.js` reads it and shows back what it read. |
+| **The tax number is checksummed offline** | 统一社会信用代码, GB 32100-2015, mod 31. Verified against two real codes and rejects any single-character typo. The 15- and 20-character old-style numbers have no check digit at all, so they are accepted on shape and said to be — never pretended to have been checked. |
+| **The supplier's row is made from the payer's** | One press on the deal, and the number is **not typed**: `BOARD_MARGIN_PCT` (5) decides it once. Typing 1,900 beside 2,000 is how a deal quietly ends up at 4.7%. |
+| **The books** | `Deals` in Dealio, and `make books` in a terminal. Both invoices on one line, the margin between them, the yuan actually banked, and what is owed on paper. `/api/books.csv` is the same thing for the accountant, with a BOM so Excel does not mangle the Chinese company names. |
+
+**The margin is never stored.** It is one row minus the other, worked out
+fresh every time. A stored percentage is a third number that can disagree with
+the two invoices under it, and on the day it does nothing can say which of the
+three is lying.
+
+**And it only counts deals that have both sides.** The first version summed
+every row, and a book with three jobs paid in and no supplier attached yet
+reported a **32.4% margin** — every number in that sentence individually true.
+Money in on a one-sided deal is now carried separately and named for what it
+is: a job that has not been paid out.
+
+**`BOARD_MARGIN_PCT` is not `store.FEE_PCT`.** That one is 2 and is the
+processing fee on a straight Dealio payment. This one is 5 and is the gap
+between two invoices on a WFOE deal. Different product, different path. If
+they ever get confused the books are out by 3% on every deal and every
+individual figure looks plausible.
+
+**Two ticks are by hand and cannot be otherwise.** A fapiao is issued in the
+tax bureau's own system and a supplier's invoice arrives as a PDF in somebody's
+email. Neither event touches this board, so neither can be worked out here —
+and a books screen that guessed would be worse than one that asks.
+
+**What has NOT been established:** whether the WFOE can actually issue fapiao
+today — that is a registration question, not a code one. The data collected is
+the same either way, for a fapiao or a plain commercial invoice.
+
 ## Next: Dealio absorbs the wallet
 
 **The problem.** Two money screens, both with Send, Request and a list of

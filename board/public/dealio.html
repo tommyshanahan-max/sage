@@ -183,6 +183,45 @@
   .prow .n{font-family:var(--serif);font-size:1.2rem;text-align:right;
     font-variant-numeric:tabular-nums}
   .prow .t{grid-column:1/-1;color:var(--mut);font-size:.82rem}
+  /* ---- THE BOOKS: two invoices on one line ------------------------------
+     A LEDGER, NOT A DECK OF CARDS. Every row here is the same kind of thing
+     and none of them needs lifting off the page; the card treatment on the
+     live list earns itself because those rows are things to act on, and
+     these are things to read down. */
+  .d{display:grid;grid-template-columns:1fr auto;gap:.15rem .8rem;
+    align-items:baseline;width:100%;text-align:left;border:0;background:none;
+    color:var(--ink);font:inherit;padding:.8rem 0;cursor:pointer;
+    border-bottom:1px solid var(--line)}
+  .d .w{font-weight:600}
+  .d .n{font-family:var(--serif);font-size:1.25rem;text-align:right;
+    font-variant-numeric:tabular-nums}
+  /* The two figures the margin came out of, in the order money moved. Tabular
+     so a column of them lines up under itself — the one place on this app
+     where somebody is reading down a column rather than glancing at a row. */
+  .d .f{grid-column:1;color:var(--mut);font-size:.84rem;
+    font-variant-numeric:tabular-nums}
+  .d .p{grid-column:2;justify-self:end;color:var(--mut);font-size:.72rem;
+    font-variant-numeric:tabular-nums}
+  .d .t{grid-column:1/-1;color:var(--mut);font-size:.78rem;margin:.15rem 0 0}
+  /* THE PAPERWORK, AS TWO MARKS AND NOT TWO SENTENCES. A deal is finished
+     when the money moved both ways and both documents exist, and the second
+     half is the one that costs money later — so it gets a mark on the row
+     that can be scanned down rather than a state that has to be read. */
+  .paper{grid-column:1/-1;display:flex;gap:.45rem;margin:.3rem 0 0}
+  .pchip{font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;
+    padding:.14rem .5rem;border-radius:99px;background:var(--line);color:var(--ink2)}
+  .pchip.ok{background:rgba(63,190,125,.14);color:var(--ok)}
+  .pchip.no{background:rgba(217,83,79,.14);color:#E08C89}
+  /* WHY THERE IS NO MARGIN, WHERE THERE IS NONE. A blank in the column the
+     screen exists for is the one thing guaranteed to be read as a bug. */
+  .dwhy{grid-column:2;justify-self:end;color:var(--mut);font-size:.72rem;
+    text-align:right;max-width:9rem;line-height:1.35}
+  /* WHAT IS OWED ON PAPER. Loud enough to be seen under the margin and no
+     louder — it is a reminder, not a failure. */
+  /* .sub AND .owing ARE THE SAME ELEMENT, and .sub is declared after this
+     block — so a bare .owing loses the colour it exists to set and the line
+     goes grey, which is the one thing it must not be. */
+  .sub.owing{color:var(--acc)}
   .none{margin:2rem 0;color:var(--mut);text-align:center}
   .sub{margin:0 0 1.3rem;color:var(--mut);font-size:.92rem}
   /* ---- THE PAD: the home screen is the amount --------------------------
@@ -770,6 +809,7 @@ function draw() {
 
   if (FRONT || (STATE && !STATE.you)) signedOut();
   else if (VIEW === "paid") paid();
+  else if (VIEW === "books") booksView();
   else if (!(STATE?.requests || []).length) empty();
   else list();
 
@@ -1116,6 +1156,16 @@ function list() {
     a.addEventListener("click", () => { VIEW = "paid"; draw(); });
     h.append(a);
   }
+  /* THE BOOKS, AND ONLY ONCE A DEAL HAS TWO SIDES. On a board where nobody
+     has ever paid a supplier it is a screen of one-sided rows repeating the
+     list above it — so it stays out of the way until the day it has
+     something the other screens cannot show. */
+  if (STATE.requests.some((q) => q.deal || q.way === "out")) {
+    const a = el("button", "hlink", T("bk.head"));
+    a.type = "button";
+    a.addEventListener("click", () => { VIEW = "books"; BOOKS = null; draw(); });
+    h.append(a);
+  }
   root.append(h);
 
   const open = STATE.requests.filter((q) => q.state !== "paid");
@@ -1196,6 +1246,290 @@ function paidRow(q, d) {
     T(q.way === "out" ? "dl.rowOut" : "dl.rowIn")].filter(Boolean).join(" · ")));
   b.addEventListener("click", () => one(q));
   return b;
+}
+
+/* ===========================================================================
+ * THE BOOKS — BOTH INVOICES OF A DEAL ON ONE LINE
+ * ===========================================================================
+ *
+ * A deal through the WFOE is two invoices. The payer is invoiced by the
+ * company they paid; the supplier invoices that same company. Nobody is paid
+ * across a border in either direction, and what is left between the two
+ * numbers is the margin.
+ *
+ * SO THE ONE THING THIS SCREEN DOES THAT NO OTHER CAN is put the two of them
+ * on the same line. The live list has the money and the Paid screen has the
+ * history, and neither can answer "what did we actually make on that job",
+ * because the answer is a subtraction across two rows that nothing joined.
+ *
+ * THE MARGIN IS NEVER STORED — see lib/books.js. It is one row minus the
+ * other, every time. A stored percentage is a third number that can disagree
+ * with the two invoices under it, and on the day it does nothing can say
+ * which of the three is lying.
+ *
+ * AND THE CSV IS NOT AN EXTRA. The person who needs this most does not use
+ * this app: an accountant is sent one attachment and opens it in a
+ * spreadsheet. A screen that can only be read on a phone is a screen whose
+ * numbers get retyped, and retyped numbers are wrong numbers.
+ */
+let BOOKS = null;
+
+async function loadBooks() {
+  try {
+    const r = await fetch("/api/books", { cache: "no-store", headers: { "x-board-device": device } });
+    BOOKS = await r.json();
+  } catch { BOOKS = { deals: [], totals: [], failed: true }; }
+  if (VIEW === "books") draw();
+}
+
+function booksView() {
+  const h = el("div", "hrow");
+  h.append(el("h1", null, T("bk.head")));
+  const back = el("button", "hlink", T("dl.back"));
+  back.type = "button";
+  back.addEventListener("click", () => { VIEW = "list"; draw(); });
+  h.append(back);
+  root.append(h);
+
+  if (!BOOKS) {
+    root.append(el("p", "none", T("bk.loading")));
+    loadBooks();
+    return;
+  }
+  root.append(el("p", "sub", T("bk.sub")));
+
+  /* THE MARGIN, AS THE NUMBER AT THE TOP, because it is the only figure on
+     this screen somebody opens it to see. One per currency and never added
+     together — the rule the Earned card has always run on. Only where both
+     sides of that currency exist: money in with nothing out has a "margin"
+     of 100%, which is not a margin, it is a deal that has not paid out yet. */
+  for (const t of (BOOKS.totals || [])) {
+    if (t.pct === null) continue;
+    const box = el("div", "mrow");
+    const a = el("div", "mcol");
+    a.append(el("span", null, T("bk.margin")), el("b", null, t.gap));
+    box.append(a);
+    const b2 = el("div", "mcol");
+    b2.append(el("span", null, T("bk.onWhat", { n: t.in })),
+      el("b", "pend", t.pct + "%"));
+    box.append(b2);
+    root.append(box);
+  }
+  /* YUAN THROUGH THE WFOE, which is the figure its own books are kept in and
+     the first one a Chinese auditor asks for. Quiet, under the margin: it is
+     a fact to have to hand rather than a thing to watch. */
+  /* THE TWO QUIET FACTS ON ONE LINE. Three stacked grey sentences under the
+     headline is three things to read where the screen gets one glance — and
+     they are both the same kind of fact, a figure to have to hand.
+     THE SECOND IS DELIBERATELY NOT IN THE MARGIN ABOVE: counting it there
+     made the headline read 32.4% on a book that was mostly jobs with no
+     supplier attached yet, and every number in that sentence was
+     individually true. */
+  const facts = [
+    BOOKS.cnyIn ? T("bk.cny", { n: BOOKS.cnyInShown }) : "",
+    ...(BOOKS.open || []).filter((o) => o.inMinor).map((o) => T("bk.open", { n: o.in })),
+  ].filter(Boolean);
+  if (facts.length) root.append(el("p", "sub", facts.join(" \u00b7 ")));
+
+  /* WHAT IS OUTSTANDING ON PAPER, counted on the server so the sentence and
+     the list can never disagree. Money without a document is the state that
+     costs money later, and it is invisible on every other screen. */
+  const owing = [
+    BOOKS.needInvoice ? T("bk.needInv", { n: BOOKS.needInvoice }) : "",
+    BOOKS.needBill ? T("bk.needBill", { n: BOOKS.needBill }) : "",
+  ].filter(Boolean);
+  if (owing.length) root.append(el("p", "sub owing", owing.join(" · ")));
+
+  if (!(BOOKS.deals || []).length) {
+    root.append(el("p", "none", T("bk.none")));
+    return;
+  }
+  for (const d of BOOKS.deals) root.append(dealRow(d));
+
+  /* ONE BUTTON, AND IT IS A LINK RATHER THAN A FETCH. A blob download built
+     in script is the thing that silently does nothing inside WeChat's
+     browser; an anchor with a filename on the server is the thing that
+     works everywhere. */
+  const out = el("a", "quietlink", T("bk.csv"));
+  out.href = "/api/books.csv";
+  out.setAttribute("download", "");
+  root.append(out);
+}
+
+function dealRow(d) {
+  const b = el("button", "d");
+  b.type = "button";
+  /* WHO TO WHO, in the order the money went. Two names is what a deal is
+     called in anybody's head — never its id and never its number, which is
+     what you look up once you have recognised it. */
+  const names = [d.in?.who || T("dl.someone"), d.out?.who || T("bk.noOne")].join(" → ");
+  b.append(el("span", "w", names));
+  if (d.gap) b.append(el("span", "n", (d.gap.under ? "−" : "") + d.gap.amount));
+  else b.append(el("span", "dwhy", T("bk.why." + (d.why || "noCur"))));
+  /* THE TWO FIGURES THE MARGIN CAME OUT OF. Shown, always, because a margin
+     with nothing under it is a number somebody has to take on trust. */
+  b.append(el("span", "f", [d.in?.amount || "—", d.out?.amount || "—"].join(" → ")));
+  if (d.gap) b.append(el("span", "p", d.gap.pct + "%"));
+  b.append(el("span", "t", [
+    d.no ? T("rq.no", { n: String(d.no).padStart(4, "0") }) : "",
+    d.in?.what || "", when(d.at),
+  ].filter(Boolean).join(" · ")));
+
+  /* THE PAPERWORK. Only once the money has actually moved — a document that
+     is not owed yet is not outstanding, and a row of red chips on a deal
+     nobody has paid is a screen that cries wolf. */
+  const chips = el("div", "paper");
+  if (d.in && d.in.state === "paid") {
+    chips.append(el("span", "pchip " + (d.in.invoice === "issued" ? "ok" : "no"),
+      T(d.in.invoice === "issued" ? "bk.cIssued" : "bk.cIssue")));
+  }
+  if (d.out && d.out.state === "paid") {
+    chips.append(el("span", "pchip " + (d.out.billed ? "ok" : "no"),
+      T(d.out.billed ? "bk.cBilled" : "bk.cBill")));
+  }
+  if (chips.children.length) b.append(chips);
+  b.addEventListener("click", () => dealSheet(d));
+  return b;
+}
+
+/* THE ROW OPENS — the shape of the whole product. The line carries the
+   concepts; everything that needs reading is one tap deeper. */
+function dealSheet(d) {
+  const back = el("div", "sh");
+  const card = el("div", "shc");
+  card.append(el("p", "lab", d.no ? T("rq.no", { n: String(d.no).padStart(4, "0") }) : T("bk.head")));
+  card.append(el("h2", null, d.in?.what || T("bk.head")));
+
+  const dl = el("dl");
+  const term = (k, v) => {
+    if (!v) return;
+    const r2 = el("div", "dr");
+    r2.append(el("dt", null, k), el("dd", null, v));
+    dl.append(r2);
+  };
+  term(T("bk.payer"), d.in?.who || "");
+  term(T("bk.invoiced"), d.in?.amount || "");
+  /* WHAT ACTUALLY ARRIVED IN YUAN, at the rate on the day the code was
+     drawn. It is a third number and it belongs beside the other two rather
+     than folded into them: the two rows are the supplier's currency so that
+     the subtraction means something, and this is what the WFOE banked. */
+  if (d.in?.cny) term(T("bk.inCny"), CUR_SIGN.cny + (d.in.cny / 100).toLocaleString("en-US"));
+  if (d.in?.inv) {
+    term(T("bk.invTo"), d.in.inv.title);
+    term(T("bk.invTax"), d.in.inv.taxId);
+  }
+  term(T("bk.supplier"), d.out?.who || "");
+  term(T("bk.paidOut"), d.out?.amount || "");
+  if (d.gap) term(T("bk.margin"), d.gap.amount + "  ·  " + d.gap.pct + "%");
+  card.append(dl);
+
+  const acts = el("div", "acts");
+  /* THE SUPPLIER'S SIDE, MADE FROM THE PAYER'S, AND THE NUMBER IS NOT TYPED.
+     That is the whole of why this button exists rather than a second trip
+     through the make sheet: typing 1,900 beside 2,000 is how a deal quietly
+     ends up at 4.7% and nobody notices for a quarter. */
+  if (d.in && !d.out) {
+    const add = el("button", null, T("bk.addSupplier"));
+    add.type = "button";
+    add.addEventListener("click", () => { back.remove(); supplierSheet(d); });
+    acts.append(add);
+  }
+  /* THE TWO TICKS. Neither event touches this board — a fapiao is issued in
+     the tax bureau's own system and a supplier's invoice arrives as a PDF in
+     somebody's email — so neither can be worked out here, and a books screen
+     that guessed would be worse than one that asks. */
+  if (d.in && d.in.state === "paid" && d.in.inv) {
+    acts.append(tick(d.in.id, d.in.invoice === "issued", "bk.tIssued", "bk.tIssue", back));
+  }
+  if (d.out && d.out.state === "paid") {
+    acts.append(tick(d.out.id, d.out.billed, "bk.tBilled", "bk.tBill", back));
+  }
+  const shut = el("button", null, T("pay.close"));
+  shut.type = "button";
+  shut.addEventListener("click", () => back.remove());
+  acts.append(shut);
+  card.append(acts);
+  back.append(card);
+  back.addEventListener("click", (e) => { if (e.target === back) back.remove(); });
+  document.body.append(back);
+}
+
+function tick(id, on, onKey, offKey, sheetBack) {
+  const b = el("button", null, T(on ? onKey : offKey));
+  b.type = "button";
+  b.addEventListener("click", async () => {
+    b.disabled = true;
+    try {
+      await fetch("/api/request/" + id + "/paper", {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ device, on: !on }),
+      });
+    } catch { /* the reload below says what actually happened */ }
+    sheetBack.remove();
+    BOOKS = null;
+    await loadBooks();
+  });
+  return b;
+}
+
+function supplierSheet(d) {
+  const back = el("div", "sh");
+  const card = el("div", "shc");
+  card.append(el("p", "lab", T("bk.addSupplier")));
+  /* THE NUMBER, BEFORE THE NAME, because the number is the thing being
+     agreed to and it is already worked out. Nobody opens this wondering how
+     much — they open it knowing who. */
+  card.append(el("h2", null, T("bk.willPay", {
+    n: d.in?.amount || "", pct: String(BOOKS?.feePct ?? 5),
+  })));
+
+  const inp = el("input");
+  inp.id = "supname";
+  inp.type = "text";
+  inp.placeholder = T("bk.supplierEg");
+  const wrap = el("label");
+  wrap.append(el("span", null, T("bk.supplierName")), inp);
+  card.append(wrap);
+
+  const bad = el("p", "why");
+  bad.hidden = true;
+  card.append(bad);
+
+  const acts = el("div", "acts");
+  const go = el("button", "go", T("bk.makeIt"));
+  go.type = "button";
+  go.addEventListener("click", async () => {
+    const to = inp.value.trim();
+    if (!to) { inp.focus(); return; }
+    go.disabled = true;
+    try {
+      const r = await fetch("/api/request/" + d.in.id + "/supplier", {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ device, to }),
+      });
+      const j = await r.json().catch(() => null);
+      if (r.ok && j?.ok) {
+        back.remove();
+        BOOKS = null;
+        await load();
+        await loadBooks();
+        return;
+      }
+      bad.textContent = T(j?.error === "already" ? "bk.eAlready"
+        : j?.error === "amount" ? "bk.eAmount" : "ask.failed");
+      bad.hidden = false;
+    } catch { bad.textContent = T("ask.failed"); bad.hidden = false; }
+    go.disabled = false;
+  });
+  const no = el("button", null, T("pay.cancel"));
+  no.type = "button";
+  no.addEventListener("click", () => back.remove());
+  acts.append(go, no);
+  card.append(acts);
+  back.append(card);
+  back.addEventListener("click", (e) => { if (e.target === back) back.remove(); });
+  document.body.append(back);
+  inp.focus();
 }
 
 function row(q) {

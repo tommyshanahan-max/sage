@@ -5567,6 +5567,118 @@ export const STRINGS = {
   "rq.goneWhy":        ["It may have been taken back, or the address is wrong. Ask whoever sent it.",
                         "可能已经撤回，或者地址不对。找发给你的人问一下。"],
 
+/* 开票信息 — THE PAYER'S TAX DETAILS, ON THE PAGE THEY PAY FROM.
+ *
+ * WRITTEN FOR SOMEBODY WHO DOES THIS EVERY WEEK. A Chinese finance clerk has
+ * handed over 开票信息 a thousand times and keeps it as a block of text they
+ * paste. So the Chinese here names the gesture — 粘贴 — and stops. A sentence
+ * explaining what a fapiao is, or why we need one, is a sentence explaining
+ * their own job back to them, which is the fault this file has been caught on
+ * before with the long-press line under the QR code.
+ *
+ * AND 发票 IS THE RIGHT WORD HERE, unlike on a request row. `rq.no` is 单号
+ * and never 发票 because a request number is not a tax document. This is the
+ * tax document. */
+  "rq.invAsk":         ["Need an invoice?", "需要开发票？"],
+  "rq.invChange":      ["Change", "修改"],
+  "rq.invDone":        ["Invoice issued", "发票已开"],
+  "rq.invPaste":       ["Paste your invoice details", "粘贴开票信息"],
+  /* Labels with nothing after them. A clerk recognises the shape of their own
+     block instantly; a made-up company and a made-up tax number in the box
+     is one more thing to read past, and a plausible fake tax number is one
+     somebody will eventually send us. */
+  "rq.invEg":          ["Company name:\nTax number:", "公司名称：\n纳税人识别号："],
+  "rq.invHint":        ["Name and tax number is enough. The rest is only for a special VAT invoice.",
+                        "公司名称和税号就够了，其余的开专票才用得上。"],
+  "rq.invSpecial":     ["Special VAT invoice — the bank line is needed too",
+                        "开增值税专用发票（还要开户行和账号）"],
+  "rq.invSave":        ["Save", "保存"],
+  "rq.invSaving":      ["Saving…", "保存中…"],
+  "rq.invLater":       ["Later", "以后再说"],
+  "rq.invGot":         ["Got it", "已收到"],
+  "rq.invClose":       ["Done", "好"],
+  "rq.invStill":       ["Still missing: {what}", "还差：{what}"],
+  "rq.invF.title":     ["company name", "公司名称"],
+  "rq.invF.taxId":     ["tax number", "税号"],
+  "rq.invF.addr":      ["address", "地址"],
+  "rq.invF.tel":       ["phone", "电话"],
+  "rq.invF.bank":      ["bank", "开户行"],
+  "rq.invF.acct":      ["account number", "账号"],
+  /* THE TAX NUMBER HAS ITS OWN CHECKSUM, so a wrong one is a typo and can be
+     said to be one. Told apart from a missing one because they are different
+     problems and only one of them is fixed by looking again. */
+  "rq.invBadTax":      ["That tax number does not check out. Have another look at it.",
+                        "税号对不上，再看一眼。"],
+  "rq.invNoName":      ["No company name in that.", "没找到公司名称。"],
+  "rq.invNoRead":      ["Could not read that. Paste the whole block.",
+                        "没读出来，整段贴进来。"],
+  "rq.invShut":        ["That invoice has gone out already. Ask them to reissue it.",
+                        "发票已经开出去了，要改的话联系对方重开。"],
+
+/* THE BOOKS — both invoices of a deal on one line.
+ *
+ * WRITTEN FOR SOMEBODY DOING THEIR OWN ACCOUNTS AT NINE AT NIGHT, which is
+ * who actually opens this. Every line is a label on a figure, so every line
+ * is as short as a label can be. Nothing here explains what a margin is.
+ *
+ * 对账 RATHER THAN 记账. 记账 is bookkeeping, which this is not and must not
+ * claim to be — it holds no journals and posts nothing. 对账 is checking two
+ * sides against each other, which is exactly what the screen does. */
+  "bk.head":           ["Deals", "对账"],
+  "bk.sub":            ["Both invoices of every deal.", "每一单的两张票。"],
+  "bk.loading":        ["…", "…"],
+  "bk.none":           ["Nothing to reconcile yet.", "还没有可对的账。"],
+  "bk.margin":         ["Margin", "毛利"],
+  "bk.onWhat":         ["of {n}", "占 {n}"],
+  /* NOT "through the WFOE". It is the right word and nobody reading a money
+     screen at speed parses it. What the sentence is for is having the yuan
+     figure to hand, so the yuan figure is the sentence. */
+  "bk.cny":            ["{n} banked in yuan", "人民币实收 {n}"],
+  /* NOT "unpaired" OR "unmatched", WHICH ARE WORDS ABOUT THE DATABASE. The
+     fact is that nobody has been paid for the job yet, so that is the
+     sentence. It sits under the margin and its whole purpose is that nobody
+     reads it as part of one. */
+  "bk.open":           ["{n} in with no supplier yet",
+                        "{n} 进账还没有供应商"],
+  "bk.needInv":        ["{n} to invoice", "{n} 张票要开"],
+  "bk.needBill":       ["{n} invoice not in", "{n} 张票没收到"],
+  "bk.noOne":          ["no supplier", "没供应商"],
+  /* WHY A MARGIN IS MISSING, where it is. A blank in the one column this
+     screen exists for reads as a bug every time. */
+  "bk.why.noSupplier": ["no supplier yet", "还没加供应商"],
+  "bk.why.noPayer":    ["no money in", "没有进账"],
+  "bk.why.noCur":      ["currency unknown", "币种不明"],
+  "bk.why.twoCurs":    ["two currencies", "两种币，算不了"],
+  "bk.cIssue":         ["To invoice", "待开票"],
+  "bk.cIssued":        ["Invoiced", "已开票"],
+  "bk.cBill":          ["No invoice", "待收票"],
+  "bk.cBilled":        ["Invoice in", "已收票"],
+  "bk.payer":          ["Payer", "付款方"],
+  "bk.invoiced":       ["Invoiced", "开票金额"],
+  "bk.inCny":          ["Banked in yuan", "人民币实收"],
+  "bk.invTo":          ["Invoice to", "发票抬头"],
+  "bk.invTax":         ["Tax number", "税号"],
+  "bk.supplier":       ["Supplier", "供应商"],
+  "bk.paidOut":        ["Paid out", "付出"],
+  "bk.addSupplier":    ["Add the supplier", "加供应商"],
+  /* THE NUMBER IS NOT TYPED AND THE SENTENCE SAYS SO. Typing 1,900 beside
+     2,000 is how a deal quietly ends up at 4.7% and nobody notices for a
+     quarter — so the rate is stated and the arithmetic is ours. */
+  "bk.willPay":        ["{n} in, less {pct}%", "进 {n}，扣 {pct}%"],
+  "bk.supplierName":   ["Who you are paying", "付给谁"],
+  "bk.supplierEg":     ["Their name", "对方名字"],
+  "bk.makeIt":         ["Make it", "生成"],
+  /* A BUTTON SAYS WHAT PRESSING IT DOES. Two ticks sit side by side on the
+     same sheet, so neither of them may read simply "Undo". */
+  "bk.tIssue":         ["Invoice issued", "已开票"],
+  "bk.tIssued":        ["Undo issued", "撤销开票"],
+  "bk.tBill":          ["Invoice received", "已收到票"],
+  "bk.tBilled":        ["Undo received", "撤销收票"],
+  "bk.eAlready":       ["That deal already has a supplier.", "这单已经有供应商了。"],
+  "bk.eAmount":        ["Nothing to work the amount out from.", "算不出金额。"],
+  /* THE PERSON WHO NEEDS THIS MOST DOES NOT USE THIS APP. */
+  "bk.csv":            ["Send it to the accountant", "导出给会计"],
+
   "memo.brand":        ["The Exchange", "交换"],
   "memo.untitled":     ["The terms", "这单的条件"],
   "memo.between":      ["{a} hired {b}", "{a} 找 {b} 办的事"],

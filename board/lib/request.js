@@ -25,6 +25,10 @@
  * asking, which Stripe account the money lands in — the caller supplies.
  */
 import { randomBytes } from "node:crypto";
+/* The other leaf beside this one. Importing it does not break "built to
+   leave": fapiao.js imports nothing either, so the two of them leave
+   together the way memo.js and its code alphabet do. */
+import { cleanFapiao } from "./fapiao.js";
 
 /** Twenty hex, the same shape as every other id here. It is the whole address
  *  of a request, so it has to be unguessable on its own: 80 bits. */
@@ -120,6 +124,41 @@ export function cleanRequest(raw) {
   const no = Number.parseInt(raw.no, 10);
   if (Number.isInteger(no) && no > 0 && no < 1e6) out.no = no;
 
+  /* THE OTHER HALF OF THE SAME DEAL.
+   *
+   * A deal is two invoices and it always was — the payer is invoiced by the
+   * company they are paying, and the supplier invoices that same company —
+   * but until now the board held one row per payment and nothing joined them.
+   * So the money was traceable and the deal was not: two rows, no way to say
+   * they were the same job, and the margin between them was a number
+   * somebody worked out in their head.
+   *
+   * A deal id on both rows fixes that and costs one field. It is minted on
+   * the "in" row the moment a supplier row is made from it, so a request that
+   * never had a supplier behind it carries nothing — which is most of them,
+   * and they should stay as light as they are.
+   *
+   * THE MARGIN IS NEVER STORED. It is what is left when one row is taken off
+   * the other, worked out fresh every time the books are drawn. A stored
+   * percentage is a number that can disagree with the two invoices under it,
+   * and on the day it does there is no way to tell which of the three is
+   * lying. */
+  const deal = /^[a-f0-9]{20}$/.test(String(raw.deal || "")) ? String(raw.deal) : "";
+  if (deal) out.deal = deal;
+
+  /* 开票信息 — WHAT THE PAYER NEEDS ON THEIR INVOICE.
+   *
+   * Only ever on a row coming in: it is the paying company's own tax details,
+   * given by them, for the invoice they are owed. On a row going out the
+   * person being paid does the invoicing and this is meaningless.
+   *
+   * Read by lib/fapiao.js, which refuses a block with no usable tax number
+   * rather than storing half of one — an invoice issued against a wrong
+   * number has to be voided and reissued, weeks later, by somebody who has
+   * forgotten the deal. */
+  const inv = (raw.way === "out") ? null : cleanFapiao(raw.inv);
+  if (inv) out.inv = inv;
+
   /* WHERE THE MONEY LANDS WHEN IT IS NOT A MEMBER'S.
    *
    * Sending money to somebody needs an account for them, and they may have
@@ -165,6 +204,15 @@ export function cleanRequest(raw) {
   const said = (Array.isArray(raw.said) ? raw.said : [])
     .map(cleanSaid).filter(Boolean).slice(0, 8);
   if (said.length) out.said = said;
+  /* THE SUPPLIER'S INVOICE IS IN HAND. Only on a row going out, and it is
+     the one fact about a deal that no part of this board can work out for
+     itself: the invoice arrives as a PDF in somebody's email. Without it the
+     books can say the money was sent and cannot say whether there is a
+     document behind it, which is the difference between a paid supplier and
+     a deductible cost. Ticked by hand, on the books screen, because a hand
+     is what put the PDF in the folder. */
+  if (raw.billed && (raw.way === "out")) out.billed = true;
+
   /* Cancelled by whoever asked. Kept rather than deleted: somebody was sent a
      link and is owed an answer about why it stopped working. */
   if (raw.off) out.off = true;
@@ -236,6 +284,16 @@ export function requestView(r, { payeeReady = false } = {}) {
     /* False and the page says so rather than drawing a Pay button that opens
        a refusal. */
     payeeReady: Boolean(payeeReady),
+    /* 开票信息, READ BACK — AND ONLY THE TWO LINES THAT GO ON THE HEAD OF
+       AN INVOICE.
+       The payer gave this and has every right to check it, but a pay link
+       can be forwarded and this row answers to whoever holds the address.
+       The company name and the tax number are printed on every invoice that
+       company has ever issued and are looked up freely; its bank account is
+       not, and there is no screen that needs it back. So it goes in and does
+       not come out. */
+    inv: r.inv ? { kind: r.inv.kind, title: r.inv.title, taxId: r.inv.taxId,
+      done: Boolean(r.inv.done) } : null,
     /* WHETHER A CODE WAS EVER PUT ON THE SCREEN FOR THIS ONE. Not the code
        and not the provider's id for it — only that there is something to ask
        about, so a page that opens on an unpaid request knows whether asking
