@@ -65,7 +65,9 @@ export function createWalletRouter({ service, passkeys, provider, identify, test
   r.post("/api/wallet/sources/connect", json, run((me, req) => service.startConnect(me, req.body?.kind, back(req.body?.returnUrl))));
   r.post("/api/wallet/sources/:id/default", json, run((me, req) => service.setDefaultSource(me, req.params.id)));
   r.post("/api/wallet/sources/:id/remove", json, run((me, req) => service.removeSource(me, req.params.id)));
-  r.post("/api/wallet/payout", json, run((me, req) => service.setPayout(me, { mode: req.body?.mode, details: req.body?.details })));
+  /* `region` is which country the ACCOUNT is in, which is not always where
+     the person is — see setPayout. */
+  r.post("/api/wallet/payout", json, run((me, req) => service.setPayout(me, { mode: req.body?.mode, details: req.body?.details, region: req.body?.region })));
 
   /* ---- passkeys ---- */
   r.post("/api/wallet/passkey/options", json, run((me, req) => passkeys.registrationOptions(me, rp(req))));

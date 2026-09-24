@@ -794,21 +794,58 @@ SCREENS.payout = async (_, q) => {
    * collected it. See lib/wallet/territory.js, including why `salesTax: null`
    * for Hong Kong and the United States is a deliberate answer and not a gap.
    */
-  const terr = territoryOf(w.region);
-  const fields = terr.bank.map((k) => [k, fieldLabel(k, w.region), fieldHint(k, w.region)]);
+  /* WHICH COUNTRY THE ACCOUNT IS IN, ASKED RATHER THAN GUESSED.
+   *
+   * The fields used to follow w.region, which is guessed from the phone's
+   * clock at setup and which nothing could change — so somebody in Shanghai
+   * with an Australian account got the Chinese form and no way to enter a
+   * SWIFT. Where somebody lives and where their account is are different
+   * facts and this screen only needs the second one.
+   *
+   * It opens on the saved account's country, or on the guess for a first
+   * one, so the common case is still no taps. */
+  let where = w.payoutRegion || w.region;
 
   /* ALWAYS A BANK. It offered "keep it in your wallet" against "pay it out",
      and the first of those is the float this board cannot hold. */
   let mode = "bank";
   const form = h("div", { class: "stack" });
-  const inputs = {};
-  for (const [key, label, hint] of fields) {
-    const id = "f_" + key;
-    inputs[key] = h("input", { id, type: "text",
-      autocomplete: key === "accountName" ? "name" : key === "address" ? "street-address" : key === "country" ? "country-name" : "off",
-      inputmode: ["bsb", "accountNumber", "abn", "routing"].includes(key) ? "numeric" : null });
-    form.append(h("div", { class: "field" }, h("label", { for: id, text: label }), inputs[key], hint ? h("span", { class: "hint", text: hint }) : null));
+  let inputs = {};
+
+  /* THE PICKER IS NOT THE FIRST THING ANYBODY SEES.
+   *
+   * The guess is right most of the time — a member in Shanghai being paid
+   * into a Chinese account — and for them the short form is the whole screen
+   * and a country dropdown above it is one more thing to read past. So the
+   * fields open on the guess and the picker sits behind one quiet line for
+   * the people the guess is wrong for. Opened once, it stays open. */
+  let showWhere = false;
+  const pick = h("select", { id: "f_where", "aria-label": T("wl.accountCountry") });
+  for (const [code, r] of Object.entries(W.regions || {})) {
+    pick.append(h("option", { value: code, text: regionName(code, r.name), selected: code === where ? "" : null }));
   }
+  pick.value = where;
+
+  /* WHAT IS TYPED SURVIVES THE SWITCH. Changing the country rebuilds the
+     fields, and a name typed into the old set would otherwise vanish —
+     which reads as the app having eaten it. Only the keys the new country
+     also asks for come across, which is most of them. */
+  const fields = () => {
+    const kept = Object.fromEntries(Object.entries(inputs).map(([k, i]) => [k, i.value]));
+    form.textContent = "";
+    inputs = {};
+    for (const key of territoryOf(where).bank) {
+      const id = "f_" + key;
+      inputs[key] = h("input", { id, type: "text", value: kept[key] || "",
+        autocomplete: key === "accountName" ? "name" : key === "address" ? "street-address" : key === "country" ? "country-name" : "off",
+        inputmode: ["bsb", "accountNumber", "routing"].includes(key) ? "numeric" : null });
+      const hint = fieldHint(key, where);
+      form.append(h("div", { class: "field" }, h("label", { for: id, text: fieldLabel(key, where) }), inputs[key],
+        hint ? h("span", { class: "hint", text: hint }) : null));
+    }
+  };
+  pick.addEventListener("change", () => { where = pick.value; fields(); });
+  fields();
   /* ONE OPTION IS NOT A QUESTION. It asked "when someone sends you money,
      where should it go?" over a single row with a tick beside it — the other
      answer was "keep it in your wallet", which is the float this board cannot
@@ -827,11 +864,23 @@ SCREENS.payout = async (_, q) => {
   let showNew = !w.payoutLabel;
   const change = w.payoutLabel ? h("button", { type: "button", class: "chip", text: T("wl.useDifferent"), onclick: () => { showNew = true; draw(); } }) : null;
   draw();
+  /* ABOVE THE FIELDS, because it decides what they are — but as a line until
+     it is needed. */
+  const whereRow = h("div", { class: "field" });
+  const elsewhere = h("button", { type: "button", class: "chip", text: T("wl.elsewhere"),
+    onclick: () => { showWhere = true; paintWhere(); pick.focus(); } });
+  const paintWhere = () => {
+    whereRow.textContent = "";
+    if (showWhere) whereRow.append(h("label", { for: "f_where", text: T("wl.accountCountry") }), pick);
+    else whereRow.append(elsewhere);
+  };
+  paintWhere();
+
   const save = btn(setup ? T("wl.finish") : T("wl.save"), "", async () => {
     save.disabled = true;
     try {
       if (mode === "wallet") await api("/api/wallet/payout", { mode: "wallet" });
-      else if (showNew) await api("/api/wallet/payout", { mode: "bank", details: {
+      else if (showNew) await api("/api/wallet/payout", { mode: "bank", region: where, details: {
         ...Object.fromEntries(Object.entries(inputs).map(([k, i]) => [k, i.value])),
       } });
       await load(); say(T("wl.saved"));
@@ -840,7 +889,7 @@ SCREENS.payout = async (_, q) => {
   });
   return { title: T("wl.gettingPaid"), body: frag(
     h("p", { class: "lead", text: T("wl.weSendTo") }),
-    list, change, form,
+    list, change, whereRow, form,
     /* WHAT THEIR INVOICE HAS TO SAY, said here rather than after the first
        one is rejected. Four things, and a supplier who gets them wrong is
        paid late for a reason nobody explained. */

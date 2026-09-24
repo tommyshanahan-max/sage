@@ -7350,7 +7350,11 @@ export const STRINGS = {
                         "8 位或 11 位，例如 CTBAAU2S。账单上有，或问银行。"],
   "wl.ibanHint":       ["IBAN where your country uses one. Otherwise the plain account number.",
                         "有 IBAN 的国家填 IBAN，没有的就填账号。"],
-  "wl.bankCountry":    ["Country the account is in", "账户所在国家"],
+  /* NOT "country the account is in" — the picker above it already says that
+     and two fields with the same label three inches apart is a form asking
+     the same question twice. This one is only reached by choosing "Somewhere
+     else", so it asks the question that choice leaves open. */
+  "wl.bankCountry":    ["Which country, exactly?", "具体是哪个国家？"],
   "wl.yourAddress":    ["Your address", "你的地址"],
   "wl.addressWhy":     ["Banks hold international payments without one.",
                         "没有地址，国际汇款会被银行卡住。"],
@@ -7389,6 +7393,13 @@ export const STRINGS = {
   "wl.accountNumber":  ["Account number", "银行账号"],
   "wl.bankLabel":      ["Bank", "开户银行"],
   "wl.cnBank":         ["Bank and branch", "开户行"],
+  /* WHERE THE ACCOUNT IS, not where you are. The two differ constantly — a
+     Chinese member paid into an Australian account, an Australian living in
+     Beijing — and this screen only needs the second fact. */
+  "wl.accountCountry": ["Country the account is in", "账户在哪个国家"],
+  /* The way out for the people the clock guessed wrong about. A line, not a
+     dropdown: most members are being paid where they are. */
+  "wl.elsewhere":      ["The account is in another country", "账户在别的国家"],
   /* THE BRANCH, NOT JUST THE BANK — this said "e.g. China Merchants Bank",
      which is the bank and not the 开户行. A domestic CNY transfer is routed
      on the branch: "招商银行" alone is where an interbank payment stalls and

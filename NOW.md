@@ -217,6 +217,27 @@ construction. `visualViewport` is the only thing that knows the overlap;
 `main` now pads itself by it, so a bottom-pinned button rises to just above
 the keyboard. Zero when no keyboard is up, so nothing else changes.
 
+**YOU COULD NOT ENTER A SWIFT IF YOUR PHONE SAID CHINA.** The payout fields
+followed the wallet's region, which is guessed from the phone's clock at setup
+and which **nothing could change** — there was no screen and no route, and the
+code comment claiming Settings could was simply false. So a member in Shanghai
+being paid into an Australian account got the Chinese form and no way out of
+it. Where somebody lives and where their account is are different facts and
+this screen only needs the second.
+
+The account now carries its own country: the fields and the server's checks
+both follow it, and it is stored on the beneficiary so the screen reopens on
+what was chosen. **The picker is behind one quiet line** — the guess is right
+most of the time and a country dropdown above the short Chinese form is one
+more thing to read past. What is typed survives the switch, or changing
+country reads as the app having eaten it.
+
+**AND ONE MISMATCH IT EXPOSED, NOT FIXED.** The beneficiary is saved with the
+**wallet's** currency, so an Australian account added by a member whose wallet
+is CNY is stored as CNY. A wire to an Australian bank denominated in yuan is
+not a thing. The currency should follow the account's country, the same way
+the fields now do.
+
 **Two things on the Chinese payout branch:**
 
 - **Fixed: it asked for the bank and not the branch** — and the label said

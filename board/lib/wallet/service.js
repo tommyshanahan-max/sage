@@ -122,6 +122,9 @@ export function createWalletService({ ledger, provider, people, now = () => Date
           earned: { minor: earnedMinor, text: format(earnedMinor, w.currency) },
           pending: { minor: pendingMinor, text: format(pendingMinor, w.currency) },
           payout: w.payout, payoutLabel: ben ? ben.label : "",
+          /* Which country the saved account is in, so the screen opens on it
+             rather than guessing the clock again. */
+          payoutRegion: ben ? (ben.region || w.region) : "",
           limits: { sendDay: { minor: r.send, text: format(r.send, w.currency) }, sentToday: { minor: sentToday(data, me.by), text: format(sentToday(data, me.by), w.currency) }, receiveMonth: { text: format(r.recv, w.currency) } },
           passkeys: (data.credentials[me.by] || []).length,
           sources, incoming, requests,
@@ -201,19 +204,34 @@ export function createWalletService({ ledger, provider, people, now = () => Date
   /* WHERE MONEY SENT TO YOU GOES. Details are handed to the provider, which
      returns an id; the Exchange keeps the id and a label ending in four
      digits, never the account number. */
-  async function setPayout(me, { mode, details }) {
+  /* WHERE THE ACCOUNT IS, NOT WHERE THE PERSON IS.
+   *
+   * This used w.region — guessed from the phone's clock at setup and never
+   * changeable, because no screen and no route existed to change it. So
+   * somebody in Shanghai being paid into an Australian account was shown a
+   * Chinese bank form and could not enter a SWIFT at all, and there was no
+   * way out of it. The two differ constantly: a Chinese member with an
+   * account abroad, an Australian living in Beijing.
+   *
+   * So the account carries its own country, the person says which, and the
+   * fields and the checks both follow that. Falls back to the wallet's
+   * region, which is what every account saved before this had. */
+  async function setPayout(me, { mode, details, region }) {
     const w = await ledger.read((d) => needWallet(d, me));
     const r = REGIONS[w.region];
+    const where = isRegion(region) ? region : w.region;
     if (mode === "wallet") {
       if (!r.balance) fail("no_balance_here", "In mainland China, money you receive goes straight to your bank.");
       return ledger.change((data, log) => { data.wallets[me.by].payout = "wallet"; log("payout.mode", { by: me.by, mode }); return true; });
     }
     if (mode !== "bank") fail("bad_mode", "Choose where your money goes.");
-    const clean = checkBankDetails(w.region, details || {});
-    const ben = await provider.createBeneficiary({ accountId: w.accountId, currency: w.currency, country: w.region, details: clean });
+    const clean = checkBankDetails(where, details || {});
+    const ben = await provider.createBeneficiary({ accountId: w.accountId, currency: w.currency, country: where, details: clean });
     return ledger.change((data, log) => {
       const id = newId("ben");
-      data.beneficiaries[id] = { id, by: me.by, providerRef: ben.beneficiaryId, label: ben.label, currency: w.currency, createdAt: iso() };
+      /* The country is kept on the beneficiary so the screen can open on the
+         one that was chosen rather than guessing the clock all over again. */
+      data.beneficiaries[id] = { id, by: me.by, providerRef: ben.beneficiaryId, label: ben.label, currency: w.currency, region: where, createdAt: iso() };
       data.wallets[me.by].beneficiaryId = id;
       data.wallets[me.by].payout = "bank";
       log("payout.bank", { by: me.by, ref: id, label: ben.label });
