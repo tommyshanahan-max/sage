@@ -182,7 +182,51 @@ being declined.
 
 **TWO THINGS TO DO, AND NEITHER IS BUILT YET.**
 
-**AUD FAILS IDENTICALLY. 24 Sep 19:15, and it settles the question.**
+## FOUND IT: the account has no Alipay capability, 24 Sep 19:30
+
+Stripe support read the account's `capabilities` list and `alipay_payments`
+is **not in it at all**. Active on the account: Afterpay, Bancontact, BLIK,
+card, EPS, Klarna, MB WAY, Pay by Bank, Pix, Satispay, Scalapay, transfers,
+Zip; Cartes Bancaires pending. No Alipay.
+
+**A toggle and a capability are different things, and only one of them is
+checked at the moment that matters.** Settings → Payment methods can show
+Alipay ON without the capability being active. Checkout creates the session
+without looking. Stripe only asks whether the account can really process the
+method when the payer confirms — so the first thing in the whole chain to
+find out is the payer, as
+`payment_intent_payment_attempt_failed · invalid_request_error`. Independent
+of currency, which is why AUD failed identically.
+
+**WHAT TO DO:** Settings → Payment methods → Alipay → run the activation
+flow, and wait for the capability to go active. It is account-level
+verification, so not instant.
+
+**`make wallets` was reading the wrong field and said so confidently.** It
+asked `payment_method_configurations` — the display preference — and printed
+"BOTH WALLETS ARE ON" about an account with no Alipay capability. It now
+prints the capability beside the switch and names the disagreement:
+
+```
+⚠  Alipay is switched ON with no live capability behind it.
+   The payment sheet will offer it and the payment will fail when somebody
+   presses it: payment_intent_payment_attempt_failed · invalid_request_error.
+```
+
+and its verdict requires the capability, not the switch. **This is the third
+time in two days that a command here answered from a field next to the one
+that decides** — `external_accounts` off an account object that does not
+carry it, `BOARD_*` grepped out of a `.env` full of `TOMSCODING_*`, and now
+this. The pattern is a confident answer from the wrong field, and it is worth
+one minute of suspicion whenever a check says what you hoped.
+
+An evening went on the four faults in front of it. All four were real and all
+four are fixed — the dead Airwallex rail, the Connect destination, the test
+key, the currency — and none of them was this.
+
+---
+
+**AUD FAILS IDENTICALLY. 24 Sep 19:15, and it settled the currency question.**
 
 ```
 11:15   6.51 AUD   alipay   requires_payment_method

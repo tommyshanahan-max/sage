@@ -124,12 +124,76 @@ for (const c of configs) {
   console.log("");
 }
 
+/* THE CAPABILITY, WHICH IS A DIFFERENT QUESTION FROM THE TOGGLE, AND THE ONE
+ * THAT DECIDES.
+ *
+ * WHAT THIS MISSED. Everything above reads payment_method_configurations —
+ * the display preference, which is what Settings → Payment methods shows and
+ * what a person means when they say a method is "on". An account can have
+ * that toggle on and not hold the capability at all, and the two are checked
+ * at different moments: Checkout creates the session without looking, and
+ * Stripe only asks whether the account can really process the method when the
+ * payer confirms. So the failure lands on the payer's screen, as
+ * `payment_intent_payment_attempt_failed · invalid_request_error`, with
+ * nothing anywhere saying "this account has no Alipay".
+ *
+ * That is exactly what happened on 24 Sep. This command printed "BOTH WALLETS
+ * ARE ON" about an account whose capabilities list had no `alipay_payments`
+ * in it at all, an evening went on the four faults in front of it — a dead
+ * Airwallex rail, a Connect destination, a test key, a currency — and the
+ * real answer was one field this file was not reading. Stripe support found
+ * it in a minute.
+ *
+ * The same shape as reading external_accounts off an account object that does
+ * not carry it: a confident answer from the wrong field. So both are printed
+ * and the disagreement is called out, because the disagreement is the bug.
+ */
+const caps = who?.capabilities || {};
+const CAPOF = { wechat_pay: "wechat_pay_payments", alipay: "alipay_payments", card: "card_payments" };
+console.log("  CAN THIS ACCOUNT ACTUALLY PROCESS THEM \u2014 the capability, not the switch:");
+for (const [key, label] of WANT) {
+  const st = caps[CAPOF[key]];
+  console.log("    " + label.padEnd(12) + " "
+    + (st === "active" ? "active"
+      : st === "pending" ? "PENDING \u2014 requested, Stripe is still checking"
+      : st === "inactive" ? "INACTIVE \u2014 the account holds it and cannot use it"
+      : "NOT ON THIS ACCOUNT \u2014 never requested, or not granted"));
+}
+console.log("");
+
+/* AND WHERE THE TWO ANSWERS DISAGREE, SAID AS THE FAULT IT IS. A method
+   switched on with no capability behind it is the worst state to be in: the
+   dashboard says yes, this command used to say yes, the session is created,
+   and the payer is the first thing in the chain to find out. */
+{
+  const def0 = configs.find((c) => c.is_default) || configs[0];
+  const liar = WANT.filter(([k]) => {
+    const on = def0?.[k]?.display_preference?.value === "on";
+    return on && caps[CAPOF[k]] !== "active";
+  });
+  if (liar.length) {
+    console.log("  \u26a0  " + liar.map(([, l]) => l).join(" and ")
+      + (liar.length > 1 ? " are" : " is") + " switched ON with no live capability behind"
+      + (liar.length > 1 ? " them." : " it."));
+    console.log("     The payment sheet will offer " + (liar.length > 1 ? "them" : "it")
+      + " and the payment will fail when somebody");
+    console.log("     presses it: payment_intent_payment_attempt_failed \u00b7 invalid_request_error.");
+    console.log("     Settings \u2192 Payment methods, find it, and run the activation flow.");
+    console.log("");
+  }
+}
+
 /* THE SENTENCE THAT MATTERS, SAID ONCE, ABOUT THE DEFAULT CONFIGURATION —
    because that is the one a charge uses when nothing names another. */
 const def = configs.find((c) => c.is_default) || configs[0];
+/* A WALLET IS "ON" ONLY IF A PAYER CAN ACTUALLY PAY WITH IT. This asked the
+   switch alone and answered "BOTH WALLETS ARE ON" about an account with no
+   alipay_payments capability — true of the setting, false of the product, and
+   the whole point of this command is the second one. */
 const live = (key) => {
   const m = def?.[key];
-  return Boolean(m && m.available !== false && m.display_preference?.value === "on");
+  return Boolean(m && m.available !== false && m.display_preference?.value === "on"
+    && caps[CAPOF[key]] === "active");
 };
 const wallets = ["wechat_pay", "alipay"].filter(live);
 console.log(wallets.length === 2
