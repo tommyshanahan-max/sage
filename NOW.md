@@ -182,12 +182,28 @@ being declined.
 
 **TWO THINGS TO DO, AND NEITHER IS BUILT YET.**
 
-1. **Is it the currency?** Alipay accepts CNY only when the Stripe account is
-   in China or Hong Kong, and this one is Australian. UNTESTED — a session
-   claimed it was ruled out and both logged attempts were CNY. The AUD test
-   is `make ask WHO="Tom" AMOUNT="1" CUR="aud"`, then press Alipay, then
-   `make pay-last` and look for a `1.00 AUD` line. (`AMOUNT="A$1"` does not
-   survive ssh → make → shell; the `$` is eaten twice. Use `CUR`.)
+1. **IT IS ALMOST CERTAINLY THE CURRENCY, and Stripe's own documentation
+   says so.** Alipay's presentment currencies are AUD, CAD, CNY, EUR, GBP,
+   HKD, JPY, MYR, NZD, SGD and USD — *depending on business location* — and
+   **AUD is the one listed for Australia**. Taking a currency at all requires
+   being able to settle it, which means a bank account per settlement
+   currency; this account settles AUD. Both failed attempts were CNY, and the
+   shop is priced in yuan and charges in yuan.
+
+   **So the shop has to charge in AUD.** The payer still sees RMB inside
+   Alipay — it converts on their side, which is the ordinary cross-border
+   flow and the reason the ¥ price on the shelf can stay as it is.
+
+   The only real decision is **the rate**: something must turn ¥31 into
+   Australian dollars at the moment of charge. Not built. A fixed rate in
+   `.env` is the small honest version; a quote per order is the right one and
+   needs a source now that Airwallex is out.
+
+   This took an evening because three sessions guessed instead of reading
+   Stripe's currency table. It is two searches.
+
+   (`AMOUNT="A$1"` does not survive ssh → make → shell; the `$` is eaten
+   twice. Use `CUR="aud"`.)
 2. **Dealio's page cannot mount the form at all** while the shop's can — same
    keys, same account, different route. It says *Nothing to do with your
    phone* and reports itself, so the reason is sitting in `make pay-why`,
