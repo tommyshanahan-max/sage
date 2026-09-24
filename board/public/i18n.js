@@ -5925,6 +5925,16 @@ export const STRINGS = {
     "群里的每个人都能看到群里的所有消息，也能看到都有谁在群里。任何人都可以退群，但没有人能把别人踢出去。",
   ],
   "grp.inIt":          ["{n} people in it", "群里有 {n} 个人"],
+  // "1 people in it" was on the screen. One person is a person.
+  "grp.inIt1":         ["1 person in it", "群里有 1 个人"],
+  /* WHAT A LINE WITH NO WORDS SAYS IN A LIST. A voice note, a bill and a
+     payment code all carry no text, so the preview under the name came out
+     as "You:" and nothing — a row that looks like a message that failed to
+     send. The Chinese is what WeChat's own list says, in brackets, because
+     that is the shape a Chinese reader already reads there. */
+  "note.wasVoice":     ["Voice message", "[语音]"],
+  "note.wasBill":      ["Asked for money", "[收款]"],
+  "note.wasCode":      ["A payment code", "[二维码]"],
   "grp.quiet":         ["Nothing said yet.", "还没有人说话。"],
   /* One word on the small line under a message, not a call to action beside
      every sentence: a room that asks you about every message is not a room

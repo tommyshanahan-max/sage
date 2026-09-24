@@ -598,7 +598,15 @@
     scroll-snap-align:start;scroll-margin-left:1.15rem}
   .hcard .n{font-size:1.9rem;font-weight:800;line-height:1}
   .hcard b{display:block;font-size:1.02rem;font-weight:700;line-height:1.2}
-  .hcard span{display:block;font-size:.78rem;opacity:.92;margin-top:.15rem}
+  /* TWO LINES, OR ONE CARD IS TWICE THE OTHER. Mo's welcome is a paragraph,
+     and unclamped it made its card ten lines tall and every card beside it
+     the same height with nothing in it. A card in this row is a name and a
+     glance at the last thing said; the room itself is one tap away. */
+  .hcard span{font-size:.78rem;opacity:.92;margin-top:.15rem;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+    overflow:hidden}
+  .hcard b{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+    overflow:hidden}
 
   /* THE PEOPLE, BEHIND THE ＋. The strip of faces was the first thing on the
      screen and cost a heading, a sentence and a sixth of the height, every
@@ -1548,9 +1556,9 @@ function drawWaiting() {
       const says = Array.isArray(g.says) ? g.says : [];
       const last = says[says.length - 1];
       const who = (Array.isArray(g.who) ? g.who : []).filter((q) => q && !q.bot);
-      const line = !last ? T("grp.inIt", { n: who.length })
+      const line = !last ? T(who.length === 1 ? "grp.inIt1" : "grp.inIt", { n: who.length })
         : (last.mine ? T("note.youSaid") + " " : last.handle ? last.handle + ": " : "")
-          + (last.text || "");
+          + saidShort(last);
       card(i + 3, "", g.name || T("grp.title"), line,
         () => { location.href = "/groups?g=" + encodeURIComponent(g.id); });
     });
@@ -1559,6 +1567,26 @@ function drawWaiting() {
   }
 
   box.hidden = !box.children.length;
+}
+
+/* WHAT THE LAST LINE SAYS, WHERE THERE ARE NO WORDS TO SHOW.
+ *
+ * A voice note, a bill and a payment code all carry an empty `text`, so both
+ * previews on this screen printed the name, a colon and nothing — "You:" on
+ * its own, which reads as a message that failed to send rather than one that
+ * has no words. Every messenger on this phone puts a bracketed noun there
+ * instead, and the Chinese is the one WeChat already uses.
+ *
+ * All three previews call this — the room card, the room row and the person
+ * row — because they were three copies of `last.text || ""` and fixing the
+ * first two left the third one printing "You:" on its own. */
+function saidShort(m) {
+  if (!m) return "";
+  if (m.text) return m.text;
+  if (m.voice) return T("note.wasVoice");
+  if (m.bill || m.pay) return T("note.wasBill");
+  if (m.qr) return T("note.wasCode");
+  return "";
 }
 
 /* WHICH SIDE OF THE SWITCH, remembered on this phone only. A convenience —
@@ -1678,11 +1706,12 @@ function groupRow(g) {
     /* Who spoke, because in a room of five the name is half the message. */
     if (last.mine) prev.append(el("span", "k", T("note.youSaid") + " "));
     else if (last.handle) prev.append(el("span", "k", last.handle + ": "));
-    prev.append(document.createTextNode(last.text || ""));
+    prev.append(document.createTextNode(saidShort(last)));
   } else {
     /* Nothing said yet, so say who is in it instead — an empty room with
        three names under it is still a reason to open it. */
-    prev.append(document.createTextNode(T("grp.inIt", { n: who.length })));
+    prev.append(document.createTextNode(
+      T(who.length === 1 ? "grp.inIt1" : "grp.inIt", { n: who.length })));
   }
 
   mid.append(nm, prev);
@@ -1743,7 +1772,9 @@ function listRow(t) {
      message is one you sent reads as one they sent, and the whole list is a
      guess about who spoke last. */
   if (t.last.mine) prev.append(el("span", "k", T("note.youSaid") + " "));
-  prev.append(document.createTextNode(t.last.text || ""));
+  // See saidShort. A voice note in a one-to-one thread printed "You:" and
+  // nothing at all.
+  prev.append(document.createTextNode(saidShort(t.last)));
   mid.append(nm, prev);
   b.append(wrap2, mid);
   b.addEventListener("click", () => {
