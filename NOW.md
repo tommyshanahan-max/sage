@@ -198,6 +198,31 @@ needs it: `setPayout` takes no `verified` flag, so the bank details save
 without one. Identity is still a row in Settings and still what the send flow
 asks for when it genuinely needs it.
 
+**AND THE SUPPLIER MAY BE CHINESE, WHICH IS THE ONE CASE WHERE THEIR TAX IS
+OURS.** "Tax is none of our business" holds for a supplier abroad. It does not
+hold when the WFOE pays a supplier **inside China**: that is a domestic
+transaction between two Chinese entities, and **the WFOE needs a fapiao from
+them to deduct the cost**. Not their obligation to us — our own deduction. The
+books already track it as the "supplier invoice received" tick, which is
+exactly the right mechanism; nothing new is needed, but nobody should read the
+line above and conclude we can pay a Chinese supplier without chasing the
+fapiao.
+
+**Two things on the Chinese payout branch:**
+
+- **Fixed: it asked for the bank and not the branch.** The hint read "e.g.
+  China Merchants Bank", which is the bank. A domestic CNY transfer routes on
+  the 开户行支行 — "招商银行" alone is where an interbank payment stalls and
+  comes back. It now shows a full branch, written the way a Chinese payee
+  writes it.
+- **Not fixed, needs a decision: `wl.cnChecked`** still says *"Payments into
+  China are checked first, usually 1–2 days"*. That was true of money arriving
+  from abroad. A WFOE paying a Chinese supplier is **domestic and same-day**,
+  so on the main path this is now a false promise about timing — in the slow
+  direction, which is the safer way to be wrong, but still wrong. Left alone
+  rather than silently rewritten, because it is a promise about money arriving
+  and both readings still exist.
+
 **THE PAYER'S HALF IS NOT AFFECTED.** The 开票信息 in `lib/fapiao.js` stays:
 that is not somebody's tax affairs, it is the invoice **we** issue **them**,
 in the country we are registered in.

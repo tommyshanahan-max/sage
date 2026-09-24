@@ -7379,7 +7379,14 @@ export const STRINGS = {
   "wl.sixDigits":      ["Six digits", "六位数字"],
   "wl.accountNumber":  ["Account number", "银行账号"],
   "wl.bankLabel":      ["Bank", "开户银行"],
-  "wl.bankEg":         ["e.g. China Merchants Bank", "例如：招商银行"],
+  /* THE BRANCH, NOT JUST THE BANK — this said "e.g. China Merchants Bank",
+     which is the bank and not the 开户行. A domestic CNY transfer is routed
+     on the branch: "招商银行" alone is where an interbank payment stalls and
+     comes back. The example is written the way a Chinese payee writes it on
+     a form, branch and all, so the shape is obvious without a sentence
+     explaining it. */
+  "wl.bankEg":         ["The branch, as written on your card or in the app",
+                        "例如：招商银行上海分行徐汇支行"],
   "wl.cnAccount":      ["Bank account or UnionPay card number", "银行账号或银联卡号"],
   "wl.ibanOr":         ["Account number or IBAN", "银行账号或 IBAN"],
   "wl.detailsToProv":  ["Your account details go to the provider. The Exchange keeps only the last four digits.",
