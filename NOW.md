@@ -675,6 +675,32 @@ question before it is a code question.**
 **Not yet proven with a real order.** The Stripe rail has taken a real ¥1
 through Dealio; nobody has bought a product through the shop's own button.
 
+## Airwallex is out of the payment path, 24 Sep
+
+`TOMSCODING_BOARD_WALLET` still said `airwallex` on the box months after
+Airwallex refused the account, and that one stale line was the whole of this
+evening. The code rail is tried BEFORE Stripe in `/api/request/:id/pay` and
+in the shop's pay route, so every press of Alipay went to a provider whose
+every call comes back
+
+```
+airwallex login 403: <!doctype html>… 403 Forbidden (host https://api.sandbox.airwallex.com)
+```
+
+— an HTML page from the edge, not even an API error — and the payer was told
+*Alipay would not take this one* while Stripe, which had taken a real payment
+that afternoon, was never asked. A dead provider that is still named in
+`.env` outranks a live one and looks exactly like a wallet declining.
+
+**Two fixes, and both were needed.** The variable is gone from `.env`. And
+both pay routes now treat a code rail that cannot draw as a rail with no
+opinion: it stands aside and the payment carries on to Stripe, which is what
+would have happened had the variable never been set. The refusal still
+survives where there is nothing to fall through to.
+
+`make wallet-why` is the command that answered this in one line. Reach for it
+the moment a pay button says a wallet said no.
+
 Its payments are **not** on Airwallex and must not be until the conversation
 above has happened. `aozhoubaba.com` is its domain.
 

@@ -11347,6 +11347,17 @@ function dealioQr() {
  *  bank connects, or Stripe's category review turns WeChat on — so the page
  *  that hard-codes two buttons is wrong again the day either happens.
  *
+ *  AND dealioQr() IS "CONFIGURED", NOT "WORKS". It answers whether BOARD_WALLET
+ *  names a provider that has the two methods on it — nothing more. On 24 Sep
+ *  this box still had BOARD_WALLET=airwallex in .env months after Airwallex
+ *  refused the account, so the object existed, every call to it threw, and
+ *  the pay sheet told the payer *Alipay would not take this one* while
+ *  Stripe — which works — was never asked, because the code rail is tried
+ *  first. A stale env var outranked a live rail and looked like a wallet
+ *  declining. The lever is the env var: unset BOARD_WALLET and everything
+ *  falls through to Stripe. So these two buttons come back when the
+ *  PROVIDER is real, which is not the same day the variable is set.
+ *
  *  It does not ask Stripe whether Alipay is switched on this minute: that is
  *  a network call on the way to drawing a button, and the answer changes
  *  about once a quarter. If Stripe refuses the session anyway the press
@@ -11568,7 +11579,7 @@ app.post("/api/request/:id/pay", express.json({ limit: "1kb" }), async (req, res
           sell: "CNY", buy: q.cur.toUpperCase(), buyAmount: minor, validSeconds: 900,
         });
         cny = Number(quote?.sellAmount);
-        if (!Number.isInteger(cny) || cny <= 0) return res.status(502).json({ error: "qr" });
+        if (!Number.isInteger(cny) || cny <= 0) throw new Error("no rate for " + q.cur);
       }
       const r = await qrProvider.qrPay({
         amount: cny, currency: "CNY", method,
@@ -11576,7 +11587,7 @@ app.post("/api/request/:id/pay", express.json({ limit: "1kb" }), async (req, res
            own line about the job, not our name for it. */
         reference: q.what || q.from,
       });
-      if (!r.qr) return res.status(502).json({ error: "qr" });
+      if (!r.qr) throw new Error("provider drew no code");
       const drawn = qrBits(r.qr);
       /* The one a finger can do anything with — see the note in lib/qr.js. */
       const png = await qrPng(r.qr);
@@ -11599,8 +11610,28 @@ app.post("/api/request/:id/pay", express.json({ limit: "1kb" }), async (req, res
         orig: q.cur === "cny" ? "" : store.fromMinor(minor, q.cur),
       });
     } catch (err) {
-      console.error("dealio qr:", err.message);
-      return res.status(502).json({ error: "qr" });
+      /* A DEAD CODE RAIL MUST NOT OUTRANK A LIVE ONE.
+       *
+       * This answered 502 `qr`, the pay sheet said *Alipay would not take
+       * this one*, and the payer pressed the other buttons to find out
+       * whether it was them. On 24 Sep that sentence was shown for an hour
+       * on a box where Alipay was fine: BOARD_WALLET still named Airwallex
+       * months after Airwallex refused the account, so the provider object
+       * existed, every call to it came back `login 403` — an HTML page from
+       * the edge, not even an API error — and Stripe, which had just taken a
+       * real payment, was never asked, because this branch is tried first.
+       *
+       * The configuration was wrong and that is a separate fix. What was
+       * wrong HERE is the shape: a rail that cannot draw a code is a rail
+       * that has no opinion, not a wallet declining. It stands aside now and
+       * the request carries on to Stripe below, which is exactly what would
+       * have happened had the variable never been set.
+       *
+       * The refusal survives where there is nothing to fall through TO: with
+       * no Stripe key the branch below answers `demo` or `payee` on its own,
+       * and the log line is kept either way because "it fell back" is the
+       * thing nobody would otherwise know had happened. */
+      console.error("dealio qr:", err.message, "— falling through to Stripe");
     }
   }
 
@@ -12801,6 +12832,13 @@ app.post("/api/order/:id/pay", express.json({ limit: "1kb" }), async (req, res) 
    * of the shop's own Alipay button has come back "off". The button has been
    * on that page the whole time with nothing behind it.
    *
+   * AND "EMPTY" IS NOT THE ONLY WAY IT FAILS. A provider that is configured
+   * and dead is worse than none: the object exists, dealioQr() hands it
+   * back, and the branch below is taken instead of this one — see the note
+   * in the catch. So this is reached both when there is no provider and when
+   * the provider could not draw, which is the same thing from the payer's
+   * side and was two different screens until today.
+   *
    * Stripe's Alipay is on and took a real payment on 24 Sep, so it stands in.
    * It is not the same thing and the difference is worth writing down: a
    * native code goes straight to the payment sheet, and this opens a page
@@ -12815,7 +12853,7 @@ app.post("/api/order/:id/pay", express.json({ limit: "1kb" }), async (req, res) 
    *
    * The card is not offered here. The button that got pressed said Alipay.
    */
-  if (!p) {
+  const viaStripe = async () => {
     if (method !== "alipay" || !stripe.configured()) {
       return res.status(400).json({ error: "off" });
     }
@@ -12838,7 +12876,8 @@ app.post("/api/order/:id/pay", express.json({ limit: "1kb" }), async (req, res) 
       console.error("order stripe:", err.message);
       return res.status(502).json({ error: "stripe" });
     }
-  }
+  };
+  if (!p) return viaStripe();
   try {
     const r = await p.qrPay({
       amount: total, currency: "CNY", method,
@@ -12857,8 +12896,14 @@ app.post("/api/order/:id/pay", express.json({ limit: "1kb" }), async (req, res) 
     res.json({ ok: true, how: method, amount: store.fromMinor(total, "cny"),
       qr: { size: drawn.size, bits: drawn.bits, png } });
   } catch (err) {
-    console.error("order qr:", err.message);
-    res.status(502).json({ error: "qr" });
+    /* THE SAME FALL-THROUGH AS THE REQUEST ROUTE, for the same reason. A
+       code rail that cannot draw has no opinion about this payment; it is
+       not the wallet declining. Answering 502 here put *支付打不开* on the
+       screen of somebody whose Alipay was working perfectly, on a box where
+       BOARD_WALLET named a provider that had been refusing every call since
+       21 Sep. Stand aside and let Stripe take it. */
+    console.error("order qr:", err.message, "— falling through to Stripe");
+    return viaStripe();
   }
 });
 
