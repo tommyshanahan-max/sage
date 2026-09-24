@@ -699,7 +699,7 @@ ask: ## A payment request, and its link: make ask WHO="Claire" AMOUNT="¥1" [FOR
 	$(COMPOSE) run --rm --no-deps -T \
 	  -e BOARD_PUBLIC_URL="https://$$(grep -E '^TOMSCODING_BOARD_DOMAIN=' .env | tail -1 | cut -d= -f2- | tr -d '\"')" \
 	  -e BOARD_DEALIO_URL="$$(grep -E '^TOMSCODING_DEALIO_DOMAIN=' .env | tail -1 | cut -d= -f2- | tr -d '\"')" \
-	  -e BOARD_DEALIO_DEMO="$$(grep -E '^BOARD_DEALIO_DEMO=' .env | tail -1 | cut -d= -f2- | tr -d '\"')" \
+	  -e BOARD_DEALIO_DEMO="$$(grep -E '^TOMSCODING_DEALIO_DEMO=' .env | tail -1 | cut -d= -f2- | tr -d '\"')" \
 	  -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/ask.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  --who "$(WHO)" --amount "$(AMOUNT)" --to "$(TO)" --for "$(FOR)" --when "$(WHEN)" --cur "$(CUR)" \

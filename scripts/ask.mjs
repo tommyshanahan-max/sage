@@ -76,7 +76,16 @@ console.log("");
  *
  * It says nothing at all when the demo is off. A line that appears on every
  * run is a line nobody reads, and then the one time it matters it is
- * furniture. */
+ * furniture.
+ *
+ * THE NAME IN .env IS TOMSCODING_DEALIO_DEMO, and compose maps it to
+ * BOARD_DEALIO_DEMO for the container — see docker-compose.yml. The first
+ * version of this read .env for the BOARD_ name, which is never there, so it
+ * would have stayed silent with the demo on. Worse, the command written to
+ * switch the demo off deleted the BOARD_ line and `grep -c` answered 0 — the
+ * expected number, for the wrong reason, which is the same mistake as reading
+ * a demo receipt as a payment. Check the running container, not the file:
+ * `docker compose exec -T board printenv BOARD_DEALIO_DEMO`. */
 if (process.env.BOARD_DEALIO_DEMO === "1") {
   console.log("  \u26A0  DEMO — THIS LINK CANNOT TAKE MONEY.");
   console.log("     It marks itself paid without charging anybody. Nothing arrives.");

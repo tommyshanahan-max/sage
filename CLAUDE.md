@@ -56,6 +56,15 @@ page does not. This cost several rounds in one afternoon, three separate
 times: a Chromium path in an image, a new field in `server.js`, and a colour
 in `shop.html`. If a change is under `board/`, it needs `make deploy`.
 
+**The names in `.env` are `TOMSCODING_*`; the container sees `BOARD_*`.**
+`docker-compose.yml` maps one to the other. So grepping `.env` for a `BOARD_`
+name always finds nothing, and a `grep -c` that answers 0 means "not under
+that name", not "off". This cost an evening: the demo payment flow was
+switched off by deleting a line that did not exist, the check agreed, and the
+next payment was still a demo. Ask the container instead —
+`docker compose exec -T board printenv BOARD_DEALIO_DEMO` — which cannot
+answer for a name nobody set.
+
 ## Offers and invites
 
 **`WHO` is a first name, everywhere, on every target.** `make cfm-offer`,
