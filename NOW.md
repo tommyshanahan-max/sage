@@ -74,6 +74,29 @@ every link was repointed, and the one nobody links — the bare address Tom
 hands people — was missed. `index.html` is gone and the mount serves
 `home.html`.
 
+**A CODE ON THE BOARD'S PAGE IS RECOGNISED BY LONG-PRESS INSIDE WECHAT
+(24 Sep, watched).** Mo posted one into the Film door room, Tom opened
+`thexchange.app/r/film` in WeChat on his phone, long-pressed it, and WeChat
+opened it. Not read from a doc — watched.
+
+**What it does NOT settle, and the difference is the whole product.** That was
+a **URL** code. WeChat's own position is that a **payment** code can no longer
+be paid by long-press recognition and wants 扫一扫 instead — a different code
+and possibly a different answer. The same command tests it:
+
+```
+make mo-code ROOM=film WHAT="长按二维码识别" CODE="<the wxp://… the 收款码 encodes>"
+```
+
+The string is what the 收款码 encodes, not the picture. Nothing else changes.
+
+**The machinery it runs on**, built overnight: a line in a room can carry a
+code (`qr` on a say), the board draws it at `/api/say/<id>/qr.png`, and both
+room pages render it as an `<img>` — which is the only thing a long-press menu
+reads. Members cannot attach one; `/api/mo/say` is behind the admin key. A
+line can also carry a payment request (`pay`), which draws as a card with the
+figure and a Pay button read fresh on every load.
+
 **THE ACCOUNT IS IN SOMEBODY ELSE'S NAME, AND THAT IS THE WHOLE BLOCKAGE
 (23 Sep, 23:00).** Not a login problem. The live account's representative is
 **Zhu Liyuan**, the two-step passkey is **"Zhu's passkey"**, and Stripe
