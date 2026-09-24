@@ -153,7 +153,22 @@ Alipay whitelists domains on request: email `techservices@alipay.com` with the
 company name, the PID, the domain, the reason and a contact. The
 `我要申请恢复` link at the foot of that page is the same appeal. Not done yet.
 
-**WeChat Pay is now a second door, not the door.** Wanting it open is right;
+**DECIDED, 24 Sep: ship on Alipay, add WeChat through the WFOE later if it
+is needed.** Alipay works today and the WFOE route stays open — the ICP
+filing, the bank's merchant account, all of it below is still true and still
+available. It is not being abandoned, it is being deferred until there is a
+payer who could not pay.
+
+Cheap to defer, and that is why: the checkout takes the wallet as an argument
+(`wechat` / `alipay` / `card` — see `kinds` in `board/lib/stripe.js`) and the
+shop's payment record already carries `how`. Adding WeChat later is plugging
+in a provider, not unpicking a decision.
+
+What would change the answer: a real share of this money needing to be spent
+in China rather than landing in Australia. Then the WFOE stops being a second
+wallet and becomes the shorter path.
+
+**WeChat Pay is a second door, not the door.** Wanting it open is right;
 waiting on it is not. Alipay is 700m-odd people and it is on.
 
 The two open questions are now WeChat Pay and a bank account — money can be
