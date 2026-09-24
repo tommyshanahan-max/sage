@@ -2186,6 +2186,37 @@ visits: ## Who has opened aozhoubaba.com, and from where: make visits [DAYS=7]
 	@echo ""
 	@rm -f /tmp/az.log
 
+pay-why: ## What a payer's phone actually saw when a pay button failed: make pay-why
+	@# THE SENTENCE A PAYER CANNOT GIVE YOU.
+	@#
+	@# Everything that fails on the payer's side comes back as one report —
+	@# "it didn't work" — and on 24 Sep three unrelated faults wore that
+	@# sentence in one evening: a dead Airwallex rail, a Connect destination
+	@# that was never onboarded, and the form itself refusing to mount. Each
+	@# was found by getting the real words out of the thing that failed, and
+	@# the browser was the one place with nothing to say.
+	@#
+	@# The page reports its own failure now — see /api/pay/why in server.js.
+	@# This reads them back. Nothing about the payer is in them: which wallet,
+	@# which half failed, and the error's own message.
+	@#
+	@# "at load"  — Stripe.js never arrived. The payer's network, or ours.
+	@# "at mount" — it arrived and Stripe refused the session. Ours, always.
+	@echo ""
+	@out=$$($(COMPOSE) logs --tail=4000 board 2>/dev/null | grep "pay form failed:" | tail -10); \
+	if [ -n "$$out" ]; then \
+	  echo "  The last few phones that could not open a payment:"; \
+	  echo ""; \
+	  echo "$$out" | sed "s/^.*pay form failed:/   /"; \
+	  echo ""; \
+	  echo "  at load   Stripe.js never arrived — the network, theirs or ours."; \
+	  echo "  at mount  Stripe refused the session — ours, and nothing the payer can do."; \
+	else \
+	  echo "  No payment form has failed since the board last started."; \
+	  echo "  A failure from before that went with the old container."; \
+	fi
+	@echo ""
+
 logs: ## Tail logs from all services
 	$(COMPOSE) logs -f --tail=100
 

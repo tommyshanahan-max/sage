@@ -264,7 +264,7 @@
  * this page and swaps the URLs.
  */
 import { T, when, setLang, pickLang, langButton } from "/i18n.js";
-import { mountCheckout } from "/pay.js";
+import { mountCheckout, sayWhy } from "/pay.js";
 
 /* THE SIGN, PUT BACK ON. The amount field takes bare digits since the
    currency picker landed — nobody hunts for ¥ on a phone keyboard — so the
@@ -768,11 +768,22 @@ async function payFrame({ secret, pk, q, how, demo, qr, amount, orig }) {
   try {
     mounted = await mountCheckout(slot, { secret, pk });
     wait.remove();
-  } catch {
+  } catch (err) {
+    /* THE WORDS, INTO THE BOX'S LOG — see /api/pay/why. Nobody can open a
+       console on a payer's phone, and this sentence has covered three
+       unrelated faults in one evening. */
+    sayWhy({ how, at: err?.at, why: err?.message });
     slot.textContent = "";
     const box = el("div", "pwait");
     box.append(el("b", null, T("pay.frameBlocked")));
-    box.append(el("span", null, T("memo.blockedWhy", { who: q.from })));
+    /* TWO FAULTS, TWO SENTENCES. Failing to fetch Stripe.js is the payer's
+       network and worth telling them about. Stripe refusing the session is
+       not: they were told to blame their own connection and go and ask the
+       seller, for something only the seller can fix, on a connection that
+       was working perfectly. */
+    box.append(el("span", null, err?.at === "mount"
+      ? T("pay.frameRefused", { who: q.from })
+      : T("memo.blockedWhy", { who: q.from })));
     slot.append(box);
   }
 }

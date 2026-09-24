@@ -10090,6 +10090,38 @@ async function startCheckout({ d, i, method, payeeAcct, ref, done }) {
   }
 }
 
+/** WHY THE PAYMENT FORM DID NOT LOAD, IN THE WORDS OF THE PHONE THAT FAILED.
+ *
+ *  THE PROBLEM THIS SOLVES. Everything that goes wrong on the payer's side
+ *  arrives here as one sentence from whoever was holding the phone — "the
+ *  payment form did not load" — and on 24 Sep three unrelated faults wore
+ *  that sentence in a single evening. Each one was found by getting the real
+ *  words out of the thing that failed: `make wallet-why` said `login 403`,
+ *  the server said `notready`. The browser was the one place with no way to
+ *  say anything, and nobody can open a console on somebody else's phone.
+ *
+ *  WHAT GOES IN THE LOG AND NOTHING ELSE: which wallet was pressed, which
+ *  half failed — fetching Stripe.js, or Stripe refusing the session, which
+ *  are a blocked network and a broken configuration and want opposite
+ *  answers — and the error's own message, clamped. No id, no device, no
+ *  address. A diagnostic that collects more than the fault is a second
+ *  problem.
+ *
+ *  OPEN, because the page that fails is open: a payer with a link has no
+ *  device row and no session, and a diagnostic that only works for people
+ *  who are signed in cannot see the failure that matters. Anybody can
+ *  therefore write a line into this log, which is why it is clamped, stripped
+ *  and prefixed — it is a line in a log, not a row in the board.
+ */
+app.post("/api/pay/why", express.json({ limit: "1kb" }), (req, res) => {
+  const clamp = (v, n) => String(v ?? "").replace(/[^\P{C}]/gu, " ").trim().slice(0, n);
+  const how = ["wechat", "alipay", "card"].includes(String(req.body?.how)) ? req.body.how : "?";
+  const at = ["load", "mount"].includes(String(req.body?.at)) ? req.body.at : "?";
+  const why = clamp(req.body?.why, 200);
+  if (why) console.error("pay form failed:", how, "at", at, "-", why);
+  res.json({ ok: true });
+});
+
 app.post("/api/pay/start", notesOff, express.json({ limit: "2kb" }), async (req, res) => {
   if (!stripe.configured() && !PAY_DEMO) return res.status(400).json({ error: "off" });
   const me = hashDevice(String(req.body?.device || ""), SALT);
@@ -11150,7 +11182,8 @@ app.get("/api/request/:id", async (req, res) => {
   const qrWays = dealioWays(board, q);
   const stripeOk = stripe.configured() && ((q.way || "in") === "out"
     ? Boolean(q.acct && q.landed)
-    : Boolean(askerAcct));
+    /* A connected account, OR no need of one — see dealioMine. */
+    : (dealioMine(board, q) || Boolean(askerAcct)));
   /* The stand-in, which draws all three because none of them is real. */
   const ways = (!qrWays.length && !stripeOk && PAY_DEMO)
     ? ["wechat", "alipay", "card"]
@@ -11375,6 +11408,24 @@ function dealioOwns(board, q) {
   if (!DEALIO_OWNER) return false;
   const asker = board.people.find((p) => p.by === q.by);
   return Boolean(asker?.handle && String(asker.handle).trim().toLowerCase() === DEALIO_OWNER);
+}
+
+/** THE MONEY IS ALREADY WHERE IT IS GOING.
+ *
+ *  Dealio's own incoming requests are charged straight into the account that
+ *  holds the keys — there is nobody to transfer to, so no destination, no
+ *  application fee and no connected account needed. See the long note at the
+ *  charge in /api/request/:id/pay.
+ *
+ *  ITS OWN FUNCTION BECAUSE TWO ROUTES ASK IT. The charge asks so it can drop
+ *  the destination; the read route asks so it can draw the buttons at all.
+ *  They were written an hour apart and disagreed immediately: the charge
+ *  stopped needing a connected account and the read route went on hiding
+ *  every button until there was one, so a payer would have been shown a page
+ *  with nothing to press for a payment that would have gone through.
+ */
+function dealioMine(board, q) {
+  return Boolean(q) && (q.way || "in") === "in" && dealioOwns(board, q);
 }
 
 /** The wallets that can pay this request with a code, which is either both of
@@ -11663,7 +11714,7 @@ app.post("/api/request/:id/pay", express.json({ limit: "1kb" }), async (req, res
    * somebody else's on the way past is 二清 and a licence question. See
    * NOW.md.
    */
-  const mine = (q.way || "in") === "in" && dealioOwns(board, q);
+  const mine = dealioMine(board, q);
   const dest = mine ? "" : ((q.way || "in") === "out"
     ? (q.landed ? q.acct : "")
     : await askerPayee(board, q));

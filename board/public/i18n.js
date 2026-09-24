@@ -5158,6 +5158,13 @@ export const STRINGS = {
      form — everything the payer reads that is ours, not theirs. */
   "pay.frameWait":     ["Bringing up the payment…", "正在调出付款…"],
   "pay.frameBlocked":  ["The payment form did not load.", "付款页面没打开。"],
+  /* THE OTHER HALF, WHICH IS NOT THE PAYER'S NETWORK. Stripe.js loaded and
+     Stripe then refused the session — a configuration fault on this side.
+     The payer was being told to blame their own connection for it, on a
+     connection that was working; and "ask them how else to pay" is the
+     wrong instruction when the fix is ours and takes a minute. */
+  "pay.frameRefused":  ["Nothing to do with your phone. Ask {who}.",
+                        "不是你手机的问题，找 {who} 说一声。"],
   "pay.frameWhy":      ["Your network may be blocking it. You can still pay {who} directly.",
                         "可能是网络挡住了。也可以直接付给 {who}。"],
   "pay.frameGo":       ["Pay them directly instead", "改成直接付"],

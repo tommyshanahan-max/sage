@@ -90,7 +90,7 @@
 
 <script type="module">
 import { T, setLang, pickLang, langButton } from "/i18n.js";
-import { mountCheckout } from "/pay.js";
+import { mountCheckout, sayWhy } from "/pay.js";
 
 /* Chinese unless the reader has said otherwise — see pickLang. */
 setLang(pickLang("zh"));
@@ -249,10 +249,28 @@ async function code(how, box, buttons) {
        redirected to, so the address bar still says this shop: the same reason
        the deal rooms mount it, written up over `ui_mode` in lib/stripe.js. */
     if (r.ok && j?.secret) {
-      box.querySelector(".ways").remove();
+      /* HELD, NOT LOOKED UP AGAIN. Once it is detached box.querySelector
+         answers null, and appending null puts the word "null" on the screen
+         — which is how a message box became the literal string `null` on a
+         phone on 23 Sep. The node goes in a variable before it leaves. */
+      const ways = box.querySelector(".ways");
+      ways.remove();
       const slot = el("div", "frame");
       box.append(slot);
-      await mountCheckout(slot, { secret: j.secret, pk: j.pk });
+      /* A MOUNT THAT THROWS IS NOT A PRESS THAT DID NOTHING. This was
+         unguarded: Stripe refusing the session left the buttons gone, an
+         empty box where the form should be, and nothing said. The words go
+         into the box's log — see /api/pay/why — and the screen says what the
+         order page says for every other refusal. */
+      try {
+        await mountCheckout(slot, { secret: j.secret, pk: j.pk });
+      } catch (err) {
+        sayWhy({ how, at: err?.at, why: err?.message });
+        slot.remove();
+        box.append(ways);
+        back("od.payNo");
+        return;
+      }
       watch();
       return;
     }

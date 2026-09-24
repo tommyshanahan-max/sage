@@ -50,8 +50,52 @@ export function loadStripeJs() {
  *  Throws if Stripe cannot be reached or refuses the session. Every caller
  *  treats that as one case: offer the payee's own page instead. */
 export async function mountCheckout(slot, { secret, pk }) {
-  const Stripe = await loadStripeJs();
-  const mounted = await Stripe(pk).createEmbeddedCheckoutPage({ clientSecret: secret });
-  mounted.mount(slot);
-  return mounted;
+  /* WHICH HALF FAILED, MARKED ON THE ERROR.
+   *
+   * Both halves threw into one catch and the page said "your network may be
+   * blocking it" for either — which is true of the first and a lie about the
+   * second. A payer on a perfectly good connection was told to blame their
+   * network and go and ask the seller, while the actual fault was a session
+   * Stripe would not accept. Two faults, two sentences, and only one of them
+   * is anything the payer can do something about.
+   *
+   * `.at` rather than a message string: the sentence is Stripe's and it
+   * changes, and matching on it is how the last thing here rotted. */
+  let Stripe;
+  try {
+    Stripe = await loadStripeJs();
+  } catch (err) {
+    err.at = "load";
+    throw err;
+  }
+  try {
+    const mounted = await Stripe(pk).createEmbeddedCheckoutPage({ clientSecret: secret });
+    mounted.mount(slot);
+    return mounted;
+  } catch (err) {
+    err.at = "mount";
+    throw err;
+  }
+}
+
+/** WHAT THE PHONE SAW, INTO THE BOX'S LOG.
+ *
+ *  Nobody can open a console on somebody else's phone, and "the payment form
+ *  did not load" is the whole of what comes back from a payer — three
+ *  different faults have worn that sentence in one evening and each one was
+ *  found by getting the real words out of the thing that failed. This is the
+ *  only place the payer's side can say them.
+ *
+ *  Nothing about the payer goes up: the method, where it failed, and the
+ *  error's own message, clamped. keepalive because the page it is sent from
+ *  may be closed a second later. Its own failure is ignored — a diagnostic
+ *  that can break the screen it is diagnosing is worse than none. */
+export function sayWhy({ how, at, why }) {
+  try {
+    fetch("/api/pay/why", {
+      method: "POST", keepalive: true,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ how, at, why: String(why || "").slice(0, 200) }),
+    }).catch(() => {});
+  } catch { /* an old browser with no keepalive */ }
 }
