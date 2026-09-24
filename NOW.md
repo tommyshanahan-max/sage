@@ -208,13 +208,23 @@ exactly the right mechanism; nothing new is needed, but nobody should read the
 line above and conclude we can pay a Chinese supplier without chasing the
 fapiao.
 
+**THE SAVE BUTTON SAT UNDER THE iOS KEYBOARD BAR, on every form in the
+wallet.** Reported from a phone: the up/down arrows and Done drawn on top of
+it, the word showing through. Not a wallet bug — iOS does not shrink the
+layout viewport when the keyboard opens, it draws over it, so `100dvh` stays
+full height and anything pinned to the bottom of it is behind the keyboard by
+construction. `visualViewport` is the only thing that knows the overlap;
+`main` now pads itself by it, so a bottom-pinned button rises to just above
+the keyboard. Zero when no keyboard is up, so nothing else changes.
+
 **Two things on the Chinese payout branch:**
 
-- **Fixed: it asked for the bank and not the branch.** The hint read "e.g.
-  China Merchants Bank", which is the bank. A domestic CNY transfer routes on
-  the 开户行支行 — "招商银行" alone is where an interbank payment stalls and
-  comes back. It now shows a full branch, written the way a Chinese payee
-  writes it.
+- **Fixed: it asked for the bank and not the branch** — and the label said
+  "Bank" while the line under it asked for the branch, two instructions three
+  inches apart disagreeing. The label now asks for what is wanted. The hint read "e.g.
+  The hint read "e.g. China Merchants Bank", which is the bank; a domestic CNY
+  transfer routes on the 开户行支行, and "招商银行" alone is where an interbank
+  payment stalls and comes back.
 - **Not fixed, needs a decision: `wl.cnChecked`** still says *"Payments into
   China are checked first, usually 1–2 days"*. That was true of money arriving
   from abroad. A WFOE paying a Chinese supplier is **domestic and same-day**,

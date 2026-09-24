@@ -51,7 +51,14 @@
   :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   [hidden]{display:none!important}
   .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-  main{max-width:34rem;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column}
+  /* PADDED BY WHATEVER THE KEYBOARD IS COVERING — see the visualViewport
+     block at the foot of this file. iOS does not shrink the layout viewport
+     when the keyboard opens, it draws over it, so `min-height:100dvh` with a
+     button pinned to the bottom puts that button underneath the keyboard's
+     own toolbar. That is exactly where Save was: the up/down arrows and Done
+     sat on top of it, with the word showing through. */
+  main{max-width:34rem;margin:0 auto;min-height:100dvh;display:flex;
+    flex-direction:column;padding-bottom:var(--kb,0px)}
   .top{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:.3rem;padding:calc(.6rem + env(safe-area-inset-top)) .6rem .55rem;
     background:var(--paper);border-bottom:1px solid var(--hair)}
   .top h1{flex:1;margin:0;font-family:var(--serif);font-weight:400;font-size:1.2rem;text-align:center;line-height:1.25}
@@ -233,6 +240,32 @@
    because every screen below reads T at draw time. */
 import { T, STRINGS, lang, setLang, pickLang, langButton } from "/i18n.js";
 import { territoryOf } from "/territory.js";
+/* HOW MUCH OF THE SCREEN THE KEYBOARD IS COVERING.
+ *
+ * On iOS the keyboard does not resize the page — it is drawn over it — so
+ * 100dvh stays the full height and anything sitting at the bottom of it ends
+ * up behind the keyboard's toolbar. Reported from a phone: the Save button
+ * under the up/down arrows and Done, the word visible through them.
+ *
+ * visualViewport is the only thing that knows. The overlap is what the layout
+ * viewport has that the visual one does not, and main pads itself by it, so a
+ * bottom-pinned button rises to sit just above the keyboard instead of under
+ * it. Zero when no keyboard is up, so nothing changes anywhere else.
+ */
+if (window.visualViewport) {
+  const vv = window.visualViewport;
+  const fit = () => {
+    const over = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
+    /* A couple of pixels of jitter as the keyboard animates is not worth a
+       reflow, and setting it on every scroll frame is what makes a page feel
+       like it is shivering. */
+    document.documentElement.style.setProperty("--kb", (over > 24 ? over : 0) + "px");
+  };
+  vv.addEventListener("resize", fit);
+  vv.addEventListener("scroll", fit);
+  fit();
+}
+
 setLang(pickLang());
 
 const $ = (id) => document.getElementById(id);
@@ -719,6 +752,10 @@ function fieldLabel(key, region) {
      there is a choice it does not have. */
   if (key === "iban" && region === "FI") return "IBAN";
   if (key === "accountNumber" && region === "CN") return T("wl.cnAccount");
+  /* THE LABEL SAID "BANK" WHILE THE LINE UNDER IT ASKED FOR THE BRANCH.
+     Two instructions in three inches, disagreeing. The label asks for what
+     is wanted. */
+  if (key === "bankName" && region === "CN") return T("wl.cnBank");
   return T(FIELD_LABEL[key] || key);
 }
 function fieldHint(key, region) {

@@ -7379,6 +7379,7 @@ export const STRINGS = {
   "wl.sixDigits":      ["Six digits", "六位数字"],
   "wl.accountNumber":  ["Account number", "银行账号"],
   "wl.bankLabel":      ["Bank", "开户银行"],
+  "wl.cnBank":         ["Bank and branch", "开户行"],
   /* THE BRANCH, NOT JUST THE BANK — this said "e.g. China Merchants Bank",
      which is the bank and not the 开户行. A domestic CNY transfer is routed
      on the branch: "招商银行" alone is where an interbank payment stalls and
