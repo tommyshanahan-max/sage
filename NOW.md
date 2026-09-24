@@ -157,6 +157,49 @@ the prompt. It never touched the box's configuration.
 history and into a screenshot on 24 Sep. A leaked live key on a public server
 is a likelier route to a terminated account than anything in this repo.
 
+## Where Alipay actually stands, 24 Sep 18:51 — read this first
+
+The box went live at 18:36 (`make go-live`, live key, live publishable, its
+own webhook, every stale payout account cleared).
+
+**The shop's checkout works up to the last step.** On a phone, on
+aozhoubaba.com: cart, address, order, one 支付宝支付 button, and then
+**Stripe's own live payment sheet, CN¥31.00, Alipay on it**. That is the
+whole integration, running. Everything fought over on 24 Sep — the dead
+Airwallex rail, the Connect destination, the test key — is behind this.
+
+**The attempt itself fails**, twice, and `make pay-last` says how:
+
+```
+31.00 CNY   alipay
+  requires_payment_method
+  The payment failed.
+  payment_intent_payment_attempt_failed · invalid_request_error
+```
+
+`invalid_request_error` is Stripe saying the request was wrong, not a payer
+being declined.
+
+**TWO THINGS TO DO, AND NEITHER IS BUILT YET.**
+
+1. **Is it the currency?** Alipay accepts CNY only when the Stripe account is
+   in China or Hong Kong, and this one is Australian. UNTESTED — a session
+   claimed it was ruled out and both logged attempts were CNY. The AUD test
+   is `make ask WHO="Tom" AMOUNT="1" CUR="aud"`, then press Alipay, then
+   `make pay-last` and look for a `1.00 AUD` line. (`AMOUNT="A$1"` does not
+   survive ssh → make → shell; the `$` is eaten twice. Use `CUR`.)
+2. **Dealio's page cannot mount the form at all** while the shop's can — same
+   keys, same account, different route. It says *Nothing to do with your
+   phone* and reports itself, so the reason is sitting in `make pay-why`,
+   unread as of 18:51.
+
+**If the currency is not it, this stops being a code question.** The message
+for Stripe support, ready to paste: *Live Australian account, Alipay enabled.
+Checkout Sessions with `payment_method_types: ["alipay"]` create fine and the
+payment sheet renders, but every attempt fails on submission with
+`payment_intent_payment_attempt_failed` / `invalid_request_error`. 24 Sep.
+What makes the attempt invalid?*
+
 **ALIPAY HAS NOT TAKEN A REAL PAYMENT. A SESSION CLAIMED IT HAD, 24 Sep, AND
 WAS WRONG.**
 
