@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: try try-china china wallets mo-code app-state claire-episodes deal claire-key claire-count claire-seed claire-video listing invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who bells twice admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check post post-status post-run post-login post-code post-logins weidian-pull weidian-json weidian-reviews shop-chapter review-tidy product-names review-move
+.PHONY: try try-china china wallets mo-code visits app-state claire-episodes deal claire-key claire-count claire-seed claire-video listing invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who bells twice admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check post post-status post-run post-login post-code post-logins weidian-pull weidian-json weidian-reviews shop-chapter review-tidy product-names review-move
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -2147,6 +2147,43 @@ reload: ## Reload Caddy config without dropping connections
 rebuild: ## Rebuild the workspace image (picks up new CLI versions)
 	$(COMPOSE) build --no-cache workspace
 	$(COMPOSE) up -d workspace
+
+visits: ## Who has opened aozhoubaba.com, and from where: make visits [DAYS=7]
+	@# THE QUESTION THIS COULD NOT ANSWER. "Has anybody but me opened it" had
+	@# no source to read: Caddy writes no access log unless a site asks for
+	@# one, and that name never did. So the answer was an absent one rather
+	@# than a quiet one, which is the worst kind — see the log block at the
+	@# bottom of docker/sites/shop.caddy.
+	@#
+	@# PARSED WITH ALPINE'S OWN TOOLS, inside the caddy container. That image
+	@# has sed and sort and nothing else, and this box has no node and no
+	@# python — borrowing a second container to read one file is a second
+	@# thing to go wrong.
+	@#
+	@# IT PRINTS ADDRESSES, so it is a thing to run and read rather than paste
+	@# anywhere. Your own phone and laptop will be the top two lines; anybody
+	@# else is the answer.
+	@$(COMPOSE) exec -T caddy sh -c 'cat /data/aozhoubaba.log 2>/dev/null' > /tmp/az.log 2>/dev/null || true
+	@if [ ! -s /tmp/az.log ]; then \
+	  echo ""; \
+	  echo "  Nothing logged yet."; \
+	  echo "  If you have not deployed since the log was switched on, that is why:"; \
+	  echo "    make deploy"; \
+	  echo ""; \
+	  exit 0; \
+	fi
+	@echo ""
+	@echo "  WHO CAME  (requests · address)"
+	@echo ""
+	@sed -n 's/.*"remote_ip":"\([^"]*\)".*/\1/p' /tmp/az.log | sort | uniq -c | sort -rn | head -20 | sed 's/^/   /'
+	@echo ""
+	@echo "  WHAT THEY OPENED"
+	@echo ""
+	@sed -n 's/.*"uri":"\([^"]*\)".*/\1/p' /tmp/az.log | sort | uniq -c | sort -rn | head -15 | sed 's/^/   /'
+	@echo ""
+	@printf '  %s requests in the log.\n' "$$(wc -l < /tmp/az.log | tr -d ' ')"
+	@echo ""
+	@rm -f /tmp/az.log
 
 logs: ## Tail logs from all services
 	$(COMPOSE) logs -f --tail=100

@@ -57,4 +57,25 @@
 	handle {
 		reverse_proxy board:8080
 	}
+
+	# WHO CAME, WHICH THIS NAME COULD NOT ANSWER AT ALL.
+	#
+	# Caddy writes no access log unless a site asks for one, so the question
+	# "has anybody but me opened aozhoubaba.com" had no source to read — not a
+	# quiet answer, an absent one. The China screens carry no analytics
+	# snippet either, deliberately: they are read by somebody deciding whether
+	# to trust us with a payment, and a third-party counter on that page is
+	# the wrong first impression.
+	#
+	# ITS OWN FILE, not the shared /data/access.log, so `make visits` greps
+	# one small file rather than every request to the workspace.
+	#
+	# Rolled and capped: five files of two megabytes is a fortnight of a quiet
+	# name and cannot fill the volume on a loud day.
+	log {
+		output file /data/aozhoubaba.log {
+			roll_size 2mb
+			roll_keep 5
+		}
+	}
 }
