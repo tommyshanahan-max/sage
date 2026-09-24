@@ -498,6 +498,15 @@ microphone on it. Rooms are `groups.html`, threads and door rooms are
 `notes.html`, and the two pages draw the same kind of message from different
 stores. A change to one of them is not a change to the other.
 
+**And it shipped broken once more the same morning**, for a reason worth
+keeping: the timer takes the message box's place while a thumb is down, which
+takes the box out of the document, so a `$("tbox")` lookup afterwards answers
+null — the word "null" appeared where the box had been and the next press
+left the button stuck red. Hold the element in a variable; a reference
+survives being detached and a lookup does not. It passed a test because the
+test held the button once and never looked at the composer afterwards. The
+test now holds it twice and reads the composer between.
+
 The audio is gated on being in the room, so the page **fetches the bytes with
 the device header and plays a blob** — it is not an `<audio src>`. A plain src
 cannot carry a header and the device lives in localStorage rather than a

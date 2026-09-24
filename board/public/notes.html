@@ -3297,6 +3297,14 @@ function micShow() {
 
 if (canHear()) {
   const mic = $("tmic");
+  /* THE BOX IS HELD, NOT LOOKED UP, and that is the whole of a bug that
+     reached Tom's phone. The timer takes the textarea's place while a thumb
+     is down, which takes it out of the document — so $("tbox") after that
+     answers null, replaceWith(null) writes the word "null" where the message
+     box used to be, and the next press throws and leaves the button stuck
+     red. A reference to the element survives being detached; a lookup for it
+     does not. */
+  const box = $("tbox");
   let rec = null, tick = null, t0 = 0;
   const meter = el("div", "micsay");
   const num = el("b", null, "0\u2033");
@@ -3305,15 +3313,19 @@ if (canHear()) {
   const stopUi = () => {
     mic.classList.remove("on");
     if (tick) { clearInterval(tick); tick = null; }
-    if (meter.parentNode) meter.replaceWith($("tbox"));
+    if (meter.parentNode) meter.replaceWith(box);
   };
   mic.addEventListener("pointerdown", (e) => {
     const target = micTarget();
     if (!target || rec) return;
     e.preventDefault();
     try { mic.setPointerCapture(e.pointerId); } catch (err) { /* older browser */ }
+    /* Nothing is turned on before the swap that could fail. A button left
+       looking live over a recording that never started is the state this
+       whole comment is about. */
+    if (!box.parentNode) return;
     mic.classList.add("on");
-    $("tbox").replaceWith(meter);
+    box.replaceWith(meter);
     t0 = Date.now();
     num.textContent = "0\u2033";
     tick = setInterval(() => {
