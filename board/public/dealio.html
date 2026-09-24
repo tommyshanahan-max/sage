@@ -1177,7 +1177,9 @@ function row(q) {
   /* Which way, first, because a list of both needs it before anything else:
      "→ Mei" is money leaving and "← Sasha" is money coming. */
   b.append(el("span", "t", [T(q.way === "out" ? "dl.rowOut" : "dl.rowIn"),
-    q.what === title ? "" : q.what, when(q.at)].filter(Boolean).join(" · ")));
+    q.what === title ? "" : q.what,
+    q.no ? T("rq.no", { n: String(q.no).padStart(4, "0") }) : "",
+    when(q.at)].filter(Boolean).join(" · ")));
   const state = q.off ? "off" : q.state;
   b.append(el("span", "c" + (state === "paid" ? " ok" : state === "off" ? " off" : ""),
     T("dl.st." + state)));

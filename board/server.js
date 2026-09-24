@@ -7306,6 +7306,16 @@ app.post("/api/card/give", express.json({ limit: "4kb" }), gate, async (req, res
  *  ONLY EVER BETWEEN THE TWO OF THEM. There is no route that gives anybody a
  *  third party's total, and this one is computed per pair for one reader.
  */
+/** The next invoice number for whoever is asking — see `no` in
+ *  lib/request.js. The highest so far plus one, not a count: a count would
+ *  hand a new request the number of one that was taken back. Every route that
+ *  makes a request asks here, so the demo, the terminal and the pad cannot
+ *  number the same asker twice. */
+function nextNo(board, by) {
+  return 1 + board.requests.filter((r) => r.by === by)
+    .reduce((n, r) => Math.max(n, r.no || 0), 0);
+}
+
 function paidWith(board, me, mineId, theirBy, theirId) {
   const sums = new Map();
   let jobs = 0;
@@ -7358,6 +7368,14 @@ app.get("/api/matches", async (req, res) => {
          everybody, which is why it is a line that appears rather than a row
          that is always there saying nothing. */
       ...paidWith(board, me, mine.id, q.by, q.id),
+      /* WHAT THEY HAVE ASKED YOU FOR AND YOU HAVE NOT PAID. The other half of
+         the buzz in POST /api/request: the notification says something
+         arrived, and this is where it is — on their card, with the button.
+         Only requests they made naming you, only the ones still open. */
+      asks: board.requests.filter((r) => r.by === q.by && r.toWho === mine.id && !r.off
+        && (r.way || "in") === "in" && request.requestState(r) !== "paid")
+        .map((r) => ({ id: r.id, no: r.no || 0, amount: r.amount, cur: r.cur || "",
+          what: r.what || "", at: r.at, url: "/pay/" + r.id })),
     });
   }
   /* MY OWN CARD, not just whether I have one. The screen that offers to hand
@@ -7365,6 +7383,8 @@ app.get("/api/matches", async (req, res) => {
      sends your contact details without naming them is a button people press
      once and then go looking for a way to undo. */
   const own = board.cards.find((c) => c.by === me) || null;
+  /* Whoever is waiting on you for money comes first on the shelf. */
+  rows.sort((a, b) => (b.asks.length ? 1 : 0) - (a.asks.length ? 1 : 0));
   res.json({
     matches: rows,
     card: Boolean(own),
@@ -10295,12 +10315,29 @@ app.post("/api/request", notesOff, express.json({ limit: "2kb" }), async (req, r
     /* THE PERSON PAYING, WHEN THEY ARE ON THE BOARD. Optional: most of the
        time they are not, which is the point of the thing. */
     const toWho = String(req.body?.toWho || "");
-    const them = board.people.find((q) => q.id === toWho);
+    /* AND WHEN THEY WERE TYPED RATHER THAN PICKED. Asking from Profile or
+       the Money tab is a name in a box, so a request to a member you know
+       reached nobody on the board — no buzz, nothing on their Cards. The name
+       is matched against the people you are connected to, and only them: the
+       whole handle first, then a first name that only one of them has. Two
+       Chens, or nobody, and it stays a name — a request sent to the wrong
+       member is worse than one sent to nobody. */
+    const typed = String(req.body?.to || "").trim().toLowerCase();
+    const conn = typed && !toWho ? board.people.filter((p) => p.state === "published"
+      && p.handle && p.by !== me && pairState(board, me, p).can) : [];
+    const byName = conn.filter((p) => p.handle.toLowerCase() === typed);
+    const byFirst = conn.filter((p) => p.handle.toLowerCase().split(/\s+/)[0] === typed);
+    const them = board.people.find((q) => q.id === toWho)
+      || (byName.length === 1 ? byName[0] : byName.length ? null
+        : byFirst.length === 1 ? byFirst[0] : null);
     const q = request.cleanRequest({
       id: request.newRequestId(),
+      no: nextNo(board, me),
       by: me,
       from: mine.handle,
-      to: String(req.body?.to || them?.handle || ""),
+      /* Their own name when they are a member — "sasha" typed in a hurry is
+         Sasha on the request she opens. */
+      to: them ? them.handle : String(req.body?.to || ""),
       toWho: them ? them.id : "",
       /* "in" asks them to pay; "out" offers to pay them. The same row and
          the same link — see the note over `way` in lib/request.js. */
@@ -10313,10 +10350,14 @@ app.post("/api/request", notesOff, express.json({ limit: "2kb" }), async (req, r
     });
     if (!q) return { error: "bad" };
     board.requests.push(q);
-    return { ok: true, id: q.id };
+    return { ok: true, id: q.id, no: q.no, tell: them && them.by !== me ? them.by : "" };
   });
   if (out?.error) return res.status(400).json(out);
-  res.json({ ok: true, id: out.id, url: payLink(req, "/pay/" + out.id) });
+  /* THEIR PHONE BUZZES when they are a member, and the request is waiting on
+     their Cards tab with a Pay button — see `asks` in /api/matches. Somebody
+     not on the board gets the link the asker sends them, as before. */
+  if (out?.tell) tellThem(out.tell).catch(() => { /* a buzz that failed did not arrive */ });
+  res.json({ ok: true, id: out.id, no: out.no, url: payLink(req, "/pay/" + out.id) });
 });
 
 /** SAYING IT INSTEAD OF TYPING IT.
@@ -10432,7 +10473,7 @@ app.post("/api/demo/ask", express.json({ limit: "1kb" }), async (req, res) => {
     const mine = board.people.find((q) => String(q.handle || "").trim().toLowerCase() === DEALIO_OWNER);
     if (!mine) return { error: "owner" };
     const q = request.cleanRequest({
-      id: request.newRequestId(), by: mine.by, from: mine.handle, to: "",
+      id: request.newRequestId(), no: nextNo(board, mine.by), by: mine.by, from: mine.handle, to: "",
       amount, cur: "", what, when: "", at: new Date().toISOString(),
     });
     if (!q) return { error: "bad" };
@@ -10931,6 +10972,7 @@ app.post("/china/api/ask", express.json({ limit: "2kb" }), async (req, res) => {
   const out = await change((board) => {
     const q = request.cleanRequest({
       id: request.newRequestId(),
+      no: nextNo(board, row.by),
       by: row.by,
       from: name,
       to: String(req.body?.to || ""),
@@ -13407,6 +13449,7 @@ app.post("/api/admin/request", admin, express.json({ limit: "2kb" }), async (req
     if (!mine) return { error: "not on this board: " + who };
     const q = request.cleanRequest({
       id: request.newRequestId(),
+      no: nextNo(board, mine.by),
       by: mine.by,
       from: mine.handle,
       to: String(req.body?.to || ""),

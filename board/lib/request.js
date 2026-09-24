@@ -111,6 +111,14 @@ export function cleanRequest(raw) {
      the normal case and works without it. */
   const toWho = /^[a-f0-9]{20}$/.test(String(raw.toWho || "")) ? String(raw.toWho) : "";
   if (toWho) out.toWho = toWho;
+  /* THE INVOICE NUMBER. One per asker, counting up from 1, given when the
+     request is made and never reused — a number somebody can quote back
+     ("that's No. 12") and write in their own books. Not an official invoice
+     and not a fapiao: in Chinese it is 单号, never 发票, because 发票 is a
+     tax document with rules this is not. Rows made before it existed have
+     none, and are shown without one rather than numbered after the fact. */
+  const no = Number.parseInt(raw.no, 10);
+  if (Number.isInteger(no) && no > 0 && no < 1e6) out.no = no;
 
   /* WHERE THE MONEY LANDS WHEN IT IS NOT A MEMBER'S.
    *
@@ -212,6 +220,7 @@ export function requestView(r, { payeeReady = false } = {}) {
   if (!r) return null;
   return {
     id: r.id,
+    no: r.no || 0,
     way: r.way || "in",
     from: r.from,
     to: r.to,

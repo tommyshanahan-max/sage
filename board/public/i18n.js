@@ -5210,22 +5210,23 @@ export const STRINGS = {
                         "他们填好收款方式之前，钱不会动。填好了你会看到。"],
   "dl.whoEg":          ["Their name", "对方的名字"],
   "dl.someone":        ["Somebody", "某人"],
+  /* THE INVOICE NUMBER on a request — see `no` in lib/request.js. 单号 and
+     never 发票: a fapiao is a tax document, and this is not one. */
+  "rq.no":             ["No. {n}", "单号 {n}"],
+  /* On a card on the Cards tab, when that person has asked you for money. */
+  "cards.asks":        ["Asks you for {amount}", "向你收 {amount}"],
+  "cards.pay":         ["Pay", "去付"],
   /* THE MONEY CARD ON YOUR OWN PAGE — see money-card.js. Asking reuses
      dl.make and the list reuses dl.sub and dl.st.*, so a row reads the same
      on Profile as on the page it opens. */
-  "pm.head":           ["Money", "钱"],
-  "pm.got":            ["in this month", "本月收到"],
-  "pm.gotN":           ["paid this month", "本月已付笔数"],
-  "pm.due":            ["owed to you · {n}", "待收 · {n} 笔"],
-  "pm.dueN":           ["owed to you", "待收笔数"],
   "pm.send":           ["Send", "付钱"],
   "pm.wallet":         ["Wallet", "钱包"],
   "pm.walletSet":      ["Set up your wallet", "开通钱包"],
   "pm.all":            ["See all", "查看全部"],
-  /* NOTHING CAME IN IS NOT A NUMBER. A big "0" beside "¥38,500" reads as a
-     broken figure rather than an empty month, so the tile says so in words
-     and puts a dash where the number would be. */
-  "pm.gotNone":        ["nothing in yet", "本月还没进账"],
+  // Closed, the wallet row says only what is owed to you — see money-card.js.
+  "pm.owed":           ["{amount} owed", "待收 {amount}"],
+  "pm.owedN":          ["{n} owed", "{n} 笔待收"],
+  "pm.openWallet":     ["Open wallet", "打开钱包"],
   /* THE FOLD ON YOUR OWN PAGE: the key, Google, and the safety note, one tap
      down. They are read once; the page is opened every day. */
   "me.keyFold":        ["Your key & sign-in", "你的钥匙和登录"],
