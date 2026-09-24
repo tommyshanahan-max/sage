@@ -145,4 +145,59 @@ if (["wechat_pay", "alipay"].some((k) => def?.[k]?.available === false)) {
   console.log("  NOT YET is either pending approval or refused, and this cannot");
   console.log("  tell them apart. Settings \u2192 Payment methods says which.");
 }
+
+/* AND THE OTHER HALF: WHERE THE MONEY GOES AFTERWARDS.
+ *
+ * This command answered "can a payer in WeChat pay" and stopped there, which
+ * is half a question. Money arriving is not money received: an account can
+ * take a payment and still be unable to pay it out, and the two are set
+ * separately and refused separately. Asked on the same screen because they
+ * are one question to whoever is waiting to be paid — and because the answer
+ * was otherwise a dashboard page, which is the thing this command exists to
+ * replace.
+ *
+ * `who` is already fetched above; nothing extra is asked of Stripe. */
+console.log("");
+console.log("  PAYOUTS");
+console.log("    taking money   " + (who?.charges_enabled ? "yes" : "NO"));
+console.log("    paying out     " + (who?.payouts_enabled ? "yes" : "NO"));
+
+/* WHICH BANK, in the only terms anybody can check against a statement: the
+   bank's own name, the last four digits and the currency it pays in. Never
+   the full number — it is on a screen somebody may be sharing. */
+const banks = (who?.external_accounts?.data || []).filter((a) => a.object === "bank_account");
+if (!banks.length) {
+  console.log("    lands in       NOWHERE \u2014 no bank account on this account yet");
+} else {
+  for (const a of banks) {
+    console.log("    lands in       "
+      + [a.bank_name || a.country, a.last4 ? "\u2022\u2022\u2022\u2022 " + a.last4 : "",
+         String(a.currency || "").toUpperCase(), a.default_for_currency ? "(the default)" : ""]
+        .filter(Boolean).join("  "));
+  }
+}
+
+/* WHEN. A daily schedule and a manual one are a week apart for somebody
+   deciding whether they can pay a supplier on Friday. */
+const sch = who?.settings?.payouts?.schedule;
+if (sch) {
+  console.log("    when           " + (sch.interval === "manual"
+    ? "only when you press Pay out funds"
+    : sch.interval + (sch.delay_days != null ? ", " + sch.delay_days + " days after a payment" : "")));
+}
+
+/* WHAT STRIPE IS STILL WAITING FOR, in Stripe's own words. The dashboard puts
+   this behind a banner that says "provide more information" without saying
+   which; the requirement ids are the list that banner is made from. */
+const need = [...new Set([...(who?.requirements?.currently_due || []),
+                          ...(who?.requirements?.past_due || [])])];
+if (need.length) {
+  console.log("");
+  console.log("    STILL WANTED BY STRIPE, and until these are in nothing moves:");
+  for (const r of need.slice(0, 12)) console.log("      " + r);
+  if (need.length > 12) console.log("      \u2026 and " + (need.length - 12) + " more");
+} else if (who?.payouts_enabled) {
+  console.log("");
+  console.log("    Stripe is waiting for nothing. This account can be paid out.");
+}
 console.log("");

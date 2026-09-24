@@ -1244,7 +1244,7 @@ pay-try: ## Why a payment was refused, in Stripe's words: make pay-try ID=... [M
 	  /seed/pay-try.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  --id "$(ID)" --method "$(METHOD)"
 
-wallets: ## Will Stripe let this platform offer WeChat Pay and Alipay: make wallets
+wallets: ## Who can pay you, and whether Stripe will pay it out: make wallets
 	@# THE QUESTION THE WHOLE PRODUCT RESTS ON, AND IT WAS A SCREEN.
 	@#
 	@# The dashboard answers it on an Account status page, in an "Active" list
