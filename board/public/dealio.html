@@ -1577,8 +1577,30 @@ async function load() {
   draw();
 }
 
+/* STRAIGHT TO THE SHEET, FROM PROFILE. The money card on your own page has
+   Ask, Send and "Where your money lands" on it, and each of those landing
+   here on the pad — to press the same button a second time — is the step the
+   card exists to remove. ?ask= names the sheet; it is read once and taken
+   off the address so a reload is the ordinary screen. */
+let ASK = (() => {
+  try {
+    const u = new URL(location.href);
+    const a = String(u.searchParams.get("ask") || "");
+    if (!a) return "";
+    u.searchParams.delete("ask");
+    history.replaceState(null, "", u);
+    return ["in", "out", "where"].includes(a) ? a : "";
+  } catch { return ""; }
+})();
+
 setLang(pickLang());
-load();
+load().then(() => {
+  if (!ASK || !STATE?.you) return;
+  const a = ASK;
+  ASK = "";
+  if (a === "where") whereSheet();
+  else if (a === "in" || STATE.canSend !== false) form(a, { amount: "" });
+});
 </script>
 </body>
 </html>

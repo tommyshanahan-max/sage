@@ -299,6 +299,37 @@
      above it: the layer is the fact, this is the thing you can still do
      something about, and two lines of equal weight read as two facts. */
   .fact dd small{display:block;font-size:.8rem;color:var(--muted);margin-top:.15rem}
+  /* A ROW OF TAGS, NOT A TABLE. Three rows of "LEVEL / Just starting" in a
+     bordered box was the tallest thing on the page after the photograph, and
+     every label in it was a word nobody reads twice. The values say it: "Just
+     starting", "Speaking part", "First ten · 3 left". The labels stay for a
+     screen reader and go from the screen. */
+  .facts{display:flex;flex-wrap:wrap;justify-content:center;gap:.5rem;
+    border:0;background:none;overflow:visible;max-width:30rem}
+  .fact{border:1px solid var(--line);border-radius:99px;background:var(--raise);
+    padding:.45rem .85rem;gap:.4rem}
+  .fact:first-child{border-top:1px solid var(--line)}
+  .fact .fk{flex:0 0 auto}
+  .fact dt{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);
+    white-space:nowrap;padding:0;border:0}
+  .fact dd{flex:0 1 auto;font-weight:600}
+  .fact dd small{display:inline;margin:0 0 0 .3rem}
+  /* The bio, three lines and a More — coarse first, the rest on a tap. */
+  .goal.clamp{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  .biomore{border:0;background:none;padding:.2rem 0 0;font:inherit;font-size:.95rem;
+    font-weight:600;color:var(--accent);cursor:pointer;align-self:flex-start}
+  /* THE KEY, GOOGLE AND THE SAFETY NOTE, FOLDED. Each is read once; together
+     they were most of the scroll on a page opened every day. */
+  .keyfold{margin:1.6rem 1.15rem 0;background:var(--raise);border:1px solid var(--line);
+    border-radius:1rem}
+  .keyfold summary{list-style:none;display:flex;justify-content:space-between;align-items:center;
+    padding:1rem 1.05rem;font-weight:600;cursor:pointer}
+  .keyfold summary::-webkit-details-marker{display:none}
+  .keyfold summary::after{content:"\203A";font-size:1.3rem;color:var(--muted);
+    transition:transform .15s}
+  .keyfold[open] summary::after{transform:rotate(90deg)}
+  .keyfold .keybox{margin:0 1.05rem 1rem;border-top:1px solid var(--hair)}
+  .keyfold .safety{margin:0 1.05rem 1rem}
   .days{display:flex;gap:.25rem;flex-wrap:wrap}
   .days b{width:1.8rem;height:1.8rem;display:grid;place-items:center;border-radius:.4rem;
     font-size:.73rem;font-weight:500;background:var(--raise);border:1px solid var(--line);
@@ -524,6 +555,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 import { mountWalletCard } from "/wallet-card.js";
+import { mountMoneyCard } from "/money-card.js";
 
 const HANDLE = "{{HANDLE}}";
 const IN_WECHAT = /micromessenger/i.test(navigator.userAgent);
@@ -1162,8 +1194,17 @@ function paint() {
      carries, rendered once when the line was written. The original when there
      is no rendering yet, which is always right and sometimes not theirs. */
   if (q.goal) {
-    head.append(el("p", "goal",
-      pick(q.goal, q.goalAlt, q.goalAlt2, q.goalLang)));
+    const bio = el("p", "goal clamp", pick(q.goal, q.goalAlt, q.goalAlt2, q.goalLang));
+    head.append(bio);
+    /* MORE ONLY WHEN THERE IS MORE. Measured once it is on the page; a More
+       under a bio that already fits is a button that does nothing. */
+    requestAnimationFrame(() => {
+      if (bio.scrollHeight <= bio.clientHeight + 2) return;
+      const more = el("button", "biomore", T("me.bioMore"));
+      more.type = "button";
+      more.addEventListener("click", () => { bio.classList.remove("clamp"); more.remove(); });
+      bio.after(more);
+    });
   }
 
   /* WHAT IS MISSING, ON YOUR OWN PAGE, AS THE THING THAT FIXES IT.
@@ -1297,8 +1338,17 @@ function paint() {
   if (facts.children.length) head.append(facts);
   box.append(head);
 
-  /* YOUR WALLET, on your own page only. Draws nothing when the wallet is off. */
-  if (q.mine) mountWalletCard(box, device);
+  /* MONEY, on your own page only — asking, sending, what is owed and the
+     wallet in one card. See money-card.js. The app keeps the old wallet card:
+     /dealio is web-only, so every button on the new one would bounce there. */
+  if (q.mine) {
+    if (NATIVE) mountWalletCard(box, device);
+    else {
+      const slot = el("div");
+      box.append(slot);
+      mountMoneyCard(slot, { device, T });
+    }
+  }
 
   /* Directly under the line that explains it, and above everything a stranger
      would read first. It was at the foot of the page under Report, which is
@@ -1497,9 +1547,13 @@ function paint() {
   // Directly under Follow, because somebody who opened a shared link has two
   // things they might do and this is the second one: look at the rest. It was
   // at the bottom of the page, past everything they would have to read first.
-  const feed = el("a", null, T("bud.back"));
-  feed.href = "/browse";
-  meet.append(feed);
+  /* Not on your own page: the tab bar is up there and Browse is in it, and a
+     third button pushed Share and Edit onto two lines each. */
+  if (!q.mine) {
+    const feed = el("a", null, T("bud.back"));
+    feed.href = "/browse";
+    meet.append(feed);
+  }
   if (!q.mine) {
     const rep = el("button", "warn", T("bud.reportThem"));
     rep.type = "button";
@@ -1639,7 +1693,12 @@ function paint() {
       .then((d) => { if (d && d.google && !NATIVE) gwrap.hidden = false; })
       .catch(() => { /* no button, and the key above is untouched */ });
 
-    if (device) box.append(kb);
+    const fold = el("details", "keyfold");
+    fold.append(el("summary", null, T("me.keyFold")));
+    if (device) fold.append(kb);
+    fold.append(el("p", "safety", T("bud.safety")));
+    box.append(fold);
+    return;
   }
 
   box.append(el("p", "safety", T("bud.safety")));
