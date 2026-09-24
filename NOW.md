@@ -486,7 +486,7 @@ have a Stripe account with trading history, and would you run a Connect
 platform on it". Their deck is tax structuring — SA, SARL, SPF, SCSp, RAIF —
 and contains no payments authorisation.
 
-## Voice messages — live 24 Sep
+## Voice messages — live 24 Sep, watched working on Tom's phone
 
 Hold the round button beside Send, speak, let go. No calls: Tom asked for
 calls, then said voice messages only, twice.
