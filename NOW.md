@@ -516,6 +516,14 @@ by reading the route, not by a phone. Do not "simplify" it back, and do not
 put the device in the query string instead — that writes it into every access
 log.
 
+## Money on your own page — live 24 Sep, watched working
+
+A **Wallet** row near the foot of Profile, the shape of the rows around it.
+Shut it says what you are owed; tapped it opens to Ask for money and the list
+still to settle. Web only — the app keeps the old wallet card, because
+/dealio is web-only and these buttons would bounce there. So it is
+thexchange.app in Safari, not the home-screen app.
+
 ## The app
 
 **Rejected 22 Sep — this section said "nothing to do but wait" for a day

@@ -34,6 +34,16 @@ cd ~/tc && git fetch origin && git reset --hard origin/<branch> && make deploy
 `git reset --hard`, not `git pull` — a pull once left a merge commit on the box
 and `make deploy` refused with "Diverging branches".
 
+**When `make deploy` says "Not possible to fast-forward", use `make up`.**
+`make deploy` does its own `git pull --ff-only` on whatever branch the box is
+checked out on. If the box has been reset to a commit from a *different*
+branch — which is what happens when somebody deploys another session's work —
+the local branch name and the commit disagree, and that pull can never
+succeed. `git fetch && git reset --hard origin/<branch> && make up` puts the
+right code on disk and builds it without a second pull. This cost most of an
+afternoon: the deploy failed, nobody read the error, and the screen it was
+meant to ship was reported missing three times.
+
 `make rebuild` rebuilds only the workspace. `make up` and `make deploy` build
 everything. Reaching for `rebuild` after a change to `board/` is the mistake.
 
