@@ -3336,7 +3336,25 @@ function fitDeck() {
    *
    * It fixes itself the moment that person uploads, which is what the prompt
    * above the card is asking them to do. */
-  const w = Math.min(full, Math.max(Math.min(full, 240), h * 0.8));
+  /* THE COLUMN, AT 4:5. THE BUDGET DOES NOT GET A VOTE ON THE WIDTH.
+   *
+   * The width used to come off the leftover height — take what the masthead,
+   * the banner, the sentence fold and the buttons have not used, and make the
+   * card 4:5 inside it. The arithmetic is right and the result was a stamp: on
+   * an iPhone 15 the leftover is about 260px, so the card hit the 240 floor
+   * and sat as a 240x300 square in the middle of a 354 column, with a portrait
+   * cropped through the top of the head. Measured, not guessed — the fold open
+   * and the fold shut both came out 240x300.
+   *
+   * Every phone did this. It only looked right on the largest one sold, which
+   * is the same mistake the note above this one is about, made one level up.
+   *
+   * So the face gets the column and the page scrolls if it must. That trade is
+   * already named above — "the card runs past the fold and the page scrolls,
+   * which is the trade that was chosen over a face cropped to a band" — and
+   * the floor quietly took it back. A phone scrolls. A face does not grow
+   * back. */
+  const w = full;
   deck.style.width = Math.round(w) + "px";
   deck.style.height = Math.round(w * 1.25) + "px";
 }
@@ -9976,21 +9994,21 @@ function drawSayHead() {
     const open = body.hidden;
     body.hidden = !open;
     head.setAttribute("aria-expanded", open ? "true" : "false");
-    /* However they last left it. Somebody who opens this every week should
-       not have to open it every week, and somebody who never touches it
-       should not be looking at a form. */
-    try { localStorage.setItem("board:say", open ? "1" : "0"); } catch { /* fine */ }
   });
-  /* OPEN FOR SOMEBODY WHO HAS NOT ANSWERED IT.
-     However they last left it is right for a member who has a sentence and
-     changes it twice a year. For somebody filling this form in for the first
-     time, a shut fold reading "What are you looking for?" is a question they
-     can walk past — and walking past it is the one mistake that leaves them
-     matched with nobody. */
-  let open = !done.length;
-  if (!open) {
-    try { open = localStorage.getItem("board:say") === "1"; } catch { /* fine */ }
-  }
+  /* OPEN FOR SOMEBODY WHO HAS NOT ANSWERED IT, AND FOR NOBODY ELSE.
+     A shut fold reading "What are you looking for?" is a question a new member
+     can walk past, and walking past it is the one mistake that leaves them
+     matched with nobody. So it opens itself for them.
+
+     IT USED TO REMEMBER BEING LEFT OPEN, on the reasoning that somebody who
+     opens it every week should not have to. Nobody opens it every week — it
+     is a sentence people change about twice a year — and remembering cost
+     far more than it saved: one tap, months earlier, left a form standing
+     over Browse ever after. Measured on an iPhone 15 it pushes Follow and
+     Next to y=862 on an 852-tall screen, so the two buttons the screen exists
+     for are off the bottom of it, for good, with nothing saying why.
+     A tap opens it. A tap is cheaper than that. */
+  const open = !done.length;
   $("saybody").hidden = !open;
   head.setAttribute("aria-expanded", open ? "true" : "false");
 }
