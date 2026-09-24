@@ -13756,9 +13756,19 @@ app.post("/api/admin/pay-try", admin, express.json({ limit: "1kb" }), async (req
   if (!q) return res.status(404).json({ error: "gone" });
   if (!q.cur) return res.status(400).json({ error: "currency" });
 
+  /* THE PATH THE PAYER TAKES, AND NOT A DIFFERENT ONE.
+   *
+   * This forced asker.payee as the destination while /api/request/:id/pay had
+   * stopped using one for the owner's own requests — so on 24 Sep it answered
+   * "your destination account needs the transfers capability" about a
+   * destination the page does not send, and an hour went on the wrong
+   * account. A command whose whole job is "why was this refused" must ask the
+   * same question the page asks, or its answer is worse than no answer:
+   * it is a true sentence about code nobody runs. */
   const asker = board.people.find((p) => p.by === q.by);
-  const dest = (q.way || "in") === "out" ? (q.landed ? q.acct : "") : asker?.payee;
-  if (!dest) return res.status(400).json({ error: "payee" });
+  const mine = dealioMine(board, q);
+  const dest = mine ? "" : ((q.way || "in") === "out" ? (q.landed ? q.acct : "") : asker?.payee);
+  if (!mine && !dest) return res.status(400).json({ error: "payee" });
 
   const want = String(req.body?.method || "");
   const methods = ["wechat", "alipay", "card"].includes(want)

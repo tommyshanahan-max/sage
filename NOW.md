@@ -137,6 +137,26 @@ half too — `acct_1UIVjEJItwOUeslJ`, Aozhou Baba, live:
   separately and says so when it cannot read it. Money can be taken and can
   leave.
 
+**THE BOX IS ON A TEST STRIPE KEY. 24 Sep, and it is the answer to the whole
+evening.** `make pay-check` prints it in its second line — *Stripe key set ·
+test*, under *PAYMENTS ARE ON — in test mode, so no real money moves*.
+
+So nothing on that server has ever been able to charge anybody. Every link
+minted tonight was a sandbox link, demo flag or no demo flag, and a session
+called three of them "a real ¥1" because it checked the demo switch and never
+checked the key. Test mode is identical on the screen — same buttons, same
+Alipay, same refusals — which is exactly why it went unnoticed for four
+hours.
+
+**The live account is a different key.** Aozhou Baba,
+`acct_1UIVjEJItwOUeslJ`, charges and payouts enabled, Alipay on, bank account
+present — all of that was read by `make wallets ASK=1` with a key typed at
+the prompt. It never touched the box's configuration.
+
+**Before anybody puts the live key on the box: roll it.** It went into zsh
+history and into a screenshot on 24 Sep. A leaked live key on a public server
+is a likelier route to a terminated account than anything in this repo.
+
 **ALIPAY HAS NOT TAKEN A REAL PAYMENT. A SESSION CLAIMED IT HAD, 24 Sep, AND
 WAS WRONG.**
 
