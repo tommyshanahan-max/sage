@@ -391,7 +391,7 @@ async function paint() {
    * that whether or not a wallet exists. Catching home here sent everybody
    * without one to setup and the forward never ran, which is the same
    * complaint this whole change is answering. */
-  if (!W?.wallet && !["setup", "help", "home"].includes(name)) scr = SCREENS.setup;
+  if (!W?.wallet && !["setup", "help", "home", "payout"].includes(name)) scr = SCREENS.setup;
   $("screen").textContent = "";
   $("screen").append(spinner(T("wl.loading")));
   let out;
@@ -662,7 +662,48 @@ SCREENS.sources = async () => {
     h("div", { class: "push" }, btn(T("wl.continue"), "", () => history.back()))) };
 };
 
+/* THE FIRST SCREEN OF BEING PAID, and it is three things, not six.
+ *
+ * The wallet's own sign-up is about a product that holds and moves money
+ * between members. This is about one thing: telling us where to send yours.
+ * Same record underneath — the bank details hang off it — but somebody who
+ * pressed "Where do we send your money" is answering that question and
+ * should not have to read about PayPal fees on the way. */
+function payoutFirst() {
+  const terms = h("input", { type: "checkbox", id: "terms" });
+  const start = btn(T("wl.whereGo"), "", async () => {
+    start.disabled = true;
+    try {
+      await api("/api/wallet/setup", { region: guessRegion(), acceptedTerms: true });
+      await load();
+      /* replace, not go: pressing back should return them to the money
+         screen they came from, not to this screen they have finished with. */
+      replace("payout");
+    } catch (err) { start.disabled = false; showError(err); }
+  }, { disabled: true });
+  terms.addEventListener("change", () => { start.disabled = !terms.checked; });
+  return { title: T("dl.whereSend"), body: frag(
+    h("p", { class: "hero", text: T("wl.whereHero") }),
+    h("p", { class: "lead", text: T("wl.whereLead") }),
+    h("label", { class: "check" }, terms, h("span", { text: T("wl.acceptTerms") })),
+    h("div", { class: "push" }, start),
+  ) };
+}
+
 SCREENS.payout = async (_, q) => {
+  /* ARRIVED HERE FROM "WHERE DO WE SEND YOUR MONEY", WITH NO WALLET.
+   *
+   * The bank details are stored on a wallet record, so with none the central
+   * guard sent people to the wallet's own sign-up: a wall about a provider
+   * that holds money, what happens when a payment cannot be reversed, and
+   * card and PayPal fees. Every word of it true of the wallet and none of it
+   * an answer to the question they pressed a button to ask. Reported from a
+   * phone, and it was the button doing exactly what it promised until the
+   * last step.
+   *
+   * So this path gets its own first screen: the question as its heading, one
+   * sentence, the terms on one line, and the bank fields straight after. */
+  if (!W.wallet) return payoutFirst();
   const w = W.wallet;
   const setup = q.get("setup") === "1";
   /* AN ABN FIRST, BECAUSE WITHOUT ONE 47% OF THE PAYMENT IS WITHHELD.

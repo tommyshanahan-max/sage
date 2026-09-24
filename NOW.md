@@ -327,6 +327,15 @@ money actually come to"*. The hero's bank line goes to the same screen — it
 used to open the Stripe sheet, so one line meant the payout rail and the
 button under it meant the bank.
 
+**AND THE BUTTON LANDED ON THE WRONG SCREEN UNTIL IT DIDN'T.** The bank
+details hang off a wallet record, so with none the central guard sent people
+to the wallet's own sign-up — a wall about a provider that holds money, what
+happens when a payment cannot be reversed, and card and PayPal fees. All true
+of the wallet; none of it an answer to the question they pressed a button to
+ask. Reported from a phone at 2am. `#payout` now has its own first screen:
+the question as the heading, one sentence, the terms on one line, and the
+bank fields straight after.
+
 **THE STRIPE ONBOARDING STEP IS NOW OFF THIS SCREEN, AND THAT NEEDS A
 DECISION.** `payoutRow()` has no callers left and `whereSheet()` is reachable
 only through the `?a=where` deep link. Nothing is deleted, but for **any

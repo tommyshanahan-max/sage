@@ -7350,6 +7350,14 @@ export const STRINGS = {
   /* Seen for an instant while the money screen opens, and by anybody whose
      browser refuses the redirect. Not "redirecting" — that is a word about
      the machinery. */
+  /* THE FIRST SCREEN OF BEING PAID. Written for somebody who pressed a
+     button asking where their money goes — so it answers that, and says
+     nothing about providers, reversals or card fees. */
+  "wl.whereHero":      ["Where do we send your money",
+                        "钱打到哪里给你"],
+  "wl.whereLead":      ["Straight to your bank. Tell us the account and we will not ask again.",
+                        "直接打到你的银行账户。填一次，以后不用再填。"],
+  "wl.whereGo":        ["Add your account", "填收款账户"],
   "wl.moved":          ["Opening your money screen…", "正在打开收款页…"],
   "wl.deals":          ["Deals", "对账"],
   "wl.someone":        ["Somebody", "某人"],
