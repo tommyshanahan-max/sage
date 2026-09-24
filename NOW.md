@@ -157,6 +157,62 @@ the prompt. It never touched the box's configuration.
 history and into a screenshot on 24 Sep. A leaked live key on a public server
 is a likelier route to a terminated account than anything in this repo.
 
+## Next: Dealio absorbs the wallet
+
+**The problem.** Two money screens, both with Send, Request and a list of
+what is owed, and only one of them can take money.
+
+- **Dealio** — a link to somebody with **no account**. They open a URL and
+  pay. Stripe. This is the product, and it is the half that works.
+- **The wallet** — member to member, both sides needing a wallet, on a
+  provider that is not connected. Nothing links to `/wallet`; the code in
+  index.html says so in as many words, *"the wallet page nothing links to"*.
+
+So the wallet is the better-made half of a product nobody can reach. Dealio
+takes its screens; `/wallet` stops being a page.
+
+**What moves across.** All of this was built or cut on 24 Sep and is worth
+keeping:
+
+- **Earned here / Still to come** as the hero, never a balance
+- **Ink**, no coloured slab — the number is the loudest thing by size
+- **Two verbs**, full-width pills, no icon-over-label tiles
+- **Three-screen setup**, region guessed from the phone's clock
+- **Identity on the provider's page**, which is where it belongs
+
+**What goes.** The balance, Add and Withdraw are already gone — the board
+cannot hold money and must not look as though it does. The second setup
+flow goes with the page.
+
+**What stays Dealio's.** The link to a stranger is the whole point. So is
+`?in=1` — the plain address paints the sales page on purpose, and a member
+pressing a tab called Money must not get the pitch. The currency picker
+stays.
+
+**Decide before writing any of it:**
+
+- Does a member paying a member also go through a link? Simplest answer is
+  yes, and then there is one flow rather than two.
+- `board/lib/wallet/` is not the page. The eleven-call provider interface and
+  the ledger are the good part and should survive whatever happens to the
+  screens — `qfpay.js` and `airwallex.js` are written against it.
+- The Money tab keeps its name and its address. Only what it draws changes.
+
+**Three traps found tonight, all of which will bite this work:**
+
+- **The wallet only knows PUBLISHED members** (`q.state !== "published"` in
+  `lib/wallet/index.js`), and Dealio does not — it matches the device on the
+  request. So one browser is Tom to Dealio and a stranger to the wallet, and
+  the wallet says *"once your page is up on the board"* to somebody whose
+  page is up. Whatever absorbs which, there must be one rule.
+- **`IN_APP` hides the Money tab completely** — the payments product was kept
+  out of Apple's build on purpose. That decision has to be re-made
+  deliberately, not inherited.
+- **`BOARD_WALLET` must name a provider or `/wallet` 404s.** Taking Airwallex
+  out of `.env` tonight turned the entire wallet off, tab and all, and that
+  took a round to notice. It is `test` on the box now: every screen works,
+  no money moves.
+
 ## Where Alipay actually stands, 24 Sep 18:51 — read this first
 
 The box went live at 18:36 (`make go-live`, live key, live publishable, its
