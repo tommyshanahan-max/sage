@@ -704,6 +704,11 @@ SCREENS.sources = async () => {
 };
 
 SCREENS.payout = async (_, q) => {
+  /* REACHED DIRECTLY NOW, from the money screen, by somebody who may have no
+     wallet at all — and the first thing below reads w.region off it. That
+     threw, paint() caught it, and the address answered with a blank screen
+     and an error toast. The same line SCREENS.home has had all along. */
+  if (!W.wallet) return SCREENS.setup([]);
   const w = W.wallet;
   const setup = q.get("setup") === "1";
   /* AN ABN FIRST, BECAUSE WITHOUT ONE 47% OF THE PAYMENT IS WITHHELD.

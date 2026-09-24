@@ -318,9 +318,11 @@ screens behind it are the only way to reach **setup, identity, limits and the
 bank details** — including the ABN/GST and SWIFT/IBAN work from today. Two
 things follow and neither is done:
 
-- The hero's "where it lands" line opens Dealio's payout sheet, **not** the
-  wallet's bank screen. So the SWIFT and ABN fields are reachable only by
-  typing `/wallet`.
+- ~~The SWIFT and ABN fields are reachable only by typing `/wallet`.~~
+  **Fixed.** The payout sheet now carries a link to `/wallet#payout`, and
+  that screen no longer throws when it is opened by somebody with no wallet —
+  it fell straight through to `w.region` and answered with a blank screen and
+  an error toast.
 - Send and Request on `/wallet` still write to the provider ledger. On a
   `test` provider it is empty so nothing disagrees today.
 

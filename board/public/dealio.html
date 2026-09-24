@@ -1202,6 +1202,21 @@ function whereSheet() {
   const card = el("div", "shc");
   card.append(el("p", "lab", T("dl.whereMoney")));
   card.append(payoutLine());
+  /* AND THE OTHER HALF OF "WHERE YOUR MONEY LANDS", WHICH HAD NO DOOR.
+   *
+   * Two different things live under that sentence and only one of them was
+   * reachable. Above: the Stripe account money is paid out TO. Here: what a
+   * supplier needs in order to invoice, and where a wire actually goes — the
+   * ABN and GST, the SWIFT/BIC, the IBAN and the beneficiary address.
+   *
+   * All of it existed and nothing linked to it: the only way in was to type
+   * /wallet. A field nobody can reach is a field nobody has filled in, and
+   * the first anybody would know is a payment held by a correspondent bank
+   * or 47% withheld by the ATO. */
+  const more = el("a", "quietlink");
+  more.href = "/wallet#payout";
+  more.textContent = T("dl.bankDetails");
+  card.append(more);
   const shut = el("button", null, T("pay.close"));
   shut.type = "button";
   shut.addEventListener("click", () => sheet.remove());

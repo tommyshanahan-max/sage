@@ -5682,6 +5682,10 @@ export const STRINGS = {
      which is a different job and deserves its own word. */
   /* THE FOLD ON THE MONEY SCREEN. One word, because it sits on a line with a
      figure and a caret and has to be read in the same glance as both. */
+  /* NOT "payout settings". The two things a person actually wants from that
+     screen are being able to invoice and being able to be wired money, so
+     the line names those and not the screen. */
+  "dl.bankDetails":    ["Your bank and invoice details", "你的银行和开票资料"],
   "dl.pending":        ["Pending", "待结"],
   "bk.totals":         ["Totals", "汇总"],
   "bk.csv":            ["Send it to the accountant", "导出给会计"],
