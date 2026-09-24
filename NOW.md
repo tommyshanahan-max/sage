@@ -133,6 +133,17 @@ So the thing this product exists to do — take money from a Chinese payer —
 works today. It has been the assumption of every conversation since August
 that it did not.
 
+**ONE WRINKLE, AND IT IS FIXABLE.** Alipay shows *您即将离开支付宝* — "you are
+about to leave Alipay" — before the payer reaches `paydealio.com`, with a
+`继续访问` button under it. It is Alipay's standard notice for any external
+domain, not a flag on this merchant, and it costs one tap. But it is an orange
+warning about 资金安全 in front of somebody sending money abroad for the first
+time, which is the worst possible moment for one.
+
+Alipay whitelists domains on request: email `techservices@alipay.com` with the
+company name, the PID, the domain, the reason and a contact. The
+`我要申请恢复` link at the foot of that page is the same appeal. Not done yet.
+
 **WeChat Pay is now a second door, not the door.** Wanting it open is right;
 waiting on it is not. Alipay is 700m-odd people and it is on.
 
