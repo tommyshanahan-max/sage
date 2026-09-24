@@ -105,7 +105,7 @@
   .big{font-size:2.3rem;font-weight:700;text-align:center;font-variant-numeric:tabular-nums;line-height:1.15;margin:0}
   .balance{border-radius:18px;padding:1.1rem;background:var(--money);color:var(--money-ink)}
   .balance .v{font-size:2.2rem;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.15}
-  .acts{display:grid;grid-template-columns:repeat(4,1fr);gap:.4rem}
+  .acts{display:grid;grid-template-columns:repeat(2,1fr);gap:.5rem}
   .act{border:1px solid var(--line);background:var(--card);border-radius:14px;padding:.6rem .2rem;display:flex;flex-direction:column;align-items:center;gap:.3rem;cursor:pointer;font-size:.86rem;font-weight:600}
   .act svg{width:1.35rem;height:1.35rem;stroke:var(--money);fill:none;stroke-width:2}
   .act[disabled]{opacity:.45;cursor:not-allowed}
@@ -392,19 +392,32 @@ const SCREENS = {};
 SCREENS.home = async () => {
   if (!W.wallet) return SCREENS.setup([]);
   const w = W.wallet;
+  /* TWO VERBS. It was four — Send, Request, Add, Withdraw — and the last two
+     existed only to move money into and out of a balance held here.
+     THE BOARD CANNOT HOLD MONEY AND MUST NOT LOOK AS THOUGH IT DOES. Holding
+     other people's money is a licence in Australia and 二清 in China, and
+     Stripe's own terms forbid it on this kind of account. A float is also the
+     thing that put a zero in the biggest type on the screen, that needed a
+     Withdraw button, a bank form and a balance to sit in.
+     Nothing is lost: the send screen already charges a card or a bank at the
+     moment of sending, which is what a top-up was for one step earlier. */
   const acts = h("div", { class: "acts" },
     h("button", { class: "act", type: "button", onclick: () => go("send") }, svg("send"), T("wl.send")),
-    h("button", { class: "act", type: "button", onclick: () => go("request") }, svg("req"), T("wl.request")),
-    h("button", { class: "act", type: "button", onclick: () => go("add"), disabled: !w.holdsBalance }, svg("add"), T("wl.add")),
-    h("button", { class: "act", type: "button", onclick: () => go("withdraw"), disabled: !w.holdsBalance }, svg("out"), T("wl.withdraw")));
+    h("button", { class: "act", type: "button", onclick: () => go("request") }, svg("req"), T("wl.request")));
   const needs = [...w.incoming.map((t) => row({ lead: face(t.with.handle), title: T("wl.sentYou", { who: t.with.handle, amt: t.amount.text }), sub: t.note || T("wl.acceptIn24"), onclick: () => go(`activity/transfer/${t.id}`) })),
     ...w.requests.filter((r) => r.direction === "in").map((r) => row({ lead: face(r.with.handle), title: T("wl.requestedAmt", { who: r.with.handle, amt: r.amount.text }), sub: r.note, onclick: () => go(`activity/request/${r.id}`) }))];
   const { rows } = await api("/api/wallet/activity");
   const recent = rows.slice(0, 5).map((x) => activityRow(x));
   return { title: T("wl.title"), action: { label: T("wl.settings"), icon: "gear", run: () => go("settings") }, body: frag(
     h("section", { class: "balance", "aria-label": T("wl.balance") },
-      h("p", { text: w.holdsBalance ? T("wl.balance") : T("wl.straightToBank") }),
-      w.holdsBalance ? h("p", { class: "v", text: w.balance.text }) : h("p", { class: "v", style: "font-size:1.3rem", text: w.payoutLabel || T("wl.noBankYet") }),
+      /* WHERE IT LANDS, NOT WHAT IS SITTING HERE. The slab read "Balance
+         A$0.00" — the biggest thing on the screen, a zero, and a claim that
+         this board holds money. It says where money goes instead, which is
+         the true and more useful fact. A balance that still exists on an old
+         wallet is shown under it rather than as the headline. */
+      h("p", { text: T("wl.straightToBank") }),
+      h("p", { class: "v", style: "font-size:1.3rem", text: w.payoutLabel || T("wl.noBankYet") }),
+
       h("p", { style: "font-size:.9rem;opacity:.9", text: `${regionName(w.region, w.regionName)} · ${w.currency} · ${w.verified === "verified" ? T("wl.verified") : T("wl.notVerifiedYet")}` })),
     acts,
     w.verified !== "verified" ? note("warn", T("wl.confirmToMove"), h("button", { type: "button", class: "chip", onclick: () => go("verify"), text: T("wl.confirmNow") })) : null,
@@ -540,7 +553,9 @@ SCREENS.payout = async (_, q) => {
   const fields = w.region === "AU" ? [["accountName", T("wl.accountName"), "text", ""], ["bsb", T("wl.bsb"), "text", T("wl.sixDigits")], ["accountNumber", T("wl.accountNumber"), "text", ""]]
     : w.region === "CN" ? [["accountName", T("wl.accountName"), "text", T("wl.asOnYourId")], ["bankName", T("wl.bankLabel"), "text", T("wl.bankEg")], ["accountNumber", T("wl.cnAccount"), "text", ""]]
     : [["accountName", T("wl.accountName"), "text", ""], ["bankName", T("wl.bankLabel"), "text", ""], ["iban", w.region === "FI" ? "IBAN" : T("wl.ibanOr"), "text", ""]];
-  let mode = w.holdsBalance ? (w.payout || "wallet") : "bank";
+  /* ALWAYS A BANK. It offered "keep it in your wallet" against "pay it out",
+     and the first of those is the float this board cannot hold. */
+  let mode = "bank";
   const form = h("div", { class: "stack" });
   const inputs = {};
   for (const [key, label, type, hint] of fields) {
@@ -551,7 +566,6 @@ SCREENS.payout = async (_, q) => {
   const list = h("div", { class: "list", role: "radiogroup", "aria-label": T("wl.whereShouldGo") });
   const draw = () => {
     list.textContent = "";
-    if (w.holdsBalance) list.append(row({ radio: mode === "wallet", title: T("wl.keepInWallet"), sub: T("wl.withdrawWhenever"), onclick: () => { mode = "wallet"; draw(); } }));
     list.append(row({ radio: mode === "bank", title: w.payoutLabel ? T("wl.myBankIs", { label: w.payoutLabel }) : T("wl.straightToMine"), sub: w.region === "CN" ? T("wl.cnChecked") : T("wl.usuallyNextDay"), onclick: () => { mode = "bank"; draw(); } }));
     form.hidden = mode !== "bank" || (Boolean(w.payoutLabel) && !showNew);
   };
@@ -614,7 +628,7 @@ SCREENS.amount = async ([to], q, known) => {
   if (!p) return { title: T("wl.send"), body: note("bad", T("wl.memberGone")) };
   if (!p.hasWallet) return { title: T("wl.payWho", { who: p.handle }), body: frag(note("info", T("wl.theyHaveNoWallet", { who: p.handle })), h("div", { class: "push" }, btn(T("wl.back"), "ghost", () => history.back()))) };
   const draft = JSON.parse(sessionStorage.getItem("wallet:draft") || "{}");
-  const d = draft.to === to ? draft : { to, amount: "", note: "", reason: "", source: (w.sources.find((s) => s.default) || {}).id || (w.holdsBalance ? "wallet" : "") };
+  const d = draft.to === to ? draft : { to, amount: "", note: "", reason: "", source: (w.sources.find((s) => s.default) || {}).id || "" };
   const chinese = p.region === "CN";
   const cont = btn(T("wl.continue"), "", async () => {
     cont.disabled = true;
@@ -631,7 +645,10 @@ SCREENS.amount = async ([to], q, known) => {
   const check = () => { cont.disabled = !(Number(d.amount) > 0) || !d.source || (chinese && d.reason.trim().length < 3); };
   noteIn.addEventListener("input", () => { d.note = noteIn.value; });
   reasonIn.addEventListener("input", () => { d.reason = reasonIn.value; check(); });
-  const sources = [...(w.holdsBalance ? [{ id: "wallet", label: T("wl.walletBalance"), kind: "wallet", sub: T("wl.balNoFee", { amt: w.balance.text }) }] : []), ...w.sources.map((s) => ({ ...s, sub: s.fee ? T("wl.feePct", { p: s.fee / 100 }) : T("wl.noFee") }))];
+  /* A CARD OR A BANK, AND NOTHING ELSE. "Wallet balance" was the first row
+     here; there is no balance now, so it would be an option that can never
+     be chosen. */
+  const sources = w.sources.map((s) => ({ ...s, sub: s.fee ? T("wl.feePct", { p: s.fee / 100 }) : T("wl.noFee") }));
   const srcList = h("div", { class: "list", role: "radiogroup", "aria-label": T("wl.payFrom") });
   const drawSrc = () => { srcList.textContent = ""; for (const s of sources) srcList.append(row({ radio: d.source === s.id, title: s.label, sub: s.sub, onclick: () => { d.source = s.id; drawSrc(); check(); srcList.querySelector('[aria-checked="true"]').focus(); } })); };
   drawSrc();
@@ -745,7 +762,7 @@ async function detailScreen(kind, id, q) {
       e.target.disabled = true;
       try {
         const w = W.wallet;
-        const source = (w.sources.find((s) => s.default) || {}).id || (w.holdsBalance ? "wallet" : "");
+        const source = (w.sources.find((s) => s.default) || {}).id || "";
         const qt = await api(`/api/wallet/requests/${id}/quote`, { source });
         sessionStorage.setItem("wallet:quote", JSON.stringify({ ...qt, note: x.note, reason: qt.reasonRequired ? x.note : "", room: x.room }));
         go("review");
@@ -781,47 +798,19 @@ SCREENS.reported = async () => ({ title: T("wl.reported"), noBack: true, body: f
   h("p", { class: "center lead", text: T("wl.replyOneDay") }), h("div", { class: "push" }, btn(T("wl.backToWallet"), "", () => replace("home")))) });
 
 /* ADD AND WITHDRAW */
-SCREENS.add = async () => {
-  const w = W.wallet;
-  const cards = w.sources.filter((s) => s.kind !== "wallet");
-  const d = { amount: "", source: (cards.find((s) => s.default) || cards[0] || {}).id || "" };
-  if (!cards.length) return { title: T("wl.addMoney"), body: frag(note("info", T("wl.connectToAdd")), h("div", { class: "push" }, btn(T("wl.connect"), "", () => go("sources")))) };
-  const list = h("div", { class: "list", role: "radiogroup", "aria-label": T("wl.from") });
-  const drawSrc = () => { list.textContent = ""; for (const s of cards) list.append(row({ radio: d.source === s.id, title: s.label, sub: s.fee ? T("wl.feePct", { p: s.fee / 100 }) : T("wl.noFee"), onclick: () => { d.source = s.id; drawSrc(); } })); };
-  drawSrc();
-  const holder = h("div");
-  const drawConfirm = () => {
-    holder.textContent = "";
-    if (!(Number(d.amount) > 0)) { holder.append(btn(T("wl.enterAmount"), "", null, { disabled: true })); return; }
-    holder.append(confirmButton(T("wl.addAmt", { amt: sym() + d.amount }), "money", "topup", `${d.source}:${d.amount}`, async (confirmation) => {
-      const r = await api("/api/wallet/topup", { amount: d.amount, source: d.source, confirmation, returnUrl: "/wallet#home" });
-      if (r.next) { leaveFor(r.next, `activity/topup/${r.id}`); return; }
-      say(T("wl.moneyAdded")); go(`activity/topup/${r.id}`);
-    }));
-  };
-  return { title: T("wl.addMoney"), body: frag(amountEntry("", (v) => { d.amount = v; drawConfirm(); }, T("wl.amountToAdd", { cur: w.currency })), h("p", { class: "k", text: T("wl.from") }), list, h("div", { class: "push" }, holder)) };
-};
+/* NO SCREENS.add. Putting money into a balance held here is the one thing
+   this board must not offer — see the note over the two verbs on home. A
+   wallet that already has a balance can still take it out (#withdraw, and the
+   button on Close), because stranding somebody's money is worse than any
+   tidiness. */
 
-SCREENS.withdraw = async () => {
-  const w = W.wallet;
-  if (!w.payoutLabel) return { title: T("wl.withdraw"), body: frag(note("info", T("wl.addBankFirst")), h("div", { class: "push" }, btn(T("wl.addBankAccount"), "", () => go("payout")))) };
-  const d = { amount: "" };
-  const holder = h("div");
-  const drawConfirm = () => {
-    holder.textContent = "";
-    const n = Number(d.amount);
-    if (!(n > 0)) { holder.append(btn(T("wl.enterAmount"), "", null, { disabled: true })); return; }
-    if (n * 100 > w.balance.minor) { holder.append(note("bad", T("wl.moreThanBalance"))); return; }
-    holder.append(confirmButton(T("wl.withdrawAmtTo", { amt: sym() + d.amount, label: w.payoutLabel }), "", "withdraw", d.amount, async (confirmation) => {
-      const r = await api("/api/wallet/withdraw", { amount: d.amount, confirmation });
-      say(T("wl.withdrawStarted")); go(`activity/withdrawal/${r.id}`);
-    }));
-  };
-  return { title: T("wl.withdraw"), body: frag(h("p", { class: "center lead", text: T("wl.available", { amt: w.balance.text }) }), amountEntry("", (v) => { d.amount = v; drawConfirm(); }, T("wl.amountToWithdraw", { cur: w.currency })),
-    h("div", { class: "list" }, row({ lead: badge("BANK"), title: T("wl.toLabel", { label: w.payoutLabel }), sub: T("wl.noFeeNextDay") })), h("div", { class: "push" }, holder)) };
-};
+/* NO SCREENS.withdraw EITHER. It was kept for a moment on the grounds that
+   an existing balance must never be stranded — but no balance has ever held
+   real money on this board: the only provider it has run against is the
+   stand-in, and Airwallex was never activated. A screen for taking money out
+   of a pot that cannot legally exist and never did is a screen that only
+   teaches people the pot is there. */
 
-/* PAYMENT METHODS AND SETTINGS */
 SCREENS.methods = async ([id]) => {
   const w = W.wallet;
   if (id) {
@@ -871,7 +860,7 @@ SCREENS.close = async () => {
   return { title: T("wl.closeWallet"), body: frag(
     h("p", { class: "lead", text: T("wl.closeWhat") }),
     has ? note("warn", T("wl.stillHave", { amt: w.balance.text })) : null,
-    h("div", { class: "push" }, has ? btn(T("wl.withdrawBalance"), "", () => go("withdraw")) : null,
+    h("div", { class: "push" },
       confirmButton(T("wl.closeWallet"), "danger", "close", "wallet", async (confirmation) => { await api("/api/wallet/close", { confirmation }); await load(); say(T("wl.walletClosed")); replace("home"); }))) };
 };
 
