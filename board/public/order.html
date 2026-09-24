@@ -85,6 +85,7 @@
 
 <script type="module">
 import { T, setLang, pickLang, langButton } from "/i18n.js";
+import { mountCheckout } from "/pay.js";
 
 /* Chinese unless the reader has said otherwise — see pickLang. */
 setLang(pickLang("zh"));
@@ -194,6 +195,20 @@ async function code(how, box, wx, ali) {
       body: JSON.stringify({ method: how }),
     });
     const j = await r.json().catch(() => null);
+    /* STRIPE INSTEAD OF A WALLET CODE. The route hands back one or the other
+       and never both — a real 收款码 where the WFOE's bank is connected, and
+       Stripe's own form where it is not; see the note over the fallback in
+       /api/order/:id/pay. The form is mounted in the page rather than
+       redirected to, so the address bar still says this shop: the same reason
+       the deal rooms mount it, written up over `ui_mode` in lib/stripe.js. */
+    if (r.ok && j?.secret) {
+      box.querySelector(".ways").remove();
+      const slot = el("div", "frame");
+      box.append(slot);
+      await mountCheckout(slot, { secret: j.secret, pk: j.pk });
+      watch();
+      return;
+    }
     if (r.ok && j?.qr) {
       box.querySelector(".ways").remove();
       const img = el("img", "qr");

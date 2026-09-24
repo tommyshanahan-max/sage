@@ -697,6 +697,25 @@ app.post("/api/hook/fee", express.raw({ type: "application/json", limit: "64kb" 
        is the board's own fee, paid on its own link. `group:row` is a payment
        between the two of them, made through Connect — the money went to the
        payee's account and the board's cut was taken by Stripe on the way. */
+    /* AN ORDER IN THE SHOP — the third shape, `order:<id>`. Checked before
+       the split below, because that one reads the part after the colon as a
+       row number and "order" is not one. Stripe is the witness here exactly
+       as it is for a deal: the buyer's own browser coming back proves
+       nothing, and this cannot be forged by editing a query string. */
+    if (ref.startsWith("order:")) {
+      const oid = shop.cleanId(ref.slice(6));
+      if (!oid) return res.json({ ok: true });
+      await change((board) => {
+        const o = board.orders.find((x) => x.id === oid);
+        if (!o || o.off || o.paid) return { ok: true };   // Stripe retries; once only.
+        o.paid = true;
+        o.pay = { ref: String(session.id || ""), how: "alipay",
+                  at: new Date().toISOString() };
+        return { ok: true, tell: o.by || "" };
+      });
+      return res.json({ ok: true });
+    }
+
     const [id, rowPart] = ref.split(":");
     if (!/^[a-f0-9]{20}$/.test(id)) return res.json({ ok: true });
     const row = rowPart === undefined ? -1 : Number(rowPart);
@@ -12715,7 +12734,6 @@ app.post("/api/order/:id/pay", express.json({ limit: "1kb" }), async (req, res) 
   const method = String(req.body?.method || "wechat");
   if (!id || !["wechat", "alipay"].includes(method)) return res.status(400).json({ error: "no" });
   const p = dealioQr();
-  if (!p) return res.status(400).json({ error: "off" });
 
   const board = await store.load(FILE);
   const o = board.orders.find((x) => x.id === id);
@@ -12724,6 +12742,54 @@ app.post("/api/order/:id/pay", express.json({ limit: "1kb" }), async (req, res) 
 
   const total = shop.orderTotal(o);
   if (!total) return res.status(400).json({ error: "amount" });
+
+  /* NO NATIVE WALLET PROVIDER? STRIPE, WHICH IS THE ONE THAT WORKS TODAY.
+   *
+   * This route was written for a provider that mints a real wallet code — a
+   * `wxp://` or an Alipay 收款码 that a scanner pays without opening
+   * anything. That is the WFOE's bank, and it is not connected: Airwallex
+   * refused the account on 21 Sep, so `dealioQr()` is empty and every press
+   * of the shop's own Alipay button has come back "off". The button has been
+   * on that page the whole time with nothing behind it.
+   *
+   * Stripe's Alipay is on and took a real payment on 24 Sep, so it stands in.
+   * It is not the same thing and the difference is worth writing down: a
+   * native code goes straight to the payment sheet, and this opens a page
+   * first — which is why Alipay shows 您即将离开支付宝 on the way in until
+   * the domain is whitelisted. Slightly worse, and available now.
+   *
+   * THE MONEY IS THE SELLER'S FROM THE START. No destination and no fee: the
+   * shop sells its own goods, so there is nobody to pass it on to. That is
+   * also what keeps this the right side of 二清 — see NOW.md. If this shop
+   * ever settles for somebody else, this branch is wrong and it is a licence
+   * question before it is a code question.
+   *
+   * The card is not offered here. The button that got pressed said Alipay.
+   */
+  if (!p) {
+    if (method !== "alipay" || !stripe.configured()) {
+      return res.status(400).json({ error: "off" });
+    }
+    try {
+      const session = await stripe.checkout({
+        amount: total, currency: "cny", fee: 0, destination: "",
+        method: "alipay",
+        /* A THIRD SHAPE OF REFERENCE — see the webhook. `order:` because a
+           bare id there already means a room's own fee, and two things
+           answering to one id is how the wrong row gets marked paid. */
+        ref: "order:" + o.id,
+        done: backHere(req, "/order/" + o.id),
+        label: o.lines[0]?.name || "Order",
+      });
+      if (!session?.client_secret) return res.status(502).json({ error: "stripe" });
+      return res.json({ ok: true, how: "alipay",
+        amount: store.fromMinor(total, "cny"),
+        secret: session.client_secret, pk: STRIPE_PK });
+    } catch (err) {
+      console.error("order stripe:", err.message);
+      return res.status(502).json({ error: "stripe" });
+    }
+  }
   try {
     const r = await p.qrPay({
       amount: total, currency: "CNY", method,

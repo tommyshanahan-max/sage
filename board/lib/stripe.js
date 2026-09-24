@@ -262,10 +262,20 @@ export async function checkout({ amount, currency, fee, destination, method, ref
         product_data: { name: label || "Payment" },
       },
     }],
-    payment_intent_data: {
-      application_fee_amount: fee > 0 ? fee : undefined,
-      transfer_data: { destination },
-    },
+    /* NO DESTINATION IS A PLAIN CHARGE INTO THIS ACCOUNT, and it has to be
+       left out rather than sent empty. Every charge this file made until now
+       was a destination charge — money passing through to somebody else's
+       account — because every one of them was between two members. A shop
+       selling its own goods is not that: the money is the seller's from the
+       start and there is nobody to transfer it to. Sent as
+       `transfer_data: {}` Stripe refuses the whole session, so the key is
+       absent entirely. */
+    ...(destination ? {
+      payment_intent_data: {
+        application_fee_amount: fee > 0 ? fee : undefined,
+        transfer_data: { destination },
+      },
+    } : {}),
   };
   /* WeChat Pay wants to know where the payer is standing — its flow differs
      between a phone browser and a desktop showing a QR code. "web" is the one
