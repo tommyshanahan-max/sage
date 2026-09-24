@@ -510,6 +510,15 @@
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z M4 21a8 8 0 0 1 16 0"/></svg>
     <span id="tabmelabel"></span>
   </a>
+  <!-- THE FIFTH TAB, WHICH THIS PAGE NEVER HAD. Messages, Cards, Browse and
+       Money all draw five; Profile drew four, so the bar lost a tab and every
+       other one slid sideways each time somebody came here — "it can't decide
+       which iteration it is". Hidden in the app by the server's own
+       {{INAPP}}, the same rule as everywhere else: see webOnly in server.js. -->
+  <a href="/dealio?in=1" id="tabmoneygo">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h18v10H3z"/><circle cx="12" cy="12" r="2.4"/></svg>
+    <span id="tabmoney"></span>
+  </a>
 </nav>
 
 <script type="module">
@@ -1523,6 +1532,8 @@ function paint() {
     $("tabcards").textContent = T("nav.cards");
     $("tabbrowse").textContent = T("nav.browse");
     $("tabmelabel").textContent = T("nav.profile");
+    $("tabmoney").textContent = T("nav.money");
+    $("tabmoneygo").hidden = "{{INAPP}}" === "1";
     $("tabme").href = location.pathname;
     $("tabs").hidden = false;
     document.body.classList.add("hastabs");
