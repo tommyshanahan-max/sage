@@ -2202,20 +2202,40 @@ pay-why: ## What a payer's phone actually saw when a pay button failed: make pay
 	@#
 	@# "at load"  — Stripe.js never arrived. The payer's network, or ours.
 	@# "at mount" — it arrived and Stripe refused the session. Ours, always.
+	@#
+	@# BOTH SIDES OF THE LINE, because it only read one and that cost another
+	@# round. A payment can fail before the form is ever asked for — the
+	@# server asks Stripe for a session and Stripe says no — and that failure
+	@# leaves nothing on the phone to report. So "no payment form has failed"
+	@# was printed at somebody whose payment had just failed, and it read as
+	@# "nothing happened". The server's own refusals are here too now.
 	@echo ""
+	@srv=$$($(COMPOSE) logs --tail=4000 board 2>/dev/null \
+	  | grep -E "checkout:|order stripe:|order qr:|dealio qr:" | tail -10); \
+	if [ -n "$$srv" ]; then \
+	  echo "  WHAT STRIPE TOLD THE BOX, when it asked for a payment:"; \
+	  echo ""; \
+	  echo "$$srv" | sed -E "s/^.*(checkout:|order stripe:|order qr:|dealio qr:)/   /"; \
+	  echo ""; \
+	fi
 	@out=$$($(COMPOSE) logs --tail=4000 board 2>/dev/null | grep "pay form failed:" | tail -10); \
 	if [ -n "$$out" ]; then \
-	  echo "  The last few phones that could not open a payment:"; \
+	  echo "  WHAT THE PHONE SAW, once the form was on its way:"; \
 	  echo ""; \
 	  echo "$$out" | sed "s/^.*pay form failed:/   /"; \
 	  echo ""; \
 	  echo "  at load   Stripe.js never arrived — the network, theirs or ours."; \
 	  echo "  at mount  Stripe refused the session — ours, and nothing the payer can do."; \
-	else \
-	  echo "  No payment form has failed since the board last started."; \
-	  echo "  A failure from before that went with the old container."; \
+	  echo ""; \
 	fi
-	@echo ""
+	@out=$$($(COMPOSE) logs --tail=4000 board 2>/dev/null \
+	  | grep -cE "pay form failed:|checkout:|order stripe:|order qr:|dealio qr:"); \
+	if [ "$$out" = "0" ]; then \
+	  echo "  Nothing has been refused since the board last started — neither by"; \
+	  echo "  Stripe when the box asked, nor on the phone afterwards."; \
+	  echo "  A failure from before that went with the old container."; \
+	  echo ""; \
+	fi
 
 logs: ## Tail logs from all services
 	$(COMPOSE) logs -f --tail=100
