@@ -504,6 +504,15 @@
     margin:.2rem 0 0}
   /* The money line under a name. Quiet and tabular — it is read as a figure,
      not as a sentence, and a column of them should line up. */
+  /* Asked of you, on their card: amber like the money it is, one tap to pay. */
+  .bcard .pask{display:flex;align-items:center;justify-content:space-between;gap:.8rem;
+    margin:.7rem 0 0;padding:.7rem .85rem;border-radius:.8rem;text-decoration:none;
+    color:var(--ink);background:color-mix(in srgb,#D99038 15%,var(--card,#fff));
+    border:1px solid color-mix(in srgb,#D99038 45%,transparent)}
+  .bcard .pask span{font-weight:600;font-size:.95rem}
+  .bcard .pask small{display:block;font-weight:400;font-size:.8rem;color:var(--ink-2)}
+  .bcard .pask b{flex:0 0 auto;background:#B8661A;color:#fff;border-radius:99px;
+    padding:.45rem 1.1rem;font-size:.9rem}
   .bcard .who .pmoney{display:block;margin:.3rem 0 0;font-size:.82rem;
     color:var(--ink-2);font-variant-numeric:tabular-nums}
   .bcard .who .psay .pchip{border:1px solid var(--line);background:var(--paper);
@@ -7181,6 +7190,27 @@ function drawCards() {
      * Two currencies print as two totals. Adding ¥ to A$ gives a number that
      * is wrong in both, and a wrong number about money is worse than none.
      */
+    /* WHAT THEY HAVE ASKED YOU FOR, with the button. The push that arrived
+       when they asked says only that something did; this is where it is.
+       The server puts these people first on the shelf. */
+    for (const a of (Array.isArray(m.asks) ? m.asks : [])) {
+      const sign = { cny: "\u00a5", usd: "$", aud: "A$", hkd: "HK$", eur: "\u20ac",
+        gbp: "\u00a3", jpy: "\u00a5" }[a.cur] || "";
+      // Bare digits get their commas — "¥2,000", not "¥2000" — and anything
+      // typed with its own sign or separators is left exactly as it was.
+      const body = /^\d+$/.test(a.amount) ? a.amount.replace(/\B(?=(\d{3})+(?!\d))/g, ",") : a.amount;
+      const amt = /^\d/.test(body) ? sign + body : body;
+      const ask = el("a", "pask");
+      ask.href = a.url;
+      const words = el("span", null, T("cards.asks", { amount: amt }));
+      const sub = [a.what, a.no ? T("rq.no", { n: String(a.no).padStart(4, "0") }) : ""]
+        .filter(Boolean).join(" \u00b7 ");
+      if (sub) words.append(el("small", null, sub));
+      ask.append(words, el("b", null, T("cards.pay")));
+      /* Outside the name's link: the row is a link to their page, and a link
+         inside a link is two taps fighting over one. */
+      card.append(ask);
+    }
     if (m.jobs) {
       const money = el("span", "pmoney");
       money.textContent = T(m.jobs === 1 ? "cards.paid1" : "cards.paid",

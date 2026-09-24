@@ -5206,6 +5206,12 @@ export const STRINGS = {
                         "他们填好收款方式之前，钱不会动。填好了你会看到。"],
   "dl.whoEg":          ["Their name", "对方的名字"],
   "dl.someone":        ["Somebody", "某人"],
+  /* THE INVOICE NUMBER on a request — see `no` in lib/request.js. 单号 and
+     never 发票: a fapiao is a tax document, and this is not one. */
+  "rq.no":             ["No. {n}", "单号 {n}"],
+  /* On a card on the Cards tab, when that person has asked you for money. */
+  "cards.asks":        ["Asks you for {amount}", "向你收 {amount}"],
+  "cards.pay":         ["Pay", "去付"],
   /* THE MONEY CARD ON YOUR OWN PAGE — see money-card.js. Asking reuses
      dl.make and the list reuses dl.sub and dl.st.*, so a row reads the same
      on Profile as on the page it opens. */

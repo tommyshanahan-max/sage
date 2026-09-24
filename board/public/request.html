@@ -409,7 +409,11 @@ function draw() {
   const line = el("div", "dueRow");
   line.append(el("span", "n", shown(q)));
   body.append(line);
-  if (q.what) body.append(el("p", "dueWhen", q.what));
+  /* What it is for, and its number — the one a payer quotes back, and writes
+     in their own books. See `no` in lib/request.js. */
+  const whatNo = [q.what, q.no ? T("rq.no", { n: String(q.no).padStart(4, "0") }) : ""]
+    .filter(Boolean).join(" \u00b7 ");
+  if (whatNo) body.append(el("p", "dueWhen", whatNo));
 
   if (q.state === "paid") {
     body.append(el("p", "done", T("rq.done", { who: q.from })));

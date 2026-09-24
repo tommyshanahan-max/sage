@@ -140,7 +140,8 @@ export async function mountMoneyCard(container, { device, T }) {
       const left = el("div");
       const title = q.to || q.what || T("dl.someone");
       left.append(el("b", null, title), el("small", null,
-        [T(q.way === "out" ? "dl.rowOut" : "dl.rowIn"), q.what === title ? "" : q.what, ago(q.at)]
+        [T(q.way === "out" ? "dl.rowOut" : "dl.rowIn"), q.what === title ? "" : q.what,
+          q.no ? T("rq.no", { n: String(q.no).padStart(4, "0") }) : "", ago(q.at)]
           .filter(Boolean).join(" · ")));
       const right = el("div", "ma", shown(q));
       right.append(el("em", null, T("dl.st." + q.state)));
