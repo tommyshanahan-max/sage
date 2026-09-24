@@ -27,7 +27,7 @@
    than a card with a zero on it that refuses to open. */
 
 const STYLE = `
-  .mtiles{display:grid;grid-template-columns:repeat(3,1fr);gap:.55rem;margin:.9rem 1.15rem 0}
+  .mtiles{display:grid;grid-template-columns:repeat(2,1fr);gap:.55rem;margin:.9rem 1.15rem 0}
   .mtiles > div{background:var(--card,#fff);border-radius:1rem;padding:.9rem .4rem .8rem;
     text-align:center;min-width:0;box-shadow:0 1px 3px rgba(21,27,40,.05),0 6px 18px rgba(21,27,40,.06)}
   .mtiles .mti{width:2.5rem;height:2.5rem;border-radius:50%;margin:0 auto;display:grid;place-items:center}
@@ -146,8 +146,9 @@ export async function mountMoneyCard(container, { device, T }) {
   tile("earn", '<path d="M4 17l6-6 4 4 6-7"/><path d="M15 8h5v5"/>', T("pm.earned"), paidIn, "");
   tile("month", '<path d="M4 6h16v14H4z"/><path d="M4 10h16"/><path d="M8 3v4M16 3v4"/>',
     T("pm.inMonth"), paidMonth, "");
-  tile("pend", '<circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/>', T("pm.pending"), dueIn,
-    dueIn.length ? T(dueIn.length === 1 ? "pm.req1" : "pm.reqN", { n: dueIn.length }) : "");
+  /* NO "PENDING" TILE. It said ¥2,100 in orange directly above a card whose
+     heading said "Wallet — ¥2,100 owed": the same number twice, one above
+     the other. The card keeps it, because the card has the people. */
   container.append(tiles);
 
   /* THE CARD: "Wallet — ¥2,100 owed ›", and who owes it. The heading is the
