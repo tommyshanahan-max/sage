@@ -5222,7 +5222,7 @@ export const STRINGS = {
   // Closed, the wallet row says only what is owed to you — see money-card.js.
   "pm.owed":           ["{amount} owed", "待收 {amount}"],
   "pm.owedN":          ["{n} owed", "{n} 笔待收"],
-  "pm.openWallet":     ["Open wallet", "打开钱包"],
+  "pm.owedHead":       ["Owed", "待收"],
   /* THE FOLD ON YOUR OWN PAGE: the key, Google, and the safety note, one tap
      down. They are read once; the page is opened every day. */
   "me.keyFold":        ["Your key & sign-in", "你的钥匙和登录"],

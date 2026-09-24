@@ -38,7 +38,37 @@ const STYLE = `
   .mcard .mchev{flex:0 0 auto;color:var(--muted,#8A939F);font-size:1.3rem;line-height:1;
     transition:transform .15s}
   .mcard[open] .mchev{transform:rotate(90deg)}
-  .mcard .mbody{padding:0 1rem .4rem;border-top:1px solid var(--hair,#EAECF1)}
+  .mcard .mbody{padding:.2rem 1rem 1rem;border-top:1px solid var(--hair,#EAECF1)}
+  /* OPENED, IT IS THE MOCKUP TOM DREW: "Owed", a white list of people with a
+     face, the amount and a chevron, the two buttons under it, and the wallet
+     as a row of its own. */
+  .mcard .mlab{margin:.9rem 0 .5rem;font-size:.95rem;color:var(--ink-2,#4E5968)}
+  .mcard .mlist{background:var(--card,#fff);border-radius:1rem;overflow:hidden;
+    box-shadow:0 1px 3px rgba(21,27,40,.06),0 6px 18px rgba(21,27,40,.06)}
+  .mcard .mlist a.mrow{padding:.85rem 1rem;border-top:1px solid var(--hair,#EAECF1)}
+  .mcard .mlist a.mrow:first-child{border-top:0}
+  .mcard .mface{flex:0 0 auto;width:2.6rem;height:2.6rem;border-radius:50%;color:#fff;
+    display:grid;place-items:center;font-weight:700;font-size:1.15rem}
+  .mcard .mrow .mid{flex:1;min-width:0}
+  .mcard .mrow .mdue{display:block;font-size:.92rem;color:#C0503C;font-weight:500}
+  .mcard .mrow .mchv{flex:0 0 auto;color:var(--muted,#8A939F);font-size:1.4rem;line-height:1}
+  .mcard .mi{display:inline-grid;place-items:center}
+  .mcard .mi svg{width:1.15rem;height:1.15rem;fill:none;stroke:currentColor;stroke-width:2;
+    stroke-linecap:round;stroke-linejoin:round}
+  .mcard .mgo a{display:flex!important;align-items:center;justify-content:center;gap:.4rem;
+    white-space:nowrap;font-size:.95rem!important;
+    border-radius:.9rem!important;padding:.85rem .5rem!important}
+  .mcard .mgo a.ask{background:var(--card,#fff)!important;color:var(--ink,#151B28)!important;
+    border:1.5px solid var(--line,#D5DAE3)!important}
+  .mcard .mgo a.snd{background:#0B2A7A!important;color:#fff!important;border-color:#0B2A7A!important}
+  .mcard a.mset{display:flex;align-items:center;gap:.8rem;margin-top:.8rem;padding:.85rem 1rem;
+    border-radius:1rem;background:var(--hair,#EAECF1);color:inherit;text-decoration:none}
+  .mcard a.mset .mico{width:2.4rem;height:2.4rem}
+  .mcard a.mset b{display:block;font-size:1rem}
+  .mcard a.mset small{display:block;font-size:.85rem;color:var(--ink-2,#4E5968)}
+  .mcard a.mset > span:nth-child(2){flex:1;min-width:0}
+  .mcard a.mall{display:block;text-align:center;padding:.8rem 0 0;font-size:.9rem;
+    font-weight:600;color:var(--accent,#3F68D8);text-decoration:none}
   .mcard .mgo{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin:.9rem 0 .2rem}
   .mcard .mgo.one{grid-template-columns:1fr}
   .mcard .mgo a{display:block;text-align:center;text-decoration:none;font-weight:600;
@@ -77,9 +107,25 @@ const SIGN = { cny: "¥", usd: "$", aud: "A$", hkd: "HK$", eur: "€", gbp: "£"
 
 /** The amount as typed, with its sign put on when it was typed without one. */
 function shown(q) {
-  const a = String(q.amount || "");
+  let a = String(q.amount || "");
+  /* Commas on a bare run of digits — "2,000", never "2000". Anything typed
+     with its own separators is left exactly as it was. */
+  if (/^\d+$/.test(a)) a = a.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   return /^\d/.test(a) && SIGN[q.cur] ? SIGN[q.cur] + a : a;
 }
+/** One colour per name, so the same person is the same circle every time. */
+const TINT = ["#3F68D8", "#E0A13A", "#2A9D63", "#7268C4", "#D4485C", "#2F8C9E"];
+const tint = (name) => TINT[[...String(name)].reduce((n, c) => n + c.charCodeAt(0), 0) % TINT.length];
+const SVG = {
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  send: '<path d="M21 3 10 14"/><path d="M21 3l-7 18-4-7-7-4z"/>',
+  wallet: '<path d="M3 7h18v12H3z"/><path d="M3 7l3-3h12l3 3"/><path d="M16 13h2"/>',
+};
+const icon = (k) => {
+  const i = el("span", "mi");
+  i.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + SVG[k] + "</svg>";
+  return i;
+};
 const num = (q) => parseFloat(String(q.amount || "").replace(/[^\d.]/g, "")) || 0;
 
 /** A total, but only when every row is in the same money. ¥2,000 plus $100 is
@@ -133,36 +179,52 @@ export async function mountMoneyCard(container, { device, T }) {
   card.append(sum);
 
   const body = el("div", "mbody");
-  const canSend = st.canSend !== false;
-  const go = el("div", "mgo" + (canSend ? "" : " one"));
-  go.append(link("ask", T("dl.make"), "/dealio?in=1&ask=in"));
-  if (canSend) go.append(link("", T("pm.send"), "/dealio?in=1&ask=out"));
-  body.append(go);
 
-  /* WHAT IS STILL OWED, three at most — the rest is one tap away on the page
-     that holds all of it. */
-  for (const q of open.slice(0, 3)) {
-    const r = link("mrow", undefined, "/dealio?in=1");
-    const left = el("div");
-    const title = q.to || q.what || T("dl.someone");
-    left.append(el("b", null, title), el("small", null,
-      [T(q.way === "out" ? "dl.rowOut" : "dl.rowIn"), q.what === title ? "" : q.what,
-        q.no ? T("rq.no", { n: String(q.no).padStart(4, "0") }) : "", ago(q.at)]
-        .filter(Boolean).join(" · ")));
-    const right = el("div", "ma", shown(q));
-    right.append(el("em", null, T("dl.st." + q.state)));
-    r.append(left, right);
-    body.append(r);
+  /* OWED, FIRST — the people, not the buttons. What is owed is why this was
+     opened; the buttons are for next time. */
+  if (open.length) {
+    body.append(el("p", "mlab", T("pm.owedHead")));
+    const list = el("div", "mlist");
+    for (const q of open.slice(0, 3)) {
+      const r = link("mrow", undefined, "/dealio?in=1");
+      const title = q.to || q.what || T("dl.someone");
+      const face = el("span", "mface", [...title][0].toUpperCase());
+      face.style.background = tint(title);
+      const mid = el("div", "mid");
+      mid.append(el("b", null, title));
+      /* The amount and its state as one line, in the colour of money not yet
+         in — and the invoice number beside it when there is one. */
+      mid.append(el("span", "mdue", shown(q) + " " + T("dl.st." + q.state)
+        + (q.no ? " · " + T("rq.no", { n: String(q.no).padStart(4, "0") }) : "")));
+      r.append(face, mid, el("span", "mchv", "\u203A"));
+      list.append(r);
+    }
+    body.append(list);
   }
 
-  /* THE FOOT: where the money lands, and the wallet — blue only while it
-     still needs setting up. */
-  const foot = el("div", "mfoot");
-  foot.append(link("", T("dl.whereMoney") + " \u203A", "/dealio?in=1&ask=where"));
-  if (wal && !wal.wallet) foot.append(link("wal", T("pm.walletSet") + " \u203A", "/wallet#setup"));
-  else if (wal) foot.append(link("", T("pm.openWallet") + " \u203A", "/wallet"));
-  else if (open.length > 3) foot.append(link("", T("pm.all") + " \u203A", "/dealio?in=1"));
-  body.append(foot);
+  const canSend = st.canSend !== false;
+  const go = el("div", "mgo" + (canSend ? "" : " one"));
+  const ask = link("ask", undefined, "/dealio?in=1&ask=in");
+  ask.append(icon("plus"), el("span", null, T("dl.make")));
+  go.append(ask);
+  if (canSend) {
+    const snd = link("snd", undefined, "/dealio?in=1&ask=out");
+    snd.append(icon("send"), el("span", null, T("pm.send")));
+    go.append(snd);
+  }
+  body.append(go);
+
+  /* WHERE THE MONEY LANDS, AS A ROW OF ITS OWN — and while the wallet still
+     needs setting up, that is what the row says under it. */
+  const set = link("mset", undefined, wal && !wal.wallet ? "/wallet#setup" : "/dealio?in=1&ask=where");
+  const sico = el("span", "mico");
+  sico.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + SVG.wallet + "</svg>";
+  const stx = el("span");
+  stx.append(el("b", null, T("dl.whereMoney")));
+  if (wal && !wal.wallet) stx.append(el("small", null, T("pm.walletSet")));
+  set.append(sico, stx, el("span", "mchv", "\u203A"));
+  body.append(set);
+  if (open.length > 3) body.append(link("mall", T("pm.all") + " \u203A", "/dealio?in=1"));
   card.append(body);
 
   container.append(card);
