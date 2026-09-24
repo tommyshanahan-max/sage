@@ -117,9 +117,18 @@ half too — `acct_1UIVjEJItwOUeslJ`, Aozhou Baba, live:
   saying they are was true on 23 Sep and is not true now.
 - **Stripe is waiting for nothing.** No requirements outstanding, so the
   identity document is no longer what is holding this account.
-- **Alipay and card are on. WeChat Pay is NOT** — "Stripe has not made it
-  available to this account", which is either still pending or refused, and
-  the API cannot tell those apart. Settings → Payment methods says which.
+- **Alipay and card are on. WeChat Pay is INELIGIBLE** — Settings → Payment
+  methods, 24 Sep. Not pending. Nothing is in a queue and waiting changes
+  nothing.
+
+  **Alipay being on is the clue.** Same account, same country, same currency —
+  and Stripe's WeChat Pay supports AUD. So it is not Australia and not the
+  currency. What is left is the business category: WeChat Pay applies its own
+  restricted list on top of Stripe's. Check Settings → Business details for
+  the industry this account is filed under. If that is accurate and it is
+  still ineligible, WeChat Pay through Stripe is closed to this business and
+  the WFOE's own merchant account is the route — which is what the ICP work
+  below was for.
 - **There is no bank account on it.** `lands in NOWHERE`, and payouts are
   manual. So money can be taken and cannot leave: adding a bank account is
   the next thing, and it is a thing Tom can do rather than a thing to wait on.
