@@ -133,14 +133,28 @@ half too — `acct_1UIVjEJItwOUeslJ`, Aozhou Baba, live:
   manual. So money can be taken and cannot leave: adding a bank account is
   the next thing, and it is a thing Tom can do rather than a thing to wait on.
 
-**AND ALIPAY TOOK REAL MONEY, 24 Sep 17:31 — watched on Tom's phone.**
-`make ask WHO="Tom" AMOUNT="¥1" FOR="Alipay test"` minted
-`paydealio.com/pay/bdbdbd21a5637b57e66f`, opened on a phone, Alipay chosen,
-paid. Through the live account, through Dealio, end to end.
+**ALIPAY HAS NOT TAKEN A REAL PAYMENT. A SESSION CLAIMED IT HAD, 24 Sep, AND
+WAS WRONG.**
 
-So the thing this product exists to do — take money from a Chinese payer —
-works today. It has been the assumption of every conversation since August
-that it did not.
+What happened: `make ask` minted a link, Tom opened it on his phone, chose
+Alipay, and the screen said it worked. It was `BOARD_DEALIO_DEMO=1` serving
+`/pay/:id/wallet` — `wallet-demo.html`, the stand-in, which says
+*演示 · 不会真实扣款* across the top and *这是付款流程的演示页面，不会扣款，
+也没有真实资金* at the bottom. No Stripe call. No money.
+
+The evidence was on screen the whole time and was read the wrong way round:
+the URL in the Alipay warning was `/pay/…/wallet`, which is the demo route
+and nothing else. It was taken for a Stripe return.
+
+**So this is still unproven.** A real test needs `BOARD_DEALIO_DEMO` off, or
+a route that cannot fall through to the stand-in. Until then nobody should
+say a Chinese payer can pay — that is the claim this file exists to stop
+being made twice.
+
+WHAT IS STILL TRUE, because it came from Stripe's own API rather than a
+screen: Alipay is available on the live account, charges and payouts are
+enabled, WeChat Pay is ineligible, and there is a bank account. The Alipay
+interstitial is real too — Alipay did open `paydealio.com` from a scan.
 
 **ONE WRINKLE, AND IT IS FIXABLE.** Alipay shows *您即将离开支付宝* — "you are
 about to leave Alipay" — before the payer reaches `paydealio.com`, with a
@@ -168,8 +182,8 @@ What would change the answer: a real share of this money needing to be spent
 in China rather than landing in Australia. Then the WFOE stops being a second
 wallet and becomes the shorter path.
 
-**WeChat Pay is a second door, not the door.** Wanting it open is right;
-waiting on it is not. Alipay is 700m-odd people and it is on.
+**WeChat Pay is a second door, not the door** — on the assumption Alipay
+works, which is the thing not yet shown.
 
 The two open questions are now WeChat Pay and a bank account — money can be
 taken and, with nothing for it to land in, sits in the Stripe balance. What
