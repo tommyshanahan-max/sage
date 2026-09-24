@@ -305,6 +305,41 @@
 
   .compose{display:flex;gap:.6rem;align-items:flex-end;margin:1.4rem 0 0;
     position:relative}
+
+  /* HOLD TO TALK. A round button beside the box, the size of a thumb, and it
+     does nothing on a tap — a voice note sent by accident is worse than one
+     not sent. It fills while it records so the hand knows it is working
+     without anybody reading anything. */
+  /* .compose button IS ONE RULE AWAY and paints every button in here the
+     accent colour — which made the microphone look like a second Send. Same
+     specificity, written after, so this one wins; a !important here would be
+     a fight with a rule that is right about every other button. */
+  .compose button.mic{flex:0 0 auto;width:44px;height:44px;padding:0;
+    border-radius:50%;border:1px solid var(--line);
+    background:var(--raise);color:var(--ink-2);font-size:.9rem;cursor:pointer;
+    display:grid;place-items:center;touch-action:none;user-select:none}
+  .compose button.mic.on{background:var(--t5);border-color:var(--t5);color:#fff}
+  /* The count, where the placeholder was. It replaces the box rather than
+     sitting beside it: while a thumb is down there is nothing to type into. */
+  .micsay{flex-grow:1;display:flex;align-items:center;gap:.5rem;height:44px;
+    padding:0 .9rem;border-radius:999px;background:var(--raise);
+    border:1px solid var(--t5);font-size:.85rem;color:var(--ink)}
+  .micsay b{font-variant-numeric:tabular-nums;font-weight:600}
+  .micsay i{font-style:normal;color:var(--muted);font-size:.78rem;margin-left:auto}
+
+  /* A VOICE NOTE IN THE ROOM. The width says the length, the way it does in
+     every wallet and chat app in China: a three-second note is a short pill
+     and a minute is a long one, so a thread of them can be read at a glance
+     before anything is played. */
+  .vn{display:flex;align-items:center;gap:.6rem;min-width:6.5rem;
+    padding:.55rem .8rem;border-radius:1.05rem;background:var(--raise);
+    border:1px solid var(--line);cursor:pointer}
+  .said.mine .vn{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+  .vn .play{flex:none;width:1.4rem;height:1.4rem;display:grid;place-items:center;font-size:.8rem}
+  .vn .bars{flex-grow:1;display:flex;align-items:center;gap:2px;height:1rem}
+  .vn .bars s{display:block;width:2px;border-radius:2px;background:currentColor;
+    opacity:.55;text-decoration:none}
+  .vn .secs{flex:none;font-size:.78rem;opacity:.8;font-variant-numeric:tabular-nums}
   /* A name said at somebody, and the picker that puts it there. Over the box,
      because under it is where the phone's own keyboard is. */
   .bub .at{font-weight:600;color:var(--accent)}
@@ -751,6 +786,7 @@ import { sheet } from "/share.js";
 import { moHear } from "/mo.js";
 import { NATIVE } from "/native.js";
 import { mountCheckout } from "/pay.js";
+import { canHear, recordBlob } from "/speak.js";
 
 const $ = (id) => document.getElementById(id);
 const el = (t, c, x) => { const n = document.createElement(t); if (c) n.className = c;
@@ -2484,6 +2520,46 @@ function paintRoom(g) {
       img.alt = "";
       wrap.append(img);
     }
+    /* SOMETHING SAID RATHER THAN TYPED. The width carries the length, so a
+       thread of them reads before anything is played — see the note on .vn.
+       Drawn instead of the bubble, never above it: a voice note has no text
+       and an empty grey bubble over it looks broken. */
+    if (m.voice) {
+      const v = el("div", "vn");
+      const play = el("span", "play", "▶");
+      const bars = el("div", "bars");
+      /* A DRAWING, NOT A WAVEFORM. The real shape of the audio would mean
+         decoding every note on every redraw for a picture nobody reads as
+         data. Seeded off the id so a given note always looks like itself
+         rather than flickering on every poll. */
+      let seed = 0;
+      for (const ch of m.id) seed = (seed * 31 + ch.charCodeAt(0)) % 9973;
+      const n = Math.max(8, Math.min(26, Math.round(m.voice.secs * 1.6) + 6));
+      for (let i = 0; i < n; i++) {
+        seed = (seed * 1103515245 + 12345) % 2147483648;
+        const h = 3 + (seed % 11);
+        const b = document.createElement("s");
+        b.style.height = h + "px";
+        bars.append(b);
+      }
+      const secs = el("span", "secs", m.voice.secs + "\u2033");
+      v.append(play, bars, secs);
+      let audio = null;
+      v.addEventListener("click", () => {
+        if (!audio) {
+          audio = new Audio("/api/say/" + m.id + "/voice");
+          /* The device header cannot go on an <audio> src, so the gate on the
+             route reads the cookie-free case the same way every other page
+             does — see voiceGate. If it refuses, say so once rather than
+             leaving a button that does nothing. */
+          audio.addEventListener("ended", () => { play.textContent = "▶"; });
+          audio.addEventListener("error", () => { secs.textContent = T("act.again"); });
+        }
+        if (audio.paused) { audio.play().catch(() => {}); play.textContent = "❚❚"; }
+        else { audio.pause(); play.textContent = "▶"; }
+      });
+      wrap.append(v);
+    }
     if (m.bill) {
       const c = el("div", "bill");
       c.append(el("span", "bamt", m.bill.amount || ""));
@@ -2551,6 +2627,81 @@ function paintRoom(g) {
      than in its members; see the note in /api/groups. So he is offered here
      without anything extra, and @ him works the way @ anybody does. */
   atPicker(ta, () => g.who.map((x) => x.handle).filter(Boolean));
+  /* HOLD TO TALK, BESIDE THE BOX.
+   *
+   * Only where the phone can actually record — canHear() asks that and not
+   * whether an API exists, which is the distinction speak.js was rewritten
+   * around after a button appeared on iPhones where it could never work.
+   *
+   * POINTER EVENTS AND NOT touchstart/mousedown. One pair covers a thumb, a
+   * mouse and a stylus, and setPointerCapture means letting go anywhere on
+   * the screen still ends the recording — without it, sliding a thumb off the
+   * button leaves the microphone open.
+   */
+  const mic = canHear() ? el("button", "mic", "\u25CF") : null;
+  if (mic) {
+    mic.type = "button";
+    mic.setAttribute("aria-label", T("grp.hold"));
+    let rec = null, tick = null, t0 = 0;
+    const meter = el("div", "micsay");
+    const num = el("b", null, "0\u2033");
+    meter.append(num, el("i", null, T("grp.letGo")));
+    const stopUi = () => {
+      mic.classList.remove("on");
+      if (tick) { clearInterval(tick); tick = null; }
+      if (meter.parentNode) meter.replaceWith(ta);
+    };
+    mic.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      try { mic.setPointerCapture(e.pointerId); } catch (err) { /* older browser */ }
+      if (rec) return;
+      mic.classList.add("on");
+      ta.replaceWith(meter);
+      t0 = Date.now();
+      num.textContent = "0\u2033";
+      tick = setInterval(() => {
+        num.textContent = Math.round((Date.now() - t0) / 1000) + "\u2033";
+      }, 200);
+      rec = recordBlob({
+        onError: (why) => {
+          rec = null; stopUi();
+          said.textContent = T(why === "not-allowed" ? "grp.noMic" : "act.again");
+        },
+        onBlob: async (blob, secs) => {
+          rec = null; stopUi();
+          /* A tap rather than a hold. Nothing was said, so nothing is sent
+             and nothing is announced. */
+          if (!blob) return;
+          try {
+            const b64 = await new Promise((ok, no) => {
+              const fr = new FileReader();
+              fr.onload = () => ok(String(fr.result).split(",")[1] || "");
+              fr.onerror = no;
+              fr.readAsDataURL(blob);
+            });
+            const r = await fetch("/api/group/voice", {
+              method: "POST", headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ device, group: g.id, audio: b64,
+                                     audioType: blob.type, secs }),
+            });
+            if (!r.ok) throw new Error("no");
+            said.textContent = "";
+            await load();
+          } catch (err) { said.textContent = T("act.again"); }
+        },
+      });
+    });
+    const letGo = (e) => {
+      if (!rec) return;
+      e.preventDefault();
+      const r = rec;
+      rec = null;
+      r.stop();
+    };
+    mic.addEventListener("pointerup", letGo);
+    mic.addEventListener("pointercancel", () => { if (rec) { const r = rec; rec = null; r.drop(); stopUi(); } });
+  }
+
   const send = el("button", null, T("note.send"));
   send.type = "button";
   send.addEventListener("click", async () => {
@@ -2580,7 +2731,7 @@ function paintRoom(g) {
     }
     send.disabled = false;
   });
-  c.append(ta, send);
+  if (mic) c.append(ta, mic, send); else c.append(ta, send);
   box.append(c);
   const said = el("p", "saycsaid");
   box.append(said);

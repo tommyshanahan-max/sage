@@ -2750,6 +2750,15 @@ const KINDS = new Map([
   ["image/jpeg", "jpg"], ["image/png", "png"], ["image/gif", "gif"],
   ["image/webp", "webp"], ["video/mp4", "mp4"], ["video/quicktime", "mov"],
   ["video/webm", "webm"],
+  /* VOICE. What a phone actually records, which is not one format: Safari
+     gives audio/mp4 and Chrome gives webm — see KINDS in public/speak.js,
+     which picks the first the browser admits to.
+     THEIR OWN EXTENSIONS AND NOT "webm" TWICE. findMedia looks a file up by
+     extension and EXT below maps it back to a type, so two types sharing an
+     extension would make audio/webm come back as video/webm — an <audio> tag
+     handed a video type, which some browsers refuse outright. */
+  ["audio/mp4", "m4a"], ["audio/webm", "weba"],
+  ["audio/ogg", "oga"], ["audio/wav", "wav"],
 ]);
 const MEDIA_MAX = 25 * 1024 * 1024;
 const EXT = new Map([...KINDS].map(([type, ext]) => [ext, type]));
@@ -9290,6 +9299,9 @@ app.get("/api/groups", notesOff, async (req, res) => {
           evt: m.evt || null,
           // The bill on the line, looked up now — see billView.
           bill: billView(board, m),
+          // Something said rather than typed. The id and how long it runs;
+          // the audio itself is a route — see /api/say/:id/voice.
+          voice: m.voice || null,
           /* THAT THERE IS A CODE, NEVER THE CODE ITSELF. The page draws an
              <img> pointing at the route below; a payment code sent down with
              every poll of every room is a payment code in a great many more
@@ -13882,6 +13894,8 @@ app.get("/api/door", notesOff, async (req, res) => {
                      evt: m.evt || null,
                      // The bill on the line, looked up now — see billView.
                      bill: billView(board, m),
+                     // See /api/say/:id/voice.
+                     voice: m.voice || null,
                      // That there is a code, never the code — see /api/say/:id/qr.png.
                      qr: Boolean(m.qr),
                      mine: how !== "peek" && m.by === me,
@@ -14175,6 +14189,89 @@ app.get("/api/say/:id/qr.png", async (req, res) => {
     console.error("say qr:", err.message);
     res.status(404).end();
   }
+});
+
+/* ---- SOMETHING SAID RATHER THAN TYPED ----------------------------------
+ *
+ * WHY VOICE, ON THIS BOARD ABOVE ALL. Half of it is in mainland China, where
+ * a voice note is not a fallback for people who cannot type — it is the
+ * default, all day, for everything. The other half writes English. The room
+ * already renders every line in both languages; audio is the one thing it
+ * could not carry.
+ *
+ * WHAT IS NEW HERE IS ALMOST NOTHING. putMedia and findMedia have stored the
+ * board's pictures since it was built, and public/speak.js already solves
+ * recording on the two phones that break it — an iPhone on the home screen,
+ * and a browser in China. This adds a kind to the first and a route to the
+ * second.
+ *
+ * MEMBERS OF THE ROOM, AND ONLY THEM. A photograph on this board is served
+ * by an unguessable id and nothing else, because a picture on a public
+ * announcement is public. A voice note is not: it is one person talking
+ * inside a room, and the id being long is not a reason to hand it to anybody
+ * who asks. So this one is gated on being in the room, every time.
+ */
+const voiceGate = async (req, res) => {
+  const me = hashDevice(String(req.get("x-board-device") || req.body?.device || ""), SALT);
+  if (!me) { res.status(400).json({ error: "no" }); return null; }
+  const board = await store.load(FILE);
+  return { me, board };
+};
+
+app.post("/api/group/voice", notesOff, express.json({ limit: "12mb" }), async (req, res) => {
+  const got = await voiceGate(req, res);
+  if (!got) return;
+  const { me, board } = got;
+  const id = String(req.body?.group || "");
+  /* The same membership question /api/group/say asks, asked the same way: a
+     room somebody is not in is a room they cannot put anything into. */
+  const g = board.groups.find((x) => x.id === id);
+  const door = store.doorKey(id);
+  const may = g ? g.members.includes(me) : (door ? doorAccess(board, me, door) : false);
+  if (!may) return res.status(403).json({ error: "gone" });
+
+  const data = String(req.body?.audio || "");
+  if (!data) return res.status(400).json({ error: "none" });
+  const buf = Buffer.from(data, "base64");
+  if (!buf.length) return res.status(400).json({ error: "none" });
+  /* TWO MINUTES OF SPEECH IS ABOUT A MEGABYTE, so anything past four is not a
+     voice note — it is a file, and this is not a file transfer. */
+  if (buf.length > 4 * 1024 * 1024) return res.status(413).json({ error: "tooBig" });
+  const type = String(req.body?.audioType || "").split(";")[0].trim();
+  if (!type.startsWith("audio/")) return res.status(415).json({ error: "badType" });
+  const media = await putMedia(buf, type);
+  if (!media) return res.status(415).json({ error: "badType" });
+
+  const secs = Math.max(1, Math.min(120, Math.round(Number(req.body?.secs) || 1)));
+  let said = "";
+  await change((b) => {
+    const row = store.cleanSay({
+      id: store.newId(), group: id, by: me, text: "", voice: { id: media, secs },
+    });
+    b.says.push(row);
+    said = row.id;
+    return true;
+  });
+  res.json({ ok: true, id: said });
+});
+
+/** The audio on a line. Gated on the room, unlike a picture — see above. */
+app.get("/api/say/:id/voice", notesOff, async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const got = await voiceGate(req, res);
+  if (!got) return;
+  const { me, board } = got;
+  const m = board.says.find((x) => x.id === String(req.params.id || ""));
+  if (!m || !m.voice) return res.status(404).end();
+  const g = board.groups.find((x) => x.id === m.group);
+  const door = store.doorKey(m.group);
+  const may = g ? g.members.includes(me) : (door ? doorAccess(board, me, door) : false);
+  if (!may) return res.status(403).end();
+  const found = await findMedia(m.voice.id);
+  if (!found) return res.status(404).end();
+  res.set("Content-Type", found.type);
+  res.set("X-Content-Type-Options", "nosniff");
+  res.sendFile(found.file);
 });
 
 /* THE BILL ON A LINE, READ WHEN THE LINE IS READ AND NOT WHEN IT WAS SAID.

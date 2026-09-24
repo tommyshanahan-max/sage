@@ -5129,6 +5129,14 @@ export const STRINGS = {
      been designed. The Chinese is what a Chinese payer already reads on every
      other payment screen they meet — 去付 and 已支付 — not a translation of
      the English. */
+  /* HOLD TO TALK. Three strings and no fourth: a label nobody sees, the one
+     word under the counter while a thumb is down, and the one refusal that
+     is a thing somebody can act on. The Chinese is what every app in China
+     already puts there — 松开发送 — not a translation of "let go to send". */
+  "grp.hold":          ["Hold to talk", "按住说话"],
+  "grp.letGo":         ["Let go to send", "松开发送"],
+  "grp.noMic":         ["This phone will not let us use the microphone.",
+                        "这台手机不允许使用麦克风。"],
   "grp.billPay":       ["Pay", "去付"],
   "grp.billPaid":      ["Paid", "已支付"],
 

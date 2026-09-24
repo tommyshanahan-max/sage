@@ -180,3 +180,103 @@ export function record(lang, on = {}) {
  * record() above is slower, costs money and has no interim words. It works on
  * both.
  */
+
+/** Record, and hand back the audio itself rather than words made out of it.
+ *
+ *  WHY THIS IS A SECOND FUNCTION AND NOT A FLAG ON THE ONE ABOVE. record()
+ *  exists to turn speech into text for the doorman: it posts to
+ *  /api/butler-hear, costs money per go, and its whole shape is built around
+ *  a sentence coming back. A voice note wants none of that — the audio IS the
+ *  message, nothing is transcribed, nothing is charged, and it goes into a
+ *  room rather than to him. Two purposes wearing one function is how a flag
+ *  ends up deciding whether something costs money.
+ *
+ *  EVERYTHING HARD IS SHARED. kind() picks the format the phone will actually
+ *  give — mp4 on Safari, webm on Chrome — and the getUserMedia dance below is
+ *  the one that works in a standalone iPhone app and in the mainland, which
+ *  is written out at length over record(). This differs in one line: what it
+ *  does with the blob.
+ *
+ *  TWO MINUTES AND IT STOPS ITSELF, rather than record()'s sixty seconds. A
+ *  voice note is a thing somebody means to be long; a question to a doorman
+ *  is not.
+ *
+ *  @param on { onState(recording), onBlob(blob, seconds), onError(why) }
+ *  @returns a handle with .stop() — send it — and .drop() — throw it away.
+ */
+export function recordBlob(on = {}) {
+  let rec = null;
+  let stream = null;
+  let dead = false;
+  let sending = false;
+  let began = 0;
+  let cap = 0;
+  const bits = [];
+
+  const shut = () => {
+    try { if (stream) stream.getTracks().forEach((t) => t.stop()); } catch { /* gone */ }
+    stream = null;
+  };
+
+  const fail = (why) => {
+    if (dead) return;
+    dead = true;
+    shut();
+    on.onState && on.onState(false);
+    on.onError && on.onError(why);
+  };
+
+  const send = () => {
+    shut();
+    on.onState && on.onState(false);
+    if (dead) return;
+    dead = true;
+    const type = (rec && rec.mimeType) || kind() || "audio/webm";
+    const blob = new Blob(bits, { type });
+    /* A tap on and straight off again. Not a failure, and a bubble with a
+       tenth of a second in it is worse than no bubble. */
+    if (blob.size < 1200) { on.onBlob && on.onBlob(null, 0); return; }
+    const secs = Math.max(1, Math.round((Date.now() - began) / 1000));
+    on.onBlob && on.onBlob(blob, secs);
+  };
+
+  navigator.mediaDevices.getUserMedia({ audio: true }).then((got) => {
+    if (dead) { got.getTracks().forEach((t) => t.stop()); return; }
+    stream = got;
+    const type = kind();
+    try {
+      rec = type ? new window.MediaRecorder(got, { mimeType: type }) : new window.MediaRecorder(got);
+    } catch {
+      return fail("kind");
+    }
+    rec.ondataavailable = (e) => { if (e.data && e.data.size) bits.push(e.data); };
+    rec.onstop = () => { if (sending) send(); else { shut(); on.onState && on.onState(false); } };
+    rec.onerror = () => fail("failed");
+    try { rec.start(); } catch { return fail("failed"); }
+    began = Date.now();
+    on.onState && on.onState(true);
+    cap = setTimeout(() => {
+      if (rec && rec.state === "recording") { sending = true; try { rec.stop(); } catch { /* gone */ } }
+    }, 120_000);
+  }).catch((e) => {
+    const why = e && (e.name === "NotAllowedError" || e.name === "SecurityError") ? "not-allowed" : "failed";
+    fail(why);
+  });
+
+  return {
+    stop() {
+      clearTimeout(cap);
+      sending = true;
+      if (rec && rec.state === "recording") { try { rec.stop(); } catch { send(); } }
+      else if (!dead) { dead = true; shut(); on.onState && on.onState(false); on.onBlob && on.onBlob(null, 0); }
+    },
+    drop() {
+      clearTimeout(cap);
+      sending = false;
+      dead = true;
+      if (rec && rec.state === "recording") { try { rec.stop(); } catch { /* gone */ } }
+      shut();
+      on.onState && on.onState(false);
+    },
+  };
+}

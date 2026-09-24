@@ -3069,6 +3069,25 @@ export function cleanSay(raw) {
      * 512 characters because that is past any payment code and short of
      * anything anybody would try to hide in one. */
     ...(raw.qr ? { qr: s(raw.qr, 512) } : {}),
+    /* SOMETHING SAID RATHER THAN TYPED.
+     *
+     * An id for the audio and how long it runs, which is all a bubble needs
+     * to draw itself before anybody presses anything. The seconds are stored
+     * because they cannot be known from the file without decoding it, and a
+     * voice note whose length is a spinner is one nobody presses.
+     *
+     * THE ONE UPLOAD THIS BOARD TAKES IN A ROOM, and it is not a hole in the
+     * contact rule the way a picture would be: stripContact cannot read a
+     * photograph of a WeChat id, and it cannot read audio either — but a
+     * voice note is a thing a person listens to, in a room the other person
+     * is already standing in, and the board's answer to somebody reading out
+     * their phone number is the same as its answer to somebody saying it in
+     * a room: report them. A picture is silent and forwardable; this is not.
+     */
+    ...(/^[a-f0-9]{20}$/.test(String(raw.voice?.id || ""))
+      ? { voice: { id: String(raw.voice.id),
+                   secs: Math.max(1, Math.min(120, Math.round(Number(raw.voice.secs) || 1))) } }
+      : {}),
   };
 }
 
