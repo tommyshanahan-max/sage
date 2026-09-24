@@ -81,7 +81,15 @@
   html{font-size:17px;-webkit-text-size-adjust:100%}
   body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
     font-size:1rem;line-height:1.5;-webkit-font-smoothing:antialiased}
-  main{max-width:34rem;margin:0 auto;padding:1.4rem 1.15rem 5rem}
+  /* THE TITLE WAS UNDER THE CLOCK. The page asks for viewport-fit=cover and
+     then never gave the notch its inch back, so on an iPhone "Messages" sat
+     behind the time and the island, and anything scrolled up ran straight
+     through the status bar. The padding gives the inch back; the strip below
+     keeps it clear once the list moves. */
+  main{max-width:34rem;margin:0 auto;
+    padding:calc(.7rem + env(safe-area-inset-top,0px)) 1.15rem 5rem}
+  body::before{content:"";position:fixed;top:0;left:0;right:0;z-index:40;
+    height:env(safe-area-inset-top,0px);background:var(--paper)}
   /* ---- the list of people -------------------------------------------------
      One row per PERSON, not per message: avatar, name, the last line, the
      time, and a dot if it is unread. Everything a WeChat row has and nothing
@@ -131,6 +139,11 @@
   .pile .sm:nth-child(1){transform:translate(-85%,-70%)}
   .pile .sm:nth-child(2){transform:translate(-15%,-70%)}
   .pile .sm:nth-child(3){transform:translate(-50%,-10%)}
+  /* Two or one, now that you are left out of your own groups' faces: the
+     three-corner layout with a corner missing sat lopsided in the square. */
+  .pile .sm:nth-child(1):nth-last-child(2){transform:translate(-82%,-50%)}
+  .pile .sm:nth-child(2):last-child{transform:translate(-18%,-50%)}
+  .pile .sm:only-child{width:84%;height:84%;transform:translate(-50%,-50%)}
   /* The ＋ circle's sibling: two blank heads, which says "more than one
      person" before anybody reads the word under it. */
   .one .pile.two{display:grid;place-items:center}
@@ -166,7 +179,8 @@
      the top of the screen when it lands rather than an inch down. */
   .thead{position:sticky;top:0;z-index:20;background:var(--paper);
     display:flex;align-items:center;gap:.6rem;
-    margin:-1.4rem 0 .9rem;padding:1.4rem 0 .7rem;
+    margin:calc(-.7rem - env(safe-area-inset-top,0px)) 0 .9rem;
+    padding:calc(.7rem + env(safe-area-inset-top,0px)) 0 .7rem;
     border-bottom:1px solid var(--hair)}
   .thead .tname{flex:1;min-width:0;text-decoration:none;color:var(--ink)}
   .thead .tname b{display:block;font-family:var(--serif);font-weight:400;
@@ -614,6 +628,9 @@
   .wroom .wm span{display:block;font-size:.82rem;color:var(--muted);
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .wroom .wm{flex:1;min-width:0}
+  /* The rewards room has no count, and an empty pill read as a broken one. */
+  .wroom .wn:empty{display:none}
+  #waitwrap{margin-top:1.6rem}
   .wroom .wn{flex:0 0 auto;font-size:.8rem;color:var(--muted);border:1px solid var(--line);
     border-radius:99px;padding:.1rem .6rem}
   .wperson{display:flex;align-items:center;gap:.8rem;padding:.7rem 0 .7rem 1rem;
@@ -669,7 +686,7 @@
   .can{display:flex;gap:.9rem;overflow-x:auto;padding:.1rem .1rem 1.1rem;
     margin:0 0 .4rem;scrollbar-width:none;-webkit-overflow-scrolling:touch}
   .can::-webkit-scrollbar{display:none}
-  .can .one{flex:0 0 auto;width:4.4rem;border:0;background:none;padding:0;
+  .can .one{flex:0 0 auto;width:5.2rem;border:0;background:none;padding:0;
     font:inherit;cursor:pointer;text-align:center;color:var(--ink)}
   .can .one b{display:block;margin:.4rem 0 0;font-size:.78rem;font-weight:600;
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -1373,9 +1390,14 @@ function drawWaiting() {
    * unconditional line left a heading over nothing on a quiet board. Counting
    * what was actually appended is right in all three cases and cannot come
    * apart from them again. */
-  $("waitlabel").textContent = T("note.waitHead");
-  $("waitsub").textContent = QUEUE.length
-    ? T("note.waitSub2", { n: QUEUE.length }) : "";
+  /* THE NUMBER GOES IN THE HEADING, AND THE PARAGRAPH GOES. It explained
+     that rooms open and people can be written to, over a list of rooms with
+     people in them — the rows say it, and nobody was reading two lines of
+     grey to find out. */
+  $("waitlabel").textContent = T("note.waitHead")
+    + (QUEUE.length ? " \u00b7 " + QUEUE.length : "");
+  $("waitsub").textContent = "";
+  $("waitsub").hidden = true;
 
   const box = $("waitrooms");
   fill(box);
@@ -1450,7 +1472,11 @@ function drawList(T0) {
   $("rulelabel").textContent = T("note.inbox");
   $("safety").textContent = T("note.safety");
   const unread = T0.reduce((n, t) => n + t.unread, 0);
-  $("sub").textContent = unread ? T("note.newOnes", { n: unread }) : T("note.inboxSub");
+  /* ONLY WHEN IT IS NEWS. "Introductions to you, and the ones you sent" under
+     the word Messages was a definition of the word Messages — a line every
+     visit that said nothing the list does not. "3 new" is worth the line. */
+  $("sub").textContent = unread ? T("note.newOnes", { n: unread }) : "";
+  $("sub").hidden = !unread;
 
   drawCan();
   drawWaiting();
@@ -1479,6 +1505,13 @@ function drawList(T0) {
   for (const r of rows) box.append(r.row());
 }
 
+/** A first name among these people, or the whole handle if two share it. */
+function shortHandle(h, among) {
+  const first = String(h || "").trim().split(/\s+/)[0] || "";
+  const same = among.filter((q) => String(q.handle || "").trim().split(/\s+/)[0] === first);
+  return same.length > 1 ? h : first;
+}
+
 /** When a group last had anything said in it — or when it was made, for one
  *  nobody has spoken in yet, so it does not sink to the bottom on day one. */
 function lastAt(g) {
@@ -1491,8 +1524,16 @@ function lastAt(g) {
  *  one of them, and the name, which is theirs or the names themselves. */
 function groupRow(g) {
   const who = (Array.isArray(g.who) ? g.who : []).filter(Boolean);
+  /* WITHOUT YOU. Every group you are in has you in it, so "Tom、Axel、Mo" on
+     Tom's own phone put his name at the front of every row and his face in
+     the corner of every pile — the one part of each row that told them apart
+     least. The count under the name still counts you. The comma is the
+     language's: 、 in an English list read as a typo. */
+  const others = who.filter((q) => !YOU.handle || q.handle !== YOU.handle);
+  const faces = others.length ? others : who;
+  const comma = document.documentElement.dataset.lang === "zh" ? "、" : ", ";
   const title = g.name
-    || who.map((q) => q.handle).filter(Boolean).slice(0, 3).join("、")
+    || faces.map((q) => shortHandle(q.handle, faces)).filter(Boolean).slice(0, 3).join(comma)
     || T("grp.title");
 
   const a = el("a", "trow");
@@ -1502,7 +1543,7 @@ function groupRow(g) {
      smudge — and the count under the name says how many there really are. */
   const wrap2 = el("div", "avwrap");
   const pile = el("div", "av pile");
-  for (const q of who.slice(0, 3)) {
+  for (const q of faces.slice(0, 3)) {
     const dot = el("span", "sm", initial(q.handle));
     dot.style.background = wash(q.handle);
     if (q.photo) {
@@ -3412,6 +3453,9 @@ async function sendDoor(key) {
 /** One face in the strip: their picture, their name, and what puts them on
  *  the list. Pressing opens the conversation, empty, with the box at the
  *  bottom — the same screen an existing thread opens. */
+/** The first word of a handle, unless somebody else on the strip shares it. */
+function shortName(h) { return shortHandle(h, CAN); }
+
 function drawCan() {
   /* THE STRIP IS THERE FOR A MEMBER EVEN WITH NOBODY IN IT, because the first
      thing in it is the ＋. Messages had no way to start anything at all —
@@ -3424,7 +3468,11 @@ function drawCan() {
   $("canwrap").hidden = WAITING || (!CAN.length && !YOU.handle);
   if ($("canwrap").hidden) return;
   $("canlabel").textContent = T("note.canHead");
-  $("cansub").textContent = T(CAN.length ? "note.canSub" : "note.canNone");
+  /* THE FACES ARE THE SENTENCE. "Tap a face to write" over a row of faces is
+     the row read aloud; it stays only when the row is empty, where it is the
+     one thing telling you how to fill it. */
+  $("cansub").textContent = CAN.length ? "" : T("note.canNone");
+  $("cansub").hidden = CAN.length > 0;
   const strip = $("can");
   fill(strip);
 
@@ -3464,7 +3512,11 @@ function drawCan() {
         { src: "/api/public-media?id=" + encodeURIComponent(q.photo), alt: "", loading: "lazy" });
       img.addEventListener("load", () => { av.textContent = ""; av.append(img); });
     }
-    b.append(av, el("b", null, q.handle));
+    /* FIRST NAMES, which is what fits. "Damon R…" and "Christop…" were a
+       full name cut off by a tile 4.4rem wide — the first name is what
+       anybody calls them anyway. Two people with the same one keep the
+       whole handle, cut or not, because a pair of "Chen"s is worse. */
+    b.append(av, el("b", null, shortName(q.handle)));
     // Only the deal is worth a word. "Matched" under every face is a label on
     // the one thing every face on this strip has in common.
     /* A word under the face only where it says something. "Matched" under
