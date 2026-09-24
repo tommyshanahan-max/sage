@@ -225,13 +225,20 @@ the keyboard. Zero when no keyboard is up, so nothing else changes.
   The hint read "e.g. China Merchants Bank", which is the bank; a domestic CNY
   transfer routes on the 开户行支行, and "招商银行" alone is where an interbank
   payment stalls and comes back.
-- **Not fixed, needs a decision: `wl.cnChecked`** still says *"Payments into
-  China are checked first, usually 1–2 days"*. That was true of money arriving
-  from abroad. A WFOE paying a Chinese supplier is **domestic and same-day**,
-  so on the main path this is now a false promise about timing — in the slow
-  direction, which is the safer way to be wrong, but still wrong. Left alone
-  rather than silently rewritten, because it is a promise about money arriving
-  and both readings still exist.
+- **Fixed: the China timing line.** It said *"Payments into China are checked
+  first, usually 1–2 days"* — true of money arriving from abroad, and the
+  payer is the WFOE, in China, so this is a **domestic transfer** and
+  same-or-next-day like anywhere else. Every region now reads the same line.
+  The string is kept rather than deleted: it will be wanted again the day
+  anything outside China pays a Chinese member directly.
+- **Fixed: a chooser with one choice.** *"When someone sends you money, where
+  should it go?"* sat over a single row with a tick beside it. The other
+  answer was "keep it in your wallet", which is the float this board cannot
+  hold and which went months ago. It is a statement now.
+- **Fixed: "your account details go to the provider."** The wallet's own
+  plumbing, and the wrong subject on a screen about being wired money. The
+  fact somebody wants there is what **we** keep, which is true whoever moves
+  it: only the last four digits.
 
 **THE PAYER'S HALF IS NOT AFFECTED.** The 开票信息 in `lib/fapiao.js` stays:
 that is not somebody's tax affairs, it is the invoice **we** issue **them**,

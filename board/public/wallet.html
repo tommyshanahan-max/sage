@@ -809,10 +809,19 @@ SCREENS.payout = async (_, q) => {
       inputmode: ["bsb", "accountNumber", "abn", "routing"].includes(key) ? "numeric" : null });
     form.append(h("div", { class: "field" }, h("label", { for: id, text: label }), inputs[key], hint ? h("span", { class: "hint", text: hint }) : null));
   }
-  const list = h("div", { class: "list", role: "radiogroup", "aria-label": T("wl.whereShouldGo") });
+  /* ONE OPTION IS NOT A QUESTION. It asked "when someone sends you money,
+     where should it go?" over a single row with a tick beside it — the other
+     answer was "keep it in your wallet", which is the float this board cannot
+     hold and which went months ago. A chooser with one choice is furniture,
+     and a tick beside it implies a decision nobody made.
+     THE TIMING LINE IS THE SAME EVERYWHERE NOW. mainland China used to read
+     "payments into China are checked first, usually 1-2 days", which is true
+     of money arriving from abroad — and the payer is the WFOE, in China, so
+     this is a domestic transfer and same-or-next-day like anywhere else. */
+  const list = h("div", { class: "list" });
   const draw = () => {
     list.textContent = "";
-    list.append(row({ radio: mode === "bank", title: w.payoutLabel ? T("wl.myBankIs", { label: w.payoutLabel }) : T("wl.straightToMine"), sub: w.region === "CN" ? T("wl.cnChecked") : T("wl.usuallyNextDay"), onclick: () => { mode = "bank"; draw(); } }));
+    list.append(row({ title: w.payoutLabel ? T("wl.myBankIs", { label: w.payoutLabel }) : T("wl.straightToMine"), sub: T("wl.usuallyNextDay") }));
     form.hidden = mode !== "bank" || (Boolean(w.payoutLabel) && !showNew);
   };
   let showNew = !w.payoutLabel;
@@ -830,7 +839,7 @@ SCREENS.payout = async (_, q) => {
     } catch (err) { save.disabled = false; showError(err); }
   });
   return { title: T("wl.gettingPaid"), body: frag(
-    h("p", { class: "lead", text: T("wl.whereShouldGo") }),
+    h("p", { class: "lead", text: T("wl.weSendTo") }),
     list, change, form,
     /* WHAT THEIR INVOICE HAS TO SAY, said here rather than after the first
        one is rejected. Four things, and a supplier who gets them wrong is

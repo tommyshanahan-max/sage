@@ -7309,10 +7309,19 @@ export const STRINGS = {
   /* payout */
   "wl.gettingPaid":    ["Getting paid", "收款方式"],
   "wl.whereShouldGo":  ["When someone sends you money, where should it go?", "别人给你转钱，到哪里？"],
+  /* A STATEMENT, NOT A QUESTION, because there is only one answer left — the
+     other was "keep it in your wallet" and this board holds no money. */
+  "wl.weSendTo":       ["We send your money straight to your bank.",
+                        "我们直接把钱打到你的银行账户。"],
   "wl.keepInWallet":   ["Keep it in my wallet", "留在钱包里"],
   "wl.withdrawWhenever":["Withdraw whenever you like", "随时可以提现"],
   "wl.myBankIs":       ["My bank account ({label})", "我的银行卡（{label}）"],
   "wl.straightToMine": ["Straight to my bank account", "直接到账我的银行卡"],
+  /* UNUSED SINCE THE PAYER BECAME THE WFOE. Kept rather than deleted because
+     it is true and will be wanted again the day anything outside China pays a
+     Chinese member directly — money arriving from abroad really is checked
+     first. It is a domestic transfer that is same-or-next-day, and that is
+     the only case the product has today. */
   "wl.cnChecked":      ["Payments into China are checked first, usually 1–2 days", "入境资金需先审核，一般 1–2 个工作日"],
   "wl.usuallyNextDay": ["Usually the same or next working day", "一般当天或次个工作日到账"],
   "wl.useDifferent":   ["Use a different account", "换一张卡"],
@@ -7390,8 +7399,12 @@ export const STRINGS = {
                         "例如：招商银行上海分行徐汇支行"],
   "wl.cnAccount":      ["Bank account or UnionPay card number", "银行账号或银联卡号"],
   "wl.ibanOr":         ["Account number or IBAN", "银行账号或 IBAN"],
-  "wl.detailsToProv":  ["Your account details go to the provider. The Exchange keeps only the last four digits.",
-                        "账户信息只发给持牌机构，The Exchange 只保留后四位。"],
+  /* NOT "your account details go to the provider". That is the wallet's own
+     plumbing and it is the wrong subject on a screen about being wired money
+     — the fact somebody wants here is what WE keep, which is true whoever
+     moves it. */
+  "wl.detailsToProv":  ["We keep only the last four digits.",
+                        "我们只保留后四位。"],
   "wl.finish":         ["Finish", "完成"],
   "wl.save":           ["Save", "保存"],
   "wl.saved":          ["Saved.", "已保存。"],
