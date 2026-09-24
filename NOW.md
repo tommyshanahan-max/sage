@@ -312,7 +312,24 @@ hundred lines further down, so every one of them came out wearing a grey
   accent directly under the figure, in the slot the drawing gives to "Still
   to come". Still accent, now at the weight of the line it sits in.
 
-**STILL TWO PAGES, AND THIS IS THE LOOSE END.** `/wallet` keeps its own home,
+**ONE PAGE NOW.** `/wallet` no longer draws a home — it forwards to
+`/dealio?in=1`. It had kept a near-duplicate home a version behind, and the
+cards that say "Open wallet" (`money-card.js`, `wallet-card.js`) pointed at
+it, so the tab showed the new screen and the card showed the old one and
+which you got depended on the door. That was reported as *"I still see the
+old money page"* and it was true. Everything behind a hash stays: `#payout`
+(bank, ABN, GST, SWIFT, IBAN), `#setup`, `#verify`, `#settings`, `#limits`,
+`#methods`, `#send`, `#request`, `#activity`.
+
+**And a hash is now the only way in, so the hash screens had to be safe.**
+Every one of them opens `const w = W.wallet` and reads a field off it on the
+next line — fine while home sent anybody without a wallet to setup, and not
+fine once home forwards. `/wallet#settings` for somebody who never set one up
+threw on `w.passkeys` and answered *"Couldn't reach the Exchange"*, which is a
+lie about the network. Guarded in one place in `paint()`, with setup, help and
+home exempt.
+
+**THE OLD LOOSE END, KEPT FOR THE RECORD:** `/wallet` keeps its own home,
 which is now a near-duplicate of this one. It was not deleted because the
 screens behind it are the only way to reach **setup, identity, limits and the
 bank details** — including the ABN/GST and SWIFT/IBAN work from today. Two

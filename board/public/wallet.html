@@ -374,7 +374,24 @@ async function paint() {
   const back = returning();
   const { parts, q } = route();
   const name = parts[0];
-  const scr = SCREENS[name] || SCREENS.home;
+  let scr = SCREENS[name] || SCREENS.home;
+  /* NO WALLET, NO WALLET SCREENS — CHECKED IN ONE PLACE.
+   *
+   * Every screen here opens with `const w = W.wallet` and reads a field off
+   * it on the next line. That was safe while the only way in was the home
+   * screen, which sent anybody without a wallet to setup. The home screen
+   * now forwards to the money screen, so a hash IS the way in — and
+   * /wallet#settings for somebody who has never set one up threw on
+   * `w.passkeys`, was caught here, and answered "Couldn't reach the
+   * Exchange", which is a lie about the network.
+   *
+   * Three screens are exempt. setup, which is how you get a wallet; help,
+   * which is where you go when something is wrong; and home, which no longer
+   * draws anything at all — it forwards to the money screen, and it must do
+   * that whether or not a wallet exists. Catching home here sent everybody
+   * without one to setup and the forward never ran, which is the same
+   * complaint this whole change is answering. */
+  if (!W?.wallet && !["setup", "help", "home"].includes(name)) scr = SCREENS.setup;
   $("screen").textContent = "";
   $("screen").append(spinner(T("wl.loading")));
   let out;
@@ -456,89 +473,31 @@ function amountEntry(initial, onChange, label) {
 /* ---- screens ---- */
 const SCREENS = {};
 
+/* THE WALLET HAS NO HOME ANY MORE. IT SENDS YOU TO THE MONEY SCREEN.
+ *
+ * There is one money screen and it is /dealio?in=1 — the hero, the two
+ * verbs, and Pending and Deals as folds. This page kept its own home as
+ * well, a near-duplicate a version behind, and every card that says "Open
+ * wallet" pointed at it. So the tab showed the new screen and the card
+ * showed the old one, and which you got depended on which door you used.
+ * That was reported as "I still see the old money page", and it was true.
+ *
+ * WHAT STAYS. Everything behind a hash: #payout (the bank, the ABN and GST,
+ * the SWIFT and IBAN), #setup, #verify, #settings, #limits, #methods, #send,
+ * #request, #activity. Those are real screens with no other address, and the
+ * money screen links to #payout by name. Only the bare home goes.
+ *
+ * replace() AND NOT href, so the back button returns to wherever they came
+ * from rather than to this address, which would send them straight out
+ * again.
+ */
 SCREENS.home = async () => {
-  if (!W.wallet) return SCREENS.setup([]);
-  const w = W.wallet;
-  /* TWO VERBS. It was four — Send, Request, Add, Withdraw — and the last two
-     existed only to move money into and out of a balance held here.
-     THE BOARD CANNOT HOLD MONEY AND MUST NOT LOOK AS THOUGH IT DOES. Holding
-     other people's money is a licence in Australia and 二清 in China, and
-     Stripe's own terms forbid it on this kind of account. A float is also the
-     thing that put a zero in the biggest type on the screen, that needed a
-     Withdraw button, a bank form and a balance to sit in.
-     Nothing is lost: the send screen already charges a card or a bank at the
-     moment of sending, which is what a top-up was for one step earlier. */
-  const acts = h("div", { class: "acts" },
-    h("button", { class: "act", type: "button", onclick: () => go("send") }, T("wl.send")),
-    h("button", { class: "act", type: "button", onclick: () => go("request") }, T("wl.request")));
-
-  /* THE DEALS, AND THE FIGURE OVER THEM, OFF ONE OBJECT.
-   *
-   * This screen used to read its hero from the provider ledger and its list
-   * from somewhere else, and on a board whose provider is `test` that is a
-   * headline of A$0.00 sitting over real money. One call, one source: the
-   * figure is the sum of the column underneath it, always, by construction.
-   *
-   * A FAILED CALL IS NOT AN EMPTY WALLET. Answering 0 because a fetch fell
-   * over is the app telling its owner they have not been paid. */
-  let books = null;
-  try { books = await api("/api/books"); }
-  catch { books = null; }
-  /* ONE PAIR PER CURRENCY AND NEVER ADDED TOGETHER — the rule the Earned card
-     has always followed: ¥30,000 and A$2,000 are two numbers and one of them
-     needs a rate this board would have to invent. So the biggest currency is
-     the hero and the rest get a quiet line.
-     THE REST HAD NO LINE AT ALL, and that is not tidiness, it is money
-     missing from a money screen: a board with A$32,700 earned and ¥30,000
-     still to come showed the first and silently dropped the second. */
-  const pots = books?.money || [];
-  const money = pots[0] || null;
-  const earned = money ? money.earned : (w.earned || w.balance).text;
-  const pending = money ? (money.pendingMinor ? money.pending : "")
-    : (w.pending && w.pending.minor ? w.pending.text : "");
-  const others = pots.slice(1).map((m) => [
-    m.earnedMinor ? T("earn.lab") + " " + m.earned : "",
-    m.pendingMinor ? T("earn.waiting") + " " + m.pending : "",
-  ].filter(Boolean).join(" · ")).filter(Boolean);
-
-  const needs = [...w.incoming.map((t) => row({ lead: face(t.with.handle), title: T("wl.sentYou", { who: t.with.handle, amt: t.amount.text }), sub: t.note || T("wl.acceptIn24"), onclick: () => go(`activity/transfer/${t.id}`) })),
-    ...w.requests.filter((r) => r.direction === "in").map((r) => row({ lead: face(r.with.handle), title: T("wl.requestedAmt", { who: r.with.handle, amt: r.amount.text }), sub: r.note, onclick: () => go(`activity/request/${r.id}`) }))];
-
-  const deals = books?.deals || [];
-  return { title: T("wl.title"), action: { label: T("wl.settings"), icon: "gear", run: () => go("settings") }, body: frag(
-    h("section", { class: "balance", "aria-label": T("wl.balance") },
-      /* EARNED AND STILL TO COME. The slab read "Balance A$0.00" — the
-         biggest thing on the screen, a zero, and a claim that this board
-         holds money. These two are true of a wallet that holds nothing: what
-         has reached you, and what is on its way.
-         STILL TO COME ONLY WHEN THERE IS SOME. A second number reading 0.00
-         beside the first is the empty this screen was full of. */
-      h("p", { text: T("earn.lab") }),
-      h("p", { class: "v", text: earned }),
-      pending ? h("p", { style: "font-size:.95rem;opacity:.92", text: T("earn.waiting") + " " + pending }) : null,
-      h("p", { style: "font-size:.85rem;opacity:.8", text: T("wl.straightToBank") + " · " + (w.payoutLabel || T("wl.noBankYet")) }),
-      /* THE OTHER CURRENCIES GO BELOW THE BANK LINE, NOT ABOVE IT.
-         Sat directly under the hero they land in the slot "Still to come"
-         occupies, and a reader binds the two: A$32,700 over "Still to come
-         ¥30,000" reads as one pair in the four seconds this screen gets,
-         when they are two currencies that must never be added. Below the
-         bank line the pairing is broken and each still carries its own
-         sign. */
-      ...others.map((t) => h("p", { style: "font-size:.85rem;opacity:.72", text: t }))),
-      /* THE REGION, THE CURRENCY AND THE IDENTITY STATE USED TO SIT HERE, as
-         a third grey line under the bank. Three of them: a country nobody
-         needs reminding of, a currency already on the front of the number
-         above it, and an identity state that the warning row below says
-         properly and with something to press. A screen gets one glance. */
-    acts,
-    w.verified !== "verified" ? note("warn", T("wl.confirmToMove"), h("button", { type: "button", class: "chip", onclick: () => go("verify"), text: T("wl.confirmNow") })) : null,
-    needs.length ? h("p", { class: "k", text: T("wl.needsYou") }) : null,
-    needs.length ? h("div", { class: "list" }, ...needs) : null,
-    h("p", { class: "k", text: T("wl.deals") }),
-    deals.length
-      ? h("div", null, ...deals.map((d) => dealDrop(d, books)))
-      : h("div", { class: "list" }, row({ title: T("wl.nothingYet"), sub: T("wl.nothingYetSub") })),
-  ) };
+  location.replace("/dealio?in=1");
+  /* A body, because paint() will draw whatever comes back before the
+     navigation happens. One line, and never a spinner: a spinner on a screen
+     that is leaving says something is loading here, and nothing is. */
+  return { title: T("wl.title"), noBack: true, body: frag(
+    h("p", { class: "lead center", text: T("wl.moved") })) };
 };
 
 /* ONE DEAL: A SUMMARY LINE THAT DROPS DOWN.
@@ -704,11 +663,6 @@ SCREENS.sources = async () => {
 };
 
 SCREENS.payout = async (_, q) => {
-  /* REACHED DIRECTLY NOW, from the money screen, by somebody who may have no
-     wallet at all — and the first thing below reads w.region off it. That
-     threw, paint() caught it, and the address answered with a blank screen
-     and an error toast. The same line SCREENS.home has had all along. */
-  if (!W.wallet) return SCREENS.setup([]);
   const w = W.wallet;
   const setup = q.get("setup") === "1";
   /* AN ABN FIRST, BECAUSE WITHOUT ONE 47% OF THE PAYMENT IS WITHHELD.

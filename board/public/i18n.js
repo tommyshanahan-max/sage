@@ -7343,6 +7343,10 @@ export const STRINGS = {
                         "没有地址，国际汇款会被银行卡住。"],
 /* THE DEALS COLUMN ON THE WALLET HOME. Labels on figures, so each one is as
    short as a label can be. Nothing here explains what a margin is. */
+  /* Seen for an instant while the money screen opens, and by anybody whose
+     browser refuses the redirect. Not "redirecting" — that is a word about
+     the machinery. */
+  "wl.moved":          ["Opening your money screen…", "正在打开收款页…"],
   "wl.deals":          ["Deals", "对账"],
   "wl.someone":        ["Somebody", "某人"],
   "wl.noSupplier":     ["no supplier", "没供应商"],
