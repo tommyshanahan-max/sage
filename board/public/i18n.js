@@ -7330,6 +7330,16 @@ export const STRINGS = {
   "wl.yourAddress":    ["Your address", "你的地址"],
   "wl.addressWhy":     ["Banks hold international payments without one.",
                         "没有地址，国际汇款会被银行卡住。"],
+/* THE DEALS COLUMN ON THE WALLET HOME. Labels on figures, so each one is as
+   short as a label can be. Nothing here explains what a margin is. */
+  "wl.deals":          ["Deals", "对账"],
+  "wl.someone":        ["Somebody", "某人"],
+  "wl.noSupplier":     ["no supplier", "没供应商"],
+  "wl.dIn":            ["Invoiced", "开票金额"],
+  "wl.dCny":           ["Banked in yuan", "人民币实收"],
+  "wl.dOut":           ["Paid out", "付出"],
+  "wl.dGap":           ["Margin", "毛利"],
+  "wl.dInvTo":         ["Invoice to", "发票抬头"],
   "wl.bsb":            ["BSB", "BSB"],
   "wl.sixDigits":      ["Six digits", "六位数字"],
   "wl.accountNumber":  ["Account number", "银行账号"],

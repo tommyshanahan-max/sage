@@ -220,6 +220,39 @@ needed rather than as paperwork.
   margin shown is gross, before any tax.** Nobody should be planning off it
   as though it were profit.
 
+## The wallet IS the deals column now — built 24 Sep, never deployed
+
+Tom's sketch (`/tmp` mock, Scenario 1): a phone showing **Earned here**, a big
+number, **Still to come**, **Straight to · <bank>**, two pills, and the deal
+underneath. Then: *"even the high level deal summaries the deals could be a
+column that drops down."*
+
+So `/wallet` home is now that. What changed:
+
+| | |
+|---|---|
+| **The hero and the list come off ONE call** | `/api/books`. It read its figure from the provider ledger and its list from somewhere else, and on a board whose provider is `test` that is a headline of **A$0.00 over real money**. The figure is now the sum of the column under it by construction. |
+| **A column of deals that drop down** | Native `<details>`, one line each: the two names and what came in. Open: invoiced, banked in yuan, paid out, margin, and the paperwork marks. Coarse first, finer on a tap — opening in place so a column can be read down. |
+| **Gone from the hero** | `Australia · AUD · identity not confirmed yet` — a country nobody needs reminding of, a currency already on the front of the number above it, and an identity state the warning row below says properly and with something to press. |
+| **Gone from home** | Recent / See all / Payment methods / Help. Methods and Help were already in Settings; the full payment history is now a Settings row so it did not simply stop existing. |
+
+**Two things caught by looking at it rather than reading it:**
+
+- **A second currency was silently dropped.** A$32,700 earned and ¥30,000
+  still to come showed the first only. Now shown — **below the bank line, not
+  above it**, because directly under the hero it lands where "Still to come"
+  sits and a reader binds the two in the four seconds this screen gets. They
+  are currencies that must never be added.
+- **Long names wrapped** and shoved the figure down, so the column stopped
+  being a column. One line each now (`min-width:0` is the half that is always
+  forgotten — without it a grid track will not shrink below its content and
+  the ellipsis never fires).
+
+**What has NOT moved.** Send and Request still write to the wallet's own
+provider ledger, which the hero no longer reads from. On a `test` provider
+that ledger is empty so nothing disagrees today — but it is the seam, and it
+is what the section below is about.
+
 ## Next: Dealio absorbs the wallet
 
 **The problem.** Two money screens, both with Send, Request and a list of

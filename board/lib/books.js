@@ -170,8 +170,33 @@ export function books(rows, { toMinor, fromMinor }, { feePct = 5 } = {}) {
       out: fromMinor(o.outMinor, o.cur), inMinor: o.inMinor, outMinor: o.outMinor }))
     .sort((a, b) => b.inMinor - a.inMinor);
 
+  /* EARNED AND STILL TO COME, worked out here so that the screen showing both
+     the figure and the list under it reads them off ONE object. The wallet
+     home drew its hero from the provider ledger and its column from the
+     deals, and on a board whose provider is `test` that is a headline of
+     zero over a list of real money.
+     IN ONLY, and per currency, never added together — the same rule the
+     Earned card on Profile has always followed. Money going out is what this
+     person OWES, and an Earned figure that quietly includes it is wrong in
+     the direction that flatters. */
+  const purse = new Map();
+  for (const d of deals) {
+    const a = d.in;
+    if (!a || !a.cur || !a.minor) continue;
+    const pot = purse.get(a.cur) || { cur: a.cur, earnedMinor: 0, pendingMinor: 0 };
+    if (a.state === "paid") pot.earnedMinor += a.minor;
+    else if (a.state === "due" || a.state === "waiting") pot.pendingMinor += a.minor;
+    purse.set(a.cur, pot);
+  }
+  const money = [...purse.values()]
+    .filter((m) => m.earnedMinor || m.pendingMinor)
+    .map((m) => ({ cur: m.cur, earned: fromMinor(m.earnedMinor, m.cur),
+      pending: fromMinor(m.pendingMinor, m.cur),
+      earnedMinor: m.earnedMinor, pendingMinor: m.pendingMinor }))
+    .sort((a, b) => b.earnedMinor + b.pendingMinor - (a.earnedMinor + a.pendingMinor));
+
   return {
-    deals, totals, open, feePct,
+    deals, totals, open, money, feePct,
     /* Yuan through the WFOE, which is the figure its own books are kept in
        and the one a Chinese auditor asks for first. */
     cnyIn, cnyInShown: fromMinor(cnyIn, "cny"),

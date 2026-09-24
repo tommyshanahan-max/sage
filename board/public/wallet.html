@@ -116,6 +116,57 @@
   .balance p{margin:0 0 .45rem;font-size:.78rem;letter-spacing:.11em;text-transform:uppercase;color:var(--muted)}
   .balance .v{font-size:3.3rem;font-weight:700;font-variant-numeric:tabular-nums;line-height:1;letter-spacing:-.035em;color:var(--ink)}
   .balance p+p{margin-top:.75rem;font-size:.9rem;letter-spacing:0;text-transform:none;color:var(--muted)}
+  /* ---- THE DEALS COLUMN -------------------------------------------------
+     A COLUMN OF SUMMARIES THAT DROP DOWN. Every deal is one line until it is
+     asked about, and then it opens where it stands rather than pushing the
+     reader onto another screen. It is the same shape as the rest of the
+     product — a list of rows, a row opens — with the difference that the
+     reader never loses their place in the column.
+
+     NATIVE <details>, NOT A DIV AND A CLICK HANDLER. It is open and closed to
+     a screen reader without being told, it works from the keyboard, the
+     browser draws the marker, and it survives a repaint with the right rows
+     still open. Hand-rolling it costs all four. */
+  .deal{border-bottom:1px solid var(--line)}
+  .deal>summary{list-style:none;cursor:pointer;display:grid;
+    grid-template-columns:1fr auto;gap:.1rem .8rem;align-items:baseline;
+    padding:.85rem .1rem}
+  .deal>summary::-webkit-details-marker{display:none}
+  .deal>summary:focus-visible{outline:2px solid var(--money);outline-offset:2px;border-radius:.5rem}
+  /* ONE LINE PER DEAL. "Beijing producer → Melbourne post house" wrapped onto
+     two and shoved the figure down with it, so a column of deals stopped
+     being a column you can run your eye down — which is the only thing this
+     shape is for. min-width:0 is the half people forget: without it a grid
+     track refuses to shrink below its content and the ellipsis never fires. */
+  .deal .who{font-weight:650;min-width:0;overflow:hidden;text-overflow:ellipsis;
+    white-space:nowrap}
+  /* THE FIGURE IS WHAT CAME IN, because that is the number somebody
+     recognises a deal by — it is the one they agreed and the one they
+     remember. The margin is what they came to find out and it is inside. */
+  .deal .fig{font-variant-numeric:tabular-nums;font-weight:650}
+  .deal .meta{grid-column:1/-1;font-size:.8rem;color:var(--muted);
+    display:flex;align-items:center;gap:.4rem}
+  /* THE MARKER TURNS, AND IT IS THE ONLY MOVING THING ON THE SCREEN. A column
+     that opens with no sign of having opened reads as the page having jumped. */
+  .deal .caret{display:inline-block;transition:transform .15s ease;color:var(--muted)}
+  .deal[open] .caret{transform:rotate(90deg)}
+  @media (prefers-reduced-motion:reduce){.deal .caret{transition:none}}
+  .deal .inner{padding:.1rem .1rem 1rem}
+  .dline{display:flex;justify-content:space-between;gap:1rem;
+    padding:.42rem 0;font-size:.92rem}
+  .dline span:first-child{color:var(--muted)}
+  .dline span:last-child{font-variant-numeric:tabular-nums;text-align:right}
+  /* THE MARGIN IS THE ONE LINE WORTH LIFTING, and it is lifted by weight and
+     a rule rather than by a colour — it is a figure, not a status. */
+  .dline.gap{border-top:1px solid var(--line);margin-top:.3rem;padding-top:.6rem;
+    font-weight:700}
+  .dline.gap span:first-child{color:var(--ink)}
+  /* WHAT IS OWED ON PAPER. Two marks, scannable down the column. */
+  .dpaper{display:flex;gap:.4rem;flex-wrap:wrap;margin:.7rem 0 0}
+  .dchip{font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;
+    padding:.16rem .55rem;border-radius:999px;background:var(--line);color:var(--ink-2)}
+  .dchip.ok{background:rgba(63,190,125,.16);color:#2E9E68}
+  .dchip.no{background:rgba(217,83,79,.15);color:#C4635F}
   .acts{display:grid;grid-template-columns:repeat(2,1fr);gap:.6rem}
   /* Full-width pills, the two things anybody came to do. The icon went: a
      word and an arrow in a row this wide is one thing too many. */
@@ -418,40 +469,123 @@ SCREENS.home = async () => {
      Nothing is lost: the send screen already charges a card or a bank at the
      moment of sending, which is what a top-up was for one step earlier. */
   const acts = h("div", { class: "acts" },
-    h("button", { class: "act", type: "button", onclick: () => go("send") }, svg("send"), T("wl.send")),
-    h("button", { class: "act", type: "button", onclick: () => go("request") }, svg("req"), T("wl.request")));
+    h("button", { class: "act", type: "button", onclick: () => go("send") }, T("wl.send")),
+    h("button", { class: "act", type: "button", onclick: () => go("request") }, T("wl.request")));
+
+  /* THE DEALS, AND THE FIGURE OVER THEM, OFF ONE OBJECT.
+   *
+   * This screen used to read its hero from the provider ledger and its list
+   * from somewhere else, and on a board whose provider is `test` that is a
+   * headline of A$0.00 sitting over real money. One call, one source: the
+   * figure is the sum of the column underneath it, always, by construction.
+   *
+   * A FAILED CALL IS NOT AN EMPTY WALLET. Answering 0 because a fetch fell
+   * over is the app telling its owner they have not been paid. */
+  let books = null;
+  try { books = await api("/api/books"); }
+  catch { books = null; }
+  /* ONE PAIR PER CURRENCY AND NEVER ADDED TOGETHER — the rule the Earned card
+     has always followed: ¥30,000 and A$2,000 are two numbers and one of them
+     needs a rate this board would have to invent. So the biggest currency is
+     the hero and the rest get a quiet line.
+     THE REST HAD NO LINE AT ALL, and that is not tidiness, it is money
+     missing from a money screen: a board with A$32,700 earned and ¥30,000
+     still to come showed the first and silently dropped the second. */
+  const pots = books?.money || [];
+  const money = pots[0] || null;
+  const earned = money ? money.earned : (w.earned || w.balance).text;
+  const pending = money ? (money.pendingMinor ? money.pending : "")
+    : (w.pending && w.pending.minor ? w.pending.text : "");
+  const others = pots.slice(1).map((m) => [
+    m.earnedMinor ? T("earn.lab") + " " + m.earned : "",
+    m.pendingMinor ? T("earn.waiting") + " " + m.pending : "",
+  ].filter(Boolean).join(" · ")).filter(Boolean);
+
   const needs = [...w.incoming.map((t) => row({ lead: face(t.with.handle), title: T("wl.sentYou", { who: t.with.handle, amt: t.amount.text }), sub: t.note || T("wl.acceptIn24"), onclick: () => go(`activity/transfer/${t.id}`) })),
     ...w.requests.filter((r) => r.direction === "in").map((r) => row({ lead: face(r.with.handle), title: T("wl.requestedAmt", { who: r.with.handle, amt: r.amount.text }), sub: r.note, onclick: () => go(`activity/request/${r.id}`) }))];
-  const { rows } = await api("/api/wallet/activity");
-  const recent = rows.slice(0, 5).map((x) => activityRow(x));
+
+  const deals = books?.deals || [];
   return { title: T("wl.title"), action: { label: T("wl.settings"), icon: "gear", run: () => go("settings") }, body: frag(
     h("section", { class: "balance", "aria-label": T("wl.balance") },
       /* EARNED AND STILL TO COME. The slab read "Balance A$0.00" — the
          biggest thing on the screen, a zero, and a claim that this board
          holds money. These two are true of a wallet that holds nothing: what
-         has reached you, and what is on its way. The same pair the deals card
-         on Profile has used all along.
+         has reached you, and what is on its way.
          STILL TO COME ONLY WHEN THERE IS SOME. A second number reading 0.00
          beside the first is the empty this screen was full of. */
       h("p", { text: T("earn.lab") }),
-      h("p", { class: "v", text: (w.earned || w.balance).text }),
-      w.pending && w.pending.minor
-        ? h("p", { style: "font-size:.95rem;opacity:.92", text: T("earn.waiting") + " " + w.pending.text })
-        : null,
-      h("p", { style: "font-size:.85rem;opacity:.8", text: T("wl.straightToBank") + " \u00b7 " + (w.payoutLabel || T("wl.noBankYet")) }),
-
-      h("p", { style: "font-size:.9rem;opacity:.9", text: `${regionName(w.region, w.regionName)} · ${w.currency} · ${w.verified === "verified" ? T("wl.verified") : T("wl.notVerifiedYet")}` })),
+      h("p", { class: "v", text: earned }),
+      pending ? h("p", { style: "font-size:.95rem;opacity:.92", text: T("earn.waiting") + " " + pending }) : null,
+      h("p", { style: "font-size:.85rem;opacity:.8", text: T("wl.straightToBank") + " · " + (w.payoutLabel || T("wl.noBankYet")) }),
+      /* THE OTHER CURRENCIES GO BELOW THE BANK LINE, NOT ABOVE IT.
+         Sat directly under the hero they land in the slot "Still to come"
+         occupies, and a reader binds the two: A$32,700 over "Still to come
+         ¥30,000" reads as one pair in the four seconds this screen gets,
+         when they are two currencies that must never be added. Below the
+         bank line the pairing is broken and each still carries its own
+         sign. */
+      ...others.map((t) => h("p", { style: "font-size:.85rem;opacity:.72", text: t }))),
+      /* THE REGION, THE CURRENCY AND THE IDENTITY STATE USED TO SIT HERE, as
+         a third grey line under the bank. Three of them: a country nobody
+         needs reminding of, a currency already on the front of the number
+         above it, and an identity state that the warning row below says
+         properly and with something to press. A screen gets one glance. */
     acts,
     w.verified !== "verified" ? note("warn", T("wl.confirmToMove"), h("button", { type: "button", class: "chip", onclick: () => go("verify"), text: T("wl.confirmNow") })) : null,
     needs.length ? h("p", { class: "k", text: T("wl.needsYou") }) : null,
     needs.length ? h("div", { class: "list" }, ...needs) : null,
-    h("div", { style: "display:flex;justify-content:space-between;align-items:baseline" }, h("p", { class: "k", text: T("wl.recent") }), h("button", { type: "button", class: "chip", onclick: () => go("activity"), text: T("wl.seeAll") })),
-    h("div", { class: "list" }, ...(recent.length ? recent : [row({ title: T("wl.nothingYet"), sub: T("wl.nothingYetSub") })])),
-    h("div", { class: "list" },
-      row({ lead: badge("⇄"), title: T("wl.methods"), sub: w.sources.length ? w.sources.map((s) => s.label).join(" · ") : T("wl.nothingConn"), onclick: () => go("methods") }),
-      row({ lead: badge("⚑"), title: T("wl.help"), sub: T("wl.helpSub"), onclick: () => go("help") })),
+    h("p", { class: "k", text: T("wl.deals") }),
+    deals.length
+      ? h("div", null, ...deals.map((d) => dealDrop(d, books)))
+      : h("div", { class: "list" }, row({ title: T("wl.nothingYet"), sub: T("wl.nothingYetSub") })),
   ) };
 };
+
+/* ONE DEAL: A SUMMARY LINE THAT DROPS DOWN.
+ *
+ * Coarse first, finer on a tap — but opening in place rather than on another
+ * screen, so a column of them can be read down and two of them compared
+ * without going back and forth. The line carries what a deal is called (the
+ * two names) and what it was for (the figure that came in). Everything that
+ * has to be worked out — what went out, what is left, whose invoice is
+ * missing — is inside.
+ */
+function dealDrop(d, books) {
+  const names = [d.in?.who || T("wl.someone"), d.out?.who || T("wl.noSupplier")].join(" → ");
+  const sum = h("summary", null,
+    h("span", { class: "who", text: names }),
+    h("span", { class: "fig", text: d.in?.amount || d.out?.amount || "" }),
+    h("span", { class: "meta" },
+      h("span", { class: "caret", text: "›" }),
+      h("span", { text: [d.no ? T("rq.no", { n: String(d.no).padStart(4, "0") }) : "",
+        d.in?.what || ""].filter(Boolean).join(" · ") })));
+
+  const inner = h("div", { class: "inner" });
+  const line = (k, v, cls) => { if (v) inner.append(h("div", { class: "dline" + (cls ? " " + cls : "") }, h("span", { text: k }), h("span", { text: v }))); };
+  line(T("wl.dIn"), d.in?.amount || "");
+  /* WHAT ACTUALLY ARRIVED IN YUAN, at the rate on the day the code was drawn.
+     A third number beside the other two rather than folded into them: those
+     are the supplier's currency so the subtraction means something, and this
+     is what was banked. */
+  if (d.in?.cny) line(T("wl.dCny"), "¥" + (d.in.cny / 100).toLocaleString("en-US"));
+  line(T("wl.dOut"), d.out?.amount || "");
+  if (d.gap) line(T("wl.dGap"), d.gap.amount + "  ·  " + d.gap.pct + "%", "gap");
+  /* AND WHY THERE IS NONE, WHERE THERE IS NONE. A missing figure in the one
+     column this screen exists for reads as a bug every time. */
+  else inner.append(h("div", { class: "dline gap" }, h("span", { text: T("wl.dGap") }),
+    h("span", { text: T("bk.why." + (d.why || "noCur")) })));
+  if (d.in?.inv) line(T("wl.dInvTo"), d.in.inv.title);
+
+  /* THE PAPERWORK, ONLY ONCE THE MONEY HAS MOVED. A document that is not owed
+     yet is not outstanding, and a row of red marks on a deal nobody has paid
+     is a screen that cries wolf. */
+  const chips = h("div", { class: "dpaper" });
+  if (d.in && d.in.state === "paid") chips.append(h("span", { class: "dchip " + (d.in.invoice === "issued" ? "ok" : "no"), text: T(d.in.invoice === "issued" ? "bk.cIssued" : "bk.cIssue") }));
+  if (d.out && d.out.state === "paid") chips.append(h("span", { class: "dchip " + (d.out.billed ? "ok" : "no"), text: T(d.out.billed ? "bk.cBilled" : "bk.cBill") }));
+  if (chips.children.length) inner.append(chips);
+
+  return h("details", { class: "deal" }, sum, inner);
+}
 
 function activityRow(x) {
   const [state] = status(x.state);
@@ -890,7 +1024,13 @@ SCREENS.settings = async () => {
       row({ title: T("wl.identity"), sub: w.verified === "verified" ? T("wl.confirmed") : T("wl.notConfirmed"), onclick: () => go("verify") }),
       row({ title: T("wl.limits"), sub: T("wl.limitsSub", { day: w.limits.sendDay.text, today: w.limits.sentToday.text }), onclick: () => go("limits") }),
       row({ title: T("wl.moneyReceive"), sub: w.payout === "bank" ? (w.payoutLabel || T("wl.yourBank")) : T("wl.staysInWallet"), onclick: () => go("payout") }),
-      row({ title: T("wl.methods"), sub: T("wl.nConnected", { n: w.sources.length }), onclick: () => go("methods") })),
+      row({ title: T("wl.methods"), sub: T("wl.nConnected", { n: w.sources.length }), onclick: () => go("methods") }),
+      /* EVERY PAYMENT, WHICH THE HOME SCREEN NO LONGER LISTS.
+         Home is the deals column now, and a deal is not the same thing as a
+         transfer between two members — so the full history had to land
+         somewhere rather than simply stop existing. It is looked for once,
+         which is what this list is for. */
+      row({ title: T("wl.recent"), sub: T("wl.nothingYetSub"), onclick: () => go("activity") })),
     h("div", { class: "list" },
       row({ title: T("wl.help"), sub: T("wl.helpSub"), onclick: () => go("help") }),
       row({ title: T("wl.closeWallet"), sub: T("wl.withdrawFirst"), onclick: () => go("close") }))) };
