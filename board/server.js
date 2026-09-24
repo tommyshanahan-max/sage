@@ -10117,8 +10117,12 @@ app.post("/api/pay/why", express.json({ limit: "1kb" }), (req, res) => {
   const clamp = (v, n) => String(v ?? "").replace(/[^\P{C}]/gu, " ").trim().slice(0, n);
   const how = ["wechat", "alipay", "card"].includes(String(req.body?.how)) ? req.body.how : "?";
   const at = ["load", "mount"].includes(String(req.body?.at)) ? req.body.at : "?";
-  const why = clamp(req.body?.why, 200);
-  if (why) console.error("pay form failed:", how, "at", at, "-", why);
+  /* LOGGED EVEN WITH NOTHING TO SAY. `if (why)` dropped the line whenever the
+     thrown thing had no message — which is how Stripe rejects — so the one
+     failure this route exists for was the one it stayed quiet about. A line
+     saying "no message" is a fact; silence is read as "it did not happen". */
+  const why = clamp(req.body?.why, 300) || "(nothing thrown said anything)";
+  console.error("pay form failed:", how, "at", at, "-", why);
   res.json({ ok: true });
 });
 
@@ -13705,7 +13709,14 @@ app.post("/api/admin/request", admin, express.json({ limit: "2kb" }), async (req
        WeChat or Alipay code needs nowhere for the money to land, and this
        said "cannot be paid" about one that could. */
     const ways = dealioWays(board, q);
-    return { ok: true, id: q.id, ready: ways.length > 0 || Boolean(mine.payee),
+    /* AND THE THIRD WAY TO BE PAYABLE, which this did not know about: the
+       owner's own request is charged straight into the account that holds
+       the keys and needs no payout account at all — see dealioMine. Without
+       it `make ask` printed "Tom has no payout set up, so this opens but
+       cannot be paid" beside a link that could be paid, which is the same
+       sentence as a broken board and reads like one. */
+    return { ok: true, id: q.id,
+      ready: ways.length > 0 || Boolean(mine.payee) || dealioMine(board, q),
       code: ways.length > 0 };
   });
   if (out?.error) return res.status(400).json(out);

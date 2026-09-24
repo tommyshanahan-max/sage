@@ -265,7 +265,7 @@ async function code(how, box, buttons) {
       try {
         await mountCheckout(slot, { secret: j.secret, pk: j.pk });
       } catch (err) {
-        sayWhy({ how, at: err?.at, why: err?.message });
+        sayWhy({ how, at: err?.at, err });
         slot.remove();
         box.append(ways);
         back("od.payNo");

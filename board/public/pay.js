@@ -90,12 +90,35 @@ export async function mountCheckout(slot, { secret, pk }) {
  *  error's own message, clamped. keepalive because the page it is sent from
  *  may be closed a second later. Its own failure is ignored — a diagnostic
  *  that can break the screen it is diagnosing is worse than none. */
-export function sayWhy({ how, at, why }) {
+export function sayWhy({ how, at, err }) {
+  /* NOT EVERYTHING THROWN IS AN ERROR WITH A MESSAGE.
+   *
+   * This took `err.message` and sent it, and Stripe rejects with a plain
+   * object — so `why` was undefined, the route's `if (why)` dropped the line,
+   * and `make pay-why` said "no payment form has failed" at somebody looking
+   * at a failed payment form. The diagnostic built to stop the guessing
+   * stayed silent in exactly the case it was built for, which is the same
+   * shape of fault as the demo switch: a check that answers "nothing here"
+   * for the wrong reason.
+   *
+   * So: the message where there is one, then Stripe's own nested error, then
+   * whatever the thing serialises to, then its type. Something always goes. */
+  const words = (e) => {
+    if (typeof e === "string") return e;
+    if (!e) return "threw " + String(e);
+    if (e.message) return String(e.message);
+    if (e.error?.message) return String(e.error.message);
+    try {
+      const j = JSON.stringify(e);
+      if (j && j !== "{}") return j;
+    } catch { /* circular, or a DOM thing */ }
+    return "threw " + Object.prototype.toString.call(e);
+  };
   try {
     fetch("/api/pay/why", {
       method: "POST", keepalive: true,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ how, at, why: String(why || "").slice(0, 200) }),
+      body: JSON.stringify({ how, at, why: words(err).slice(0, 300) }),
     }).catch(() => {});
   } catch { /* an old browser with no keepalive */ }
 }

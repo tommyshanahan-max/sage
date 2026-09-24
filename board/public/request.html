@@ -772,7 +772,7 @@ async function payFrame({ secret, pk, q, how, demo, qr, amount, orig }) {
     /* THE WORDS, INTO THE BOX'S LOG — see /api/pay/why. Nobody can open a
        console on a payer's phone, and this sentence has covered three
        unrelated faults in one evening. */
-    sayWhy({ how, at: err?.at, why: err?.message });
+    sayWhy({ how, at: err?.at, err });
     slot.textContent = "";
     const box = el("div", "pwait");
     box.append(el("b", null, T("pay.frameBlocked")));
