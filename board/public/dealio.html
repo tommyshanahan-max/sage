@@ -28,6 +28,13 @@
   :root{
     --bg:#0B0E15; --card:#141924; --ink:#E9EDF5; --ink2:#A3B0C4; --mut:#6F7D92;
     --line:#232B39; --hair:#1C2330; --acc:#D6483B; --accink:#fff; --ok:#3FBE7D;
+    /* THE TOP BLOCK RUNS ITS OWN PALETTE, AND IT IS THE PAGE'S OPPOSITE.
+       Six variables rather than one, for the same reason the skin above is
+       ten: nothing else in this file should have to know which way round the
+       screen is. Here the page is dark, so the top is light. */
+    --top:#F2F4F9; --topInk:#101623; --topDim:#5A6678;
+    --topBtn:#101623; --topBtnInk:#F2F4F9; --topLine:rgba(16,22,35,.20);
+    --topAcc:#A8362B;
     --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",
       "Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
     --serif:Georgia,"Songti SC","Noto Serif CJK SC",'Times New Roman',serif;
@@ -50,6 +57,12 @@
   html:not([data-dealio="1"]){
     --bg:#EEF0F4; --card:#F7F8FB; --ink:#151B28; --ink2:#4E5968; --mut:#8A939F;
     --line:#E3E6EC; --hair:#EAECF1; --acc:#3F68D8; --accink:#FFFFFF; --ok:#2A9D63;
+    /* And here the page is light, so the top is dark. The accent is the
+       board's blue lifted until it reads on it — the page's own #3F68D8 on
+       a near-black panel is a link nobody can see. */
+    --top:#141A27; --topInk:#F3F5FA; --topDim:#9AA5B8;
+    --topBtn:#FFFFFF; --topBtnInk:#141A27; --topLine:rgba(255,255,255,.26);
+    --topAcc:#8FB0FF;
   }
   /* The bar itself, in whichever palette is in force — it is drawn from the
      same ten variables, so it is dark on one host and light on the other
@@ -190,14 +203,14 @@
      what has reached you, and what is on its way. */
   .whero{padding:.4rem .1rem 1.2rem}
   .whero .k2{margin:0 0 .45rem;font-size:.72rem;letter-spacing:.14em;
-    text-transform:uppercase;color:var(--mut)}
+    text-transform:uppercase;color:var(--topDim)}
   .whero .v{margin:0;font-size:3.1rem;font-weight:700;line-height:1;
-    letter-spacing:-.035em;font-variant-numeric:tabular-nums;color:var(--ink)}
+    letter-spacing:-.035em;font-variant-numeric:tabular-nums;color:var(--topInk)}
   /* .hq AND NOT .q. `.q` is the request card on this same page — declared a
      hundred lines further down, so it wins the cascade and every quiet line
      in the hero came out wearing a grey card. A class name that reads well
      in isolation is not a free choice on a page that already has one. */
-  .whero .hq{margin:.7rem 0 0;font-size:.92rem;color:var(--mut)}
+  .whero .hq{margin:.7rem 0 0;font-size:.92rem;color:var(--topDim)}
   /* THE BANK LINE IS A BUTTON, because it is the one line on this screen that
      is a thing to go and fix. It reads as a line until it needs pressing. */
   .whero button.hq{display:block;width:100%;text-align:left;border:0;
@@ -206,16 +219,22 @@
      figure made it the second loudest thing on the screen, in the slot the
      drawing gives to "Still to come". It is a real fault and it stays in the
      accent, but at the weight of the line it sits in. */
-  .whero button.hq.warn2{color:var(--acc);text-decoration:underline;
+  .whero button.hq.warn2{color:var(--topAcc);text-decoration:underline;
     text-underline-offset:3px}
   /* A SHADOW, NOT JUST A SHADE. --card on --bg is four points of lightness
      apart, which is a difference you can measure and not one you can see: the
      block did not divide the page, it just sat on it. The shadow under the
      rounded bottom is what makes the top read as lying over the rest. */
-  .topblock{background:var(--card);border-bottom:1px solid var(--line);
-    margin:0 -.9rem 1.5rem;padding:1.2rem .9rem 1.25rem;
+  /* A DIFFERENT SCHEME, NOT A DIFFERENT SHADE. Two surfaces four points of
+     lightness apart do not divide a page — they just look like a printing
+     fault. The top runs the page's opposite: dark panel on the light skin,
+     light panel on the dark one, each with its own text, muted and accent so
+     nothing inside has to be special-cased. No hairline: a panel this far
+     from the page behind it does not need a line to say where it ends. */
+  .topblock{background:var(--top);color:var(--topInk);
+    margin:0 -.9rem 1.5rem;padding:1.3rem .9rem 1.35rem;
     border-radius:0 0 1.3rem 1.3rem;
-    box-shadow:0 6px 18px rgba(8,12,22,.07)}
+    box-shadow:0 8px 22px rgba(8,12,22,.16)}
   /* THE TWO VERBS, AS TWO MATCHING PILLS. This screen had a number pad, a
      currency dropdown and one blue button stacked under the hero: three
      mismatched controls where the drawing has two matching ones, in a second
@@ -224,19 +243,46 @@
      typed. Fewer controls, and the screen stops shouting in two colours. */
   .pills{display:grid;grid-template-columns:repeat(2,1fr);gap:.6rem;margin:0 0 .4rem}
   .pills button{border:0;border-radius:999px;padding:1.05rem .6rem;cursor:pointer;
-    font:inherit;font-size:1.02rem;font-weight:700;background:var(--ink);color:var(--card)}
-  /* ON THE BLOCK, NOT ON THE PAGE. The quiet pill was var(--card), which is
-     now exactly the surface behind it — an invisible button. It takes the
-     page's own ground instead, so the pair reads as dark-and-light either
-     way round. */
-  .pills button+button{background:var(--bg);color:var(--ink);
-    border:1px solid var(--line)}
-  .pills button[disabled]{opacity:.45;cursor:not-allowed}
+    font:inherit;font-size:1.02rem;font-weight:700;
+    background:var(--topBtn);color:var(--topBtnInk)}
+  /* ON THE BLOCK, NOT ON THE PAGE. The quiet pill kept taking a page colour
+     and vanishing into whichever surface was behind it. It is drawn from the
+     block's own palette instead — nothing, outlined — so the pair reads as
+     solid-and-outline whichever way round the screen is. */
+  .pills button+button{background:transparent;color:var(--topInk);
+    border:1px solid var(--topLine)}
+  /* .45 WAS FINE ON A PAGE AND NOT ON THE BLOCK. An outlined pill at 45% on
+     a near-black panel is a shape you can see and a word you cannot read. */
+  .pills button[disabled]{opacity:.58;cursor:not-allowed}
   /* ONE VERB IS NOT HALF A PAIR. Kept for any state that ever draws a single
      pill: alone, it takes the width rather than sitting in the left half
      with a hole beside it. Send is no longer hidden, so today nothing hits
      this — which is the point of it still being here. */
   .pills button:only-child{grid-column:1/-1}
+  /* A SMALL WINDOW WITH A FIGURE ON IT. Shut, it is one line: what it holds
+     and how much. The figure is the answer most of the time; the list behind
+     it is for the times it is not. */
+  .fold{background:var(--card);border:1px solid var(--line);border-radius:1rem;
+    margin:0 0 .7rem;overflow:hidden}
+  .fold>summary{list-style:none;cursor:pointer;display:flex;align-items:center;
+    gap:.6rem;padding:.95rem 1rem}
+  .fold>summary::-webkit-details-marker{display:none}
+  .fold>summary:focus-visible{outline:2px solid var(--acc);outline-offset:-2px}
+  .fold .fl{font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--mut)}
+  /* SMALLER THAN THE HERO AND BY A LOT. It is a second figure on a screen
+     whose first one is 3.1rem — at anything near that size the screen has
+     two headlines and no hierarchy. */
+  .fold .ff{margin-left:auto;font-family:var(--serif);font-size:1.3rem;
+    font-variant-numeric:tabular-nums;color:var(--ink)}
+  .fold .caret{color:var(--mut);display:inline-block;transition:transform .15s ease}
+  .fold[open] .caret{transform:rotate(90deg)}
+  @media (prefers-reduced-motion:reduce){.fold .caret{transition:none}}
+  .finner{padding:.1rem .8rem .8rem}
+  /* The rows inside are already cards; on a card they need no second edge. */
+  .finner .q{background:none;border-top:1px solid var(--line);border-radius:0;
+    margin:0;padding:.85rem .15rem}
+  .feet{display:flex;gap:1.1rem;margin:.9rem 0 0;padding:0 .15rem}
   /* ---- THE DEALS COLUMN ------------------------------------------------
      A COLUMN OF SUMMARIES THAT DROP DOWN. Every deal is one line until it is
      asked about, and then it opens where it stands rather than pushing the
@@ -1242,54 +1288,81 @@ function payoutLine() {
 function list() {
   root.append(topBlock());
 
-  /* THE DEALS, AS A COLUMN THAT DROPS DOWN. Coarse first, finer on a tap,
-     opening in place. Only once a deal has two sides: on a board where
-     nobody has ever paid a supplier it would be a column of one-sided rows
-     repeating the list further down. */
-  const deals = (BOOKS?.deals || []).filter((d) => d.in && d.out);
+  /* TWO FOLDS, BOTH SHUT.
+   *
+   * The screen used to end in a list of cards headed "Still to settle" —
+   * every open row, always, whether or not anybody wanted to look at one. On
+   * a working month that is a wall of cards under the only two numbers
+   * anybody opens this screen for.
+   *
+   * So each becomes a small window with its own figure on it: Pending, and
+   * Deals. Shut by default. The figure is the answer; the list behind it is
+   * for the times the figure is not.
+   *
+   * AND THE TWO NUMBERS AGREE WITH THE TWO LISTS, which is the whole reason
+   * the split falls where it does. Pending counts money still coming TO you
+   * and opens on exactly those rows. The money going OUT is the supplier
+   * half of a deal — it is not something you are owed, and a "pending"
+   * figure that quietly included it would be wrong in the direction that
+   * flatters — so it lives under Deals, where both halves are shown side by
+   * side anyway.
+   */
+  const mine = STATE.requests || [];
+  const waiting = mine.filter((q) => q.state !== "paid" && (q.way || "in") !== "out");
+  const pot = (STATE.money || [])[0];
+  /* THE FIGURE IS MONEY, NOT A COUNT. It fell back to the number of rows
+     when nothing was pending, so a settled month read "PENDING 0" — a bare
+     zero with no sign, which is a count of something unnamed rather than an
+     amount. The currency's own zero says the same thing and says it in the
+     units the line above it is in. */
+  root.append(fold(T("dl.pending"), pot ? pot.pending : "",
+    waiting.length ? waiting.map((q) => row(q)) : [el("p", "none", T("dl.allSettled"))]));
+
+  const deals = BOOKS?.deals || [];
   if (deals.length) {
-    root.append(el("h2", "lhead", T("bk.head")));
-    const col = el("div");
-    for (const d of deals) col.append(dealDrop(d));
-    root.append(col);
-  } else if (BOOKS === null) {
-    /* Asked for once per visit. The screen draws without it rather than
-       waiting: the pad is what most people came for. */
+    root.append(fold(T("bk.head"), String(deals.length), deals.map((d) => dealDrop(d))));
+  } else if (BOOKS === null && mine.some((q) => q.deal || q.way === "out")) {
+    /* Asked for once per visit, and only where there is something to ask
+       about. The screen draws without it rather than waiting. */
     loadBooks();
   }
 
-  /* THE PAD, UNDER THE DEALS. It was the first thing on the screen, on the
-     Cash App reading that the number is what you already know. That holds
-     for somebody arriving to ask for money and not for somebody opening the
-     app to see how they are doing — which is most opens. The pad is two
-     thumb-lengths down and still the loudest control on the screen. */
-  const h = el("div", "hrow");
-  h.append(el("h2", "lhead", T("dl.sub")));
-  /* THE OTHER SCREEN, and only once there is something on it. "Has this
-     person ever actually paid me" is the question that decides whether you
-     say yes to the next job, and the live list cannot answer it — it empties
-     as things settle. */
-  if (STATE.requests.some((q) => q.state === "paid")) {
+  /* THE TWO DEEPER SCREENS, at the foot and quiet. Both are looked for once:
+     "has this person ever actually paid me", and the file for the
+     accountant. Neither is a thing to meet on the way in. */
+  const feet = el("div", "feet");
+  if (mine.some((q) => q.state === "paid")) {
     const a = el("button", "hlink", T("dl.paidHead"));
     a.type = "button";
     a.addEventListener("click", () => { VIEW = "paid"; draw(); });
-    h.append(a);
+    feet.append(a);
   }
-  /* AND THE BOOKS PROPER — the totals, and the file for the accountant. The
-     column above is for reading; this is for reconciling. */
-  if (STATE.requests.some((q) => q.deal || q.way === "out")) {
+  if (mine.some((q) => q.deal || q.way === "out")) {
     const a = el("button", "hlink", T("bk.totals"));
     a.type = "button";
     a.addEventListener("click", () => { VIEW = "books"; BOOKS = null; draw(); });
-    h.append(a);
+    feet.append(a);
   }
-  root.append(h);
-
-  const open = STATE.requests.filter((q) => q.state !== "paid");
-  if (!open.length) root.append(el("p", "none", T("dl.allSettled")));
-  for (const q of open) root.append(row(q));
-
+  if (feet.children.length) root.append(feet);
   root.append(whereLink());
+}
+
+/* A SMALL WINDOW WITH ITS OWN FIGURE ON IT, that opens.
+ *
+ * The same <details> the deal rows use, for the same reasons: a screen
+ * reader knows it is shut without being told, it works from the keyboard,
+ * and it survives a repaint still open. */
+function fold(label, figure, kids) {
+  const box = el("details", "fold");
+  const sum = el("summary");
+  sum.append(el("span", "caret", "›"));
+  sum.append(el("span", "fl", label));
+  sum.append(el("span", "ff", figure));
+  box.append(sum);
+  const inner = el("div", "finner");
+  for (const k of kids) if (k) inner.append(k);
+  box.append(inner);
+  return box;
 }
 
 /* ===========================================================================
@@ -1539,7 +1612,10 @@ function hero() {
   const top = pots[0] || null;
   box.append(el("p", "k2", T("earn.lab")));
   box.append(el("p", "v", top ? top.earned : (CUR_SIGN[curPick()] || "") + "0"));
-  if (top?.pendingMinor) box.append(el("p", "hq", T("earn.waiting") + " " + top.pending));
+  /* "STILL TO COME" IS NOT HERE ANY MORE. The Pending fold below carries the
+     same figure and opens on the rows behind it, so printing it here as well
+     put one number on the screen twice, inches apart, with nothing to say
+     which of the two was the live one. The hero keeps what has arrived. */
 
   /* WHERE IT LANDS, AND IT IS THE ONE LINE HERE THAT IS A THING TO GO AND
      FIX. It was a whole warning row across the screen, shouting the same

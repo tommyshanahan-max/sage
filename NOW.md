@@ -273,6 +273,20 @@ as a column that drops down, then the pad.
   line above it. Both verbs open the sheet that has always asked for the
   amount when none was typed, so nothing is lost and the screen stops
   shouting in two colours.
+- **Two folds, both shut.** The screen used to end in every open row as a
+  wall of cards headed "Still to settle". Now: **Pending** with its figure,
+  and **Deals** with its count — each a small window that opens. The two
+  numbers agree with the two lists by construction, which is why the split
+  falls where it does: Pending counts money still coming *to* you and opens
+  on exactly those rows; money going *out* is the supplier half of a deal, so
+  it lives under Deals where both halves are shown side by side. A "pending"
+  figure that quietly included it would be wrong in the direction that
+  flatters. "Still to come" left the hero — the same figure printed twice,
+  inches apart, with nothing to say which was live.
+- **The top runs the page's opposite palette**, not a shade of it: dark panel
+  on the light skin, light panel on the dark one, each with its own text,
+  muted, accent and buttons. Two surfaces four points of lightness apart do
+  not divide a page, they look like a printing fault.
 - **The top is its own surface** — the money and the two verbs on a raised
   block, the deals on the page below it, so the glance this screen gets can
   tell "how am I doing" from "what is outstanding" without a heading to read.
