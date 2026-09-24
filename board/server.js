@@ -11492,6 +11492,23 @@ function dealioWays(board, q) {
   return ["wechat", "alipay"];
 }
 
+/** Whether this person is the one whose requests land in the account that
+ *  holds the keys. The handle and nothing else — no provider, no Stripe.
+ *
+ *  SEPARATE FROM dealioIsOwner ON PURPOSE. That one answers "do this
+ *  person's requests draw a WeChat or Alipay code", which needs a provider,
+ *  and it was standing in for this question because until 24 Sep the two had
+ *  the same answer. Then Airwallex came out of .env and they stopped agreeing:
+ *  the money screen asked whether codes could be drawn, got no, fell through
+ *  to a payout account that `make go-live` had just cleared, and told Tom
+ *  "Nobody can pay you yet" under a list of his own requests — on a board
+ *  where his card payments work. A warning that is false is worse than none:
+ *  it is the app telling its owner his product is broken. */
+function isDealioOwner(person) {
+  return Boolean(DEALIO_OWNER)
+    && String(person?.handle || "").trim().toLowerCase() === DEALIO_OWNER;
+}
+
 /** Whether this person's own requests draw codes — the list screen's
  *  version of dealioWays, which needs a request and this does not. */
 function dealioIsOwner(person) {
@@ -11900,7 +11917,14 @@ app.get("/api/requests", notesOff, async (req, res) => {
        of requests people could have paid. A warning that is false is worse
        than no warning: it is the app telling its owner his own product is
        broken. */
-    ready: dealioIsOwner(me_) || (Boolean(me_?.payee) && (stripe.configured() || PAY_DEMO)
+    /* AND THE THIRD WAY, added 24 Sep: the owner's own requests are charged
+       straight into the account that holds the keys — no destination, no
+       connected account, nothing to onboard. See dealioMine and the note over
+       isDealioOwner. Without this the screen warned about a payout account
+       that the payment no longer goes anywhere near. */
+    ready: dealioIsOwner(me_)
+      || (stripe.configured() && isDealioOwner(me_))
+      || (Boolean(me_?.payee) && (stripe.configured() || PAY_DEMO)
       && (!stripe.configured() || await canBePaid(me_.payee))),
     /* AND WHICH MONEY CAN ACTUALLY BE ASKED FOR. The picker offers seven
        currencies; the codes can price four of them against yuan. Asking in
