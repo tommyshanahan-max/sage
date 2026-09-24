@@ -1721,27 +1721,52 @@
      the height and this has to beat it. */
   .deck.short, #mine:not([hidden]) + .deck.short{
     height:max(9rem, min(34vh, 19rem, calc(var(--vh, 1vh) * 100 - 30rem - env(safe-area-inset-bottom))))}
-  .pc{position:absolute;inset:0;border-radius:1.3rem;overflow:hidden;
+  /* TOP, NOT INSET. The card's height is its photograph plus its words now,
+     so it must be free to be as tall as they are; stretched to a budget it
+     would squash one or clip the other. fitDeck reads it back and gives the
+     deck the same height. */
+  .pc{position:absolute;top:0;left:0;right:0;border-radius:1.3rem;overflow:hidden;
     background:var(--raise);box-shadow:var(--shadow);
-    display:flex;flex-direction:column;justify-content:flex-end;
+    display:flex;flex-direction:column;justify-content:flex-start;
+    background:#0a0e16;
     will-change:transform;transition:transform .28s ease,opacity .28s ease}
   .pc.gone{opacity:0}
-  .pc img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
-  /* No photograph is not a hole: the initial, big, on the accent. */
-  /* THE LETTER, AT THE SIZE OF A MISSING PICTURE. It was 8rem — a screen with
-     one character on it, which is what the card became for anybody who had not
-     uploaded a face. It sits behind the words now rather than instead of
-     them. */
-  .pc .noshot{position:absolute;inset:0;display:grid;place-items:center;
+  /* NOTHING IS WRITTEN ON THE FACE.
+   *
+   * The name, the sentence and the bio used to sit on the photograph over a
+   * dark gradient. Legible, and still the wrong thing: on a real headshot the
+   * block ran from the mouth down and the person disappeared under their own
+   * caption. Said plainly and more than once — "looks bad writing and stuff
+   * over their face".
+   *
+   * So the photograph is the top of the card and the words are a panel under
+   * it. The panel is dark on purpose rather than by inheritance: it is the
+   * same ink the gradient was, so every colour inside it — the name, the
+   * pills, the mark, the two buttons — is already right and none of it had to
+   * be re-picked for a light ground. A photograph with a dark label under it,
+   * which is what a photograph in a frame has.
+   *
+   * The picture keeps 4:5, the shape people drag their crop into, so nothing
+   * is cut off the top of a head to make room for a sentence. */
+  .pc img{position:relative;width:100%;aspect-ratio:4/5;
+    flex:0 0 auto;object-fit:cover;display:block}
+  /* No photograph is not a hole: the initial, big, on the accent. Same slot
+     and same shape as a picture, so a deck of both does not jump about. */
+  .pc .noshot{position:relative;width:100%;aspect-ratio:4/5;flex:0 0 auto;
+    display:grid;place-items:center;
     background:var(--accent);color:var(--accent-ink);
-    font-family:var(--serif);font-size:4.5rem;line-height:1;opacity:.55;
-    align-content:start;padding-top:1.1rem}
-  /* Words on a scrim, not straight onto the photograph: white on a picture is
-     legible right up until somebody uploads a bright one. */
-  .pc .scrim{position:relative;padding:5rem 1.2rem 1.2rem;
-    background:linear-gradient(to top,rgba(10,14,22,.86),rgba(10,14,22,.52) 42%,rgba(10,14,22,0))}
+    font-family:var(--serif);font-size:4.5rem;line-height:1;opacity:.55}
+  /* The panel under the picture. No gradient: there is nothing to fade into
+     now, and a gradient over a solid colour is a seam. */
+  /* TIGHT ON PURPOSE. Every pixel in here is one the photograph does not
+     get, and the alternative to finding them was cropping the portrait — the
+     loose 1.9 line-height below, a 1.8rem name and 1.2rem of padding cost
+     about 50px between them, which is the difference between the two buttons
+     sitting above the tab bar and under it. */
+  .pc .scrim{position:relative;flex:0 0 auto;padding:.85rem 1.1rem .95rem;
+    background:#0a0e16}
   .pc .nameline{display:flex;align-items:baseline;gap:.6rem;flex-wrap:wrap}
-  .pc h2{margin:0;font-family:var(--serif);font-weight:400;font-size:1.8rem;
+  .pc h2{margin:0;font-family:var(--serif);font-weight:400;font-size:1.55rem;
     line-height:1.1;color:#fff}
   /* The four letters, as a badge. Monospaced-feeling by letter-spacing rather
      than by a mono stack, which would not match anything else here. */
@@ -1793,7 +1818,7 @@
      element, re-parented into the card's scrim; see personCard.
      Grey on grey disappears over a picture, so the quiet one becomes white on
      a wash of the photograph behind it and the loud one keeps the accent. */
-  .pc .scrim .pacts{margin:.9rem 0 0}
+  .pc .scrim .pacts{margin:.7rem 0 0}
   .pc .scrim .pacts button,.pc .scrim .pacts a{
     border-color:rgba(255,255,255,.55);background:rgba(255,255,255,.16);
     color:#fff;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
@@ -1942,7 +1967,7 @@
      sentence (somebody who joined before it existed) would be a gap under
      every such name, so it collapses. */
   .psaywrap:empty{display:none}
-  .psay{margin:.45rem 0 0;font-size:.9rem;line-height:1.9;
+  .psay{margin:.35rem 0 0;font-size:.9rem;line-height:1.6;
     color:rgba(255,255,255,.82)}
   /* Now that it sits above the city and the bio rather than at the bottom of
      the card, the space belongs under it. */
@@ -3331,7 +3356,12 @@ function fitDeck() {
    * sentence, and the whole reason that class exists is to stop the sentence
    * being pushed under the fold — making it a portrait too would undo it.
    * The rule protects faces, so it applies where there is one. */
-  if (short) { deck.style.width = ""; return; }
+  /* NO PHOTOGRAPH IS THE SAME SHAPE NOW. .noshot used to fill the card behind
+     the words, so a card without a picture needed its own shorter budget and
+     bailed out here. It is a sized block at the top of the card like any
+     photograph is, with the same panel under it, so it takes the same rule —
+     and while it bailed, its card ran 60px past the deck and the buttons went
+     under the bar on exactly the cards that have the least to show. */
   const full = deck.parentElement
     ? deck.parentElement.getBoundingClientRect().width : deck.offsetWidth;
   /* THE WIDTH HAS A FLOOR, and the shape wins over the budget.
@@ -3382,7 +3412,55 @@ function fitDeck() {
    * back. */
   const w = full;
   deck.style.width = Math.round(w) + "px";
-  deck.style.height = Math.round(w * 1.25) + "px";
+  /* THE HEIGHT IS READ OFF THE CARD, NOT BUDGETED.
+   *
+   * A card is a 4:5 photograph with a panel of words under it, and the panel
+   * is as tall as the words in it — a long name that wraps, a second sentence,
+   * two lines of bio. Guessing that from here would be a number to keep in
+   * step with the CSS for ever; the card already knows.
+   *
+   * Falls back to the picture alone before the first card exists — fitDeck
+   * runs once in drawDeck before anything is appended, and again after. */
+  const top = deck.lastElementChild;
+  const shot = top && top.querySelector("img, .noshot");
+  const panel = top && top.querySelector(".scrim");
+  if (!shot || !panel) { deck.style.height = Math.round(w * 1.25) + "px"; return; }
+  /* THE PICTURE TAKES WHAT IS LEFT, AND NEVER MORE THAN 4:5.
+   *
+   * The words are a panel under the photograph now, so the card is taller
+   * than the photograph and both have to fit above the tab bar. A fixed 4:5
+   * did not: on an iPhone 15 the card came to 628px and the two buttons sat
+   * under the bar — the exact fault this whole change was undoing, moved
+   * eleven pixels.
+   *
+   * So the panel is measured, not guessed, and the photograph gets the rest,
+   * capped at 4:5 — the shape people drag their crop into, which is as tall
+   * as it is ever worth being. On a roomy screen it is exactly that and
+   * nothing is cut. On a short one it crops a little rather than pushing the
+   * buttons off the bottom, and a small crop on a portrait is a face; a
+   * button behind the tab bar is a screen that looks broken.
+   *
+   * NEVER WORSE THAN SQUARE. That is the floor, and it is where the two
+   * demands stop being satisfiable together: a 4:5 photograph is 443px on a
+   * 393 phone, the panel under it is another 160, and a screen carrying a
+   * masthead, a waiting-list banner and the sentence row has about 520 to
+   * give. One of the three has to be smaller. A square crop keeps the face
+   * and loses the edges; a letterbox loses the face, which is what the note
+   * further up is about, and a button behind the tab bar is a screen that
+   * looks broken.
+   *
+   * Below the floor the page scrolls a little rather than cropping further.
+   * The way to get a full 4:5 back is to take something off the top of the
+   * page, which is a decision about the page and not about the card. */
+  const words = panel.offsetHeight;
+  const tall = Math.max(w, Math.min(w * 1.25, room - words));
+  shot.style.height = Math.round(tall) + "px";
+  /* THE DECK IS TOLD WHAT THE CARD IS, NOT WHAT IT SHOULD BE.
+     tall + words was the arithmetic and it was 66px out — the panel had been
+     measured before the picture was resized, and the card ended up taller
+     than the deck holding it, so the deck clipped its own buttons. The card
+     is laid out by then; read it. */
+  deck.style.height = Math.round(top.offsetHeight) + "px";
 }
 window.addEventListener("resize", fitDeck);
 window.addEventListener("orientationchange", fitDeck);
@@ -7878,10 +7956,13 @@ function personCard(q, live) {
    * what they wrote is always right and sometimes not in the reader's
    * language, which is the honest failure and the one this had before.
    */
-  if (q.goal) {
-    const said = pick(q.goal, q.goalAlt, q.goalAlt2, q.goalLang);
-    scrim.append(el("p", "goal", said));
-  }
+  /* AND IT IS NOT ON THE CARD ANY MORE. Two lines of somebody's prose under
+     their name, on a screen that is meant to be a face and a sentence: the
+     card ran to 717px with it and the buttons went off the bottom of the
+     phone. Said plainly — "looks bad writing and stuff over their face".
+     It is on their page, and the card now opens their page; see the tap
+     below. Nothing is lost and the face gets the room. The rendering above
+     is still what that page reads. */
 
   /* WHAT THEY ARE LOOKING FOR, ON THE CARD ITSELF. This is the half of the
      feature that works at eight people: a match needs two people to have
@@ -7932,9 +8013,10 @@ function personCard(q, live) {
       // Lit when it is what you are: that is why they came up for you.
       line2.append(el("b", "pchip" + (mineRoles.has(pick.want) ? " on" : ""),
         T("role.a." + pick.want)));
-      if (says.length > 1) {
-        line2.append(el("span", "psaymore", T("brw.sayMore", { n: says.length - 1 })));
-      }
+      /* THE "+1 more" FOOTNOTE IS GONE. It cost a whole line on the panel —
+         the sentence filled the width, so it always wrapped — to say that
+         there was more to see. The card opens their page now, where all of
+         their sentences are, so the card itself is the thing that says it. */
       psay.append(line2);
     } else if (Array.isArray(q.rooms) && q.rooms.length) {
       const chips = el("div", "pchips");
@@ -8519,7 +8601,16 @@ function drawDeck() {
   }
   const top = at(AT, true);
   deck.append(top);
-  dragCard(top);
+  /* THE CARD OPENS THEIR PAGE. Only where there is a page to open: somebody
+     invited straight into a room has no handle and no profile, and a tap
+     that leads to a 404 is worse than one that does nothing. */
+  const q0 = PEOPLE[AT];
+  const handle = !mine && q0 && q0.handle ? String(q0.handle).toLowerCase() : "";
+  dragCard(top, handle
+    ? () => { location.href = "/p/" + encodeURIComponent(handle); }
+    : null);
+  // Now that there is a card to measure — see the note in fitDeck.
+  fitDeck();
 
   const acts = $("pacts");
   fill(acts);
@@ -8674,7 +8765,7 @@ function drawDeck() {
 /* Flick to move on. Pointer events rather than touch events, so a mouse on a
  * laptop behaves the same as a thumb — and the card follows the finger, because
  * a gesture that only acts at the end of itself feels broken on the way. */
-function dragCard(box) {
+function dragCard(box, onTap) {
   let x0 = null, dx = 0;
   const go = (e) => {
     if (e.button !== undefined && e.button !== 0) return;
@@ -8691,6 +8782,22 @@ function dragCard(box) {
     if (x0 === null) return;
     const far = Math.abs(dx) > 90;
     box.style.transition = "";
+    /* A TAP IS A DRAG THAT WENT NOWHERE, and it opens their page.
+     *
+     * The bio came off the card, so there has to be somewhere for it to be —
+     * "one tap deeper" needs the tap to exist, and this card had none.
+     *
+     * Six pixels, not zero: a thumb on glass always moves a little, and a
+     * threshold of nothing means the gesture works with a mouse and never on
+     * a phone. Controls on the card stop pointerdown before this ever starts
+     * — Share, the following mark and the two buttons all do — so x0 is null
+     * for them and this returns above. */
+    if (!far && Math.abs(dx) < 6 && typeof onTap === "function") {
+      x0 = null;
+      box.style.transform = "";
+      onTap();
+      return;
+    }
     if (far) {
       box.style.transform = `translateX(${dx > 0 ? 700 : -700}px) rotate(${dx / 12}deg)`;
       box.classList.add("gone");
