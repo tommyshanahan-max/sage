@@ -1276,6 +1276,22 @@ wallets: ## Who can pay you, and whether Stripe will pay it out: make wallets
 	  $(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	    /seed/stripe-methods.mjs)
 
+pay-last: ## Why Stripe turned the last few payments down: make pay-last [N=5]
+	@# THE FOUR WORDS INSIDE STRIPE'S OWN FRAME, ANSWERED.
+	@#
+	@# On 24 Sep a payment got all the way to Stripe's form on a phone — live
+	@# keys, CN¥31.00, Alipay chosen — and came back "The payment attempt
+	@# failed." and nothing else. Not on the page, not in the container log,
+	@# not in `make pay-why`: nothing of ours was involved. Stripe asked
+	@# Alipay and Alipay said no, and the reason sat on a dashboard page
+	@# behind a payment id somebody had to find and click.
+	@#
+	@# So it is asked for. Read-only: one GET, nothing written, and the key
+	@# goes through the environment rather than argv, which is visible in `ps`
+	@# for as long as the call lasts.
+	@$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/pay-last.mjs "$(N)"
+
 hook-make: ## Make the Stripe webhook and print its secret: used by make go-live
 	@# NOT FOR TYPING. `make go-live` calls it and catches the secret in a
 	@# variable; run by hand it prints a live signing secret onto a screen and
