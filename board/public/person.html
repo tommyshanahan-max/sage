@@ -314,18 +314,18 @@
     white-space:nowrap;padding:0;border:0}
   .fact dd{flex:0 1 auto;font-weight:600}
   .fact dd small{display:inline;margin:0 0 0 .3rem}
-  /* THE BANNER OVER THE WALLET — see where it is built. */
+  /* THE BANNER OVER THE WALLET — see where it is built. Pale, like the tiles
+     under it: it is a fact about you, not a button. */
   .standban{display:flex;align-items:center;gap:.75rem;margin:1.4rem 1.15rem 0;
-    padding:1rem;border-radius:1.1rem;color:#fff;
-    background:linear-gradient(120deg,#1B2A8C,#3F68D8 60%,#2F8FD8)}
-  .standban .sbico{flex:0 0 auto;width:2.4rem;height:2.4rem;border-radius:50%;
-    border:2px solid rgba(255,255,255,.8);display:grid;place-items:center}
-  .standban .sbico svg{width:1.1rem;height:1.1rem;fill:#fff}
-  .standban b{flex:1;min-width:0;font-size:1.02rem;font-weight:700;line-height:1.3}
-  .standban .sbpill{flex:0 0 auto;background:#fff;color:#3F68D8;font-size:.8rem;
-    font-weight:600;padding:.35rem .7rem;border-radius:99px;white-space:nowrap}
-  .sbhere{margin:.55rem 1.15rem 0;font-size:.88rem;color:var(--ink-2);text-align:center}
-  .standban + .sbhere + div .mcard,.standban + div .mcard{margin-top:.9rem}
+    padding:1.1rem 1.1rem;border-radius:1.1rem;background:#DCE7FB;color:#151B28}
+  @media (prefers-color-scheme:dark){.standban{background:#18233D;color:#E9EDF5}}
+  .standban b{flex:1;min-width:0;font-size:1.15rem;font-weight:700;line-height:1.3}
+  .standban b span{display:block;font-weight:500}
+  .standban .sbpill{flex:0 0 auto;display:flex;align-items:center;gap:.35rem;
+    background:rgba(255,255,255,.65);color:#3F68D8;font-size:.82rem;font-weight:600;
+    padding:.4rem .75rem;border-radius:99px;white-space:nowrap}
+  .standban .sbpill svg{width:1rem;height:1rem;fill:none;stroke:currentColor;stroke-width:2;
+    stroke-linecap:round;stroke-linejoin:round}
   /* The bio, three lines and a More — coarse first, the rest on a tap. */
   .goal.clamp{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
   .biomore{border:0;background:none;padding:.2rem 0 0;font:inherit;font-size:.95rem;
@@ -1378,16 +1378,23 @@ function paint() {
       { n: q.followers }) : "";
     if (lay || fol) {
       const ban = el("div", "standban");
-      const star = el("span", "sbico");
-      star.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.9 5.6L19.5 10l-5.6 1.9L12 17.5l-1.9-5.6L4.5 10l5.6-1.4z"/></svg>';
-      ban.append(star, el("b", null, [lay, left].filter(Boolean).join(" \u00b7 ")));
-      if (fol) ban.append(el("span", "sbpill", fol));
+      /* The layer on one line and the places left on the next — the two
+         things the banner is for, big enough to read at a glance. */
+      const t = el("b");
+      t.append(document.createTextNode(lay + (left ? " \u2014" : "")));
+      if (left) t.append(el("span", null, left));
+      ban.append(t);
+      if (fol) {
+        const pill = el("span", "sbpill");
+        pill.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/>'
+          + '<path d="M3 19a6 6 0 0 1 12 0"/><circle cx="17" cy="9" r="2.6"/><path d="M15.5 14.2A5 5 0 0 1 21 19"/></svg>';
+        pill.append(document.createTextNode(fol));
+        ban.append(pill);
+      }
       box.append(ban);
     }
-    if (Array.isArray(q.rooms) && q.rooms.length) {
-      box.append(el("p", "sbhere", T("bud.hereFor") + ": "
-        + q.rooms.map((r) => T("room." + r)).join(", ")));
-    }
+    /* "Here for" is not repeated here: it is what you chose in Edit, and a
+       third line under the banner was the clutter Tom asked to lose. */
   }
 
   if (q.mine) {

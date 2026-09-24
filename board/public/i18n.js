@@ -5218,11 +5218,12 @@ export const STRINGS = {
   "pm.send":           ["Send", "付钱"],
   "pm.wallet":         ["Wallet", "钱包"],
   "pm.walletSet":      ["Set up your wallet", "开通钱包"],
-  "pm.all":            ["See all", "查看全部"],
   // Closed, the wallet row says only what is owed to you — see money-card.js.
   "pm.owed":           ["{amount} owed", "待收 {amount}"],
   "pm.owedN":          ["{n} owed", "{n} 笔待收"],
   "pm.owedHead":       ["Owed", "待收"],
+  "pm.walletOwed":     ["Wallet — {amount}", "钱包 — {amount}"],
+  "pm.nobodyOwes":     ["Nobody owes you anything.", "没有人欠你钱。"],
   // The three tiles in the opened wallet — see money-card.js.
   "pm.earned":         ["Earned", "累计收到"],
   "pm.inMonth":        ["In this month", "本月收到"],
