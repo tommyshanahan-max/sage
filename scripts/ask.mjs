@@ -59,6 +59,30 @@ console.log("  " + PUBLIC + "/pay/" + j.id);
    nobody can find is a feature nobody has. */
 console.log("  " + PUBLIC + "/pay/" + j.id + ".png   (a code — open it and show it)");
 console.log("");
+
+/* WHETHER THIS LINK CAN ACTUALLY TAKE MONEY, SAID BESIDE THE LINK.
+ *
+ * With BOARD_DEALIO_DEMO on, /pay/:id/wallet serves the stand-in: it marks
+ * the request paid without a payment ever happening. The page says so — a
+ * banner in Chinese across the top and a line under the button — and on
+ * 24 Sep that was not enough. A ¥1 "payment" was made on a phone, the screen
+ * said it worked, and it was written into NOW.md as proof that a Chinese
+ * payer can pay. Nothing had been charged.
+ *
+ * A banner on the page is the wrong place for this. The link is what gets
+ * carried away, pasted into a chat and sent to somebody — so what the link
+ * is has to travel with the link, in the same breath, where whoever is about
+ * to send it cannot scroll past it.
+ *
+ * It says nothing at all when the demo is off. A line that appears on every
+ * run is a line nobody reads, and then the one time it matters it is
+ * furniture. */
+if (process.env.BOARD_DEALIO_DEMO === "1") {
+  console.log("  \u26A0  DEMO — THIS LINK CANNOT TAKE MONEY.");
+  console.log("     It marks itself paid without charging anybody. Nothing arrives.");
+  console.log("     Real payments need BOARD_DEALIO_DEMO out of .env on the box.");
+  console.log("");
+}
 /* SAID HERE RATHER THAN FOUND OUT ON THE PHONE. A request from somebody with
    no payout set up opens fine and cannot be paid, and the page says so — but
    by then somebody has walked to another device to find out. */

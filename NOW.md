@@ -146,10 +146,18 @@ The evidence was on screen the whole time and was read the wrong way round:
 the URL in the Alipay warning was `/pay/…/wallet`, which is the demo route
 and nothing else. It was taken for a Stripe return.
 
-**So this is still unproven.** A real test needs `BOARD_DEALIO_DEMO` off, or
-a route that cannot fall through to the stand-in. Until then nobody should
-say a Chinese payer can pay — that is the claim this file exists to stop
-being made twice.
+**`BOARD_DEALIO_DEMO` is now out of `.env` on the box, 24 Sep 17:54** —
+removed and confirmed gone. So the next `make ask` link is a real charge.
+
+**And `make ask` now says which it is, beside the link.** A banner on the
+page was not enough: the link is what gets carried off and pasted into a
+chat, so what the link is has to travel with it. With the demo on it prints
+`⚠ DEMO — THIS LINK CANNOT TAKE MONEY`; with it off it says nothing, because
+a line that appears every time is furniture by the time it matters.
+
+**Still unproven until somebody pays one.** Nobody should say a Chinese payer
+can pay until that has happened with no orange banner on the screen — that is
+the claim this file exists to stop being made twice.
 
 WHAT IS STILL TRUE, because it came from Stripe's own API rather than a
 screen: Alipay is available on the live account, charges and payouts are
