@@ -183,6 +183,107 @@
   .prow .n{font-family:var(--serif);font-size:1.2rem;text-align:right;
     font-variant-numeric:tabular-nums}
   .prow .t{grid-column:1/-1;color:var(--mut);font-size:.82rem}
+  /* ---- THE HERO: what you have earned, and what is still coming ---------
+     THE ONE THING SOMEBODY OPENS A MONEY SCREEN TO SEE, at the size that
+     says so. Not a balance — this board holds nothing and must not look as
+     though it does. Two facts that are true of a wallet holding nothing:
+     what has reached you, and what is on its way. */
+  .whero{padding:.4rem .1rem 1.2rem}
+  .whero .k2{margin:0 0 .45rem;font-size:.72rem;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--mut)}
+  .whero .v{margin:0;font-size:3.1rem;font-weight:700;line-height:1;
+    letter-spacing:-.035em;font-variant-numeric:tabular-nums;color:var(--ink)}
+  /* .hq AND NOT .q. `.q` is the request card on this same page — declared a
+     hundred lines further down, so it wins the cascade and every quiet line
+     in the hero came out wearing a grey card. A class name that reads well
+     in isolation is not a free choice on a page that already has one. */
+  .whero .hq{margin:.7rem 0 0;font-size:.92rem;color:var(--mut)}
+  /* THE BANK LINE IS A BUTTON, because it is the one line on this screen that
+     is a thing to go and fix. It reads as a line until it needs pressing. */
+  .whero button.hq{display:block;width:100%;text-align:left;border:0;
+    background:none;font:inherit;font-size:.86rem;padding:.35rem 0 0;cursor:pointer}
+  /* THE WARNING IS A LINE, NOT A SHOUT. Bold accent directly under the
+     figure made it the second loudest thing on the screen, in the slot the
+     drawing gives to "Still to come". It is a real fault and it stays in the
+     accent, but at the weight of the line it sits in. */
+  .whero button.hq.warn2{color:var(--acc);text-decoration:underline;
+    text-underline-offset:3px}
+  /* A SHADOW, NOT JUST A SHADE. --card on --bg is four points of lightness
+     apart, which is a difference you can measure and not one you can see: the
+     block did not divide the page, it just sat on it. The shadow under the
+     rounded bottom is what makes the top read as lying over the rest. */
+  .topblock{background:var(--card);border-bottom:1px solid var(--line);
+    margin:0 -.9rem 1.5rem;padding:1.2rem .9rem 1.25rem;
+    border-radius:0 0 1.3rem 1.3rem;
+    box-shadow:0 6px 18px rgba(8,12,22,.07)}
+  /* THE TWO VERBS, AS TWO MATCHING PILLS. This screen had a number pad, a
+     currency dropdown and one blue button stacked under the hero: three
+     mismatched controls where the drawing has two matching ones, in a second
+     blue fighting the warning line above it. The pad is not lost — both pills
+     open the same sheet, and it has always asked for the amount when none was
+     typed. Fewer controls, and the screen stops shouting in two colours. */
+  .pills{display:grid;grid-template-columns:repeat(2,1fr);gap:.6rem;margin:0 0 .4rem}
+  .pills button{border:0;border-radius:999px;padding:1.05rem .6rem;cursor:pointer;
+    font:inherit;font-size:1.02rem;font-weight:700;background:var(--ink);color:var(--card)}
+  /* ON THE BLOCK, NOT ON THE PAGE. The quiet pill was var(--card), which is
+     now exactly the surface behind it — an invisible button. It takes the
+     page's own ground instead, so the pair reads as dark-and-light either
+     way round. */
+  .pills button+button{background:var(--bg);color:var(--ink);
+    border:1px solid var(--line)}
+  .pills button[disabled]{opacity:.45;cursor:not-allowed}
+  /* ONE VERB IS NOT HALF A PAIR. Kept for any state that ever draws a single
+     pill: alone, it takes the width rather than sitting in the left half
+     with a hole beside it. Send is no longer hidden, so today nothing hits
+     this — which is the point of it still being here. */
+  .pills button:only-child{grid-column:1/-1}
+  /* ---- THE DEALS COLUMN ------------------------------------------------
+     A COLUMN OF SUMMARIES THAT DROP DOWN. Every deal is one line until it is
+     asked about, and then it opens where it stands rather than pushing the
+     reader onto another screen — so a column can be read down and two deals
+     compared without going back and forth.
+     NATIVE <details>, NOT A DIV AND A CLICK HANDLER. Open and closed to a
+     screen reader without being told, keyboard-operable, and it survives a
+     repaint with the right rows still open. Hand-rolling costs all four. */
+  .deal{border-bottom:1px solid var(--line)}
+  .deal>summary{list-style:none;cursor:pointer;display:grid;
+    grid-template-columns:1fr auto;gap:.1rem .8rem;align-items:baseline;
+    padding:.85rem .1rem}
+  .deal>summary::-webkit-details-marker{display:none}
+  .deal>summary:focus-visible{outline:2px solid var(--acc);outline-offset:2px;border-radius:.5rem}
+  /* ONE LINE PER DEAL. "Beijing producer → Melbourne post house" wrapped onto
+     two and shoved the figure down with it, so the column stopped being a
+     column you can run your eye down. min-width:0 is the half people forget:
+     without it a grid track will not shrink below its content and the
+     ellipsis never fires. */
+  .deal .who{font-weight:650;min-width:0;overflow:hidden;text-overflow:ellipsis;
+    white-space:nowrap}
+  .deal .fig{font-family:var(--serif);font-size:1.15rem;
+    font-variant-numeric:tabular-nums;text-align:right}
+  .deal .meta{grid-column:1/-1;font-size:.78rem;color:var(--mut);
+    display:flex;align-items:center;gap:.4rem}
+  /* THE MARKER TURNS, and it is the only moving thing on the screen. A column
+     that opens with no sign of having opened reads as the page jumping. */
+  .deal .caret{display:inline-block;transition:transform .15s ease}
+  .deal[open] .caret{transform:rotate(90deg)}
+  @media (prefers-reduced-motion:reduce){.deal .caret{transition:none}}
+  .deal .inner{padding:.1rem .1rem 1rem}
+  .dline{display:flex;justify-content:space-between;gap:1rem;padding:.42rem 0;font-size:.92rem}
+  .dline span:first-child{color:var(--mut)}
+  .dline span:last-child{font-variant-numeric:tabular-nums;text-align:right}
+  /* THE MARGIN IS THE ONE LINE WORTH LIFTING, and it is lifted by weight and
+     a rule rather than a colour — it is a figure, not a status. */
+  .dline.gap{border-top:1px solid var(--line);margin-top:.3rem;padding-top:.6rem;font-weight:700}
+  .dline.gap span:first-child{color:var(--ink)}
+  .dpaper{display:flex;gap:.4rem;flex-wrap:wrap;margin:.7rem 0 0}
+  .dchip{font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;
+    padding:.16rem .55rem;border-radius:999px;background:var(--line);color:var(--ink2)}
+  .dchip.ok{background:rgba(63,190,125,.16);color:var(--ok)}
+  .dchip.no{background:rgba(217,83,79,.16);color:#E08C89}
+  .dacts{display:flex;flex-wrap:wrap;gap:.5rem;margin:.8rem 0 0}
+  .dacts button{border:1px solid var(--line);background:var(--card);color:var(--ink);
+    font:inherit;font-size:.86rem;padding:.5rem .9rem;border-radius:999px;cursor:pointer}
+
   /* ---- THE BOOKS: two invoices on one line ------------------------------
      A LEDGER, NOT A DECK OF CARDS. Every row here is the same kind of thing
      and none of them needs lifting off the page; the card treatment on the
@@ -999,8 +1100,9 @@ function signedOut() {
    own centred arrangement with its own heading, which meant the first thing
    somebody learned moved the moment they made a request. One screen. */
 function empty() {
-  root.append(pad());
-  if (STATE && !STATE.ready) root.append(payoutRow());
+  /* THE SAME SHAPE WITH NOTHING IN IT. A money screen that opens on a bare
+     pad has no answer to "how am I doing" — and zero is an answer. */
+  root.append(topBlock());
   root.append(el("p", "none", T("dl.noneHead")));
   root.append(whereLink());
 }
@@ -1120,30 +1222,47 @@ function payoutLine() {
   return box;
 }
 
+/* THE ONE MONEY SCREEN.
+ *
+ * It was two: Dealio, which can take money from a stranger with no account,
+ * and the wallet, which is member-to-member on a provider nothing is
+ * connected to. Both had Send, Request and a list of what is owed. Only one
+ * of them worked, and the better-made screens were on the other.
+ *
+ * So this is the wallet's face on Dealio's rails, in the order Tom drew it:
+ * what you have earned, the deals underneath as a column that drops down,
+ * and then the pad — the thing that actually takes money — below them.
+ *
+ * THE FIGURE AND THE COLUMN COME OFF THE SAME DATA. Both are worked out from
+ * this person's requests: `money` on /api/requests for the hero, /api/books
+ * for the deals. A screen whose headline is fed by one ledger and whose list
+ * is fed by another is a screen that will one day show A$0.00 over real
+ * money — which is exactly what the wallet did.
+ */
 function list() {
-  /* THE PAD FIRST, then what is still owed. The two buttons used to be
-     pinned at the bottom under a list; the action belongs at the top, which
-     is the one thing Facebook's own screens get right and this did not. */
-  root.append(pad());
+  root.append(topBlock());
 
-  /* NOWHERE FOR THE MONEY TO LAND, ABOVE THE HEADING AND NOT UNDER IT.
-     It used to be appended after "Still to settle", which filed it as the
-     first row of that list — and it is not a row of that list. It is a fault
-     with the account, it is answered from the pad above it, and on a screen
-     whose only open request was money going OUT it read as a remark about
-     that request, which it is not. */
-  if (STATE && !STATE.ready) root.append(payoutRow());
+  /* THE DEALS, AS A COLUMN THAT DROPS DOWN. Coarse first, finer on a tap,
+     opening in place. Only once a deal has two sides: on a board where
+     nobody has ever paid a supplier it would be a column of one-sided rows
+     repeating the list further down. */
+  const deals = (BOOKS?.deals || []).filter((d) => d.in && d.out);
+  if (deals.length) {
+    root.append(el("h2", "lhead", T("bk.head")));
+    const col = el("div");
+    for (const d of deals) col.append(dealDrop(d));
+    root.append(col);
+  } else if (BOOKS === null) {
+    /* Asked for once per visit. The screen draws without it rather than
+       waiting: the pad is what most people came for. */
+    loadBooks();
+  }
 
-  /* EARNED AND STILL TO COME — the two numbers this screen was missing.
-     The pad above says what you are about to ask for; the list below says
-     what is outstanding one row at a time. Neither answers "how am I doing",
-     which is the question somebody opens a money screen to ask.
-     ONE PAIR PER CURRENCY, never added together: ¥30,000 and A$2,000 are two
-     numbers and one of them needs a rate this board would have to invent.
-     The server sends nothing when there is nothing — see `money` in
-     /api/requests — so this draws no empty row. */
-  for (const m of (STATE.money || [])) root.append(moneyRow(m));
-
+  /* THE PAD, UNDER THE DEALS. It was the first thing on the screen, on the
+     Cash App reading that the number is what you already know. That holds
+     for somebody arriving to ask for money and not for somebody opening the
+     app to see how they are doing — which is most opens. The pad is two
+     thumb-lengths down and still the loudest control on the screen. */
   const h = el("div", "hrow");
   h.append(el("h2", "lhead", T("dl.sub")));
   /* THE OTHER SCREEN, and only once there is something on it. "Has this
@@ -1156,12 +1275,10 @@ function list() {
     a.addEventListener("click", () => { VIEW = "paid"; draw(); });
     h.append(a);
   }
-  /* THE BOOKS, AND ONLY ONCE A DEAL HAS TWO SIDES. On a board where nobody
-     has ever paid a supplier it is a screen of one-sided rows repeating the
-     list above it — so it stays out of the way until the day it has
-     something the other screens cannot show. */
+  /* AND THE BOOKS PROPER — the totals, and the file for the accountant. The
+     column above is for reading; this is for reconciling. */
   if (STATE.requests.some((q) => q.deal || q.way === "out")) {
-    const a = el("button", "hlink", T("bk.head"));
+    const a = el("button", "hlink", T("bk.totals"));
     a.type = "button";
     a.addEventListener("click", () => { VIEW = "books"; BOOKS = null; draw(); });
     h.append(a);
@@ -1279,7 +1396,7 @@ async function loadBooks() {
     const r = await fetch("/api/books", { cache: "no-store", headers: { "x-board-device": device } });
     BOOKS = await r.json();
   } catch { BOOKS = { deals: [], totals: [], failed: true }; }
-  if (VIEW === "books") draw();
+  if (VIEW === "books" || VIEW === "list") draw();
 }
 
 function booksView() {
@@ -1354,6 +1471,152 @@ function booksView() {
   out.href = "/api/books.csv";
   out.setAttribute("download", "");
   root.append(out);
+}
+
+/* THE TOP OF THE PAGE IS ITS OWN SURFACE.
+ *
+ * The money and the two verbs on one shade, the deals on the page under it.
+ * Without the divide the screen was one undifferentiated column — a number,
+ * some buttons, some rows — and nothing said which part was "how am I doing"
+ * and which was "what is outstanding". A shade does that in the glance this
+ * screen gets, without a heading to read.
+ *
+ * IT BLEEDS TO THE EDGES, which is what makes it read as a region of the
+ * page rather than another card in a stack of cards. The negative side
+ * margin cancels main's own padding; the padding inside puts the text back
+ * where it was. No negative top margin — the brand bar is above it.
+ */
+function topBlock() {
+  const box = el("div", "topblock");
+  box.append(hero(), verbs());
+  return box;
+}
+
+/* THE TWO VERBS. Both open the sheet that already asks for the amount when
+   none was typed, which is what the pad was doing one step earlier and with
+   three controls instead of two.
+   SENDING IS STRIPE'S HALF and on a box whose Connect is off it takes a
+   person to a button that can only fail, about their own bank details — so
+   it is not offered there at all. The server says; no answer means yes,
+   which is every board that had this before. See canSend in server.js. */
+function verbs() {
+  const box = el("div", "pills");
+  const ask = el("button", null, T("dl.make"));
+  ask.type = "button";
+  ask.addEventListener("click", () => form("in", { amount: "" }));
+  box.append(ask);
+  /* SEND IS ALWAYS DRAWN. It used to be hidden on a board whose Connect is
+     off, which is right about the dead end and wrong about the screen: it
+     left one dark pill in the left half with a hole beside it, and the pair
+     is the shape of this screen. So it is always there and only ever
+     disabled — nobody can walk into the dead end, and nobody meets a screen
+     that looks like it lost a button. On the real box Connect is on and it
+     is simply live. */
+  const send = el("button", null, T("dl.send"));
+  send.type = "button";
+  send.disabled = STATE?.canSend === false;
+  send.addEventListener("click", () => form("out", { amount: "" }));
+  box.append(send);
+  return box;
+}
+
+/* THE HERO — WHAT YOU HAVE EARNED, AND WHAT IS STILL COMING.
+ *
+ * Never a balance. This board holds no money and must not look as though it
+ * does: holding other people's money is a licence in Australia and 二清 in
+ * China, and a zero in the biggest type on the screen was what the balance
+ * actually produced.
+ *
+ * ONE PAIR PER CURRENCY, NEVER ADDED TOGETHER. ¥30,000 and A$2,000 are two
+ * numbers and one of them needs a rate this board would have to invent. The
+ * biggest is the hero; the rest get a quiet line BELOW the bank line, not
+ * above it — directly under the hero they land where "Still to come" sits
+ * and a reader binds them into one pair in the four seconds this gets.
+ */
+function hero() {
+  const box = el("div", "whero");
+  const pots = STATE?.money || [];
+  const top = pots[0] || null;
+  box.append(el("p", "k2", T("earn.lab")));
+  box.append(el("p", "v", top ? top.earned : (CUR_SIGN[curPick()] || "") + "0"));
+  if (top?.pendingMinor) box.append(el("p", "hq", T("earn.waiting") + " " + top.pending));
+
+  /* WHERE IT LANDS, AND IT IS THE ONE LINE HERE THAT IS A THING TO GO AND
+     FIX. It was a whole warning row across the screen, shouting the same
+     sentence at somebody every time they opened the app, which is how a
+     warning becomes furniture. As the third line of the hero it is read
+     once, in place, next to the money it is about. */
+  const ready = STATE?.ready;
+  const half = !ready && STATE?.started;
+  const b = el("button", "hq" + (ready ? "" : " warn2"));
+  b.type = "button";
+  b.textContent = ready
+    ? T("wl.straightToBank") + " · " + T("wl.yourBank")
+    : T(half ? "dl.halfHead" : "dl.notReady");
+  b.addEventListener("click", whereSheet);
+  box.append(b);
+
+  for (const m of pots.slice(1)) {
+    const bits = [m.earnedMinor ? T("earn.lab") + " " + m.earned : "",
+      m.pendingMinor ? T("earn.waiting") + " " + m.pending : ""].filter(Boolean).join(" · ");
+    if (bits) box.append(el("p", "hq", bits));
+  }
+  return box;
+}
+
+/* ONE DEAL: A SUMMARY LINE THAT DROPS DOWN, with everything it can be acted
+   on with inside it. The line carries what a deal is called — the two names —
+   and the figure that came in, which is the one somebody remembers it by.
+   What has to be worked out is behind the tap. */
+function dealDrop(d) {
+  const names = [d.in?.who || T("dl.someone"), d.out?.who || T("bk.noOne")].join(" → ");
+  const sum = el("summary");
+  sum.append(el("span", "who", names));
+  sum.append(el("span", "fig", d.in?.amount || d.out?.amount || ""));
+  const meta = el("div", "meta");
+  meta.append(el("span", "caret", "›"));
+  meta.append(el("span", null, [d.no ? T("rq.no", { n: String(d.no).padStart(4, "0") }) : "",
+    d.in?.what || "", when(d.at)].filter(Boolean).join(" · ")));
+  sum.append(meta);
+
+  const inner = el("div", "inner");
+  const line = (k, v, cls) => {
+    if (!v) return;
+    const r = el("div", "dline" + (cls ? " " + cls : ""));
+    r.append(el("span", null, k), el("span", null, v));
+    inner.append(r);
+  };
+  line(T("wl.dIn"), d.in?.amount || "");
+  /* WHAT ACTUALLY ARRIVED IN YUAN, at the rate on the day the code was drawn.
+     A third number beside the other two rather than folded into them: those
+     two are the supplier's currency so that the subtraction means something,
+     and this is what was banked. */
+  if (d.in?.cny) line(T("wl.dCny"), "¥" + (d.in.cny / 100).toLocaleString("en-US"));
+  line(T("wl.dOut"), d.out?.amount || "");
+  if (d.gap) line(T("wl.dGap"), d.gap.amount + "  ·  " + d.gap.pct + "%", "gap");
+  else line(T("wl.dGap"), T("bk.why." + (d.why || "noCur")), "gap");
+  if (d.in?.inv) line(T("wl.dInvTo"), d.in.inv.title);
+
+  /* THE PAPERWORK, ONLY ONCE THE MONEY HAS MOVED. A document that is not
+     owed yet is not outstanding, and red marks on a deal nobody has paid is
+     a screen that cries wolf. */
+  const chips = el("div", "dpaper");
+  if (d.in && d.in.state === "paid") chips.append(el("span", "dchip " + (d.in.invoice === "issued" ? "ok" : "no"), T(d.in.invoice === "issued" ? "bk.cIssued" : "bk.cIssue")));
+  if (d.out && d.out.state === "paid") chips.append(el("span", "dchip " + (d.out.billed ? "ok" : "no"), T(d.out.billed ? "bk.cBilled" : "bk.cBill")));
+  if (chips.children.length) inner.append(chips);
+
+  /* THE TWO TICKS, WHERE THE DEAL IS. Neither can be worked out here — a
+     fapiao is issued in the tax bureau's own system and a supplier's invoice
+     arrives as a PDF in an inbox — so they are asked for rather than
+     guessed, next to the deal they are about. */
+  const acts = el("div", "dacts");
+  if (d.in && d.in.state === "paid" && d.in.inv) acts.append(tick(d.in.id, d.in.invoice === "issued", "bk.tIssued", "bk.tIssue", null));
+  if (d.out && d.out.state === "paid") acts.append(tick(d.out.id, d.out.billed, "bk.tBilled", "bk.tBill", null));
+  if (acts.children.length) inner.append(acts);
+
+  const box = el("details", "deal");
+  box.append(sum, inner);
+  return box;
 }
 
 function dealRow(d) {
@@ -1465,7 +1728,7 @@ function tick(id, on, onKey, offKey, sheetBack) {
         body: JSON.stringify({ device, on: !on }),
       });
     } catch { /* the reload below says what actually happened */ }
-    sheetBack.remove();
+    if (sheetBack) sheetBack.remove();
     BOOKS = null;
     await loadBooks();
   });

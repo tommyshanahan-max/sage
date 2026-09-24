@@ -253,6 +253,63 @@ provider ledger, which the hero no longer reads from. On a `test` provider
 that ledger is empty so nothing disagrees today — but it is the seam, and it
 is what the section below is about.
 
+## Dealio absorbed the wallet's face — built 24 Sep, never deployed
+
+**One money screen, at `/dealio?in=1`, which is where the Money tab already
+points.** Tom's sketch, in his order: what you have earned, the deals under it
+as a column that drops down, then the pad.
+
+- **The hero** — Earned here, the number, Still to come, and where it lands.
+  The payout warning was a row across the screen shouting the same sentence
+  on every open, which is how a warning becomes furniture; it is now the
+  third line of the hero, next to the money it is about, and it is a button.
+- **The deals column** — native `<details>`, one line each (the two names and
+  what came in), opening in place. Inside: invoiced, banked in yuan, paid
+  out, margin, the invoice head, the paperwork marks and the two ticks.
+- **The pad is gone.** Moving it down the page was wrong twice over: a huge
+  faint ¥0 with no label reads as a broken element, and a number pad, a
+  currency dropdown and one blue button is three mismatched controls where
+  the drawing has two matching ones — in a second blue fighting the warning
+  line above it. Both verbs open the sheet that has always asked for the
+  amount when none was typed, so nothing is lost and the screen stops
+  shouting in two colours.
+- **The top is its own surface** — the money and the two verbs on a raised
+  block, the deals on the page below it, so the glance this screen gets can
+  tell "how am I doing" from "what is outstanding" without a heading to read.
+  It needed a **shadow**, not just a shade: `--card` on `--bg` is four points
+  of lightness apart, a difference you can measure and not one you can see.
+- **`Deals` in the header became `Totals`** — the column is for reading, that
+  screen is for reconciling and exporting, and they are different jobs.
+
+**Three things only looking at it found:**
+
+- **`.q` was already taken.** The hero's
+quiet lines used a class the request card on the same page uses, declared a
+hundred lines further down, so every one of them came out wearing a grey
+  card. Renamed `.hq`. A class name that reads well on its own is not a free
+  choice on a page that already has one.
+- **One verb is not half a pair.** Sending is Stripe's half and was hidden
+  on a board whose Connect is off, which left a single dark pill in the left
+  half of the screen with a hole beside it. Send is now always drawn and only
+  ever **disabled** — nobody walks into the dead end, and nobody meets a
+  screen that looks like it lost a button. On the box Connect is on, so it is
+  simply live. Wiring it properly is a later job.
+- **The payout warning was the second loudest thing on the screen** — bold
+  accent directly under the figure, in the slot the drawing gives to "Still
+  to come". Still accent, now at the weight of the line it sits in.
+
+**STILL TWO PAGES, AND THIS IS THE LOOSE END.** `/wallet` keeps its own home,
+which is now a near-duplicate of this one. It was not deleted because the
+screens behind it are the only way to reach **setup, identity, limits and the
+bank details** — including the ABN/GST and SWIFT/IBAN work from today. Two
+things follow and neither is done:
+
+- The hero's "where it lands" line opens Dealio's payout sheet, **not** the
+  wallet's bank screen. So the SWIFT and ABN fields are reachable only by
+  typing `/wallet`.
+- Send and Request on `/wallet` still write to the provider ledger. On a
+  `test` provider it is empty so nothing disagrees today.
+
 ## Next: Dealio absorbs the wallet
 
 **The problem.** Two money screens, both with Send, Request and a list of

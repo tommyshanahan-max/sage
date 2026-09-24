@@ -5677,6 +5677,10 @@ export const STRINGS = {
   "bk.eAlready":       ["That deal already has a supplier.", "这单已经有供应商了。"],
   "bk.eAmount":        ["Nothing to work the amount out from.", "算不出金额。"],
   /* THE PERSON WHO NEEDS THIS MOST DOES NOT USE THIS APP. */
+  /* THE DEEPER SCREEN, now that the deals themselves are on the home screen.
+     The column there is for reading; this is for reconciling and exporting,
+     which is a different job and deserves its own word. */
+  "bk.totals":         ["Totals", "汇总"],
   "bk.csv":            ["Send it to the accountant", "导出给会计"],
 
   "memo.brand":        ["The Exchange", "交换"],
