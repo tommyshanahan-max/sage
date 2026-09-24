@@ -11635,11 +11635,39 @@ app.post("/api/request/:id/pay", express.json({ limit: "1kb" }), async (req, res
     }
   }
 
-  /* WHOSE ACCOUNT, BY DIRECTION — see the note in the read route above. */
-  const dest = (q.way || "in") === "out"
+  /* NOBODY TO TRANSFER TO WHEN THE MONEY IS ALREADY YOURS.
+   *
+   * Every charge this route made was a DESTINATION charge — created on the
+   * platform, transferred on to a connected account — because the product is
+   * one member paying another. Dealio's own requests are not that. The note
+   * over the code rail above says it already: until Airwallex onboards other
+   * people, every payment these keys confirm lands in ONE account, the
+   * account holder's. And the account holder is the platform.
+   *
+   * So the destination was the asker's `payee` — a connected account minted
+   * at some point by /china/connect and never onboarded — and Stripe refused
+   * the session because its transfers capability is not active. The payer
+   * saw *THEY HAVE NOT FINISHED SETTING UP YET*, which is true of the
+   * connected account and beside the point: the money was never going
+   * through it. Asking Stripe to transfer Tom's money to Tom, via an empty
+   * account Tom does not use.
+   *
+   * A plain charge instead, for the Dealio owner only. Same gate as the code
+   * rail (dealioOwns), and money coming IN — a promise to send still needs
+   * somewhere to send it. No transfer_data and so no application fee, which
+   * is right: there is no cut to take off yourself. lib/stripe.js leaves the
+   * key out entirely rather than sending it empty, which Stripe refuses.
+   *
+   * EVERYBODY ELSE KEEPS THE DESTINATION, and that is the line that matters
+   * rather than a tidiness: collecting your own money is a shop, holding
+   * somebody else's on the way past is 二清 and a licence question. See
+   * NOW.md.
+   */
+  const mine = (q.way || "in") === "in" && dealioOwns(board, q);
+  const dest = mine ? "" : ((q.way || "in") === "out"
     ? (q.landed ? q.acct : "")
-    : await askerPayee(board, q);
-  if (!dest) return res.status(400).json({ error: "payee" });
+    : await askerPayee(board, q));
+  if (!mine && !dest) return res.status(400).json({ error: "payee" });
   if (!stripe.configured()) return res.json({ ok: true, demo: true, method });
 
   /* startCheckout reads a plan row, so the request is handed to it as one.

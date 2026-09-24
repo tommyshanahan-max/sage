@@ -701,6 +701,21 @@ survives where there is nothing to fall through to.
 `make wallet-why` is the command that answered this in one line. Reach for it
 the moment a pay button says a wallet said no.
 
+**And behind it was a second one: Dealio charged itself through Connect.**
+With Airwallex out of the way Alipay reached Stripe and Stripe refused —
+*THEY HAVE NOT FINISHED SETTING UP YET*. Every charge this route made was a
+DESTINATION charge, transferred on to the asker's `payee`: a connected
+account minted by `/china/connect` at some point and never onboarded, so its
+transfers capability is not active. But Dealio's money never goes through
+it. **The keys are Aozhou Baba's** — the money is in the right account the
+moment it is charged. It was asking Stripe to transfer Tom's money to Tom.
+
+A plain charge now for the Dealio owner's own incoming requests — no
+`transfer_data`, and so no application fee, which is right because there is
+no cut to take off yourself. **Everybody else keeps the destination**, and
+that is the line rather than a tidiness: collecting your own money is a shop,
+holding somebody else's on the way past is 二清.
+
 Its payments are **not** on Airwallex and must not be until the conversation
 above has happened. `aozhoubaba.com` is its domain.
 
