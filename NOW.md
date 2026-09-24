@@ -287,6 +287,11 @@ as a column that drops down, then the pad.
   on the light skin, light panel on the dark one, each with its own text,
   muted, accent and buttons. Two surfaces four points of lightness apart do
   not divide a page, they look like a printing fault.
+- **The top block sits on the page rather than running to its edges.** It
+  used to bleed to both sides with only its bottom corners rounded, which
+  reads as a band the page is wearing — while the shadow under it was already
+  saying "an object lying on the page". A margin of page all the way round
+  and four corners settles that argument in the shadow's favour.
 - **The top is its own surface** — the money and the two verbs on a raised
   block, the deals on the page below it, so the glance this screen gets can
   tell "how am I doing" from "what is outstanding" without a heading to read.

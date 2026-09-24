@@ -232,9 +232,15 @@
      light panel on the dark one, each with its own text, muted and accent so
      nothing inside has to be special-cased. No hairline: a panel this far
      from the page behind it does not need a line to say where it ends. */
+  /* INSET, NOT BLED. It ran to both edges with only its bottom corners
+     rounded, which reads as a band the page is wearing. A margin of page all
+     the way round and four corners instead of two makes it an object lying
+     ON the page — which is what the shadow was already saying and the edges
+     were contradicting. main's own .9rem of side padding is the gap; the
+     block just stops pulling against it. */
   .topblock{background:var(--top);color:var(--topInk);
-    margin:0 -.9rem 1.5rem;padding:1.3rem .9rem 1.35rem;
-    border-radius:0 0 1.3rem 1.3rem;
+    margin:.35rem 0 1.4rem;padding:1.3rem 1.15rem 1.35rem;
+    border-radius:1.3rem;
     box-shadow:0 8px 22px rgba(8,12,22,.16)}
   /* THE TWO VERBS, AS TWO MATCHING PILLS. This screen had a number pad, a
      currency dropdown and one blue button stacked under the hero: three
@@ -1586,10 +1592,11 @@ function booksView() {
  * and which was "what is outstanding". A shade does that in the glance this
  * screen gets, without a heading to read.
  *
- * IT BLEEDS TO THE EDGES, which is what makes it read as a region of the
- * page rather than another card in a stack of cards. The negative side
- * margin cancels main's own padding; the padding inside puts the text back
- * where it was. No negative top margin — the brand bar is above it.
+ * IT SITS ON THE PAGE RATHER THAN RUNNING TO THE EDGES. It used to bleed,
+ * with only its bottom corners rounded, which reads as a band the page is
+ * wearing rather than a thing lying on it — and the shadow was already
+ * saying the opposite. A margin of page all the way round settles the
+ * argument in the shadow's favour.
  */
 function topBlock() {
   const box = el("div", "topblock");
