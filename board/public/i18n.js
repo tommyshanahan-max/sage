@@ -5685,6 +5685,10 @@ export const STRINGS = {
   /* NOT "payout settings". The two things a person actually wants from that
      screen are being able to invoice and being able to be wired money, so
      the line names those and not the screen. */
+  /* THE QUESTION AS SOMEBODY WOULD ASK IT. Not "payout settings", which is
+     the name of a screen, and not "where your money lands", which was a
+     footnote about a Stripe account. */
+  "dl.whereSend":      ["Where do we send your money", "钱打到哪里给你"],
   "dl.bankDetails":    ["Your bank and invoice details", "你的银行和开票资料"],
   "dl.pending":        ["Pending", "待结"],
   "bk.totals":         ["Totals", "汇总"],

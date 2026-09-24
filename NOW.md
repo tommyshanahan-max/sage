@@ -312,6 +312,26 @@ hundred lines further down, so every one of them came out wearing a grey
   accent directly under the figure, in the slot the drawing gives to "Still
   to come". Still accent, now at the weight of the line it sits in.
 
+**"WHERE DO WE SEND YOUR MONEY" IS A BUTTON NOW, AND IT GOES TO THE BANK.**
+It was a quiet underlined link at the foot called "Where your money lands",
+and it opened a sheet about a **Stripe connected account**. Two things wrong
+with that: it looked like a footnote when it is the difference between being
+paid and not, and what it opened was the rail rather than the answer. Nobody
+thinks *"I must complete my Connect onboarding"*; they think *"where does the
+money actually come to"*. The hero's bank line goes to the same screen — it
+used to open the Stripe sheet, so one line meant the payout rail and the
+button under it meant the bank.
+
+**THE STRIPE ONBOARDING STEP IS NOW OFF THIS SCREEN, AND THAT NEEDS A
+DECISION.** `payoutRow()` has no callers left and `whereSheet()` is reachable
+only through the `?a=where` deep link. Nothing is deleted, but for **any
+member who is not Tom** that step is how they become payable at all — the
+owner's own requests are a plain charge into the platform account
+(`dealioMine`) and need no connected account, which is why taking it off the
+screen costs Tom nothing and could cost somebody else everything. Either it
+finds a home inside `/wallet#payout` beside the bank fields, or it goes for
+good on purpose.
+
 **ONE PAGE NOW.** `/wallet` no longer draws a home — it forwards to
 `/dealio?in=1`. It had kept a near-duplicate home a version behind, and the
 cards that say "Open wallet" (`money-card.js`, `wallet-card.js`) pointed at

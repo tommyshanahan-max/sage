@@ -213,13 +213,14 @@
   .whero .hq{margin:.7rem 0 0;font-size:.92rem;color:var(--topDim)}
   /* THE BANK LINE IS A BUTTON, because it is the one line on this screen that
      is a thing to go and fix. It reads as a line until it needs pressing. */
-  .whero button.hq{display:block;width:100%;text-align:left;border:0;
-    background:none;font:inherit;font-size:.86rem;padding:.35rem 0 0;cursor:pointer}
+  .whero a.hq{display:block;width:100%;text-align:left;border:0;
+    background:none;font:inherit;font-size:.86rem;padding:.35rem 0 0;
+    cursor:pointer;text-decoration:none;color:var(--topDim)}
   /* THE WARNING IS A LINE, NOT A SHOUT. Bold accent directly under the
      figure made it the second loudest thing on the screen, in the slot the
      drawing gives to "Still to come". It is a real fault and it stays in the
      accent, but at the weight of the line it sits in. */
-  .whero button.hq.warn2{color:var(--topAcc);text-decoration:underline;
+  .whero a.hq.warn2{color:var(--topAcc);text-decoration:underline;
     text-underline-offset:3px}
   /* A SHADOW, NOT JUST A SHADE. --card on --bg is four points of lightness
      apart, which is a difference you can measure and not one you can see: the
@@ -259,6 +260,11 @@
      with a hole beside it. Send is no longer hidden, so today nothing hits
      this — which is the point of it still being here. */
   .pills button:only-child{grid-column:1/-1}
+  /* THE ONE QUESTION, AT THE SIZE OF THE QUESTION. Full width, at the foot,
+     under everything it is the answer to. */
+  .bigwhere{display:block;margin:1.4rem 0 .4rem;padding:1.05rem 1rem;
+    border-radius:999px;background:var(--ink);color:var(--bg);
+    font-weight:700;font-size:1rem;text-align:center;text-decoration:none}
   /* A SMALL WINDOW WITH A FIGURE ON IT. Shut, it is one line: what it holds
      and how much. The figure is the answer most of the time; the list behind
      it is for the times it is not. */
@@ -1150,7 +1156,7 @@ function empty() {
      pad has no answer to "how am I doing" — and zero is an answer. */
   root.append(topBlock());
   root.append(el("p", "none", T("dl.noneHead")));
-  root.append(whereLink());
+  root.append(whereButton());
 }
 
 /* THE PAYOUT PROBLEM AS A ROW, not a red box across the top of the screen.
@@ -1187,13 +1193,24 @@ function payoutRow() {
   return b;
 }
 
-/* The way to your payout settings when nothing is wrong with them — quiet,
-   at the foot, looked for once and then never again. */
-function whereLink() {
-  const a = el("button", "quietlink");
-  a.type = "button";
-  a.textContent = T("dl.whereMoney");
-  a.addEventListener("click", whereSheet);
+/* WHERE DO WE SEND YOUR MONEY — the one question this screen has to ask,
+ * asked at the size of the question.
+ *
+ * It was a quiet underlined link at the foot called "Where your money
+ * lands", and it opened a sheet about a Stripe connected account. Two things
+ * wrong with that. It looked like a footnote, when it is the difference
+ * between being paid and not; and what it opened was the rail, not the
+ * answer. Nobody thinks "I must complete my Connect onboarding". They think
+ * "where does the money actually come to".
+ *
+ * So it is a full-width button and it goes straight to the bank screen — the
+ * account, the ABN and GST, the SWIFT/BIC and the IBAN. That is where the
+ * money is sent from, and it is the screen somebody wants when they ask.
+ */
+function whereButton() {
+  const a = el("a", "bigwhere");
+  a.href = "/wallet#payout";
+  a.textContent = T("dl.whereSend");
   return a;
 }
 
@@ -1359,7 +1376,7 @@ function list() {
     feet.append(a);
   }
   if (feet.children.length) root.append(feet);
-  root.append(whereLink());
+  root.append(whereButton());
 }
 
 /* A SMALL WINDOW WITH ITS OWN FIGURE ON IT, that opens.
@@ -1639,12 +1656,15 @@ function hero() {
      once, in place, next to the money it is about. */
   const ready = STATE?.ready;
   const half = !ready && STATE?.started;
-  const b = el("button", "hq" + (ready ? "" : " warn2"));
-  b.type = "button";
+  /* AND IT OPENS THE SAME SCREEN THE BUTTON DOES. It used to open the Stripe
+     sheet, so one line on this screen meant "your payout rail" and the
+     button under it meant "your bank" — two doors, two ideas, one question.
+     Both now go to the bank. */
+  const b = el("a", "hq" + (ready ? "" : " warn2"));
+  b.href = "/wallet#payout";
   b.textContent = ready
     ? T("wl.straightToBank") + " · " + T("wl.yourBank")
     : T(half ? "dl.halfHead" : "dl.notReady");
-  b.addEventListener("click", whereSheet);
   box.append(b);
 
   for (const m of pots.slice(1)) {
