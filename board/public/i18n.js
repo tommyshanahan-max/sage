@@ -5210,6 +5210,22 @@ export const STRINGS = {
                         "他们填好收款方式之前，钱不会动。填好了你会看到。"],
   "dl.whoEg":          ["Their name", "对方的名字"],
   "dl.someone":        ["Somebody", "某人"],
+  /* THE MONEY CARD ON YOUR OWN PAGE — see money-card.js. Asking reuses
+     dl.make and the list reuses dl.sub and dl.st.*, so a row reads the same
+     on Profile as on the page it opens. */
+  "pm.head":           ["Money", "钱"],
+  "pm.got":            ["in this month", "本月收到"],
+  "pm.gotN":           ["paid this month", "本月已付笔数"],
+  "pm.due":            ["owed to you · {n}", "待收 · {n} 笔"],
+  "pm.dueN":           ["owed to you", "待收笔数"],
+  "pm.send":           ["Send", "付钱"],
+  "pm.wallet":         ["Wallet", "钱包"],
+  "pm.walletSet":      ["Set up your wallet", "开通钱包"],
+  "pm.all":            ["See all", "查看全部"],
+  /* THE FOLD ON YOUR OWN PAGE: the key, Google, and the safety note, one tap
+     down. They are read once; the page is opened every day. */
+  "me.keyFold":        ["Your key & sign-in", "你的钥匙和登录"],
+  "me.bioMore":        ["More", "展开"],
   "dl.off":            ["Take it back", "撤回"],
   /* "Waiting" under a heading that already says "Still to settle" says the
      same thing twice and answers nothing. The question somebody opens this
