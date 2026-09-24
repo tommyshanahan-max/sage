@@ -165,8 +165,25 @@ console.log("    paying out     " + (who?.payouts_enabled ? "yes" : "NO"));
 /* WHICH BANK, in the only terms anybody can check against a statement: the
    bank's own name, the last four digits and the currency it pays in. Never
    the full number — it is on a screen somebody may be sharing. */
-const banks = (who?.external_accounts?.data || []).filter((a) => a.object === "bank_account");
-if (!banks.length) {
+/* ASKED FOR SEPARATELY, BECAUSE /account DOES NOT VOLUNTEER IT.
+ *
+ * external_accounts is not on the account object unless it is expanded, so
+ * reading who.external_accounts.data got undefined and this printed
+ * "NOWHERE — no bank account on this account yet" at somebody who had one.
+ * A missing field read as an empty list is the worst shape of wrong: it does
+ * not look like a failure, it looks like an answer.
+ *
+ * A failure here says so rather than inventing an empty list. */
+let banks = who?.external_accounts?.data;
+let banksAsked = Array.isArray(banks);
+if (!banksAsked && who?.id) {
+  const got = await get("/accounts/" + who.id + "/external_accounts?object=bank_account&limit=10");
+  if (got.res.ok && Array.isArray(got.body?.data)) { banks = got.body.data; banksAsked = true; }
+}
+banks = (banks || []).filter((a) => a.object === "bank_account");
+if (!banksAsked) {
+  console.log("    lands in       could not be read \u2014 Stripe would not list the bank");
+} else if (!banks.length) {
   console.log("    lands in       NOWHERE \u2014 no bank account on this account yet");
 } else {
   for (const a of banks) {
