@@ -572,7 +572,12 @@ SCREENS.sources = async () => {
 SCREENS.payout = async (_, q) => {
   const w = W.wallet;
   const setup = q.get("setup") === "1";
-  const fields = w.region === "AU" ? [["accountName", T("wl.accountName"), "text", ""], ["bsb", T("wl.bsb"), "text", T("wl.sixDigits")], ["accountNumber", T("wl.accountNumber"), "text", ""]]
+  /* AN ABN FIRST, BECAUSE WITHOUT ONE 47% OF THE PAYMENT IS WITHHELD.
+     Not a preference — no-ABN withholding is the law, and a supplier who
+     leaves it blank is paid 53 cents in the dollar. Asked once, here, rather
+     than discovered on the first payment. Its own checksum is checked before
+     anything is sent, so a typo is caught on this screen. */
+  const fields = w.region === "AU" ? [["abn", T("wl.abn"), "text", T("wl.abnHint")], ["accountName", T("wl.accountName"), "text", T("wl.asOnAbn")], ["bsb", T("wl.bsb"), "text", T("wl.sixDigits")], ["accountNumber", T("wl.accountNumber"), "text", ""]]
     : w.region === "CN" ? [["accountName", T("wl.accountName"), "text", T("wl.asOnYourId")], ["bankName", T("wl.bankLabel"), "text", T("wl.bankEg")], ["accountNumber", T("wl.cnAccount"), "text", ""]]
     : [["accountName", T("wl.accountName"), "text", ""], ["bankName", T("wl.bankLabel"), "text", ""], ["iban", w.region === "FI" ? "IBAN" : T("wl.ibanOr"), "text", ""]];
   /* ALWAYS A BANK. It offered "keep it in your wallet" against "pay it out",
@@ -582,9 +587,19 @@ SCREENS.payout = async (_, q) => {
   const inputs = {};
   for (const [key, label, type, hint] of fields) {
     const id = "f_" + key;
-    inputs[key] = h("input", { id, type, autocomplete: key === "accountName" ? "name" : "off", inputmode: ["bsb", "accountNumber"].includes(key) ? "numeric" : null });
+    inputs[key] = h("input", { id, type, autocomplete: key === "accountName" ? "name" : "off", inputmode: ["bsb", "accountNumber", "abn"].includes(key) ? "numeric" : null });
     form.append(h("div", { class: "field" }, h("label", { for: id, text: label }), inputs[key], hint ? h("span", { class: "hint", text: hint }) : null));
   }
+  /* GST IS A YES OR NO AND BOTH ARE NORMAL. Registered, they add 10% and it
+     is claimed back; under the $75,000 threshold they charge none. A form
+     that assumes one makes half its users wrong, so it is a question rather
+     than a default. */
+  const gst = h("input", { type: "checkbox", id: "f_gst" });
+  if (w.region === "AU") {
+    form.append(h("label", { class: "check" }, gst, h("span", { text: T("wl.gstReg") })));
+    form.append(h("p", { class: "hint", text: T("wl.gstWhy") }));
+  }
+
   const list = h("div", { class: "list", role: "radiogroup", "aria-label": T("wl.whereShouldGo") });
   const draw = () => {
     list.textContent = "";
@@ -598,7 +613,10 @@ SCREENS.payout = async (_, q) => {
     save.disabled = true;
     try {
       if (mode === "wallet") await api("/api/wallet/payout", { mode: "wallet" });
-      else if (showNew) await api("/api/wallet/payout", { mode: "bank", details: Object.fromEntries(Object.entries(inputs).map(([k, i]) => [k, i.value])) });
+      else if (showNew) await api("/api/wallet/payout", { mode: "bank", details: {
+        ...Object.fromEntries(Object.entries(inputs).map(([k, i]) => [k, i.value])),
+        ...(w.region === "AU" ? { gst: gst.checked } : {}),
+      } });
       await load(); say(T("wl.saved"));
       if (setup) go("ready"); else history.back();
     } catch (err) { save.disabled = false; showError(err); }
@@ -606,6 +624,11 @@ SCREENS.payout = async (_, q) => {
   return { title: T("wl.gettingPaid"), body: frag(
     h("p", { class: "lead", text: T("wl.whereShouldGo") }),
     list, change, form,
+    /* WHAT THEIR INVOICE HAS TO SAY, said here rather than after the first
+       one is rejected. Four things, and a supplier who gets them wrong is
+       paid late for a reason nobody explained. */
+    w.region === "AU" ? h("div", { class: "list" },
+      row({ title: T("wl.invNeeds"), sub: T("wl.invNeedsSub") })) : null,
     h("p", { class: "small", text: T("wl.detailsToProv") }),
     h("div", { class: "push" }, save, setup ? btn(T("wl.skipForNow"), "ghost", () => go("ready")) : null)) };
 };

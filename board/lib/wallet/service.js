@@ -217,6 +217,16 @@ export function createWalletService({ ledger, provider, people, now = () => Date
     });
   }
 
+  /** The ABN's own checksum. Eleven digits, first one less one, weighted,
+   *  and the total divides by 89. */
+  function validAbn(abn) {
+    if (!/^\d{11}$/.test(abn)) return false;
+    const w = [10, 1, 3, 5, 7, 9, 11, 13, 15, 17, 19];
+    const n = abn.split("").map(Number);
+    n[0] -= 1;
+    return n.reduce((sum, d2, i) => sum + d2 * w[i], 0) % 89 === 0;
+  }
+
   function checkBankDetails(region, d) {
     const t = (v, n = 80) => String(v ?? "").trim().slice(0, n);
     const digits = (v) => String(v ?? "").replace(/[\s-]/g, "");
@@ -226,7 +236,27 @@ export function createWalletService({ ledger, provider, people, now = () => Date
       const bsb = digits(d.bsb), acc = digits(d.accountNumber);
       if (!/^\d{6}$/.test(bsb)) fail("bank_bsb", "A BSB is six digits.");
       if (!/^\d{5,10}$/.test(acc)) fail("bank_account", "Enter the account number.");
-      return { accountName: name, bsb, accountNumber: acc, bankName: t(d.bankName) || "Bank account" };
+      /* AN ABN, BECAUSE WITHOUT ONE 47% OF THE PAYMENT IS WITHHELD.
+       *
+       * Not a preference: no-ABN withholding is the law, and a supplier who
+       * leaves this blank is paid 53 cents in the dollar with the rest sent
+       * to the ATO. Asked here, once, rather than discovered on the first
+       * payment.
+       *
+       * CHECKED WITHOUT ASKING ANYBODY. An ABN carries its own checksum —
+       * subtract 1 from the first digit, weight the eleven digits by
+       * 10,1,3,5,7,9,11,13,15,17,19 and the sum divides by 89. So a typo is
+       * caught here rather than by a bank three days later, and it needs no
+       * key, no network and no third party to do it.
+       *
+       * GST IS A YES OR NO AND BOTH ARE NORMAL. Registered, they add 10% and
+       * we claim it back; not registered — under the $75k threshold — they
+       * charge none. A form that assumes one is a form that makes half its
+       * users wrong. */
+      const abn = digits(d.abn);
+      if (!validAbn(abn)) fail("bank_abn", "That ABN does not look right. Eleven digits, from your invoice.");
+      return { accountName: name, bsb, accountNumber: acc, abn, gst: Boolean(d.gst),
+        bankName: t(d.bankName) || "Bank account" };
     }
     if (region === "CN") {
       const acc = digits(d.accountNumber);

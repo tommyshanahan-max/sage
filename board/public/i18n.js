@@ -7191,6 +7191,20 @@ export const STRINGS = {
   "wl.useDifferent":   ["Use a different account", "换一张卡"],
   "wl.accountName":    ["Name on the account", "开户人姓名"],
   "wl.asOnYourId":     ["As on your ID", "与身份证一致"],
+  /* THE ABN, AND WHY IT IS NOT OPTIONAL. Without one the payer must withhold
+     47% and send it to the ATO — so a blank field is not a blank field, it is
+     half the money gone. Said as the consequence rather than as a rule. */
+  "wl.abn":            ["ABN", "ABN（澳洲商号）"],
+  "wl.abnHint":        ["Eleven digits, from your invoice. Without one we have to withhold 47%.",
+                        "11 位数字，发票上有。没有的话必须先扣 47%。"],
+  "wl.asOnAbn":        ["As registered against the ABN, not your trading name.",
+                        "与 ABN 登记的名称一致，不是店招名。"],
+  "wl.gstReg":         ["I'm registered for GST", "我已注册 GST"],
+  "wl.gstWhy":         ["Under $75,000 a year you usually aren't, and that's fine — just don't charge it.",
+                        "年营业额 7.5 万以下通常不用注册，不注册就别收这 10%。"],
+  "wl.invNeeds":       ["What your invoice needs", "发票上要写什么"],
+  "wl.invNeedsSub":    ["The words \"Tax invoice\", your ABN, the date, what it was for, and the GST — or \"Total price includes GST\".",
+                        "写上 Tax invoice、你的 ABN、日期、服务内容，以及 GST 金额（或注明含 GST）。"],
   "wl.bsb":            ["BSB", "BSB"],
   "wl.sixDigits":      ["Six digits", "六位数字"],
   "wl.accountNumber":  ["Account number", "银行账号"],
