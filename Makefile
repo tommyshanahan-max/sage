@@ -1411,6 +1411,7 @@ whitelabel: ## The money screen in somebody else's name and colour: make whitela
 	@bash scripts/whitelabel.sh \
 	  $(if $(filter command line,$(origin ID)),--id "$(ID)",) \
 	  $(if $(filter command line,$(origin AT)),--at "$(AT)",) \
+	  $(if $(filter command line,$(origin ACCT)),--acct "$(ACCT)",) \
 	  $(if $(filter command line,$(origin DOMAIN)),--domain "$(DOMAIN)",) \
 	  $(if $(filter command line,$(origin NAME)),--name "$(NAME)",) \
 	  $(if $(filter command line,$(origin INK)),--ink "$(INK)",) \

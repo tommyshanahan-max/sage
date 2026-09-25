@@ -44,6 +44,7 @@
 set -euo pipefail
 
 ID=""
+ACCT=""
 AT=""
 DOMAIN=""
 NAME=""
@@ -53,6 +54,7 @@ WHO=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --id)     ID="${2:-}";     shift 2 ;;
+    --acct)   ACCT="${2:-}";   shift 2 ;;
     --at)     AT="${2:-}";     shift 2 ;;
     --domain) DOMAIN="${2:-}"; shift 2 ;;
     --name)   NAME="${2:-}";   shift 2 ;;
@@ -75,7 +77,7 @@ get() { grep -E "^${1}=" .env | tail -1 | cut -d= -f2- | tr -d '"' || true; }
 # A VALUE WITH A NEWLINE IN IT is what a copy out of a dashboard looks like
 # when the selection took the line break too. Caught here, where it can be
 # said plainly, rather than as a greyed button with no explanation.
-case "$ID$AT$DOMAIN$NAME$INK$PAPER$WHO" in
+case "$ID$ACCT$AT$DOMAIN$NAME$INK$PAPER$WHO" in
   *$'\n'*|*$'\r'*) echo "  That has a line break in it. Copy it again without the newline."; exit 1 ;;
 esac
 
@@ -97,6 +99,25 @@ case "$ID" in
     echo ""
     echo "  A Connect client id starts with ca_. That one does not."
     echo "  An sk_ or pk_ is a different thing and must not go in here."
+    echo ""
+    exit 1 ;;
+esac
+
+# AN acct_ ID AND NOTHING THAT LOOKS LIKE ONE. What this writes decides who
+# carries a chargeback, so a typo here is somebody else's loss landing on us
+# — or ours landing on them. server.js filters the list again for the same
+# reason; this one can say so while somebody is still at the keyboard.
+case "$ACCT" in
+  "") ;;
+  acct_*)
+    case "$ACCT" in
+      *[!a-zA-Z0-9_,]*)
+        echo ""; echo "  \"$ACCT\" has something in it that is not part of an account id."; echo ""; exit 1 ;;
+    esac ;;
+  *)
+    echo ""
+    echo "  A connected account id starts with acct_. That one does not."
+    echo "  It is in the Stripe dashboard under Connect -> Accounts."
     echo ""
     exit 1 ;;
 esac
@@ -195,13 +216,14 @@ if [ -n "$ID" ]; then
   put TOMSCODING_BOARD_STRIPE_CLIENT_ID "$ID"
 fi
 
+[ -n "$ACCT" ]   && put TOMSCODING_BOARD_STRIPE_DIRECT "$ACCT"
 [ -n "$AT" ]     && put TOMSCODING_WHITELABEL_PATH "$AT"
 [ -n "$DOMAIN" ] && put TOMSCODING_WHITELABEL_DOMAIN "$DOMAIN"
 [ -n "$NAME" ]   && put TOMSCODING_WHITELABEL_NAME "$NAME"
 [ -n "$INK" ]    && put TOMSCODING_WHITELABEL_INK "$INK"
 [ -n "$PAPER" ]  && put TOMSCODING_WHITELABEL_PAPER "$PAPER"
 
-if [ -n "$ID$AT$DOMAIN$NAME$INK$PAPER" ]; then
+if [ -n "$ID$ACCT$AT$DOMAIN$NAME$INK$PAPER" ]; then
   echo "  Writing, and bringing the box up so it reads them…"
   make up >/dev/null
 fi
@@ -211,7 +233,7 @@ fi
 # be switched off in the dashboard on a Tuesday by somebody who is not here,
 # and a command that only looks when it already suspects trouble is a command
 # that reports "fine" from memory.
-if [ -z "$ID$AT$DOMAIN$NAME$INK$PAPER" ]; then
+if [ -z "$ID$ACCT$AT$DOMAIN$NAME$INK$PAPER" ]; then
   docker compose run --rm --no-deps -T -v "$PWD/scripts:/seed:ro" \
     --entrypoint node board /seed/connect-check.mjs || true
 fi
@@ -243,6 +265,12 @@ if [ -n "$SCREEN" ]; then
   echo "  The screen:  $SCREEN"
   LABEL_NOW="$(get TOMSCODING_WHITELABEL_NAME)"
   [ -n "$LABEL_NOW" ] && echo "  It says:     $LABEL_NOW"
+  D="$(get TOMSCODING_BOARD_STRIPE_DIRECT)"
+  if [ -n "$D" ]; then
+    echo "  Charged:     directly, on $D — his name, his chargebacks"
+  else
+    echo "  Charged:     through us — OUR name on the statement, OUR chargebacks"
+  fi
   [ -n "$(get TOMSCODING_WHITELABEL_INK)" ] \
     || echo "  No colour set yet — it is wearing ours. INK=\"#16233D\""
 else

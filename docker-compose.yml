@@ -1018,6 +1018,21 @@ services:
       # Unset, /china/connect greys its first button and says so on the
       # screen; make pay-check prints it either way.
       BOARD_STRIPE_CLIENT_ID: ${TOMSCODING_BOARD_STRIPE_CLIENT_ID:-}
+      # WHOSE TURNOVER IS THEIRS AND NOT OURS. A comma-separated list of
+      # acct_ ids charged DIRECTLY instead of through a destination charge:
+      # the charge is raised on their account, their name is on the payer's
+      # statement, and a chargeback is theirs rather than this platform's.
+      # Our fee still comes off the top either way.
+      #
+      # Empty on every box today, which means every charge is a destination
+      # charge exactly as before. It is a list rather than a default because
+      # every id in it is a business we did not onboard and have not
+      # audited, and flipping the default would silently move who is liable
+      # for every member of this board. See the note over checkout() in
+      # board/lib/stripe.js, and DIRECT_ACCTS in server.js.
+      #
+      # Set it with: make whitelabel ACCT="acct_…"
+      BOARD_STRIPE_DIRECT: ${TOMSCODING_BOARD_STRIPE_DIRECT:-}
       # Stripe's webhook signing secret. Without it the hook route refuses
       # everything, which is the safe failure: an unsigned route that writes
       # "this was paid" is a route anybody on the internet can write to.

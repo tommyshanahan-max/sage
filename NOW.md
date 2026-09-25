@@ -1194,6 +1194,45 @@ have a Stripe account with trading history, and would you run a Connect
 platform on it". Their deck is tax structuring — SA, SARL, SPF, SCSp, RAIF —
 and contains no payments authorisation.
 
+### Direct charges, so a partner's turnover is his — built 25 Sep, off by default
+
+**Every charge this board raises was a destination charge**, which makes this
+platform the merchant of record: our name on the payer's statement, and a
+refund or chargeback taken from us. `board/lib/stripe.js:22` already said so
+in writing. It also said the exposure is "smaller than it sounds for this
+corridor" — true, because WeChat and Alipay are push payments with no
+chargeback. **That reassurance does not cover a European partner whose clients
+pay by card**, which is the one path it excludes.
+
+`checkout()` now takes `direct` as well as `destination`. A direct charge
+sends the payee's `acct_…` in a `Stripe-Account` header: the charge is raised
+on their account, their name is on the statement, the dispute is theirs —
+**and `application_fee_amount` still works**, so our cut comes off the top
+either way. That is what makes it a choice rather than a trade. Both at once
+throws, here rather than at Stripe later.
+
+**Off unless an account is named.** `BOARD_STRIPE_DIRECT` is a list of
+`acct_…`, set with `make whitelabel ACCT="acct_…"`, empty on every box today.
+A list rather than a default because every id in it is a business we did not
+onboard, and flipping the default would silently move who is liable for every
+member of this board. Members stay on destination charges, which is right for
+them. `make whitelabel` prints which it is, in those words.
+
+`board/lib/stripe.test.mjs` is new and stubs `fetch`: six tests over what the
+request WOULD be. The answer Stripe gives is not in doubt; the request is, and
+the difference between the two shapes is one header and one block of body.
+
+**The dashboard needs one setting.** A direct charge's events belong to the
+connected account, so the webhook endpoint must be listening to connected
+accounts or nothing flips a row to PAID. Same URL, same signature, same
+`client_reference_id`, plus an `account` field.
+
+**Still open, and it gates all of this:** nothing stores a connected account
+against a wallet (`setPayout` knows only `bank` and `wallet`), so Daniel can
+complete the handshake and the wallet will not know. And nobody has confirmed
+an Australian platform may run direct charges for a Luxembourg account — that
+is Stripe's call per country pair.
+
 ### The Stripe row was a dead end, and my first fix made it worse — 25 Sep
 
 Tapping **My Stripe account** went to `/china/api/link`, found no

@@ -9430,6 +9430,32 @@ const DEAL_FEE_TO = store.cleanPayLink(process.env.BOARD_DEAL_FEE_TO || "");
    not baked into the board for everybody to read. Unset, /api/pay/start still
    answers and the room falls back to the payee's link, as it did before. */
 const STRIPE_PK = (process.env.BOARD_STRIPE_PK || "").trim();
+
+/* WHOSE TURNOVER IS THEIRS, NOT OURS — the accounts charged DIRECTLY rather
+ * than through a destination charge. See the long note over checkout() in
+ * lib/stripe.js for what the difference actually is; the short version is
+ * that a direct charge is raised on their account, so their name is on the
+ * payer's statement and a chargeback is theirs.
+ *
+ * A LIST, AND DELIBERATELY NOT A DEFAULT. Every account here is somebody we
+ * did not onboard, running a business we have not audited, and making that
+ * the default would silently change who is liable for every member of this
+ * board. Members stay on destination charges, which is right for them: they
+ * are paid in WeChat and Alipay, which have no chargeback of the kind cards
+ * do, and we know who they are.
+ *
+ * It is acct_ ids rather than names because the id is what the charge
+ * carries and a name would have to be resolved to one anyway — and getting
+ * that resolution wrong would put the wrong company's money at risk.
+ *
+ * BOARD_STRIPE_DIRECT="acct_1AAA,acct_1BBB". Empty — every box today —
+ * means every charge is a destination charge, exactly as before.
+ */
+const DIRECT_ACCTS = new Set(
+  String(process.env.BOARD_STRIPE_DIRECT || "")
+    .split(",").map((x) => x.trim()).filter((x) => /^acct_[A-Za-z0-9]+$/.test(x)),
+);
+const paidDirectly = (acct) => Boolean(acct) && DIRECT_ACCTS.has(String(acct));
 /* A LOOK, NOT A PAYMENT.
  *
  * `make try` sets this so the payer's screens can be walked on a laptop with
@@ -10319,9 +10345,14 @@ async function startCheckout({ d, i, method, payeeAcct, ref, done }) {
      exactly the kind of thing that is noticed once and never forgiven. */
   const fee = Math.floor(amount * store.FEE_PCT / 100);
   try {
+    /* ONE OR THE OTHER, NEVER BOTH — see paidDirectly above, and the note
+       over checkout() for which risk each one moves where. The cut and the
+       rounding are identical either way, which is the point of them being
+       computed here rather than at each caller. */
+    const direct = paidDirectly(payeeAcct);
     const session = await stripe.checkout({
       amount, currency: d.cur, fee,
-      destination: payeeAcct,
+      ...(direct ? { direct: payeeAcct } : { destination: payeeAcct }),
       method, ref, done,
       label: row.label || d.title || "Payment",
     });
