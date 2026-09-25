@@ -9207,7 +9207,7 @@ const STRIPE_PK = (process.env.BOARD_STRIPE_PK || "").trim();
  * take money into. It is never set on the box. Every guard on /api/pay/start —
  * who is asking, which side they are on, whether the amount is a number —
  * still runs, so what is skipped is the call to Stripe and nothing else. */
-const PAY_DEMO = process.env.BOARD_PAY_DEMO === "1";
+const PAY_DEMO = process.env.BOARD_PAY_DEMO === "1" && !stripe.live();
 
 /* THE TRADING MARGIN ON A TWO-INVOICE DEAL.
  *
@@ -11377,7 +11377,24 @@ const DEALIO_OWNER = String(process.env.BOARD_DEALIO_OWNER || "").trim().toLower
  * somebody about their own money, and the same rule applies here as to the
  * line in CLAUDE.md about not claiming to be encrypted. Never set on a box
  * taking real money. */
-const DEALIO_DEMO = process.env.BOARD_DEALIO_DEMO === "1";
+/* A DEMO MAY NOT RUN ON A BOX THAT CAN TAKE REAL MONEY.
+ *
+ * Both of these draw stand-in codes and stand-in pages. That is exactly what
+ * they are for on a laptop, and it is indefensible on the live box: on
+ * 25 Sep a payer scanned a mock code on the shop, Alipay answered 404 Not
+ * Found, and it was first blamed on a VPN. Nobody had set a demo flag — it
+ * was BOARD_WALLET=test, a third switch — but the lesson is the same either
+ * way, and an env var that can be set once can be set again.
+ *
+ * So the key decides, not the operator. A live secret key means every demo
+ * is off, whatever .env says, and the refusal is printed at boot rather than
+ * discovered by somebody trying to pay. */
+const DEMO_ASKED = process.env.BOARD_PAY_DEMO === "1" || process.env.BOARD_DEALIO_DEMO === "1";
+const DEMO_OK = !stripe.live();
+if (DEMO_ASKED && !DEMO_OK) {
+  console.log("demo: REFUSED — this box has a live Stripe key. BOARD_PAY_DEMO and BOARD_DEALIO_DEMO are ignored.");
+}
+const DEALIO_DEMO = DEMO_OK && process.env.BOARD_DEALIO_DEMO === "1";
 
 /* WHAT POSTAGE COSTS AND WHAT A STOREFRONT EARNS. One flat postage per
    order, because that is how a parcel to China is actually charged and a

@@ -50,6 +50,12 @@ const KEY = (process.env.BOARD_STRIPE_KEY || "").trim();
 
 export const configured = () => Boolean(KEY);
 
+/* WHETHER THIS IS REAL MONEY. Stripe's own prefix and nothing cleverer: a
+   live secret key is sk_live_, a test one sk_test_. Exported so the server
+   can refuse to run a demo rail on a box that can take a payment — see the
+   demo guard in server.js. */
+export const live = () => /^sk_live_/.test(KEY);
+
 /* Stripe takes application/x-www-form-urlencoded with bracket notation for
    anything nested — payment_intent_data[transfer_data][destination]. Written
    out rather than guessed at, because a key one bracket wrong is not an error,

@@ -178,6 +178,20 @@ go through it. Walked: on the box's shape Alipay reaches Stripe; under
 `make try` and the demo rail the code still draws, which is the whole point of
 the mock.
 
+**AND A DEMO NOW CANNOT RUN ON A BOX THAT TAKES REAL MONEY.** `BOARD_PAY_DEMO`
+and `BOARD_DEALIO_DEMO` are ignored whenever the Stripe key is `sk_live_`, and
+the refusal prints at boot:
+
+```
+demo: REFUSED — this box has a live Stripe key. BOARD_PAY_DEMO and BOARD_DEALIO_DEMO are ignored.
+```
+
+Neither flag was set when the 404 happened — that was `BOARD_WALLET=test`, a
+third switch — but an env var that can be set once can be set again, and the
+key is a fact about the box rather than a thing somebody remembered. Three
+switches could put a stand-in in front of a payer; now the live key closes two
+of them and `dealioQr()` closes the third.
+
 **A dead code is worse than no code.** The payer cannot tell whether the shop
 is broken or they are, and the shop is the thing they were deciding whether to
 trust.
