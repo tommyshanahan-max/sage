@@ -1194,6 +1194,37 @@ have a Stripe account with trading history, and would you run a Connect
 platform on it". Their deck is tax structuring — SA, SARL, SPF, SCSp, RAIF —
 and contains no payments authorisation.
 
+### Two more holes in the same allowlist — 25 Sep
+
+Pressing Back out of the Stripe flow on `europay.paydealio.com` landed on
+**China Business Solutions** — our own brochure, headed "Get paid from China"
+and "Cross-border payments for services — mainland China to Australia". And
+`/china/connect?e=nolink` showed **our** email, `tom@aozhoubaba.com`,
+prefilled, over a button that opens a *new* Stripe account.
+
+**`/china/` was allowlisted wholesale** because the OAuth pair lives under it.
+That directory also holds six brochure screens. Same mistake as the invite
+door, made the same way: a prefix chosen for what lives under it rather than
+for what is needed. It is now exactly `/china/api/link` and `/china/linked`,
+neither of which draws anything — and `chinaHome()` rewrites every landing
+inside them to `/wallet#payout` on a white label, because the person came
+from one row on the payout screen and that is the only place they have been.
+
+**And `.html` counted as a static asset.** `WL_FILE` was "anything with an
+extension", so `/china/home.html` came back 200 — the whole brochure through
+the back of the list. Every page here answers at both spellings, so that rule
+admitted every screen in the building. `.html` is a door, not an asset.
+
+Both found by curling the list rather than re-reading it. That is now four
+bugs in one allowlist found that way and none found by reading it.
+
+**Not fixed, and worth knowing:** `e=nolink` renders "Stripe would not open
+an account just now. Try again in a minute." Nolink means
+`BOARD_STRIPE_CLIENT_ID` is unset — nothing was asked of Stripe at all. The
+true line is already at the foot of that page ("Connecting an account you
+already have is not switched on here yet"); the red banner above it is the
+wrong one for this case.
+
 ### On a white label's own name, only the money — 25 Sep
 
 `europay.paydealio.com/enter` served **The Exchange's invitation door** — our

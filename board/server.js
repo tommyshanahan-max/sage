@@ -953,13 +953,36 @@ const WL_PREFIX = [
      nobody had added; the symptom is Error 400 redirect_uri_mismatch, which
      is Google's and cannot be fixed from here. */
   "/auth/",                 // the callback Google returns to
-  "/china/",                // connecting a Stripe account they already have
+  /* THE STRIPE HANDSHAKE, AND NOT ONE PAGE MORE.
+     This was "/china/" — the whole directory — because that is where the
+     OAuth pair lives. It also holds China Business Solutions: our own
+     brochure, six screens of it, headed "Get paid from China" and
+     "Cross-border payments for services — mainland China to Australia".
+     Pressing Back out of the Stripe flow on europay.paydealio.com landed on
+     our pitch, our positioning and our other product, wearing his name at
+     the top of the browser. Same mistake as the invite door and made the
+     same way: a prefix chosen for what lives under it rather than for what
+     is needed.
+     These two are the only ones a white label ever touches, and neither is
+     a page — both redirect before anything is drawn. Every /china/... they
+     would have sent somebody to is rewritten by chinaHome below. */
+  "/china/api/link",        // the redirect out to Stripe's authorise page
+  "/china/linked",          // and where Stripe sends the browser back
   "/pay/",                  // a payment link somebody was sent
 ];
-/* A FILE IS A FILE. The stylesheet, i18n.js, the icons and the service
-   worker are all under public/ and none of them is a door; listing them by
-   name would be a list that rots the first time one is renamed. */
-const WL_FILE = /\.[a-z0-9]{2,5}$/i;
+/* A FILE IS A FILE — BUT AN .html IS A DOOR.
+ *
+ * The stylesheet, i18n.js, the icons and the service worker are all under
+ * public/ and none of them is a door; listing them by name would be a list
+ * that rots the first time one is renamed. So: anything with an extension.
+ *
+ * WHICH LET /china/home.html THROUGH, 200, THE WHOLE BROCHURE. Express
+ * serves those pages at both spellings and the extension made one of them a
+ * "file". Every page here is reachable by its own name as well as its clean
+ * one, so an extension rule that admits .html admits every screen in the
+ * building through the back of the list. Named pages go in WL_PAGES; .html
+ * is not an asset. */
+const WL_FILE = /\.(?!html?$)[a-z0-9]{2,5}$/i;
 
 app.use((req, res, next) => {
   if (!isWhitelabelHost(req)) return next();
@@ -11196,6 +11219,24 @@ app.post("/china/api/connect", express.json(), async (req, res) => {
  * gets a URL and sets location.href is two round trips to do one thing. The
  * page is an ordinary link.
  */
+/* WHERE THE STRIPE FLOW PUTS SOMEBODY DOWN, which is not the same place on
+ * every hostname.
+ *
+ * On our own names these routes end on one of the China Business Solutions
+ * screens — /china/connect to say what went wrong, /china/switch to ask
+ * Stripe whether WeChat Pay is really on, /china/stopped for a cancel — and
+ * that is right, because CBS is the product somebody arrived through.
+ *
+ * On a white label it is wrong twice over: those pages are our brand and our
+ * pitch, and the person did not come from them. They pressed one row on the
+ * payout screen. So they go back to that screen, which is the only place
+ * they have been.
+ *
+ * The query is kept. /wallet reads nothing from it today; it costs nothing
+ * and the next person to wire a message onto a failed connect will find the
+ * reason already in the address rather than having to thread it through. */
+const chinaHome = (req, where) => (isWhitelabelHost(req) ? "/wallet#payout" : where);
+
 app.get("/china/api/link", async (req, res) => {
   /* The other button, standing in as well — otherwise the demo can only walk
      the door somebody WITHOUT a Stripe account comes through, and the one
@@ -11205,9 +11246,9 @@ app.get("/china/api/link", async (req, res) => {
     res.cookie(CHINA_COOKIE, token, {
       httpOnly: true, sameSite: "Lax", secure: true, maxAge: 180 * 24 * 3600 * 1000, path: "/china",
     });
-    return res.redirect(302, "/china/stand-in");
+    return res.redirect(302, chinaHome(req, "/china/stand-in"));
   }
-  if (!stripe.canLink()) return res.redirect(302, "/china/connect?e=nolink");
+  if (!stripe.canLink()) return res.redirect(302, chinaHome(req, "/china/connect?e=nolink"));
   try {
     const state = await CHINA.beginLink();
     res.redirect(302, stripe.linkUrl({
@@ -11216,7 +11257,7 @@ app.get("/china/api/link", async (req, res) => {
     }));
   } catch (err) {
     console.error("china link:", err.message);
-    res.redirect(302, "/china/connect?e=stripe");
+    res.redirect(302, chinaHome(req, "/china/connect?e=stripe"));
   }
 });
 
@@ -11226,10 +11267,10 @@ app.get("/china/linked", async (req, res) => {
      without it and acting on one first is how an attacker's code gets
      attached to somebody else's browser. */
   const ok = await CHINA.spendLink(req.query.state);
-  if (!ok) return res.redirect(302, "/china/connect?e=state");
+  if (!ok) return res.redirect(302, chinaHome(req, "/china/connect?e=state"));
   /* They pressed cancel on Stripe's screen, which is not an error and has
      its own page — the same one an abandoned Express onboarding lands on. */
-  if (req.query.error || !req.query.code) return res.redirect(302, "/china/stopped");
+  if (req.query.error || !req.query.code) return res.redirect(302, chinaHome(req, "/china/stopped"));
   try {
     const account = await stripe.linkFinish(String(req.query.code));
     const token = await CHINA.remember({ account, email: "" });
@@ -11240,10 +11281,10 @@ app.get("/china/linked", async (req, res) => {
        account is linked, and whether it can actually take a WeChat payment
        is the next thing anybody wants to know. That screen asks Stripe and
        moves itself on when the answer is yes. */
-    res.redirect(302, "/china/switch");
+    res.redirect(302, chinaHome(req, "/china/switch"));
   } catch (err) {
     console.error("china linked:", err.message);
-    res.redirect(302, "/china/connect?e=stripe");
+    res.redirect(302, chinaHome(req, "/china/connect?e=stripe"));
   }
 });
 
