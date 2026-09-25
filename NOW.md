@@ -1194,6 +1194,46 @@ have a Stripe account with trading history, and would you run a Connect
 platform on it". Their deck is tax structuring — SA, SARL, SPF, SCSp, RAIF —
 and contains no payments authorisation.
 
+### On a white label's own name, only the money — 25 Sep
+
+`europay.paydealio.com/enter` served **The Exchange's invitation door** — our
+logo, "This board is private", "63 people are waiting to get in" — on a
+payments domain. `/board`, `/groups`, `/notes`, `/cards`, `/browse` and the
+directory were all one typed path away. A second hostname on one container
+answers every route that container answers, and nobody had said otherwise.
+
+**An allowlist, not a blocklist**, in `board/server.js`. A list of doors to
+shut is a list somebody has to remember to add to, and what it misses is an
+invite-only board. The allowed set was read off the `fetch` calls in
+`dealio.html` and `wallet.html` rather than recalled: `/`, `/wallet`,
+`/dealio`, `/api/wallet*`, `/api/request*`, `/api/books*`, `/api/pay/`,
+`/api/signin/`, `/china/`, `/pay/`, and any path with a file extension.
+A page is redirected to `/`; an API gets 404, because a redirect to HTML is a
+JSON parse error three frames later.
+
+**Only the hostname door** (`isWhitelabelHost`, not `isWhitelabel`). The path
+door is `paydealio.com/europay`, and that name is Dealio's own where the rest
+of the board legitimately answers.
+
+**And the links out, which the routes alone would not have fixed:**
+
+- the tab bar was `display:none` on a white label — five links to `/notes`,
+  `/cards`, `/browse` and `/me` still in the HTML. Hiding a door is not
+  shutting it. It `.remove()`s now.
+- "I have an invite code" in the sign-in sheet was an `<a href="/enter">` —
+  the board's door, on his product. Gone, with the line under it that points
+  at the same place.
+- the sheet's heading said "Two ways back in" with one button left. Dropped
+  rather than reworded: a heading above one thing is two things to read.
+
+Checked by curl and by reading the rendered DOM: **zero `<a href>` anywhere
+in the page**, no `#boardbar`, and every board path 302s to `/`. The board on
+its own name is untouched.
+
+**Found by testing, not reading:** the first allowlist had `/api/wallet/` with
+the trailing slash, so the bare `/api/wallet` every wallet screen calls first
+404'd. A list that looks right and is one character wrong.
+
 ### Where do we send your money — two answers, not one — 25 Sep
 
 `/wallet#payout` opened straight on a bank form: eight boxes, a country chip

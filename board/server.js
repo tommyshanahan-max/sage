@@ -906,6 +906,60 @@ app.post("/api/hook/fee", express.raw({ type: "application/json", limit: "64kb" 
     if (out?.tell) tellThem(out.tell).catch(() => {});
   });
 
+/* ON A WHITE LABEL'S OWN NAME, ONLY THE MONEY. NOTHING ELSE AT ALL.
+ *
+ * europay.paydealio.com answered every route this container answers, because
+ * that is what a second hostname on one container means and nobody had said
+ * otherwise. So /enter served The Exchange's invitation door — "This board is
+ * private", the logo, "63 people are waiting to get in" — on a payments
+ * domain, and /board, /groups, /notes and the directory were all one typed
+ * path away. A private board with its front door on somebody else's brand.
+ *
+ * AN ALLOWLIST, NOT A BLOCKLIST. A list of doors to shut is a list somebody
+ * has to remember to add to, and what it misses is a board that is meant to
+ * be invite-only. This names what the money screens actually use — read off
+ * the fetch calls in dealio.html and wallet.html rather than recalled — and
+ * everything else is not here.
+ *
+ * ONLY THE HOSTNAME DOOR. isWhitelabelHost, not isWhitelabel: the path door
+ * is paydealio.com/europay, and that name is Dealio's own, where the rest of
+ * the board legitimately answers. Locking by path would take down the host
+ * it is a guest on.
+ *
+ * A PAGE IS SENT HOME, AN API IS REFUSED. Somebody who types a path gets the
+ * money screen rather than an error, which is both friendlier and says
+ * nothing about what does exist here. A fetch gets a 404, because a redirect
+ * to an HTML page is a JSON parse error three frames later. */
+const WL_PAGES = new Set(["/", "/wallet", "/dealio"]);
+const WL_PREFIX = [
+  /* BOTH SPELLINGS. wallet.html asks /api/wallet for its state and
+     /api/wallet/<something> for everything else, and a prefix with the
+     slash on it misses the first — which 404s the one call every screen
+     there makes before it draws anything. Caught by curling the list rather
+     than by reading it back. */
+  "/api/wallet",            // every screen in wallet.html
+  "/api/request",           // asking to be paid, and reading one back
+  "/api/books",             // the two sides of a deal, and the CSV
+  "/api/pay/",              // onboarding a payee
+  "/api/signin/",           // how the owner of this name gets in at all
+  "/china/",                // connecting a Stripe account they already have
+  "/pay/",                  // a payment link somebody was sent
+];
+/* A FILE IS A FILE. The stylesheet, i18n.js, the icons and the service
+   worker are all under public/ and none of them is a door; listing them by
+   name would be a list that rots the first time one is renamed. */
+const WL_FILE = /\.[a-z0-9]{2,5}$/i;
+
+app.use((req, res, next) => {
+  if (!isWhitelabelHost(req)) return next();
+  const path = String(req.path || "/");
+  if (WL_PAGES.has(path)) return next();
+  if (WL_PREFIX.some((p) => path.startsWith(p))) return next();
+  if (WL_FILE.test(path)) return next();
+  if (path.startsWith("/api/")) return res.status(404).json({ error: "not_here" });
+  return res.redirect(302, "/");
+});
+
 app.use(async (req, res, next) => {
   if (INVITE !== "read") return next();
   // The operator's own routes carry the admin secret and are checked by their

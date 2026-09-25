@@ -899,7 +899,13 @@ function signInSheet() {
   const back = el("div", "sh");
   const card = el("div", "shc");
   card.append(el("p", "lab", T("dl.signIn")));
-  card.append(el("h2", null, T("dl.signInHead")));
+  /* "TWO WAYS BACK IN" COUNTS THE WAYS, and on a white label there is one:
+     the invite code below is The Exchange's door and does not belong on
+     somebody else's product. A heading above a single button is two things
+     to read where one would do, so it goes rather than being reworded. */
+  if (!document.documentElement.dataset.label) {
+    card.append(el("h2", null, T("dl.signInHead")));
+  }
 
   const say = el("p", "why");
 
@@ -928,10 +934,18 @@ function signInSheet() {
     card.append(w);
   }
 
-  const code = el("a", "ghost2 wide", T("dl.haveCode"));
-  code.href = "/enter";
-  card.append(code);
-  card.append(el("p", "hint", T("dl.cnNote")));
+  /* NOT ON A WHITE LABEL'S NAME. "I have an invite code" is a link to
+     /enter, which is The Exchange's own door — "This board is private",
+     our logo, and how many people are waiting to get in — and it was
+     sitting on a payments product belonging to somebody else. The line
+     under it points at the same door, so it goes with it.
+     Google stays: it is how the owner of this name signs in. */
+  if (!document.documentElement.dataset.label) {
+    const code = el("a", "ghost2 wide", T("dl.haveCode"));
+    code.href = "/enter";
+    card.append(code);
+    card.append(el("p", "hint", T("dl.cnNote")));
+  }
 
   if (["again", "unknown", "here", "other", "failed"].includes(SIGNIN)) {
     say.textContent = T("g." + SIGNIN);
@@ -1023,11 +1037,13 @@ function paintBoardBar() {
      is, so the first version of this guard hid the words from the one skin
      that shows them. The attribute is what decides the bar either way. */
   const bar = document.getElementById("boardbar");
-  /* And on a partner's name, where the CSS has already taken the bar off the
-     screen — painting words into a hidden bar is work nobody sees, and a bar
-     of tabs into a private board is not his to show. */
-  if (!bar || document.documentElement.getAttribute("data-dealio") === "1"
-      || document.documentElement.dataset.label) return;
+  /* AND ON A WHITE LABEL'S NAME THE BAR LEAVES THE DOCUMENT.
+     display:none took it off the screen and left five links to /notes,
+     /cards, /browse and /me sitting in the page — findable by anything that
+     reads the HTML rather than looks at it, and a way into a private board
+     from somebody else's product. Hiding a door is not shutting it. */
+  if (bar && document.documentElement.dataset.label) { bar.remove(); return; }
+  if (!bar || document.documentElement.getAttribute("data-dealio") === "1") return;
   const say = (id, key) => { const e = document.getElementById(id); if (e) e.textContent = T(key); };
   say("bbnotes", "note.inbox");
   say("bbcards", "nav.cards");
