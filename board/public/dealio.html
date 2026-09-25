@@ -983,16 +983,35 @@ let FRONT = (() => {
     const q = new URL(location.href).searchParams;
     if (q.get("in") === "1") return false;
   } catch { }
-  /* EXCEPT ON A PARTNER'S OWN NAME, where the front page is not a landing
-     page — it is a sign-in with his name over it, because everything that
-     made this screen worth opening on belongs to us and does not belong on
-     his site. There is nothing there for a signed-in person to look at, and
-     the button that would take them past it said OPEN DEALIO, which is our
-     product's name on his domain: the one thing a white label cannot do.
-     So he lands on the money. Somebody signed out still meets signedOut()
-     through the STATE check in draw(). */
-  if (document.documentElement.dataset.label) return false;
-  return true;
+  /* AND ?out=1 IS HOW TO GET THE LANDING PAGE ON PURPOSE. It was already in
+     the address for links that had been sent; it is now the way to show
+     somebody the pitch, which is the one thing the front page is for. */
+  try {
+    const q = new URL(location.href).searchParams;
+    if (q.get("out") === "1") return true;
+  } catch { }
+  /* SIGNED IN, YOU LAND ON THE MONEY. NOT ON A PAGE ABOUT THE MONEY.
+   *
+   * The note above is still right that the landing page has to be reachable
+   * — it is the one thing there is to show somebody, and opening straight on
+   * the pad once hid it from the only person who ever has to show it. It was
+   * wrong about the price. "One tap a member takes without thinking" is a
+   * tap taken every single time, for ever, to get past our own advertisement
+   * to our own product: a headline selling what you already bought, a card
+   * of a stranger asking you for ¥2,400, and a red button with our name on
+   * it. Tom said three times today that he opens this and sees the old page.
+   * He was right three times.
+   *
+   * A STRANGER STILL MEETS THE PITCH. This only decides where somebody who
+   * is already signed in arrives; draw() sends anybody without a session to
+   * signedOut() regardless, which is what that screen was built for. So the
+   * front page keeps its whole job — everybody who has never seen this
+   * product still sees it first — and loses only its claim on the people who
+   * have.
+   *
+   * ?in=1 above is now the same as the default. Kept, because links carrying
+   * it have been sent and a dead parameter is cheaper than a dead link. */
+  return false;
 })();
 
 /* THE BAR'S WORDS, painted from the same keys the board's own bar uses, so

@@ -1194,6 +1194,26 @@ have a Stripe account with trading history, and would you run a Connect
 platform on it". Their deck is tax structuring — SA, SARL, SPF, SCSp, RAIF —
 and contains no payments authorisation.
 
+### /dealio opens on the money now, not on the pitch — 25 Sep
+
+Signed in, `paydealio.com/dealio` painted the landing page: our headline
+selling what you already bought, a card of a stranger asking you for ¥2,400,
+and a red OPEN DEALIO button. One tap past our own advertisement to our own
+product, taken every single time.
+
+The note over `FRONT` was right that the landing page has to stay reachable —
+opening straight on the pad once hid it from the only person who ever has to
+show it — and wrong about the price of the tap. **`?out=1` shows it on
+purpose** now, and that is what to put in a link when showing somebody.
+
+**A stranger still meets the pitch.** This only decides where somebody with a
+session arrives; `draw()` sends anybody without one to `signedOut()`
+regardless. Checked all four: signed in → money, `?out=1` → pitch, signed out
+→ pitch with SIGN IN, `/europay` → Europay.
+
+Tom said three times in one day that he opens this and sees the old page. He
+was right three times.
+
 ### The box filled up — 25 Sep, fixed, and capped so it cannot recur
 
 `/` hit **98%, 1.5G free**, and `make up` could not build. It did not fail
