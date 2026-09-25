@@ -1446,7 +1446,38 @@ attempts in the list: four blocked on 25 Sep, five cancelled on 24 Sep.
 
 Unresolved. It is the last unknown on the Alipay path and one click answers it.
 
-### The Stripe row is blocked on a platform profile — 25 Sep
+### CONNECT IS APPROVED — 26 Sep
+
+Stripe, by email, dated 25 Sep and found at 1:25am on the 26th:
+
+> **Your Connect application is approved.** Aozhou Baba is approved to create
+> live accounts and charges. You can now create connected accounts in the
+> Dashboard or with the API.
+
+**This is the thing that was blocking the Daniel plan all week.** Everything
+below this line about a platform profile under review is now history, kept
+only because the three answers inside it still decide how it behaves.
+
+**What it unlocks, in order:**
+
+| | |
+|---|---|
+| **The live client id** | should no longer be grey on the OAuth settings page |
+| **`/china/connect`** | becomes a real door — Daniel authorises the Stripe account he already has |
+| **The 0.5%** | comes off automatically as an application fee on a direct charge. The monthly stripe-to-stripe invoice was the workaround for exactly this, and it is no longer needed |
+
+The direct-charge code is already built and waiting on it: `paidDirectly`,
+`DIRECT_PCT`, and the `Stripe-Account` header path in `lib/stripe.js`, all
+tested. Nothing new has to be written — a client id has to be written into
+`.env`.
+
+**Next, and it is one command:**
+`make whitelabel` with no arguments asks Stripe the state of play and prints
+it. If `connect a partner` still reads no, the client id is on
+https://dashboard.stripe.com/settings/connect/onboarding-options/oauth and
+goes in with `make whitelabel ID="ca_…"`.
+
+### The Stripe row was blocked on a platform profile — 25 Sep, CLEARED 26 Sep
 
 Chased the client id for half an hour. Stripe's own tooltip on the field
 settles it:
@@ -1482,9 +1513,11 @@ would quietly undo work already done:
 - **Connected account countries → include Luxembourg.** Where the AU platform
   → LU account question finally gets asked.
 
-Tom has not started it and said so. **Nothing can connect until it clears**,
-and "Not switched on yet" on that row is now literally true rather than a
-placeholder.
+Tom had not started it and said so. It cleared anyway — see the entry above.
+**The three answers still matter**: whatever the approved profile says about
+account type, loss liability and connected-account countries is what the
+integration actually behaves like, and none of the three has been read back
+since it was approved. Worth checking before Daniel connects, not after.
 
 Demo-able tonight without it: the white label, his name and colour, the bank
 payout, the two-answer screen, the affiliates concept. Not a live connect.
