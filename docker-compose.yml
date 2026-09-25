@@ -1,7 +1,28 @@
 name: tomscoding
 
+# EVERY CONTAINER'S LOG, CAPPED — and this is here because the box filled up.
+#
+# 25 September: / hit 98%, 1.5G free, and `make up` could not build. The space
+# was 9.5G of container logs. Docker's json-file driver has NO limit by
+# default, so a container that restarts every few seconds writes for ever, and
+# two of them had been doing exactly that. The deploy did not fail loudly; it
+# sat there with no output for twenty minutes while somebody watched a blank
+# screen and wondered whether ssh had hung.
+#
+# Truncating the logs fixed that morning. This stops the next one. 30MB a
+# container, 19 containers, so the ceiling is about 600MB however badly
+# anything misbehaves.
+#
+# One anchor rather than nineteen copies: a cap somebody has to remember to
+# paste into each new service is a cap the twentieth service will not have.
+x-logs: &logs
+  driver: json-file
+  options: { max-size: "10m", max-file: "3" }
+
+
 services:
   workspace:
+    logging: *logs
     build:
       context: ./docker/workspace
     image: tomscoding-workspace:latest
@@ -48,6 +69,7 @@ services:
   # makes the second build instant, and it removes any ordering assumption
   # about which service tags the image first.
   workspace-2:
+    logging: *logs
     profiles: ["seat2"]
     build:
       context: ./docker/workspace
@@ -94,6 +116,7 @@ services:
   # Off unless COMPOSE_PROFILES includes "browser" — a browser is the heaviest
   # thing on this box and most days you will not want it running.
   browser:
+    logging: *logs
     profiles: ["browser"]
     image: lscr.io/linuxserver/firefox:latest
     container_name: tomscoding-browser
@@ -157,6 +180,7 @@ services:
   # here because this one publishes no port, has no inbound path and has a
   # fixed job; it is not somewhere to add things casually. See docs/security.md.
   autoheal:
+    logging: *logs
     profiles: ["browser"]
     # Pinned, not :latest. Everything else here can float; a container holding
     # the Docker socket should not change under you without your saying so.
@@ -186,6 +210,7 @@ services:
   # Off unless COMPOSE_PROFILES includes "agent", and useless without
   # ANTHROPIC_API_KEY — `make up` checks for it.
   agent:
+    logging: *logs
     profiles: ["agent"]
     build:
       context: ./agent
@@ -332,6 +357,7 @@ services:
   # with a chosen branch and records which commit that was. Nothing the partner
   # does can advance it, and nothing you do here reaches your workspace.
   partner:
+    logging: *logs
     profiles: ["partner"]
     build:
       context: ./agent
@@ -447,6 +473,7 @@ services:
   # Same shape as workspace-2 next to workspace, for the same reason: when a
   # second one is a copy rather than a fork, a fix to either is a fix to both.
   partner-2:
+    logging: *logs
     profiles: ["partner2"]
     build:
       context: ./agent
@@ -518,6 +545,7 @@ services:
   # only the mockups directory writable. Changes to the product are mocked up
   # here and shipped by the owner from his own seat.
   thefeed:
+    logging: *logs
     profiles: ["thefeed"]
     build:
       context: ./agent
@@ -593,6 +621,7 @@ services:
   # matter in an argument, and it has no reason to reach the board or the
   # workspace to do its job.
   cfm:
+    logging: *logs
     build:
       context: ./cfm
     image: tomscoding-cfm:latest
@@ -642,6 +671,7 @@ services:
     cpu_shares: ${TOMSCODING_CFM_CPU_SHARES:-128}
 
   caddy:
+    logging: *logs
     image: caddy:2-alpine
     container_name: tomscoding-caddy
     restart: unless-stopped
@@ -791,6 +821,7 @@ services:
   # password, and just the two public paths under /a/ on the brand page, so a
   # page can report without the dashboard being on that origin at all.
   analytics:
+    logging: *logs
     profiles: ["analytics"]
     build:
       context: ./analytics
@@ -888,6 +919,7 @@ services:
   # hostname is a certificate, a moderation duty and a thing to defend.
   # ---------------------------------------------------------------------------
   board:
+    logging: *logs
     build:
       context: ./board
     image: tomscoding-board:latest
@@ -1317,6 +1349,7 @@ services:
       options: { max-size: "10m", max-file: "3" }
 
   board-demo:
+    logging: *logs
     build:
       context: ./board
     image: tomscoding-board:latest
@@ -1384,6 +1417,7 @@ services:
   # rather than promised.
   # ---------------------------------------------------------------------------
   ferry:
+    logging: *logs
     profiles: ["ferry"]
     build:
       context: ./ferry
@@ -1433,6 +1467,7 @@ services:
   # cannot do, long before all six APIs have been approved.
   # ---------------------------------------------------------------------------
   post:
+    logging: *logs
     profiles: ["post"]
     build:
       context: ./post
@@ -1492,6 +1527,7 @@ services:
   # tab that dies mid-upload — which looks like the platform refusing.
   # ---------------------------------------------------------------------------
   post-browser:
+    logging: *logs
     profiles: ["post"]
     build:
       context: ./post

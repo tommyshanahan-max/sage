@@ -1194,6 +1194,35 @@ have a Stripe account with trading history, and would you run a Connect
 platform on it". Their deck is tax structuring — SA, SARL, SPF, SCSp, RAIF —
 and contains no payments authorisation.
 
+### The box filled up — 25 Sep, fixed, and capped so it cannot recur
+
+`/` hit **98%, 1.5G free**, and `make up` could not build. It did not fail
+loudly: `ssh host 'make up'` has no TTY, so the output is block-buffered and
+the screen stays blank. Twenty minutes of watching nothing, three times,
+wondering whether ssh had hung.
+
+**It was 9.5G of container logs.** Docker's `json-file` driver has no size
+limit by default, and `tomscoding-post` and `tomscoding-post-browser` have
+been restart-looping (`Restarting (0)`), writing for ever.
+
+Freed with `truncate -s 0 /var/lib/docker/containers/*/*-json.log` plus
+`docker builder prune -af` → **85%, 11G free**. Nothing running was touched
+and no data was deleted.
+
+**Capped for good** in `docker-compose.yml`: an `x-logs: &logs` anchor at the
+top, `logging: *logs` on all seventeen services, 10MB × 3 each. The ceiling
+is now about 600MB however badly anything misbehaves. One anchor rather than
+seventeen copies — a cap somebody has to remember to paste into each new
+service is a cap the eighteenth service will not have. **It applies when
+containers are recreated, so it lands on the next deploy after this one.**
+
+**Still open:** `post` and `post-browser` are still restart-looping. Capped
+logs mean they can no longer fill the disk, but nothing has looked at *why*
+they exit.
+
+**And use `ssh -t`.** Every deploy command handed over in this session lacked
+it, which is the whole reason a working build looked like a hang.
+
 ### The money screen in somebody else's name — built 25 Sep, not deployed
 
 `make whitelabel`. My server, my code, his name and colour on it, his Stripe.
