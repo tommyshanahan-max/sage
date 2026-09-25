@@ -1194,6 +1194,41 @@ have a Stripe account with trading history, and would you run a Connect
 platform on it". Their deck is tax structuring — SA, SARL, SPF, SCSp, RAIF —
 and contains no payments authorisation.
 
+### What Daniel actually is, and why it changes the category — 25 Sep
+
+Said late on 25 Sep and it matters more than it sounds: **Daniel is a
+brokerage.** Money comes in, lands on a trading platform, and he and his
+merchants take a commission every time it is traded. Not a broker being paid
+for advice.
+
+**THIS IS A CAPITAL ACCOUNT TRANSACTION, NOT A CURRENT ACCOUNT ONE.** Every
+line written for this product so far assumes the current account: a Chinese
+client paying for a service rendered. China treats the two completely
+differently — the individual $50,000 annual quota explicitly excludes
+overseas securities and investment. Moving RMB out to fund trading is the
+category SAFE restricts hardest, and the failure mode is an account frozen
+rather than a payment declined.
+
+**And both wallets prohibit it by name.** WeChat Pay's and Alipay's merchant
+terms exclude funding investment or trading accounts. That is the exact
+capability we were counting on his Luxembourg account having — it can be
+enabled and still not usable for this.
+
+**The question that decides it:** what is his client buying at the moment
+they pay? Brokerage services rendered is one transaction; funding an account
+to trade with is another, with the same money.
+
+**What is unaffected:** direct charges are right either way and put the
+liability where the business is; the white label, the skin and the payout
+screen do not care.
+
+**What it changes about the money:** our 5% is on the deposit, once. His
+commission is on every trade. So this revenue scales with his DEPOSITS and
+not with his trading volume — worth knowing before anybody models it the
+other way.
+
+Nobody has asked Stripe, WeChat or Alipay about any of this yet.
+
 ### The connected account reaches the wallet now — 25 Sep
 
 The gap that made the Stripe row a handshake into nothing. `setPayout` takes
