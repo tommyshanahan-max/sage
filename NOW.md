@@ -1364,7 +1364,7 @@ and the difference is the presentment currency.
 VPN, card testing, Radar, and "not activated". Every one was asserted from a
 screenshot rather than asked of Stripe. The command exists now; use it first.
 
-### The shop order page takes a card now — 25 Sep, NOT DEPLOYED
+### The shop order page takes a card now — 26 Sep, DEPLOYED AND PAID
 
 `aozhoubaba.com/order/…` offered one button, 支付宝, and every Alipay attempt
 on that account since 24 Sep has failed (see the table above). A card has not:
@@ -1386,8 +1386,39 @@ line about the wrong button once there are two, so a screen with a card on it
 says `Charged in Australian dollars, at the day's rate.` / `按澳元扣款，汇率
 以当日为准。` instead.
 
-Needs `make deploy` — it is `board/server.js` and two files under
-`board/public/`, all of them COPYed into the image.
+**A card payment went through on it, 26 Sep ~1:10am**, on
+`aozhoubaba.com/order/54ad115cefc16a859604` — the order flipped to *Waiting to
+be sent*, so the webhook marked it paid too. That is the second successful card
+on this account and the whole path, not just the button.
+
+Alipay is still unexplained. The discriminator has not been run:
+`make blocked ID="pi_3UJAQSJItwOUeslJ1Odnb9lF"` — a CNY attempt, against four
+AUD ones that were blocked and five CNY ones that were cancelled.
+
+### `make up` refused every deploy over a profile nothing set — 26 Sep, fixed
+
+An hour at one in the morning, and three dropped ssh sessions looked like the
+cause. They were not.
+
+`make whitelabel DOMAIN="europay.paydealio.com"` wrote the hostname and did NOT
+add `board-wl` to `COMPOSE_PROFILES` — the script only did that when a Stripe
+KEY came in the same run, and there was no key yet. `make up` refuses that
+combination on purpose (a hostname with a certificate and nothing behind it is
+a 502 found by somebody's client mid-payment), so a half-finished setup armed a
+refusal that then blocked **every deploy of anything on the box**.
+
+| | |
+|---|---|
+| **The bug** | the guard read `WHITELABEL_DOMAIN`, the thing that satisfied it read `WL_STRIPE_KEY` |
+| **Fixed** | profile and salt go on the hostname; moved below the puts so it sees what the same run wrote |
+| **And** | the refusal now prints the command that fixes it, with the real domain in it |
+| **And** | `whitelabel.sh` stopped swallowing `make up` — silent minutes read as a hang on this box |
+
+**Two lessons, both about what was handed over.** A retry loop written
+`until ssh … make up` retries a *deterministic build failure* forever; it only
+belongs around a connection. And two terminal windows running `make up` at once
+collide on a container name — `Conflict. The container name
+"/tomscoding-board-wl" is already in use`. One deploy at a time.
 
 ### ALIPAY IS AVAILABLE. WECHAT PAY IS INELIGIBLE. THEY ARE NOT THE SAME — 26 Sep
 
