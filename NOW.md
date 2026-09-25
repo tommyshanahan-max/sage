@@ -1194,10 +1194,30 @@ have a Stripe account with trading history, and would you run a Connect
 platform on it". Their deck is tax structuring — SA, SARL, SPF, SCSp, RAIF —
 and contains no payments authorisation.
 
-### What Daniel actually is, and why it changes the category — 25 Sep
+### What Daniel actually is, and why it changes the category — 25 Sep, sharpened 26 Sep
 
-Said late on 25 Sep and it matters more than it sounds: **Daniel is a
-brokerage.** Money comes in, lands on a trading platform, and he and his
+**CORRECTED 26 Sep. He is NOT the brokerage.** This said he was, and he is the
+layer in front of one:
+
+| | |
+|---|---|
+| **The brokerage** | has **custody** of the money. The client's funds sit there |
+| **Daniel** | introduces the client, runs the algorithm, and **holds nothing** |
+| **How he earns** | paid on the **spread**, every time the algorithm trades |
+| **His affiliates** | paid out of that, per deal |
+
+So his revenue is a rebate on trading volume, and the money a Chinese client
+sends is a **deposit into somebody else's custody** — not payment for anything
+Daniel sells.
+
+**WHICH BREAKS THE FRAMEWORK CHART AS DRAWN.** It shows the money landing in
+*Daniel's Stripe balance*. If the brokerage has custody, that is either untrue
+or it means Daniel holds client money in transit — which is the exact thing he
+says he does not do, and a regulated act in Luxembourg if he did. Whose Stripe
+account is merchant of record for a deposit is the unanswered question, and
+everything about the chart, the fee and who signs up hangs on it.
+
+Money comes in, lands on a trading platform, and he and his
 merchants take a commission every time it is traded. Not a broker being paid
 for advice.
 
@@ -1222,10 +1242,15 @@ to trade with is another, with the same money.
 liability where the business is; the white label, the skin and the payout
 screen do not care.
 
-**What it changes about the money:** our 5% is on the deposit, once. His
-commission is on every trade. So this revenue scales with his DEPOSITS and
-not with his trading volume — worth knowing before anybody models it the
-other way.
+**What it changes about the money:** our 0.5% (5% when this was written; Tom
+cut it on 25 Sep) is on the deposit, once. His commission is on every trade.
+So this revenue scales with his DEPOSITS and not with his trading volume —
+worth knowing before anybody models it the other way.
+
+**And it comes out of principal.** A percentage of a deposit is taken from the
+client's own capital before a single trade, not out of anybody's earnings.
+That is a different thing to disclose, and a different thing for a brokerage's
+compliance to look at, than a cut of revenue.
 
 Nobody has asked Stripe, WeChat or Alipay about any of this yet.
 
