@@ -1248,6 +1248,36 @@ described a transfer that does not happen.
 A bank account already saved is kept, so switching back is not retyping a wire.
 Three tests cover it; 17 across both suites.
 
+### The deal with Daniel, as agreed 25 Sep
+
+**We are a layer on top of his Stripe.** Software as a service, 0.5% of what
+goes through it, for now.
+
+| | |
+|---|---|
+| Merchant of record | **Daniel**, on every transaction |
+| WeChat / Alipay | his capabilities, his account |
+| Merchants under him | his Connect, his application, his country |
+| Us | the software, and nothing that touches money |
+
+**This is what `board-wl` already is** — his key, his box, our code. Nothing
+to change.
+
+**What it removes:** the platform profile blocker stops mattering. We do not
+need Connect. No 二清 question, no payment licence question, no chargeback
+exposure.
+
+**What it costs:** 0.5% cannot be taken automatically without Connect, so it
+is invoiced. But the layer sees every transaction, so the figure is ours to
+compute — `lib/books.js` and `make books` already pair and total both sides of
+a deal. Pointing them at his box is a small job and not done.
+
+**Two open:** his clients' payment data sits on our box in Tokyo for a
+Luxembourg company, which is a processor relationship and eventually a page of
+paper. And the 0.5% should be charged on the service payments only — the
+account funding is meant to stay off these rails, so billing it would point
+the fee and the compliance line in opposite directions.
+
 ### His own box, on his own Stripe key — built 25 Sep, off by default
 
 Connect needs a live client id, which needs a platform profile, which Stripe
