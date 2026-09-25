@@ -1,0 +1,326 @@
+<title>Portal Screens</title>
+<style>
+  :root{
+    --paper:#F4F5F7; --card:#FFFFFF; --ink:#10243F; --ink2:#3D4E68;
+    --mut:#6E7C93; --line:#D6DCE5; --acc:#0B6E4F;
+    --l0:#184f95; --l1:#256abf; --l2:#3987e5; --l3:#86b6ef;
+    --screen:#FFFFFF; --stage:#EEF1F6; --bezel:#0B1220;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#0B1220; --card:#141D2E; --ink:#EDF1F8; --ink2:#BAC5D8;
+      --mut:#8794AB; --line:#27324A; --acc:#4FC79B;
+      --l0:#b7d3f6; --l1:#86b6ef; --l2:#3987e5; --l3:#256abf;
+      --screen:#111A2B; --stage:#0B1220; --bezel:#2A3550;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#0B1220; --card:#141D2E; --ink:#EDF1F8; --ink2:#BAC5D8;
+    --mut:#8794AB; --line:#27324A; --acc:#4FC79B;
+    --l0:#b7d3f6; --l1:#86b6ef; --l2:#3987e5; --l3:#256abf;
+    --screen:#111A2B; --stage:#0B1220; --bezel:#2A3550;
+  }
+
+  body{background:var(--paper);color:var(--ink);
+    font:400 17px/1.5 ui-sans-serif,-apple-system,"Segoe UI",Roboto,sans-serif;
+    padding:0 16px;-webkit-text-size-adjust:100%}
+  .wrap{max-width:1100px;margin:0 auto;padding-block:36px 64px}
+  h1{font-size:clamp(1.9rem,5vw,2.7rem);line-height:1.08;letter-spacing:-.02em;
+     margin:0 0 .35rem;text-wrap:balance}
+  .sub{color:var(--ink2);margin:0 0 2.2rem;font-size:1.06rem;max-width:44ch}
+
+  .rail{display:grid;gap:1.6rem;
+    grid-template-columns:repeat(auto-fit,minmax(272px,1fr));align-items:start}
+  figure{margin:0}
+  figcaption{margin:.9rem 0 0;font-size:.98rem;color:var(--ink2)}
+  figcaption b{display:block;color:var(--ink);font-size:1.05rem;margin:0 0 .15rem}
+
+  /* A phone, not a browser window. This is opened on a handset in a taxi and
+     the frame is there to keep that in view while judging it. */
+  .phone{background:var(--bezel);border-radius:2.1rem;padding:.55rem;
+    box-shadow:0 14px 40px rgba(0,0,0,.18)}
+  .scr{background:var(--screen);border-radius:1.7rem;overflow:hidden;
+    display:flex;flex-direction:column;height:35rem}
+  .bar{display:flex;align-items:center;justify-content:space-between;
+    padding:.85rem 1.05rem .2rem;font-size:.78rem;color:var(--mut);font-weight:700}
+  .body{flex:1;overflow:hidden;padding:0 1.05rem 1.05rem;display:flex;
+    flex-direction:column;min-height:0}
+  .back{font-size:1.4rem;line-height:1;color:var(--mut);padding:.2rem 0 .4rem}
+
+  .eyebrow{font-size:.74rem;font-weight:700;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--mut);margin:.5rem 0 .3rem}
+  .big{font-size:2.9rem;line-height:1;letter-spacing:-.04em;margin:0;
+    font-variant-numeric:tabular-nums}
+  .cap{font-size:.92rem;color:var(--ink2);margin:.35rem 0 0}
+
+  .stage{margin:.6rem -.3rem .2rem;background:var(--stage);border-radius:1rem;
+    flex:1;min-height:0;position:relative;overflow:hidden}
+  .stage canvas{display:block;width:100%;height:100%}
+
+  .go{display:block;width:100%;border:0;border-radius:999px;background:var(--ink);
+    color:var(--screen);font:inherit;font-size:1.02rem;font-weight:700;
+    padding:.92rem;margin-top:.7rem;text-align:center}
+  .go.quiet{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
+
+  /* Rows, because the shape of the whole product is a list you tap into. */
+  .rows{flex:1;min-height:0;overflow:hidden;margin:.5rem 0 0}
+  .r{display:flex;align-items:center;gap:.7rem;padding:.82rem 0;
+    border-bottom:1px solid var(--line)}
+  .r:last-child{border-bottom:0}
+  .r .sw{width:.72rem;height:.72rem;border-radius:.18rem;flex:none}
+  .r .nm{flex:1;min-width:0;font-weight:600;font-size:1.02rem;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .r .vv{font-variant-numeric:tabular-nums;font-weight:700;font-size:1.02rem}
+  .r .ch{color:var(--mut);font-size:1.1rem}
+  .r small{display:block;font-weight:400;color:var(--mut);font-size:.8rem}
+
+  .kv{display:flex;justify-content:space-between;padding:.72rem 0;
+    border-bottom:1px solid var(--line);font-size:1rem}
+  .kv:last-of-type{border-bottom:0}
+  .kv b{font-variant-numeric:tabular-nums}
+  .code{font:700 1.5rem/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;
+    letter-spacing:.22em;text-align:center;background:var(--stage);
+    border-radius:.8rem;padding:.9rem;margin:.7rem 0 0}
+
+  /* THE TAB BAR IS THE COMBINATION. The wallet answers "what have I got and
+     where does it go"; the pyramid answers "where is it coming from". Two
+     halves of one app, and a row along the bottom is how a phone says so. */
+  /* The bar goes last and takes the slack, so every screen's content sits
+     at the top and the tabs at the bottom — rather than each screen
+     pushing its own last element down and leaving a hole mid-screen,
+     which is what the payout screen did. */
+  .tabs{display:flex;margin-top:auto;border-top:1px solid var(--line);margin-left:-1.05rem;
+    margin-right:-1.05rem;margin-bottom:-1.05rem;
+    padding:.55rem .4rem calc(.55rem + env(safe-area-inset-bottom,0px))}
+  .tabs span{flex:1;text-align:center;font-size:.72rem;font-weight:700;
+    color:var(--mut);letter-spacing:.02em}
+  .tabs span em{display:block;font-style:normal;font-size:1.15rem;line-height:1.3}
+  .tabs span.on{color:var(--ink)}
+
+  .note{margin:2.6rem 0 0;font-size:.98rem;color:var(--mut);max-width:62ch}
+  .note b{color:var(--ink)}
+</style>
+
+<div class="wrap">
+
+  <h1>Wallet and Pyramid, one app</h1>
+  <p class="sub">The wallet says what you have. The pyramid says where it came from. A tab apart, never on one screen.</p>
+
+  <div class="rail">
+
+    <figure>
+      <div class="phone"><div class="scr">
+        <div class="bar"><span>EUROPAY</span><span>9:41</span></div>
+        <div class="body">
+          <p class="eyebrow">Balance · 余额</p>
+          <p class="big">$4,182</p>
+          <p class="cap">Available now · 可提现</p>
+          <div style="display:flex;gap:.55rem;margin:.9rem 0 .2rem">
+            <button class="go" style="margin:0">Request · 收款</button>
+            <button class="go quiet" style="margin:0">Send · 转账</button>
+          </div>
+          <p class="eyebrow" style="margin-top:1rem">Activity · 交易记录</p>
+          <div class="rows">
+            <div class="r"><span class="nm">Lin · Shanghai<small>Today</small></span><span class="vv" style="color:var(--acc)">+$310</span></div>
+            <div class="r"><span class="nm">Your 0.5%<small>Yesterday</small></span><span class="vv" style="color:var(--acc)">+$92</span></div>
+            <div class="r"><span class="nm">To your bank<small>24 Sep</small></span><span class="vv">&minus;$2,600</span></div>
+          </div>
+          <div class="tabs">
+            <span class="on"><em>&#128176;</em>Wallet</span>
+            <span class=""><em>&#128202;</em>Pyramid</span>
+            <span class=""><em>&#10010;</em>Invite</span>
+          </div>
+        </div>
+      </div></div>
+      <figcaption><b>Wallet</b>The half that already exists. What you have, the two things you do with it, and what moved. Unchanged.</figcaption>
+    </figure>
+
+    <figure>
+      <div class="phone"><div class="scr">
+        <div class="bar"><span>EUROPAY</span><span>9:41</span></div>
+        <div class="body">
+          <p class="eyebrow">September · 九月</p>
+          <p class="big" id="hero">$134,860</p>
+          <p class="cap">Through everyone beneath you</p>
+          <div class="stage"><canvas id="cv"></canvas></div>
+          <button class="go quiet" style="margin-bottom:.55rem">Your people &nbsp;&rsaquo;</button>
+          <div class="tabs">
+            <span class=""><em>&#128176;</em>Wallet</span>
+            <span class="on"><em>&#128202;</em>Pyramid</span>
+            <span class=""><em>&#10010;</em>Invite</span>
+          </div>
+        </div>
+      </div></div>
+      <figcaption><b>Pyramid</b>The new half. One figure and the shape it came from &mdash; drag it, it is live. Tap a tile to stand where that person stands.</figcaption>
+    </figure>
+
+    <figure>
+      <div class="phone"><div class="scr">
+        <div class="bar"><span>EUROPAY</span><span>9:41</span></div>
+        <div class="body">
+          <div class="back">&lsaquo;</div>
+          <p class="eyebrow">Algotech</p>
+          <p class="big" style="font-size:2.1rem">$61,290</p>
+          <p class="cap">Their total, with everyone beneath them</p>
+          <div style="margin-top:.7rem">
+            <div class="kv"><span>Their own</span><b>$18,400</b></div>
+            <div class="kv"><span>Their people</span><b>12</b></div>
+            <div class="kv"><span>Earned you · 0.5%</span><b>$306</b></div>
+            <div class="kv"><span>Joined</span><b>14 Aug</b></div>
+          </div>
+          <button class="go" style="margin-top:auto;margin-bottom:.55rem">See their pyramid</button>
+          <div class="tabs">
+            <span class=""><em>&#128176;</em>Wallet</span>
+            <span class="on"><em>&#128202;</em>Pyramid</span>
+            <span class=""><em>&#10010;</em>Invite</span>
+          </div>
+        </div>
+      </div></div>
+      <figcaption><b>One person</b>The row opened. &ldquo;See their pyramid&rdquo; re-roots the whole thing on them &mdash; same screen, new vertex.</figcaption>
+    </figure>
+
+    <figure>
+      <div class="phone"><div class="scr">
+        <div class="bar"><span>EUROPAY</span><span>9:41</span></div>
+        <div class="body">
+          <div class="back">&lsaquo;</div>
+          <p class="eyebrow">Getting paid</p>
+          <p class="big" style="font-size:1.5rem;line-height:1.18">When someone sends you money, where should it go?</p>
+          <p class="cap">别人给你转钱，到哪里？</p>
+          <div class="rows" style="flex:0">
+            <div class="r"><span class="nm">A bank account<small>Takes a day or two</small></span><span class="ch">&rsaquo;</span></div>
+            <div class="r"><span class="nm">My Stripe account<small>The one you already have</small></span><span class="ch">&rsaquo;</span></div>
+          </div>
+          <p class="cap" style="margin:.8rem 0 .55rem">It is already there when it clears.</p>
+          <div class="tabs">
+            <span class="on"><em>&#128176;</em>Wallet</span>
+            <span class=""><em>&#128202;</em>Pyramid</span>
+            <span class=""><em>&#10010;</em>Invite</span>
+          </div>
+        </div>
+      </div></div>
+      <figcaption><b>Getting paid</b>The wallet&rsquo;s own question, in its own words. Two rows, no form &mdash; the form is Stripe&rsquo;s problem, on Stripe&rsquo;s page.</figcaption>
+    </figure>
+
+  </div>
+
+  <p class="note"><b>Why it is shaped like this.</b> Two halves, one tab apart, and neither ever shows the other&rsquo;s detail. The wallet already exists and does not change. The pyramid is the half nobody else gives them &mdash; a picture of their own business they will open every morning, and the reason they do not leave. Every screen carries one level of the tree and never two: a figure, a shape, a row opened.</p>
+
+</div>
+<script>
+/* The live pyramid from the other page, cut down to what fits in a phone: no
+   controls, no legend, no drill — it is the hero on a home screen, and a hero
+   that needs instructions is not one. Drag still works. */
+const ROWS = [{id:"us",own:0}];
+(function seed() {
+  const tier1 = [18400, 9100, 5600];
+  const tier2 = [6200,4900,3100,2600,3800,2400,3300];
+  let id = 0;
+  tier1.forEach((v) => ROWS.push({ id:"a"+(++id), own:v, parent:"us" }));
+  const p1 = ROWS.filter((r) => r.parent === "us");
+  tier2.forEach((v, i) => ROWS.push({ id:"b"+(++id), own:v, parent:p1[i % 3].id }));
+  const p2 = ROWS.filter((r) => String(r.id)[0] === "b");
+  let rnd = 7;
+  const next = () => (rnd = (rnd*1103515245+12345) % 2147483648) / 2147483648;
+  for (const p of p2) {
+    const n = 2 + Math.floor(next()*3);
+    for (let k=0;k<n;k++) ROWS.push({ id:"c"+(++id), own: 250+Math.round(next()*1400), parent:p.id });
+  }
+})();
+const kids = (id) => ROWS.filter((r) => r.parent === id);
+function depthOf(id){let d=0,cur=ROWS.find(r=>r.id===id);
+  while(cur&&cur.parent){d++;cur=ROWS.find(r=>r.id===cur.parent);}return d;}
+
+const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const cv = document.getElementById("cv");
+const ctx = cv.getContext("2d");
+const CELL = 0.92, GAP = 0.11, LIFT = 1.05, CAMZ = 11, FOCAL = 8.4;
+let boxes = [], W=0, H=0, DPR=1, rotY=0.62, rotX=0.36, SPAN=8;
+
+function build() {
+  boxes = [];
+  const cols = [css("--l0"),css("--l1"),css("--l2"),css("--l3")];
+  const maxOwn = Math.max.apply(null, ROWS.map((r) => r.own).concat([1]));
+  for (let d=0; d<=3; d++) {
+    const at = ROWS.filter((r) => depthOf(r.id) === d);
+    if (!at.length) continue;
+    const perRow = Math.ceil(Math.sqrt(at.length));
+    const nRows = Math.ceil(at.length / perRow);
+    at.forEach((r, i) => {
+      const rowI = Math.floor(i / perRow);
+      const inRow = Math.min(perRow, at.length - rowI * perRow);
+      const side = Math.max(CELL - GAP, 0.03);
+      const h = d === 0 ? 0.30 : 0.14 + 0.95 * (r.own / maxOwn);
+      boxes.push({ x:((i - rowI*perRow) - (inRow-1)/2)*CELL,
+        z:(rowI - (nRows-1)/2)*CELL, y:1.45 - d*LIFT,
+        sx:side, sz:side, sy:h, col:cols[d] });
+    });
+  }
+  const widest = Math.max.apply(null, boxes.map((b) => Math.abs(b.x)+b.sx).concat([2]));
+  SPAN = Math.max(6.4, widest * 1.85);
+}
+function project(p){
+  const cy=Math.cos(rotY),sy=Math.sin(rotY);
+  let x=p[0]*cy-p[2]*sy, z=p[0]*sy+p[2]*cy;
+  const cx=Math.cos(rotX),sx=Math.sin(rotX);
+  let y=p[1]*cx-z*sx; z=p[1]*sx+z*cx;
+  const k=FOCAL/(CAMZ-z);
+  return {x:W/2+x*k*(W/SPAN), y:H*0.46-y*k*(H/(SPAN*0.78)), z};
+}
+const FACES=[[4,5,6,7,0,0,1],[1,0,3,2,0,0,-1],[5,1,2,6,1,0,0],
+             [0,4,7,3,-1,0,0],[7,6,2,3,0,1,0],[0,1,5,4,0,-1,0]];
+const L=(()=>{const v=[0.38,0.86,0.34],m=Math.hypot(v[0],v[1],v[2]);return v.map(n=>n/m);})();
+function corners(b){const x0=b.x-b.sx/2,x1=b.x+b.sx/2,z0=b.z-b.sz/2,z1=b.z+b.sz/2,
+  y0=b.y-b.sy,y1=b.y;
+  return [[x0,y0,z0],[x1,y0,z0],[x1,y1,z0],[x0,y1,z0],
+          [x0,y0,z1],[x1,y0,z1],[x1,y1,z1],[x0,y1,z1]];}
+function rn(n){const cy=Math.cos(rotY),sy=Math.sin(rotY);
+  let x=n[0]*cy-n[2]*sy,z=n[0]*sy+n[2]*cy;
+  const cx=Math.cos(rotX),sx=Math.sin(rotX);
+  return [x,n[1]*cx-z*sx,n[1]*sx+z*cx];}
+function hexv(c){const h=c.replace("#","");
+  const v=h.length===3?h.split("").map(x=>x+x).join(""):h;
+  return [parseInt(v.slice(0,2),16),parseInt(v.slice(2,4),16),parseInt(v.slice(4,6),16)];}
+function shade(c,k){const [r,g,b]=hexv(c);
+  const f=(n)=>Math.max(0,Math.min(255,Math.round(n*k)));
+  return "rgb("+f(r)+","+f(g)+","+f(b)+")";}
+function draw(){
+  ctx.setTransform(DPR,0,0,DPR,0,0); ctx.clearRect(0,0,W,H);
+  const q=[];
+  for(const b of boxes){
+    const c=corners(b).map(project);
+    for(const f of FACES){
+      const p=[c[f[0]],c[f[1]],c[f[2]],c[f[3]]];
+      const n=rn([f[4],f[5],f[6]]);
+      const lit=0.58+0.42*Math.max(0,n[0]*L[0]+n[1]*L[1]+n[2]*L[2]);
+      q.push({p,zz:(p[0].z+p[1].z+p[2].z+p[3].z)/4,fill:shade(b.col,lit)});
+    }
+  }
+  q.sort((a,b)=>a.zz-b.zz);
+  for(const o of q){ctx.beginPath();ctx.moveTo(o.p[0].x,o.p[0].y);
+    for(let i=1;i<4;i++)ctx.lineTo(o.p[i].x,o.p[i].y);
+    ctx.closePath();ctx.fillStyle=o.fill;ctx.fill();}
+}
+function size(){
+  const r=cv.parentElement.getBoundingClientRect();
+  DPR=Math.min(devicePixelRatio||1,2); W=r.width; H=r.height;
+  cv.width=Math.round(W*DPR); cv.height=Math.round(H*DPR);
+}
+size(); build(); draw();
+addEventListener("resize",()=>{size();draw();});
+
+let spin=true,down=false,lx=0,ly=0;
+cv.style.touchAction="none";
+cv.addEventListener("pointerdown",(e)=>{down=true;spin=false;lx=e.clientX;ly=e.clientY;
+  if(cv.setPointerCapture)cv.setPointerCapture(e.pointerId);});
+cv.addEventListener("pointermove",(e)=>{if(!down)return;
+  rotY+=(e.clientX-lx)*0.009;
+  rotX=Math.max(-0.1,Math.min(1.0,rotX+(e.clientY-ly)*0.006));
+  lx=e.clientX;ly=e.clientY;draw();});
+const up=()=>{down=false;};
+cv.addEventListener("pointerup",up); cv.addEventListener("pointercancel",up);
+if(matchMedia("(prefers-reduced-motion: reduce)").matches) spin=false;
+(function loop(){requestAnimationFrame(loop);
+  if(spin&&!down){rotY+=0.0024;draw();}})();
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{build();draw();});
+</script>
