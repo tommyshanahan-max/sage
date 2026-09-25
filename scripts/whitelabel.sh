@@ -417,7 +417,36 @@ fi
 [ -n "$(get TOMSCODING_BOARD_STRIPE_CLIENT_ID)" ] || exit 0
 [ -n "$DEAL" ] || exit 0
 
-NAME_FOR="${WHO:-there}"
+# HIS NAME OR NOTHING. This defaulted to "there", and printed a finished
+# message reading "there — this is the page I mentioned" between two rules
+# under the words "Everything between the rules is the message". That is a
+# message handed over to be edited before sending, which is the one thing a
+# handed-over block must never be — and the house rule is that WHO is a first
+# name on every target, because Tom calls people by their first name and that
+# is what he types. So without it there is no block to paste, only the line
+# that says how to get one.
+if [ -z "$WHO" ]; then
+  echo "  The link is live. To print the message for somebody, name them:"
+  echo ""
+  echo "      make whitelabel WHO=\"Daniel\""
+  echo ""
+fi
+
+# AND WHAT IS STILL TRUE OF THE MONEY. A client id makes the door work; it
+# does not make the charge his. Until his acct_ is in BOARD_STRIPE_DIRECT the
+# report above says "through us — OUR name on the statement, OUR chargebacks"
+# and it is right. That is one command after he authorises, and the place it
+# will be needed is here, not in somebody's memory at two in the morning.
+if [ -z "$(get TOMSCODING_BOARD_STRIPE_DIRECT)" ]; then
+  echo "  After he authorises, his acct_ comes back on this box. Until it is"
+  echo "  written, his charges are OURS — our name, our chargebacks:"
+  echo ""
+  echo "      make whitelabel ACCT=\"acct_…\""
+  echo ""
+fi
+
+[ -n "$WHO" ] || exit 0
+NAME_FOR="$WHO"
 echo "────────────────────────────────────────────────────────────"
 echo ""
 echo "$NAME_FOR — this is the page I mentioned. It connects the Stripe"
