@@ -11393,6 +11393,27 @@ const SHOP_CUT_PCT = Math.min(Math.max(Number(process.env.BOARD_SHOP_CUT || 15),
 function dealioQr() {
   const p = WALLET.on ? WALLET.provider : null;
   if (!p || typeof p.qrPay !== "function" || typeof p.intentStatus !== "function") return null;
+  /* THE MOCK MAY NOT DRAW A CODE ON A REAL BOX.
+   *
+   * providers/mock.js answers qrPay with `https://qr.alipay.com/int_<id>`
+   * — a real domain and an invented path. It exists so every screen after
+   * the code can be built and looked at on a laptop with no keys and no
+   * money, and it pays itself after six seconds. It was never meant to face
+   * the Alipay app.
+   *
+   * BOARD_WALLET=test on the box, so it did. Alipay scanned the code, went
+   * to its own server, and answered 404 Not Found — on the shop, over a
+   * ¥91 order, to somebody who had got all the way to paying. Reported as
+   * "no URL found", and before that misread as a VPN problem, which cost
+   * another round.
+   *
+   * A dead code is worse than no code: the payer cannot tell whether the
+   * shop is broken or they are, and the shop is the thing they were
+   * deciding whether to trust. So the mock draws one only where a demo is
+   * deliberately on — `make try` and `make try-china` — and everywhere else
+   * this answers null and Alipay falls through to Stripe, which is live on
+   * this account and works. */
+  if (p.name === "test" && !PAY_DEMO && !DEALIO_DEMO) return null;
   return p;
 }
 

@@ -157,6 +157,31 @@ the prompt. It never touched the box's configuration.
 history and into a screenshot on 24 Sep. A leaked live key on a public server
 is a likelier route to a terminated account than anything in this repo.
 
+## THE MOCK WAS DRAWING REAL-LOOKING DEAD CODES — 25 Sep, never deployed
+
+**`providers/mock.js` answers `qrPay` with `https://qr.alipay.com/int_<id>`.**
+A real domain, an invented path. It exists so every screen after the code can
+be built on a laptop with no keys and no money, and it pays itself after six
+seconds. It was never meant to face the Alipay app.
+
+**`BOARD_WALLET=test` on the box, so it did.** Alipay scanned the code, went
+to its own server, and answered **404 Not Found** — on the shop, over a ¥91
+Aveeno order, to somebody who had got all the way to paying. The 404 page
+named the payload exactly: `/int_2d5ba2b7a17e3d75_Aveeno baby`.
+
+**It was first blamed on the VPN**, and turning the VPN off is what let it get
+far enough to fail properly. A round lost to that.
+
+`dealioQr()` now refuses a provider named `test` unless `BOARD_PAY_DEMO` or
+`BOARD_DEALIO_DEMO` is on. One place, and both callers — the shop and Dealio —
+go through it. Walked: on the box's shape Alipay reaches Stripe; under
+`make try` and the demo rail the code still draws, which is the whole point of
+the mock.
+
+**A dead code is worse than no code.** The payer cannot tell whether the shop
+is broken or they are, and the shop is the thing they were deciding whether to
+trust.
+
 ## Tax came out of the supplier side — 25 Sep, never deployed
 
 **"Tax is really none of our business. We are in China."** And that undid the
