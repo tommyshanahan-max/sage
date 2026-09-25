@@ -11310,6 +11310,30 @@ app.get("/china/linked", async (req, res) => {
   if (req.query.error || !req.query.code) return res.redirect(302, chinaHome(req, "/china/stopped"));
   try {
     const account = await stripe.linkFinish(String(req.query.code));
+    /* AND WRITE IT DOWN WHERE THE WALLET WILL FIND IT.
+     *
+     * This used to store the account in the cookie below and nowhere else,
+     * because it was built for China Business Solutions, where the cookie IS
+     * the session and there is no wallet. The payout screen then offered
+     * "My Stripe account", sent somebody through a real authorisation on
+     * Stripe's own page, and came back to a screen that still said nothing
+     * was chosen. The handshake worked and the answer was thrown away.
+     *
+     * BY COOKIE, BECAUSE THERE IS NO HEADER. Stripe redirects the browser
+     * here; an ordinary navigation carries no x-board-device, so identify()
+     * cannot be used. board_in is what every other page route reads.
+     *
+     * NEVER FATAL. Somebody may reach this with no board session at all —
+     * the CBS flow is outside the door on purpose — and that is not an
+     * error, it is the older of the two paths. The cookie below still
+     * happens either way. */
+    try {
+      const by = inCookie(req);
+      const who = by && WALLET.on ? await WALLET.identify.byHash(by) : null;
+      if (who) await WALLET.service.setPayout(who, { mode: "stripe", details: { account } });
+    } catch (err) {
+      console.error("china linked -> wallet:", err.message);
+    }
     const token = await CHINA.remember({ account, email: "" });
     res.cookie(CHINA_COOKIE, token, {
       httpOnly: true, sameSite: "Lax", secure: true, maxAge: 180 * 24 * 3600 * 1000, path: "/china",

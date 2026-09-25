@@ -1194,6 +1194,40 @@ have a Stripe account with trading history, and would you run a Connect
 platform on it". Their deck is tax structuring — SA, SARL, SPF, SCSp, RAIF —
 and contains no payments authorisation.
 
+### The connected account reaches the wallet now — 25 Sep
+
+The gap that made the Stripe row a handshake into nothing. `setPayout` takes
+a third answer, `stripe`, storing the `acct_…` on the wallet; `/china/linked`
+writes it there as well as into the CBS cookie, resolving the person from
+`board_in` because a browser coming back from Stripe carries no
+`x-board-device` header.
+
+**No beneficiary and no provider call.** A bank payout is a wire, so the
+provider has to be told who to wire to. A connected account is not: the charge
+was raised on it, so the money is already there. That is the whole reason the
+answer is worth having — and why the screen now says "It is already there when
+it clears" instead of "same or next working day", drops the "we send your
+money straight to your bank" line, and hides the country picker, all of which
+described a transfer that does not happen.
+
+A bank account already saved is kept, so switching back is not retyping a wire.
+Three tests cover it; 17 across both suites.
+
+### Daniel's second question, as a row — 25 Sep
+
+**What your merchants earn**, on the white-label home screen only, above the
+big button. A tree — one filled node, a rail, three leaves — and behind it the
+same tree with three example merchants, their volume and his 5% share. Every
+figure is marked EXAMPLE FIGURES on the row and again at the top of the sheet,
+because numbers on a money screen are read as yours and these are nobody's.
+
+It exists because the resale idea is the thing being bought and a concept in a
+paragraph is a concept nobody reads. Nothing behind it is built.
+
+**Put it in `list()` first, which is wrong:** an empty wallet draws `empty()`,
+so it only appeared once there was money on the screen — the one time nobody
+needs the pitch. It is in both now.
+
 ### Direct charges, so a partner's turnover is his — built 25 Sep, off by default
 
 **Every charge this board raises was a destination charge**, which makes this

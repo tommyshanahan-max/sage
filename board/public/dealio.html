@@ -289,6 +289,33 @@
      with a hole beside it. Send is no longer hidden, so today nothing hits
      this — which is the point of it still being here. */
   .pills button:only-child{grid-column:1/-1}
+  /* THE ROW THAT EXPLAINS WHAT THIS BECOMES. Built from the same parts as a
+     fold — a card, a bold line, a quiet one — rather than a new kind of
+     thing, because it sits between two folds and a button and a fourth
+     shape there would read as a fourth idea. */
+  .treerow{display:flex;align-items:center;gap:.8rem;width:100%;
+    margin:.2rem 0 0;padding:.9rem 1rem;border:1px solid var(--line);
+    border-radius:1rem;background:var(--card);color:var(--ink);
+    font:inherit;text-align:left;cursor:pointer}
+  .treerow svg{flex:0 0 auto;color:var(--top)}
+  .treerow .tm{display:flex;flex-direction:column;gap:.1rem;min-width:0}
+  .treerow .tm b{font-size:.95rem}
+  .treerow .tm span{font-size:.8rem;color:var(--mut)}
+  .treerow .chev{margin-left:auto;color:var(--mut);font-style:normal}
+  /* The picture gets room, because it is the argument. */
+  .treeart{display:flex;justify-content:center;margin:.4rem 0 .9rem;
+    color:var(--acc)}
+  .treelist{margin:.2rem 0 0}
+  .treeline{display:flex;align-items:baseline;gap:.6rem;padding:.55rem 0;
+    border-top:1px solid var(--hair);font-size:.9rem}
+  .treeline .tw{flex:1 1 auto;min-width:0}
+  /* Figures line up, which is the only way three of them read as a column
+     and not as three unrelated numbers. */
+  .treeline .tt{color:var(--mut);font-variant-numeric:tabular-nums}
+  .treeline .tc{width:4.5rem;text-align:right;font-weight:600;
+    font-variant-numeric:tabular-nums}
+  .treeline.tsum{border-top:1px solid var(--line);font-weight:600}
+  .treeline.tsum .tt{font-weight:400}
   /* THE ONE QUESTION, AT THE SIZE OF THE QUESTION. Full width, at the foot,
      under everything it is the answer to. */
   /* THE DEEP COLOUR, NOT THE TEXT COLOUR. It was var(--ink) on var(--bg),
@@ -1279,6 +1306,12 @@ function empty() {
      pad has no answer to "how am I doing" — and zero is an answer. */
   root.append(topBlock());
   root.append(el("p", "none", T("dl.noneHead")));
+  /* AND HERE TOO, which is the screen it matters most on: a white label with
+     nothing in it yet is exactly when somebody is being shown what this
+     becomes. Putting it only in list() meant it appeared once there was
+     already money on the screen, which is the one time nobody needs the
+     pitch. */
+  if (document.documentElement.dataset.label) root.append(treeRow());
   root.append(whereButton());
 }
 
@@ -1499,7 +1532,108 @@ function list() {
     feet.append(a);
   }
   if (feet.children.length) root.append(feet);
+  /* WHAT THIS BECOMES IF HE RESELLS IT, drawn rather than described.
+     Only on a white label — it is his question, not a member's. */
+  if (document.documentElement.dataset.label) root.append(treeRow());
   root.append(whereButton());
+}
+
+/* THE SHAPE OF THE BUSINESS UNDERNEATH HIM, AS A PICTURE AND A NUMBER.
+ *
+ * Daniel's second question, after "can my clients pay me from China", is
+ * "can I sell this to the other merchants I know". That is a different
+ * product and none of it is built — but the concept is the thing being
+ * bought, and a concept explained in a paragraph is a concept nobody reads.
+ *
+ * So: one row with a tree on it, and behind it the same tree drawn with
+ * three merchants under him and what each one would be worth. EVERY FIGURE
+ * IS MARKED AS AN EXAMPLE, on the row and again at the top of the sheet.
+ * Numbers on a money screen are read as yours; these are not his and saying
+ * so once is not enough.
+ */
+function treeSvg(size) {
+  const ns = "http://www.w3.org/2000/svg";
+  const g = document.createElementNS(ns, "svg");
+  g.setAttribute("viewBox", "0 0 48 40");
+  g.setAttribute("width", size); g.setAttribute("height", String(Math.round(size * 40 / 48)));
+  g.setAttribute("fill", "none");
+  g.setAttribute("stroke", "currentColor");
+  g.setAttribute("stroke-width", "2");
+  g.setAttribute("stroke-linecap", "round");
+  g.setAttribute("aria-hidden", "true");
+  /* One node at the top, a rail, three legs, three leaves. Drawn rather
+     than a font glyph so it takes the palette it is put on. */
+  const path = document.createElementNS(ns, "path");
+  path.setAttribute("d", "M24 4v8 M8 20h32 M24 12v8 M8 20v6 M24 20v6 M40 20v6");
+  g.append(path);
+  for (const [cx, cy, r] of [[24, 4, 3], [8, 30, 3.5], [24, 30, 3.5], [40, 30, 3.5]]) {
+    const c = document.createElementNS(ns, "circle");
+    c.setAttribute("cx", cx); c.setAttribute("cy", cy); c.setAttribute("r", r);
+    if (cy === 4) c.setAttribute("fill", "currentColor");
+    g.append(c);
+  }
+  return g;
+}
+
+/* THE EXAMPLE, IN ONE PLACE. Names that are plainly not his clients, and a
+   share that is the same percentage on every row so the arithmetic is
+   checkable by anybody who wants to. */
+const TREE_EG = [
+  { who: "Ravenna Studio", took: 18400, cut: 920 },
+  { who: "Nord Interiors", took: 7250, cut: 363 },
+  { who: "Atelier Six", took: 3100, cut: 155 },
+];
+const euro = (n) => "\u20ac" + n.toLocaleString("en-GB");
+
+function treeRow() {
+  const b = el("button", "treerow");
+  b.type = "button";
+  b.append(treeSvg(28));
+  const m = el("span", "tm");
+  m.append(el("b", null, T("dl.affLabel")));
+  m.append(el("span", null, T("dl.affSub")));
+  b.append(m);
+  b.append(el("i", "chev", "\u203a"));
+  b.addEventListener("click", treeSheet);
+  return b;
+}
+
+function treeSheet() {
+  const back = el("div", "sh");
+  const card = el("div", "shc");
+  card.append(el("p", "lab", T("dl.affExample")));
+  card.append(el("h2", null, T("dl.affHead")));
+
+  const art = el("div", "treeart");
+  art.append(treeSvg(76));
+  card.append(art);
+
+  card.append(el("p", "notep", T("dl.affWhat")));
+
+  const rows = el("div", "treelist");
+  for (const r of TREE_EG) {
+    const line = el("div", "treeline");
+    line.append(el("span", "tw", r.who));
+    line.append(el("span", "tt", euro(r.took)));
+    line.append(el("span", "tc", euro(r.cut)));
+    rows.append(line);
+  }
+  const sum = el("div", "treeline tsum");
+  sum.append(el("span", "tw", T("dl.affYours")));
+  sum.append(el("span", "tt", euro(TREE_EG.reduce((a, r) => a + r.took, 0))));
+  sum.append(el("span", "tc", euro(TREE_EG.reduce((a, r) => a + r.cut, 0))));
+  rows.append(sum);
+  card.append(rows);
+
+  const acts = el("div", "acts");
+  const shut = el("button", null, T("pay.close"));
+  shut.type = "button";
+  shut.addEventListener("click", () => back.remove());
+  acts.append(shut);
+  card.append(acts);
+  back.append(card);
+  back.addEventListener("click", (e) => { if (e.target === back) back.remove(); });
+  document.body.append(back);
 }
 
 /* A SMALL WINDOW WITH ITS OWN FIGURE ON IT, that opens.

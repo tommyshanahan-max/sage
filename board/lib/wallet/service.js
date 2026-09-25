@@ -121,7 +121,13 @@ export function createWalletService({ ledger, provider, people, now = () => Date
           balance: { minor: w.balance, text: format(w.balance, w.currency) },
           earned: { minor: earnedMinor, text: format(earnedMinor, w.currency) },
           pending: { minor: pendingMinor, text: format(pendingMinor, w.currency) },
-          payout: w.payout, payoutLabel: ben ? ben.label : "",
+          /* A CONNECTED ACCOUNT HAS NO BENEFICIARY, so a label read only off
+             one came back empty and the screen said nothing was saved when
+             something was. */
+          payout: w.payout,
+          payoutLabel: w.payout === "stripe" && w.stripeAccount
+            ? stripeLabel(w.stripeAccount)
+            : (ben ? ben.label : ""),
           /* Which country the saved account is in, so the screen opens on it
              rather than guessing the clock again. */
           payoutRegion: ben ? (ben.region || w.region) : "",
@@ -216,6 +222,13 @@ export function createWalletService({ ledger, provider, people, now = () => Date
    * So the account carries its own country, the person says which, and the
    * fields and the checks both follow that. Falls back to the wallet's
    * region, which is what every account saved before this had. */
+/* WHAT A CONNECTED ACCOUNT IS CALLED ON A SCREEN. Stripe hands back an id
+   and nothing else — no bank name, no last four, because the account is
+   theirs and we never see inside it. So the tail of the id, which is enough
+   to tell two apart and is not a secret: it travels in the header of every
+   charge raised on that account. */
+  const stripeLabel = (account) => "Stripe \u00b7\u00b7\u00b7\u00b7 " + String(account).slice(-4);
+
   async function setPayout(me, { mode, details, region }) {
     const w = await ledger.read((d) => needWallet(d, me));
     const r = REGIONS[w.region];
@@ -223,6 +236,39 @@ export function createWalletService({ ledger, provider, people, now = () => Date
     if (mode === "wallet") {
       if (!r.balance) fail("no_balance_here", "In mainland China, money you receive goes straight to your bank.");
       return ledger.change((data, log) => { data.wallets[me.by].payout = "wallet"; log("payout.mode", { by: me.by, mode }); return true; });
+    }
+    /* THEIR OWN STRIPE ACCOUNT, CONNECTED RATHER THAN TYPED.
+     *
+     * The third answer, and the one that had nowhere to go: the OAuth
+     * handshake in /china/linked completed, we learned their acct_, and it
+     * went into a cookie and nothing else. So somebody could authorise us on
+     * Stripe's own page, come back, and find "where do we send your money"
+     * still unanswered.
+     *
+     * NO BENEFICIARY AND NO PROVIDER CALL. A bank payout is a wire, so the
+     * provider has to be told who to wire to. This is not a wire: the money
+     * is already in their account the moment the charge clears, because the
+     * charge was raised on it. There is nothing to create and nothing to
+     * pay out — which is the whole reason this answer is worth having.
+     *
+     * THE ID IS CHECKED HERE TOO. server.js filters the direct list and
+     * whitelabel.sh refuses a bad one at the keyboard; this is the layer
+     * that actually writes it down, so it does not take somebody else's
+     * word for the shape. */
+    if (mode === "stripe") {
+      const account = String(details?.account || "").trim();
+      if (!/^acct_[A-Za-z0-9]{4,}$/.test(account)) {
+        fail("bad_account", "That is not a Stripe account id.");
+      }
+      return ledger.change((data, log) => {
+        data.wallets[me.by].payout = "stripe";
+        data.wallets[me.by].stripeAccount = account;
+        /* The beneficiary stays where it was. Somebody who had a bank
+           account and connects Stripe has not asked us to forget the bank,
+           and switching back should not mean typing it all again. */
+        log("payout.stripe", { by: me.by, account });
+        return { label: stripeLabel(account) };
+      });
     }
     if (mode !== "bank") fail("bad_mode", "Choose where your money goes.");
     /* THE ACCOUNT'S OWN CURRENCY, NOT THE WALLET'S.

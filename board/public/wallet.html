@@ -935,8 +935,17 @@ SCREENS.payout = async (_, q) => {
   const list = h("div", { class: "list" });
   const draw = () => {
     list.textContent = "";
-    list.append(row({ title: w.payoutLabel ? T("wl.myBankIs", { label: w.payoutLabel }) : T("wl.straightToMine"), sub: T("wl.usuallyNextDay") }));
-    form.hidden = mode !== "bank" || (Boolean(w.payoutLabel) && !showNew);
+    /* A CONNECTED ACCOUNT IS NOT A BANK ROW. It said "straight to my bank
+       account · usually the same or next working day" over a Stripe account,
+       which is wrong twice: it is not a bank, and nothing is sent anywhere —
+       the money is already there, because the charge was raised on it. */
+    const onStripe = w.payout === "stripe";
+    list.append(row({
+      title: onStripe ? w.payoutLabel
+        : (w.payoutLabel ? T("wl.myBankIs", { label: w.payoutLabel }) : T("wl.straightToMine")),
+      sub: T(onStripe ? "wl.stripeLands" : "wl.usuallyNextDay"),
+    }));
+    form.hidden = onStripe || mode !== "bank" || (Boolean(w.payoutLabel) && !showNew);
   };
   let showNew = !w.payoutLabel || PAYOUT_HOW === "bank";
   /* CHANGING IT REOPENS THE QUESTION, rather than dropping straight into the
@@ -975,8 +984,15 @@ SCREENS.payout = async (_, q) => {
        opened this screen directly should still leave the way they arrived. */
     back: PAYOUT_HOW === "bank" ? () => { PAYOUT_HOW = "ask"; replace("payout"); } : null,
     body: frag(
-    h("p", { class: "lead", text: T("wl.weSendTo") }),
-    list, change, whereRow, form,
+    /* BOTH OF THESE ARE ABOUT A WIRE, and there is no wire to a connected
+       account: "we send your money straight to your bank" over a Stripe
+       account is a sentence about something that does not happen, and the
+       country of the account decides which bank fields to draw, which are
+       not drawn. */
+    w.payout === "stripe" ? null : h("p", { class: "lead", text: T("wl.weSendTo") }),
+    list, change,
+    w.payout === "stripe" ? null : whereRow,
+    form,
     /* WHAT THEIR INVOICE HAS TO SAY, said here rather than after the first
        one is rejected. Four things, and a supplier who gets them wrong is
        paid late for a reason nobody explained. */

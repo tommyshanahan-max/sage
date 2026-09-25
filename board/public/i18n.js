@@ -7346,6 +7346,26 @@ export const STRINGS = {
      than carried across: 还没开通 is what a Chinese product says about a
      feature that is not switched on yet. */
   "wl.pickStripeOff":  ["Not switched on yet", "还没开通"],
+  /* WHAT A CONNECTED ACCOUNT DOES, WHICH IS NOTHING. There is no wire and
+     no waiting: the charge was raised on their own account, so the money is
+     theirs the moment it clears. Saying "same or next working day" over it
+     would be describing a transfer that never happens.
+     结算 is the word a Chinese merchant reads on their own statement. */
+  "wl.stripeLands":    ["It is already there when it clears", "结算后直接进你的账户"],
+
+  /* WHAT THIS BECOMES IF HE RESELLS IT — the second conversation, on a row.
+     Every string here says "example" or implies it, because figures on a
+     money screen are read as yours and these are nobody's.
+     下级商户 is the ordinary Chinese word for merchants under you in a
+     distribution chain; "附属商户" is a translation of "affiliate" and not
+     a thing anybody says. */
+  "dl.affLabel":       ["What your merchants earn", "你下面的商户赚了多少"],
+  "dl.affSub":         ["An example — none yet", "示例 — 还没有商户"],
+  "dl.affExample":     ["Example figures", "示例数字"],
+  "dl.affHead":        ["Merchants under you", "你的下级商户"],
+  "dl.affWhat":        ["They take money from China. You take a share of every payment, without touching it.",
+                        "他们收中国客户的钱，每一笔你都分成，钱不经你的手。"],
+  "dl.affYours":       ["Your share", "你的分成"],
   "wl.accountName":    ["Name on the account", "开户人姓名"],
   "wl.asOnYourId":     ["As on your ID", "与身份证一致"],
   /* THE ABN, AND WHY IT IS NOT OPTIONAL. Without one the payer must withhold
