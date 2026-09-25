@@ -18,7 +18,7 @@
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta name="theme-color" content="#0B0E15">
 <title>Europay</title>
-<meta name="description" content="Your clients in China can pay you.">
+<meta name="description" content="China payment software for multi-level agent networks.">
 <meta name="robots" content="noindex">
 <style>
   :root{
@@ -39,10 +39,21 @@
                  calc(3rem + env(safe-area-inset-bottom,0px))}
 
   .name{font-size:.78rem;font-weight:800;letter-spacing:.16em;text-transform:uppercase;
-    color:var(--mut);margin:0 0 1.4rem}
+    color:var(--mut);margin:0 0 1.1rem}
+  /* The category, above the promise. Small, because it is the thing you read
+     second — but it has to be there, or the headline is a benefit attached
+     to nothing. */
+  .kicker{font-size:.95rem;font-weight:600;color:var(--acc);margin:0 0 .55rem;
+    max-width:34ch}
   h1{font-size:clamp(2.1rem,7.5vw,3.4rem);line-height:1.06;letter-spacing:-.025em;
     font-weight:700;margin:0 0 .5rem;text-wrap:balance}
-  .sub{font-size:clamp(1.05rem,3.6vw,1.3rem);color:var(--ink2);margin:0;max-width:22ch}
+  /* Three marks where a sentence was. They sit high on purpose: on a
+     payments page this is the thing a merchant looks for first, and it
+     answers "will my customers recognise this" without a word of copy. */
+  .marks{display:flex;flex-wrap:wrap;gap:.45rem;margin:.9rem 0 0}
+  .marks span{font-size:.95rem;font-weight:700;padding:.45rem .9rem;
+    border-radius:999px;background:var(--card);border:1px solid var(--line);
+    color:var(--ink2)}
 
   /* The shape, given the room it needs. It is the only thing on this page
      nobody else shows them, so it gets the screen rather than a corner. */
@@ -51,8 +62,14 @@
      so a stage painted outside that palette is dark text on dark ground the
      moment somebody sets a light paper. Anything the skin does not define
      must not sit behind anything it does. */
+  .pyrlab{font-size:.74rem;font-weight:800;letter-spacing:.15em;text-transform:uppercase;
+    color:var(--mut);margin:1.7rem 0 .5rem}
+  /* Under the shape, not over it. What a thing IS goes above it; how to read
+     it goes below, which is where somebody looks once the picture has failed
+     to explain itself. */
+  .pyrwhat{font-size:.95rem;color:var(--ink2);margin:.7rem 0 0;max-width:38ch}
   .stage{position:relative;background:var(--card);border:1px solid var(--line);
-    border-radius:1.1rem;margin:1.6rem 0 0;overflow:hidden;touch-action:none;
+    border-radius:1.1rem;margin:0;overflow:hidden;touch-action:none;
     aspect-ratio:10/7}
   .stage canvas{display:block;width:100%;height:100%}
   .stage .amt{position:absolute;left:1rem;top:.9rem;pointer-events:none}
@@ -73,10 +90,10 @@
      has to work for somebody who reads the headline, presses the button and
      never scrolls — so nothing above this line depends on it. */
   .shots{display:grid;gap:1.1rem;margin:2.8rem 0 0;
-    grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+    grid-template-columns:repeat(auto-fit,minmax(185px,1fr))}
   .phone{background:#000;border-radius:1.6rem;padding:.42rem}
   .scr{background:var(--card);border-radius:1.3rem;overflow:hidden;
-    height:22rem;display:flex;flex-direction:column;padding:.85rem}
+    height:23.5rem;display:flex;flex-direction:column;padding:.85rem}
   .eyebrow{font-size:.66rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
     color:var(--mut);margin:.2rem 0 .3rem}
   .big{font-size:1.9rem;line-height:1;letter-spacing:-.035em;margin:0;
@@ -105,14 +122,20 @@
 <div class="wrap">
 
   <p class="name" id="brand">EUROPAY</p>
+  <p class="kicker" id="kicker"></p>
   <h1 id="head"></h1>
-  <p class="sub" id="sub"></p>
+  <div class="marks">
+    <span id="mAli"></span><span id="mWx"></span><span id="mCard"></span>
+  </div>
 
+  <p class="pyrlab" id="pyrLab"></p>
   <div class="stage" id="stage">
     <canvas id="cv"></canvas>
     <div class="amt"><b id="amt">$134,860</b><span id="amtSub"></span></div>
     <div class="turn" id="turn"></div>
   </div>
+
+  <p class="pyrwhat" id="pyrWhat"></p>
 
   <a class="go" href="/dealio" id="go"></a>
   <p class="under" id="under"></p>
@@ -155,15 +178,32 @@ function shots() {
      + '<span class="vv" style="color:var(--ok)">+$92</span></div>',
      T("ep.cWallet"));
 
-  make('<p class="eyebrow">' + T("ep.sPeople") + ' · 3</p>'
-     + '<p class="big">$33,100</p>'
+  const who = [["Algotech","12","$18,400"],["Lin · Shanghai","4","$6,200"],
+    ["Zhao · Shenzhen","3","$4,900"],["Chen · Guangzhou","2","$3,800"],
+    ["Ho · Hong Kong","3","$3,300"],["Wu · Chengdu","2","$3,100"]];
+  make('<p class="eyebrow">' + T("ep.sPeople") + ' · 37</p>'
+     + '<p class="big">$134,860</p>'
      + '<p class="cap">' + T("ep.sBetween") + '</p>'
-     + '<div style="margin-top:.7rem">'
-     + '<div class="r"><span class="nm">Algotech<small>12</small></span><span class="vv">$18,400</span></div>'
-     + '<div class="r"><span class="nm">Meili Store<small>7</small></span><span class="vv">$9,100</span></div>'
-     + '<div class="r"><span class="nm">Kwong Trading<small>5</small></span><span class="vv">$5,600</span></div>'
+     + '<div style="margin-top:.6rem">'
+     + who.map(([n,k,v]) => '<div class="r"><span class="nm">' + n
+         + '<small>' + k + '</small></span><span class="vv">' + v + '</span>'
+         + '<span style="color:var(--mut)">\u203a</span></div>').join("")
      + '</div>',
      T("ep.cPeople"));
+
+  /* A ROW OPENED, which is the level below the list. The whole product is a
+     list you tap into, and a page that shows the list without ever showing
+     what a row opens into has described half of it. */
+  make('<p class="eyebrow">Algotech</p>'
+     + '<p class="big">$61,290</p>'
+     + '<p class="cap">' + T("ep.sWithBelow") + '</p>'
+     + '<div style="margin-top:.8rem">'
+     + '<div class="r"><span class="nm">' + T("ep.sTheirOwn") + '</span><span class="vv">$18,400</span></div>'
+     + '<div class="r"><span class="nm">' + T("ep.sTheirPeople") + '</span><span class="vv">12</span></div>'
+     + '<div class="r"><span class="nm">' + T("ep.sEarnedYou") + ' · 0.5%</span><span class="vv">$306</span></div>'
+     + '<div class="r"><span class="nm">' + T("ep.sJoined") + '</span><span class="vv">14 Aug</span></div>'
+     + '</div>',
+     T("ep.cPerson"));
 
   make('<p class="eyebrow">' + T("ep.sPaid") + '</p>'
      + '<p class="big" style="font-size:1.15rem;line-height:1.25">' + T("ep.sWhere") + '</p>'
@@ -175,10 +215,15 @@ function shots() {
 }
 
 function paint() {
+  $("kicker").textContent = T("ep.kicker");
   $("head").textContent = T("ep.head");
-  $("sub").textContent = T("ep.sub");
+  $("mAli").textContent = T("ep.mAli");
+  $("mWx").textContent = T("ep.mWx");
+  $("mCard").textContent = T("ep.mCard");
   $("amtSub").textContent = T("ep.beneath");
   $("turn").textContent = T("ep.turn");
+  $("pyrLab").textContent = T("ep.pyrLab");
+  $("pyrWhat").textContent = T("ep.pyrWhat");
   $("go").textContent = T("ep.go");
   $("under").textContent = T("ep.under");
   $("foot").textContent = T("ep.foot");
@@ -186,7 +231,13 @@ function paint() {
   document.documentElement.lang = lang() === "zh" ? "zh" : "en";
   shots();
 }
-$("lang").addEventListener("click", () => { setLang(lang() === "zh" ? "en" : "zh"); paint(); });
+/* say() repaints the two lines over the stage, and it lives below with the
+   pyramid — so the language button calls it explicitly rather than paint()
+   reaching forward for something that does not exist yet. */
+$("lang").addEventListener("click", () => {
+  setLang(lang() === "zh" ? "en" : "zh");
+  paint(); say();
+});
 paint();
 
 /* ---- the pyramid ---------------------------------------------------------
@@ -200,20 +251,41 @@ paint();
  * The numbers are a stand-in. This is the front of a demo; there is no
  * signed-in person to have a real tree.
  */
-const ROWS = [{ id: "r", own: 0 }];
+const ROWS = [{ id: "r", name: "", own: 0 }];
 (function seed() {
   let id = 0, rnd = 7;
   const next = () => (rnd = (rnd * 1103515245 + 12345) % 2147483648) / 2147483648;
-  [18400, 9100, 5600].forEach((v) => ROWS.push({ id: "a" + (++id), own: v, parent: "r" }));
+  const TOP = ["Algotech", "Meili Store", "Kwong Trading"];
+  const MID = ["Lin \u00b7 Shanghai", "Zhao \u00b7 Shenzhen", "Wu \u00b7 Chengdu",
+    "Tan \u00b7 Hangzhou", "Chen \u00b7 Guangzhou", "Xu \u00b7 Xiamen", "Ho \u00b7 Hong Kong"];
+  const LOW = ["Feng","Guo","Han","Jiang","Kang","Liang","Mo","Ni","Ouyang","Peng",
+    "Qin","Ruan","Shen","Tang","Wei","Yao","Zhu","Cao","Deng","Fu","Gao","Hou",
+    "Jin","Lu","Meng","Nie","Pan","Qiu","Ren","Song","Wan","Xue","Yan","Zeng",
+    "Bai","Cui","Du","Fan","Geng","Hu"];
+  [18400, 9100, 5600].forEach((v, i) =>
+    ROWS.push({ id: "a" + (++id), name: TOP[i], own: v, parent: "r" }));
   const p1 = ROWS.filter((x) => x.parent === "r");
   [6200, 4900, 3100, 2600, 3800, 2400, 3300].forEach((v, i) =>
-    ROWS.push({ id: "b" + (++id), own: v, parent: p1[i % 3].id }));
+    ROWS.push({ id: "b" + (++id), name: MID[i], own: v, parent: p1[i % 3].id }));
+  let low = 0;
   for (const p of ROWS.filter((x) => String(x.id)[0] === "b")) {
     const n = 2 + Math.floor(next() * 3);
     for (let k = 0; k < n; k++)
-      ROWS.push({ id: "c" + (++id), own: 250 + Math.round(next() * 1400), parent: p.id });
+      ROWS.push({ id: "c" + (++id), name: LOW[low++ % LOW.length],
+        own: 250 + Math.round(next() * 1400), parent: p.id });
   }
 })();
+const rollOf = (id, seen) => {
+  seen = seen || new Set();
+  if (seen.has(id)) return 0;
+  seen.add(id);
+  const me = ROWS.find((r) => r.id === id);
+  let sum = me ? me.own : 0;
+  for (const k of ROWS.filter((r) => r.parent === id)) sum += rollOf(k.id, seen);
+  return sum;
+};
+const TOTAL = rollOf("r");
+const money = (n) => "$" + n.toLocaleString("en-US");
 const depthOf = (id) => { let d = 0, c = ROWS.find((r) => r.id === id);
   while (c && c.parent) { d++; c = ROWS.find((r) => r.id === c.parent); } return d; };
 
@@ -221,6 +293,7 @@ const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n
 const cv = $("cv"), ctx = cv.getContext("2d");
 const CELL = 0.92, GAP = 0.11, LIFT = 1.05, CAMZ = 11, FOCAL = 8.4;
 let boxes = [], W = 0, H = 0, DPR = 1, rotY = 0.62, rotX = 0.36, SPAN = 8;
+let PICKED = null;   // declared here because draw() reads it on first paint
 
 function build() {
   boxes = [];
@@ -239,6 +312,10 @@ function build() {
       const inRow = Math.min(perRow, at.length - rowI * perRow);
       const side = Math.max(CELL - GAP, 0.03);
       boxes.push({
+        id: r.id,
+        name: r.name,
+        own: r.own,
+        roll: rollOf(r.id),
         x: ((i - rowI * perRow) - (inRow - 1) / 2) * CELL,
         z: (rowI - (nRows - 1) / 2) * CELL,
         y: 1.45 - d * LIFT,
@@ -290,7 +367,11 @@ function draw() {
     for (const f of FACES) {
       const p = [c[f[0]],c[f[1]],c[f[2]],c[f[3]]];
       const n = rotN([f[4],f[5],f[6]]);
-      const lit = 0.58 + 0.42*Math.max(0, n[0]*LIT[0]+n[1]*LIT[1]+n[2]*LIT[2]);
+      /* The chosen square is lifted rather than outlined: a stroke on one box
+         in a stack of forty reads as an artefact, a brighter face reads as
+         the one being talked about. */
+      const lit = (0.58 + 0.42*Math.max(0, n[0]*LIT[0]+n[1]*LIT[1]+n[2]*LIT[2]))
+        * (PICKED && b.id === PICKED ? 1.42 : (PICKED ? 0.72 : 1));
       q.push({ p, zz:(p[0].z+p[1].z+p[2].z+p[3].z)/4, fill: shade(b.col, lit) });
     }
   }
@@ -306,21 +387,61 @@ function size() {
   DPR = Math.min(devicePixelRatio || 1, 2); W = r.width; H = r.height;
   cv.width = Math.round(W*DPR); cv.height = Math.round(H*DPR);
 }
-size(); build(); draw();
+size(); build(); draw(); say();
 addEventListener("resize", () => { size(); draw(); });
 
-let spin = true, down = false, lx = 0, ly = 0;
+let spin = true, down = false, lx = 0, ly = 0, downAt = null;
 const st = $("stage");
+
+/* WHOSE SQUARE IS THAT. The whole point of the shape is that every block is
+   somebody, and a shape nobody can interrogate is a decoration. Tapping one
+   puts their name and their number where the total was; tapping it again
+   puts the total back. Guarded on drag distance, because a rotate that ends
+   over a square is not a tap on it. */
+function inPoly(px, py, p) {
+  let hit = false;
+  for (let i = 0, j = 3; i < 4; j = i++) {
+    if ((p[i].y > py) !== (p[j].y > py)
+      && px < (p[j].x - p[i].x) * (py - p[i].y) / (p[j].y - p[i].y) + p[i].x) hit = !hit;
+  }
+  return hit;
+}
+function pick(e) {
+  const r = cv.getBoundingClientRect();
+  const px = e.clientX - r.left, py = e.clientY - r.top;
+  const hits = boxes.map((b) => {
+    const c = corners(b).map(project);
+    const top = [7,6,2,3].map((k) => c[k]);
+    return { b, top, zz: (top[0].z+top[1].z+top[2].z+top[3].z)/4 };
+  }).filter((o) => inPoly(px, py, o.top)).sort((a, b) => b.zz - a.zz);
+  return hits.length ? hits[0].b : null;
+}
+function say() {
+  const b = PICKED ? boxes.find((x) => x.id === PICKED) : null;
+  $("amt").textContent = b ? money(b.own) : money(TOTAL);
+  $("amtSub").textContent = b ? b.name + " \u00b7 " + T("ep.theirOwnLine")
+                              : T("ep.beneath");
+  $("turn").textContent = b ? T("ep.tapBack") : T("ep.turn");
+}
 st.addEventListener("pointerdown", (e) => { down = true; spin = false;
-  lx = e.clientX; ly = e.clientY;
+  lx = e.clientX; ly = e.clientY; downAt = [e.clientX, e.clientY];
   if (st.setPointerCapture) st.setPointerCapture(e.pointerId); });
 st.addEventListener("pointermove", (e) => { if (!down) return;
   rotY += (e.clientX - lx) * 0.009;
   rotX = Math.max(-0.1, Math.min(1.0, rotX + (e.clientY - ly) * 0.006));
   lx = e.clientX; ly = e.clientY; draw(); });
-const up = () => { down = false; };
+const up = (e) => {
+  down = false;
+  if (!downAt) return;
+  const moved = Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]);
+  downAt = null;
+  if (moved > 6) return;
+  const b = pick(e);
+  PICKED = (b && b.id !== PICKED) ? b.id : null;
+  say(); draw();
+};
 st.addEventListener("pointerup", up);
-st.addEventListener("pointercancel", up);
+st.addEventListener("pointercancel", () => { down = false; downAt = null; });
 if (matchMedia("(prefers-reduced-motion: reduce)").matches) spin = false;
 (function loop(){ requestAnimationFrame(loop);
   if (spin && !down) { rotY += 0.0024; draw(); } })();

@@ -6906,11 +6906,33 @@ export const STRINGS = {
      and has not agreed to anything: what it does for them, in one line, and
      a button. The Chinese is written rather than translated — a reader here
      is a merchant, not a payer, so it is plainer than the pay screens. */
+  /* WHAT THIS IS, IN ONE LINE, ABOVE THE HEADLINE. A cold visitor needs the
+     category before the promise — "Your clients in China can pay you" is the
+     benefit and says nothing about what the thing IS. Tom's own words, kept
+     because they are plainer than anything written for them. */
+  "ep.kicker":         ["China payment software for multi-level agent networks",
+                        "\u9762\u5411\u591a\u5c42\u7ea7\u4ee3\u7406\u7f51\u7edc\u7684\u4e2d\u56fd\u6536\u6b3e\u7cfb\u7edf"],
   "ep.head":           ["Your clients in China can pay you.",
                         "中国客户直接给你付款。"],
-  "ep.sub":            ["In the wallet they already use, on a page with your name on it.",
-                        "用他们平时用的钱包，在写着你名字的页面上。"],
+  /* THE MARKS, WHICH ARE THE PROOF. A Chinese merchant scans a payments page
+     for two words before reading anything, and a paragraph saying "in the
+     wallet they already use" is the slow way to say what two logos say at a
+     glance. English keeps both scripts — a reader who cannot read the
+     characters still needs to see them, because seeing them IS the message. */
+  "ep.mAli":           ["支付宝 Alipay", "支付宝"],
+  "ep.mWx":            ["微信支付 WeChat Pay", "微信支付"],
+  "ep.mCard":          ["Card", "银行卡"],
+  /* WHAT THE BLOCKS ARE, because a stranger meets a rotating 3D shape with
+     no idea what it is showing them. "Multi-level hierarchical affiliate
+     revenue tracking" is the thing itself and is five nouns deep; a person
+     who has to parse a label has already stopped looking at the picture.
+     Two short lines instead: what it is, then how to read it. */
+  "ep.pyrLab":         ["Your network", "\u4f60\u7684\u56e2\u961f"],
+  "ep.pyrWhat":        ["Each block is one person under you. The taller it is, the more they brought in.",
+                        "\u6bcf\u4e2a\u65b9\u5757\u662f\u4f60\u4e0b\u9762\u7684\u4e00\u4e2a\u4eba\uff0c\u8d8a\u9ad8\u8d5a\u5f97\u8d8a\u591a\u3002"],
   "ep.beneath":        ["Through everyone beneath you", "你下面所有人的总额"],
+  "ep.tapBack":        ["Tap the same square for the total", "\u518d\u70b9\u4e00\u6b21\u770b\u603b\u989d"],
+  "ep.theirOwnLine":   ["Their own, this month", "\u4ed6\u672c\u6708\u81ea\u5df1\u7684"],
   "ep.turn":           ["Drag to turn", "拖动可旋转"],
   "ep.go":             ["Get started", "开始使用"],
   "ep.under":          ["Nothing to install. Connect the Stripe account you already have.",
@@ -6937,6 +6959,14 @@ export const STRINGS = {
   "ep.sBankSub":       ["A day or two", "一两天到账"],
   "ep.sStripe":        ["My Stripe account", "我的 Stripe 账户"],
   "ep.sStripeSub":     ["The one you already have", "用你现有的账户"],
+  /* The fourth screen: a row opened. Labels for a person's own card. */
+  "ep.sTheirOwn":      ["Their own", "\u4ed6\u81ea\u5df1\u7684"],
+  "ep.sTheirPeople":   ["Their people", "\u4ed6\u4e0b\u9762\u7684\u4eba"],
+  "ep.sEarnedYou":     ["Earned you", "\u7ed9\u4f60\u8d5a\u7684"],
+  "ep.sJoined":        ["Joined", "\u52a0\u5165\u65f6\u95f4"],
+  "ep.sWithBelow":     ["With everyone beneath them", "\u542b\u4ed6\u4e0b\u9762\u6240\u6709\u4eba"],
+  "ep.cPerson":        ["Any of them, opened. Their tree, and what it brings you.",
+                        "\u70b9\u5f00\u5176\u4e2d\u4e00\u4e2a\uff1a\u4ed6\u7684\u56e2\u961f\uff0c\u548c\u4ed6\u7ed9\u4f60\u5e26\u6765\u7684\u3002"],
   "ep.cWallet":        ["What you have, and what moved.", "余额和流水。"],
   "ep.cPeople":        ["Everyone under you, and what they took.",
                         "你下面的人，和他们的流水。"],
