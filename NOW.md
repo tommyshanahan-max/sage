@@ -1317,6 +1317,46 @@ Daniel's own domain with **Tom as a first-level merchant under Daniel** —
 which inverts who applies to Stripe, and may be the easier door given the
 20 Sep decline.
 
+### WHY NINE ALIPAY PAYMENTS FAILED — answered 26 Sep, 12:23am
+
+`make blocked ID="pi_3UJabdJItwOUeslJ0FiqLf8l"` asked Stripe rather than
+guessing:
+
+```
+outcome          blocked
+reason           unknown_risk_level
+risk level       normal        risk score  —
+network status   not_sent_to_network
+error            invalid_request_error
+                 payment_intent_payment_attempt_failed
+```
+
+**`not_sent_to_network` is the whole answer.** It never reached Alipay. Stripe
+refused the request before contacting them, so it is not the payer, not a
+Radar rule (none attached), and not the risk score — Radar never scored it,
+which is what `unknown_risk_level` with no score means.
+
+**`invalid_request_error` + `payment_intent_payment_attempt_failed` is a
+signature already written in this file**, as what happens when a method is
+switched on in the dashboard with no live capability behind it. It is the same
+error, on the same account, and it was predicted here before it was seen.
+
+So the two wallets fail for two different reasons, which is exactly why
+conflating them cost so much time:
+
+| | |
+|---|---|
+| **WeChat Pay** | **Ineligible** — Stripe will not turn it on. A settled no. |
+| **Alipay** | displayed, **not activated**. A form nobody finished. |
+
+**THE ACTION, IDENTIFIED 24 SEP AND STILL NOT DONE:** Stripe dashboard →
+Settings → Payment methods → Alipay → run the activation flow. Nine payments
+across two days failed on this, four of them tonight.
+
+**What this closes:** the mock-code chase, the VPN theory, the currency
+theory, the card-testing theory, and the Radar theory. None of them. The
+method was never switched on.
+
 ### ALIPAY IS AVAILABLE. WECHAT PAY IS INELIGIBLE. THEY ARE NOT THE SAME — 26 Sep
 
 Written at the top of its own entry because it was got wrong twice in one
