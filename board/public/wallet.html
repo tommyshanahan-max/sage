@@ -388,7 +388,19 @@ const route = () => { const raw = location.hash.replace(/^#/, ""); const [path, 
 const go = (path) => { location.hash = path; };
 const replace = (path) => { history.replaceState(null, "", "#" + path); paint(); };
 window.addEventListener("hashchange", () => paint());
-$("back").addEventListener("click", () => history.back());
+/* A SCREEN MAY OWN ITS BACK ARROW, and one of them has to.
+ *
+ * history.back() is right almost everywhere: every screen here was pushed
+ * onto the stack by the one before it. The payout form is the exception —
+ * it is reached with replace(), which overwrites the entry the two choices
+ * were drawn on, so there is no entry to go back to. The arrow either did
+ * nothing or left the wallet altogether, and somebody who tapped "My bank
+ * account" had no way back to pick Stripe instead short of reloading.
+ *
+ * Cleared on every paint, so a screen that does not set one gets the
+ * ordinary behaviour and cannot inherit the last screen's. */
+let BACK_TO = null;
+$("back").addEventListener("click", () => (BACK_TO ? BACK_TO() : history.back()));
 
 /* Coming back from the provider's own page lands on #…&back=ref; drop that
    and pick up where the person left off. */
@@ -439,6 +451,7 @@ async function paint() {
   }
   $("title").textContent = out.title;
   document.title = `${out.title} · ${T("wl.suffix")}`;
+  BACK_TO = typeof out.back === "function" ? out.back : null;
   $("back").classList.toggle("hide", name === "home" || out.noBack);
   const act = $("act");
   if (out.action) { act.classList.remove("hide"); act.setAttribute("aria-label", out.action.label); $("acticon").innerHTML = ICON[out.action.icon]; act.onclick = out.action.run; }
@@ -956,7 +969,12 @@ SCREENS.payout = async (_, q) => {
       if (setup) go("ready"); else history.back();
     } catch (err) { save.disabled = false; showError(err); }
   });
-  return { title: T("wl.gettingPaid"), body: frag(
+  return { title: T("wl.gettingPaid"),
+    /* Back to the two choices, not out of the wallet — see BACK_TO. Only
+       when they came through them: somebody who already had an account and
+       opened this screen directly should still leave the way they arrived. */
+    back: PAYOUT_HOW === "bank" ? () => { PAYOUT_HOW = "ask"; replace("payout"); } : null,
+    body: frag(
     h("p", { class: "lead", text: T("wl.weSendTo") }),
     list, change, whereRow, form,
     /* WHAT THEIR INVOICE HAS TO SAY, said here rather than after the first
