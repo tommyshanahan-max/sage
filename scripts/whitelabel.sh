@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
 # A PARTNER, TAKING MONEY INTO HIS OWN STRIPE, ON HIS OWN NAME, ON THIS BOX.
 #
-#   make partner                                  where this stands, asked of Stripe
-#   make partner ID="ca_…"                        switch the connect button on
-#   make partner DOMAIN="pay.his-name.lu"         give him his own hostname
-#   make partner NAME="Daniel Brokerage" INK="#16233D"    put his face on it
-#   make partner WHO="Daniel"                     the message to send him
+#   make whitelabel                                  where this stands, asked of Stripe
+#   make whitelabel ID="ca_…"                        switch the connect button on
+#   make whitelabel AT="/europay"                 a path on a name we own
+#   make whitelabel DOMAIN="pay.his-name.lu"         give him his own hostname
+#   make whitelabel NAME="Daniel Brokerage" INK="#16233D"    put his face on it
+#   make whitelabel WHO="Daniel"                     the message to send him
 #
 # All of them compose, so the whole thing is one line:
 #
-#   make partner ID="ca_…" DOMAIN="pay.his-name.lu" \
+#   make whitelabel ID="ca_…" DOMAIN="pay.his-name.lu" \
 #     NAME="Daniel Brokerage" INK="#16233D" PAPER="#F7F7F5" WHO="Daniel"
 #
 # WHAT IT IS FOR. Daniel is a broker in Luxembourg. He wants the money screen
@@ -20,8 +21,8 @@
 #   the Stripe half   lib/stripe.js's linkUrl/linkFinish — OAuth, so he
 #                     connects the account he HAS rather than being given a
 #                     new empty one. Needs BOARD_STRIPE_CLIENT_ID.
-#   the name half     docker/sites/board-partner.caddy — his hostname, this
-#                     container. Needs TOMSCODING_BOARD_PARTNER_DOMAIN and a
+#   the name half     docker/sites/whitelabel.caddy — his hostname, this
+#                     container. Needs TOMSCODING_WHITELABEL_DOMAIN and a
 #                     DNS record he sets himself.
 #   the face half     the money screen in his colour, with his name on it and
 #                     nothing of ours — the mockup that got agreed. It is one
@@ -43,6 +44,7 @@
 set -euo pipefail
 
 ID=""
+AT=""
 DOMAIN=""
 NAME=""
 INK=""
@@ -51,6 +53,7 @@ WHO=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --id)     ID="${2:-}";     shift 2 ;;
+    --at)     AT="${2:-}";     shift 2 ;;
     --domain) DOMAIN="${2:-}"; shift 2 ;;
     --name)   NAME="${2:-}";   shift 2 ;;
     --ink)    INK="${2:-}";    shift 2 ;;
@@ -72,7 +75,7 @@ get() { grep -E "^${1}=" .env | tail -1 | cut -d= -f2- | tr -d '"' || true; }
 # A VALUE WITH A NEWLINE IN IT is what a copy out of a dashboard looks like
 # when the selection took the line break too. Caught here, where it can be
 # said plainly, rather than as a greyed button with no explanation.
-case "$ID$DOMAIN$NAME$INK$PAPER$WHO" in
+case "$ID$AT$DOMAIN$NAME$INK$PAPER$WHO" in
   *$'\n'*|*$'\r'*) echo "  That has a line break in it. Copy it again without the newline."; exit 1 ;;
 esac
 
@@ -94,6 +97,32 @@ case "$ID" in
     echo ""
     echo "  A Connect client id starts with ca_. That one does not."
     echo "  An sk_ or pk_ is a different thing and must not go in here."
+    echo ""
+    exit 1 ;;
+esac
+
+# A PATH BECOMES A ROUTE, so it is one slash and then plain characters.
+# server.js ignores anything else outright, which would leave somebody with
+# a command that reported success and an address that 404s.
+#
+# NOT CALLED "PATH". `make whitelabel PATH=/europay` would hand every recipe
+# in the Makefile a $PATH of "/europay", and the next line of the deploy
+# would not find sh. AT reads better anyway.
+case "$AT" in
+  "") ;;
+  /[a-z0-9]*)
+    case "$AT" in
+      *[!a-z0-9/-]*|*/*/*)
+        echo ""
+        echo "  \"$AT\" is not a path this can serve."
+        echo "  One slash, then lower-case letters, digits and dashes:"
+        echo "    AT=\"/europay\""
+        echo ""
+        exit 1 ;;
+    esac ;;
+  *)
+    echo ""
+    echo "  A path starts with a slash — AT=\"/europay\", not \"$AT\"."
     echo ""
     exit 1 ;;
 esac
@@ -166,12 +195,13 @@ if [ -n "$ID" ]; then
   put TOMSCODING_BOARD_STRIPE_CLIENT_ID "$ID"
 fi
 
-[ -n "$DOMAIN" ] && put TOMSCODING_BOARD_PARTNER_DOMAIN "$DOMAIN"
-[ -n "$NAME" ]   && put TOMSCODING_BOARD_PARTNER_NAME "$NAME"
-[ -n "$INK" ]    && put TOMSCODING_BOARD_PARTNER_INK "$INK"
-[ -n "$PAPER" ]  && put TOMSCODING_BOARD_PARTNER_PAPER "$PAPER"
+[ -n "$AT" ]     && put TOMSCODING_WHITELABEL_PATH "$AT"
+[ -n "$DOMAIN" ] && put TOMSCODING_WHITELABEL_DOMAIN "$DOMAIN"
+[ -n "$NAME" ]   && put TOMSCODING_WHITELABEL_NAME "$NAME"
+[ -n "$INK" ]    && put TOMSCODING_WHITELABEL_INK "$INK"
+[ -n "$PAPER" ]  && put TOMSCODING_WHITELABEL_PAPER "$PAPER"
 
-if [ -n "$ID" ] || [ -n "$DOMAIN" ] || [ -n "$NAME" ] || [ -n "$INK" ] || [ -n "$PAPER" ]; then
+if [ -n "$ID$AT$DOMAIN$NAME$INK$PAPER" ]; then
   echo "  Writing, and bringing the box up so it reads them…"
   make up >/dev/null
 fi
@@ -181,53 +211,72 @@ fi
 # be switched off in the dashboard on a Tuesday by somebody who is not here,
 # and a command that only looks when it already suspects trouble is a command
 # that reports "fine" from memory.
-if [ -z "$ID$DOMAIN$NAME$INK$PAPER" ]; then
+if [ -z "$ID$AT$DOMAIN$NAME$INK$PAPER" ]; then
   docker compose run --rm --no-deps -T -v "$PWD/scripts:/seed:ro" \
     --entrypoint node board /seed/connect-check.mjs || true
 fi
 
-# NOTHING TO SAY YET is its own answer, and a better one than a message
-# nobody can act on. The check above has already printed what is missing and
-# where to get it, so this just stops.
-[ -n "$(get TOMSCODING_BOARD_STRIPE_CLIENT_ID)" ] || exit 0
 
-# WHICH NAME TO SEND HIM TO. His own if he has one, the payments name if not,
-# and the board's name as the last resort — every one of them is this same
-# container, and the board builds what it prints from the Host header, so the
-# link he opens is the name he stays on.
-HOST="$(get TOMSCODING_BOARD_PARTNER_DOMAIN)"
-[ -n "$HOST" ] || HOST="$(get TOMSCODING_DEALIO_DOMAIN)"
-[ -n "$HOST" ] || HOST="$(get TOMSCODING_BOARD_DOMAIN)"
-if [ -z "$HOST" ]; then
-  echo ""
-  echo "  This box has no public hostname set, so there is no link to send."
-  echo ""
-  exit 1
+# WHERE THE SCREEN IS, WHICH IS THE THING THAT EXISTS NOW.
+#
+# Stripe used to decide whether anything got printed here at all, and that
+# was the wrong way round: the screen is real the moment there is an address
+# for it, with or without a payment rail behind it. That is the thing to send
+# somebody and look at together.
+#
+# The path wins over the hostname when both are set, because the path works
+# today and the hostname works once somebody else has made a DNS record.
+DEAL="$(get TOMSCODING_DEALIO_DOMAIN)"
+[ -n "$DEAL" ] || DEAL="$(get TOMSCODING_BOARD_DOMAIN)"
+AT_NOW="$(get TOMSCODING_WHITELABEL_PATH)"
+DOM_NOW="$(get TOMSCODING_WHITELABEL_DOMAIN)"
+
+SCREEN=""
+if [ -n "$AT_NOW" ] && [ -n "$DEAL" ]; then
+  SCREEN="https://$DEAL$AT_NOW"
+elif [ -n "$DOM_NOW" ]; then
+  SCREEN="https://$DOM_NOW/"
 fi
 
-NAME="${WHO:-there}"
 echo ""
+if [ -n "$SCREEN" ]; then
+  echo "  The screen:  $SCREEN"
+  LABEL_NOW="$(get TOMSCODING_WHITELABEL_NAME)"
+  [ -n "$LABEL_NOW" ] && echo "  It says:     $LABEL_NOW"
+  [ -n "$(get TOMSCODING_WHITELABEL_INK)" ] \
+    || echo "  No colour set yet — it is wearing ours. INK=\"#16233D\""
+else
+  echo "  No address for it yet:  make whitelabel AT=\"/europay\""
+fi
+echo ""
+
+# AND HIS OWN NAME, IF HE IS EVER GIVEN ONE. Second, because it is the half
+# that waits on somebody else.
+if [ -n "$DOM_NOW" ]; then
+  echo "  $DOM_NOW answers once he points it here:"
+  echo ""
+  echo "      $DOM_NOW    A    45.77.8.166"
+  echo ""
+  echo "  That record is his one job. The certificate is automatic."
+  echo ""
+fi
+
+# THE STRIPE HALF, ONLY WHEN THERE IS ONE. Without a client id there is no
+# link worth sending — the button behind it is greyed — and the check at the
+# top of this run has already said where to get one.
+[ -n "$(get TOMSCODING_BOARD_STRIPE_CLIENT_ID)" ] || exit 0
+[ -n "$DEAL" ] || exit 0
+
+NAME_FOR="${WHO:-there}"
 echo "────────────────────────────────────────────────────────────"
 echo ""
-echo "$NAME — this is the page I mentioned. It connects the Stripe"
+echo "$NAME_FOR — this is the page I mentioned. It connects the Stripe"
 echo "account you already have. Nothing new to open, and don't send"
 echo "me any keys — you authorise it yourself and I never see them."
 echo ""
-echo "https://$HOST/china/connect"
+echo "https://${DOM_NOW:-$DEAL}/china/connect"
 echo ""
 echo "────────────────────────────────────────────────────────────"
 echo ""
 echo "Everything between the rules is the message."
 echo ""
-if [ -n "$(get TOMSCODING_BOARD_PARTNER_DOMAIN)" ]; then
-  echo "His name is live here once he points it at this box:"
-  echo ""
-  echo "    $HOST    A    45.77.8.166"
-  echo ""
-  echo "That DNS record is his one job. The certificate is automatic."
-else
-  echo "He is on our name. To give him his own:"
-  echo ""
-  echo "    make partner DOMAIN=\"pay.his-name.lu\""
-  echo ""
-fi

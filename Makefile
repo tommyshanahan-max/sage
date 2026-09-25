@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: try try-china china wallets mo-code visits app-state claire-episodes deal claire-key claire-count claire-seed claire-video listing invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who bells twice admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check post post-status post-run post-login post-code post-logins weidian-pull weidian-json weidian-reviews shop-chapter review-tidy product-names review-move
+.PHONY: try try-china china wallets mo-code visits app-state claire-episodes deal claire-key claire-count claire-seed claire-video listing invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who bells twice admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions whitelabel partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check post post-status post-run post-login post-code post-logins weidian-pull weidian-json weidian-reviews shop-chapter review-tidy product-names review-move
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -1373,10 +1373,18 @@ pay-check: ## Can this board take a payment, and if not why: make pay-check
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/pay-check.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)"
 
-partner: ## A partner on his own name, in his own colour: make partner [ID="ca_..."] [DOMAIN="pay.his.lu"] [NAME="..."] [INK="#16233D"] [WHO="Daniel"]
-	@# THE ARRANGEMENT: my server, my code, his domain, his Stripe. Both
-	@# halves were already built and neither was reachable without editing
-	@# .env over SSH, which is the step that never gets done.
+whitelabel: ## The money screen in somebody else's name and colour: make whitelabel AT="/europay" NAME="Europay" INK="#16233D"
+	@# THE ARRANGEMENT: my server, my code, his name on it, his Stripe.
+	@#
+	@# TWO DOORS TO THE SAME SCREEN, and the cheap one first. AT is a path
+	@# on a name we already own — paydealio.com/europay — which resolves
+	@# and has a certificate already, so the screen exists the moment the
+	@# box is up and can be put in a message this afternoon. DOMAIN is a
+	@# hostname of his own, which is better in the end and waits on a DNS
+	@# record somebody else has to make. Set either, or both.
+	@#
+	@# NOT "PATH". make would hand every recipe below a $$PATH of
+	@# "/europay" and the next line of a deploy would not find sh.
 	@#
 	@# HE SENDS NO KEY, AND THAT IS STRUCTURAL RATHER THAN POLITE. One
 	@# BOARD_STRIPE_KEY serves this whole container — the board, both its
@@ -1400,8 +1408,9 @@ partner: ## A partner on his own name, in his own colour: make partner [ID="ca_.
 	@# the environment as its own variables, and a box with ID already in
 	@# its environment would otherwise have that written into .env by a
 	@# command that named no id at all.
-	@bash scripts/partner.sh \
+	@bash scripts/whitelabel.sh \
 	  $(if $(filter command line,$(origin ID)),--id "$(ID)",) \
+	  $(if $(filter command line,$(origin AT)),--at "$(AT)",) \
 	  $(if $(filter command line,$(origin DOMAIN)),--domain "$(DOMAIN)",) \
 	  $(if $(filter command line,$(origin NAME)),--name "$(NAME)",) \
 	  $(if $(filter command line,$(origin INK)),--ink "$(INK)",) \

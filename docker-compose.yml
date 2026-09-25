@@ -704,14 +704,14 @@ services:
       TOMSCODING_DEALIO_DOMAIN: ${TOMSCODING_DEALIO_DOMAIN:-dealio.localhost}
       TOMSCODING_DEALIO_WWW: ${TOMSCODING_DEALIO_WWW:-www.dealio.localhost}
       # A PARTNER'S OWN NAME, served by this same board — see
-      # docker/sites/board-partner.caddy and `make partner`. Daniel in
+      # docker/sites/whitelabel.caddy and `make whitelabel`. Daniel in
       # Luxembourg is the first: his hostname, his Stripe account through
       # Connect, this code on this box.
       #
       # NOT TOMSCODING_PARTNER_DOMAIN, which is the partner SEAT above and a
       # different product entirely. Two site blocks on one address is a
       # startup failure that takes every site here down with it.
-      TOMSCODING_BOARD_PARTNER_DOMAIN: ${TOMSCODING_BOARD_PARTNER_DOMAIN:-boardpartner.localhost}
+      TOMSCODING_WHITELABEL_DOMAIN: ${TOMSCODING_WHITELABEL_DOMAIN:-whitelabel.localhost}
       TOMSCODING_BOARD_OLD_DOMAIN: ${TOMSCODING_BOARD_OLD_DOMAIN:-oldboard.localhost}
       TOMSCODING_BOARD_OLD_WWW: ${TOMSCODING_BOARD_OLD_WWW:-oldboardwww.localhost}
       TOMSCODING_BOARD_WWW: ${TOMSCODING_BOARD_WWW:-www.board.localhost}
@@ -916,7 +916,7 @@ services:
       # second board.
       #
       # THE DOMAIN IS NAMED TWICE ON PURPOSE. Caddy needs it to answer the
-      # name at all (TOMSCODING_BOARD_PARTNER_DOMAIN in the caddy service);
+      # name at all (TOMSCODING_WHITELABEL_DOMAIN in the caddy service);
       # the board needs it to know which requests wear his face. Two
       # containers, two environments, one value in .env feeding both.
       #
@@ -925,10 +925,18 @@ services:
       # Anything that is not a hex code is ignored and the board's own
       # palette stands — see hexColour in server.js for why that check is not
       # optional on a value that ends up inside a <style> block.
-      BOARD_PARTNER_DOMAIN: ${TOMSCODING_BOARD_PARTNER_DOMAIN:-}
-      BOARD_PARTNER_NAME: ${TOMSCODING_BOARD_PARTNER_NAME:-}
-      BOARD_PARTNER_INK: ${TOMSCODING_BOARD_PARTNER_INK:-}
-      BOARD_PARTNER_PAPER: ${TOMSCODING_BOARD_PARTNER_PAPER:-}
+      BOARD_WHITELABEL_DOMAIN: ${TOMSCODING_WHITELABEL_DOMAIN:-}
+      # OR A PATH ON A NAME WE ALREADY OWN — paydealio.com/europay. The
+      # cheap half, and the one to ship first: this name resolves and has a
+      # certificate already, so the screen exists the moment the box is up
+      # and can be put in a message. A hostname of his own needs a DNS
+      # record from him and is therefore always tomorrow.
+      #
+      # Both work and neither is required. Set one, the other, or both.
+      BOARD_WHITELABEL_PATH: ${TOMSCODING_WHITELABEL_PATH:-}
+      BOARD_WHITELABEL_NAME: ${TOMSCODING_WHITELABEL_NAME:-}
+      BOARD_WHITELABEL_INK: ${TOMSCODING_WHITELABEL_INK:-}
+      BOARD_WHITELABEL_PAPER: ${TOMSCODING_WHITELABEL_PAPER:-}
       # Without this the admin routes refuse everything, which is the safe
       # failure: a board nobody can moderate is worse than one nobody can post
       # to.

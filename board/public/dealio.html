@@ -8,7 +8,7 @@
      own. Same reasoning as data-dealio above: settled before the first
      paint, because a fetch cannot answer before the first paint. Both are
      empty on every other host, which is every host today. -->
-<html lang="en" data-dealio="{{DEALIO}}" data-skin="{{SKIN}}" data-partner="{{PARTNER}}">
+<html lang="en" data-dealio="{{DEALIO}}" data-skin="{{SKIN}}" data-label="{{LABEL}}">
 <head>
 <meta charset="utf-8">
 {{DEMO}}
@@ -100,10 +100,10 @@
      Dealio's: his clients are not members of a private board and must not be
      shown a row of tabs into one. */
   html[data-dealio="1"] .boardbar,
-  html[data-skin="partner"] .boardbar{display:none}
+  html[data-skin="whitelabel"] .boardbar{display:none}
   /* And the page pays for it, or the last row sits under it — the same
      mistake the board's own deck made and had measured out of it today. */
-  html:not([data-dealio="1"]):not([data-skin="partner"]) body{padding-bottom:5.5rem}
+  html:not([data-dealio="1"]):not([data-skin="whitelabel"]) body{padding-bottom:5.5rem}
   *{box-sizing:border-box}
   html,body{margin:0;background:var(--bg);color:var(--ink)}
   body{font-family:var(--sans);font-size:16px;line-height:1.5;
@@ -834,7 +834,7 @@ function top() {
   const b = el("div", "top");
   /* WHOSE SCREEN THIS IS, and on a partner's name it is his. The word was a
      constant here, which is the one thing a white label cannot have. */
-  const mark = document.documentElement.dataset.partner || "Dealio";
+  const mark = document.documentElement.dataset.label || "Dealio";
   b.append(el("span", "dot"), el("span", "wm", mark));
   /* The tab and the phone's own chrome, which are the two places a white
      label leaks. The title is in the file as "Dealio" so the page has a name
@@ -991,7 +991,7 @@ let FRONT = (() => {
      product's name on his domain: the one thing a white label cannot do.
      So he lands on the money. Somebody signed out still meets signedOut()
      through the STATE check in draw(). */
-  if (document.documentElement.dataset.partner) return false;
+  if (document.documentElement.dataset.label) return false;
   return true;
 })();
 
@@ -1008,7 +1008,7 @@ function paintBoardBar() {
      screen — painting words into a hidden bar is work nobody sees, and a bar
      of tabs into a private board is not his to show. */
   if (!bar || document.documentElement.getAttribute("data-dealio") === "1"
-      || document.documentElement.dataset.partner) return;
+      || document.documentElement.dataset.label) return;
   const say = (id, key) => { const e = document.getElementById(id); if (e) e.textContent = T(key); };
   say("bbnotes", "note.inbox");
   say("bbcards", "nav.cards");
@@ -1170,7 +1170,7 @@ function signedOut() {
      So his front page is his name and the way in. He is the only person who
      signs in here — a client never reaches the root, they open a payment
      link — so there is nothing else this screen has to do. */
-  const partner = document.documentElement.dataset.partner || "";
+  const partner = document.documentElement.dataset.label || "";
   if (partner) {
     box.append(el("h1", "hero", partner));
     const inYet = Boolean(STATE && STATE.you);

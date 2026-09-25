@@ -404,13 +404,39 @@ const isDealioHost = (req) =>
  * navy, white and the neutrals it already had. So the skin takes his deep
  * colour, optionally his paper, and derives the rest. A partner asked for
  * ten hex codes is a partner who does not reply. */
-const PARTNER_HOSTS = (() => {
-  const d = String(process.env.BOARD_PARTNER_DOMAIN || "").trim().toLowerCase();
+const WHITELABEL_HOSTS = (() => {
+  const d = String(process.env.BOARD_WHITELABEL_DOMAIN || "").trim().toLowerCase();
   return d ? new Set([d, "www." + d]) : new Set();
 })();
-const isPartnerHost = (req) =>
-  PARTNER_HOSTS.size > 0
-  && PARTNER_HOSTS.has(String(req.get("host") || "").toLowerCase().split(":")[0]);
+const isWhitelabelHost = (req) =>
+  WHITELABEL_HOSTS.size > 0
+  && WHITELABEL_HOSTS.has(String(req.get("host") || "").toLowerCase().split(":")[0]);
+
+/* OR A PATH ON A NAME WE ALREADY OWN, which is the cheap half and the one
+ * that shipped first.
+ *
+ * A hostname of his own is the better answer in the end and it costs a DNS
+ * record, a certificate and a wait on somebody else's afternoon.
+ * paydealio.com/europay costs nothing: the name resolves, the certificate
+ * exists, and it can be looked at today. So both work and neither is
+ * required — set the path, or the domain, or both.
+ *
+ * VALIDATED, BECAUSE IT BECOMES A ROUTE. One slash, then lower-case letters,
+ * digits and dashes, and nothing else — a path out of the environment with a
+ * colon or a star in it is an express pattern rather than a page. Anything
+ * that does not match is ignored entirely and there is no such page, which
+ * is the safe failure: a route nobody asked for is worse than a 404. */
+const WHITELABEL_PATH = (() => {
+  const t = String(process.env.BOARD_WHITELABEL_PATH || "").trim().toLowerCase();
+  return /^\/[a-z0-9][a-z0-9-]{0,30}$/.test(t) ? t : "";
+})();
+const isWhitelabelPath = (req) =>
+  WHITELABEL_PATH !== ""
+  && String(req.path || "").toLowerCase().replace(/\/+$/, "") === WHITELABEL_PATH;
+
+/* Either door. Everything below asks this rather than the two above, so a
+   screen does not have to know which way somebody arrived. */
+const isWhitelabel = (req) => isWhitelabelHost(req) || isWhitelabelPath(req);
 
 /* A COLOUR OUT OF THE ENVIRONMENT GOES INTO A <style> BLOCK, which makes it
    the one value on this page that could close the block and open a script.
@@ -423,25 +449,39 @@ const hexColour = (v) => {
   return /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(t) ? t : null;
 };
 
-const PARTNER_NAME = String(process.env.BOARD_PARTNER_NAME || "").trim().slice(0, 40);
-const PARTNER_INK = hexColour(process.env.BOARD_PARTNER_INK);
-const PARTNER_PAPER = hexColour(process.env.BOARD_PARTNER_PAPER);
+const LABEL_NAME = String(process.env.BOARD_WHITELABEL_NAME || "").trim().slice(0, 40);
+const LABEL_INK = hexColour(process.env.BOARD_WHITELABEL_INK);
+const LABEL_PAPER = hexColour(process.env.BOARD_WHITELABEL_PAPER);
 
 /* THE SKIN, BUILT ONCE. Every value in it is either a validated hex colour
-   or a literal written here, so there is nothing in the string a hostname or
-   an env var could have put there.
+ * or a literal written here, so there is nothing in the string a hostname or
+ * an env var could have put there.
  *
- * It overrides the board's light palette rather than replacing it — that
- * block already runs on this host, because a partner's name is not Dealio's
- * name, and most of what it sets is right. What differs is the deep colour
- * (the top block and the one solid button) and, if he gave one, the paper.
- * Everything a partner did not name keeps a value that was chosen by
- * somebody looking at the screen. */
-const PARTNER_CSS = PARTNER_INK
-  ? `html[data-skin="partner"]{`
-    + (PARTNER_PAPER ? `--bg:${PARTNER_PAPER};` : "")
-    + `--acc:${PARTNER_INK};--accink:#FFFFFF;`
-    + `--top:${PARTNER_INK};--topBtnInk:${PARTNER_INK};`
+ * THE WHOLE PALETTE, NOT THE DIFFERENCE. It set only the handful of values
+ * that change, on the reasoning that the board's own light block already ran
+ * underneath — true while the white label was a hostname of its own, because
+ * such a host is not Dealio's host. It stopped being true the moment the
+ * same screen appeared at paydealio.com/europay: that IS Dealio's host, so
+ * `:root` is the DARK palette, and every variable left unset stayed dark on
+ * a light page. The language button came out pale grey on near-white and was
+ * all but invisible; the folds would have been dark boxes.
+ *
+ * So all seventeen, from the board's light block, with his colour in the
+ * places that are his. A skin that depends on which other skin happens to be
+ * underneath it is a skin that breaks the next time it is mounted somewhere
+ * new, and it did.
+ *
+ * WHAT IS HIS: the deep colour (the top block, the one solid button, the
+ * pill text on the block) and the paper, if he named one. The neutrals are
+ * ours because they were chosen by somebody looking at the screen, and a
+ * partner asked for ten hex codes is a partner who does not reply. */
+const LABEL_CSS = LABEL_INK
+  ? `html[data-skin="whitelabel"]{`
+    + `--bg:${LABEL_PAPER || "#EEF0F4"};--card:#F7F8FB;`
+    + `--ink:#151B28;--ink2:#4E5968;--mut:#8A939F;`
+    + `--line:#E3E6EC;--hair:#EAECF1;--ok:#2A9D63;`
+    + `--acc:${LABEL_INK};--accink:#FFFFFF;`
+    + `--top:${LABEL_INK};--topBtnInk:${LABEL_INK};`
     + `--topInk:#EEF1F7;--topDim:#93A0B8;--topBtn:#FFFFFF;`
     + `--topLine:rgba(255,255,255,.26);--topAcc:#EEF1F7;`
     + `}`
@@ -450,7 +490,7 @@ const PARTNER_CSS = PARTNER_INK
 /* His name, for the tab and the line above the figure. Escaped because it is
    an operator-set string printed into HTML, and the cost of being wrong once
    is not worth the two lines saved. */
-const PARTNER_TAG = PARTNER_NAME
+const LABEL_TAG = LABEL_NAME
   .replace(/&/g, "&amp;").replace(/</g, "&lt;")
   .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
@@ -486,9 +526,9 @@ async function page(file, req, res, next, extra = null) {
          palette has to be settled before the first paint, and a fetch cannot
          answer before the first paint. Empty on every name but a partner's,
          which is every name today. */
-      .split("{{SKIN}}").join(isPartnerHost(req) ? "partner" : "")
-      .split("{{SKINCSS}}").join(isPartnerHost(req) ? PARTNER_CSS : "")
-      .split("{{PARTNER}}").join(isPartnerHost(req) ? PARTNER_TAG : "")
+      .split("{{SKIN}}").join(isWhitelabel(req) ? "whitelabel" : "")
+      .split("{{SKINCSS}}").join(isWhitelabel(req) ? LABEL_CSS : "")
+      .split("{{LABEL}}").join(isWhitelabel(req) ? LABEL_TAG : "")
       /* WHETHER THIS IS THE APP, for the pages that have to draw a nav bar
          before any fetch could answer. Same reasoning as {{DEALIO}} above,
          and the same detection as inApp() further down — see the long note
@@ -1073,14 +1113,33 @@ app.get("/", (req, res, next) => {
      somebody who has never heard of it — what it is, what it costs, who runs
      it — and the app itself is a tap away at /dealio. */
   if (isDealioHost(req)) return page("pay.html", req, res, next);
-  /* A PARTNER'S NAME OPENS ON THE MONEY, not on the pitch. Dealio's own name
-     gets pay.html because somebody arriving there has never heard of it and
-     needs telling what it is. Daniel's clients arrive from a link on his own
-     site, having already read his: a second front page is a second thing to
-     get past. So "/" here is the screen itself. */
-  if (isPartnerHost(req)) return page("dealio.html", req, res, next);
+  /* A WHITE LABEL'S NAME OPENS ON THE MONEY, not on the pitch. Dealio's own
+     name gets pay.html because somebody arriving there has never heard of it
+     and needs telling what it is. Daniel's clients arrive from a link on his
+     own page, having already read his: a second front page is a second thing
+     to get past. So "/" here is the screen itself. */
+  if (isWhitelabelHost(req)) return page("dealio.html", req, res, next);
   return page(ROOT_IS_BOARD ? "index.html" : "landing.html", req, res, next);
 });
+
+/* AND THE SAME SCREEN AT A PATH WE ALREADY OWN — paydealio.com/europay.
+ *
+ * THE POINT OF IT IS THAT NOBODY HAS TO DO ANYTHING FIRST. A hostname of his
+ * own needs a DNS record from him and a certificate from Caddy, so the
+ * earliest anybody can look at it is tomorrow. This name already resolves
+ * and already has a certificate: the screen exists the moment the box comes
+ * up, and it can be sent to him in a message.
+ *
+ * REGISTERED ONLY WHEN THERE IS A PATH TO REGISTER. Unset, express is never
+ * told about it and the address is an ordinary 404 — rather than a route
+ * that exists and answers with a blank skin, which is the sort of page that
+ * gets found by somebody it was not meant for.
+ *
+ * page() reads the same request and paints the skin, so there is nothing to
+ * pass here — see isWhitelabel above. */
+if (WHITELABEL_PATH) {
+  app.get(WHITELABEL_PATH, (req, res, next) => page("dealio.html", req, res, next));
+}
 /* THE NUMBERS, ON A PHONE.
  *
  * make doors is the same figures and needs a terminal, which means they get

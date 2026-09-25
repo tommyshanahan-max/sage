@@ -1,7 +1,7 @@
 // CAN SOMEBODY ELSE PLUG THEIR OWN STRIPE ACCOUNT INTO THIS BOARD, asked of
 // Stripe rather than reasoned about.
 //
-//   make partner        (which runs it)
+//   make whitelabel     (which runs it)
 //
 // THE QUESTION THIS EXISTS FOR. A partner — Daniel in Luxembourg is the first
 // — wants the money to land in the Stripe account he already has, on a
@@ -120,10 +120,10 @@ if (!conn.ok) {
   console.log("    https://dashboard.stripe.com/settings/connect/onboarding-options/oauth");
   console.log("");
   console.log("  Then, in one line:");
-  console.log("    make partner ID=\"ca_…\"");
+  console.log("    make whitelabel ID=\"ca_…\"");
   console.log("");
 } else {
   console.log("  A partner can connect the Stripe account they already have.");
-  console.log("  The link to send them:  make partner");
+  console.log("  The link to send them:  make whitelabel");
   console.log("");
 }

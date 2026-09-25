@@ -1194,50 +1194,57 @@ have a Stripe account with trading history, and would you run a Connect
 platform on it". Their deck is tax structuring — SA, SARL, SPF, SCSp, RAIF —
 and contains no payments authorisation.
 
-### A partner on his own name, paid into his own Stripe — built 25 Sep, not deployed
+### The money screen in somebody else's name — built 25 Sep, not deployed
 
-`make partner`. My server, my code, his domain, his colour, his Stripe.
-Three halves, and the third is the one that was actually the mockup:
+`make whitelabel`. My server, my code, his name and colour on it, his Stripe.
 
-- **his name** — a hostname on this same board container
-  (`docker/sites/board-partner.caddy`), the third copy of `board-also`'s shape
-- **his face** — the money screen in his navy, his name in the tab and over
-  the figure, no board bar, and none of Dealio's front page. `data-skin` on
-  `<html>`, a palette block built in `server.js` from validated hex, the same
-  mechanism `data-dealio` has used since there were two products
-- **his Stripe** — the OAuth pair in `board/lib/stripe.js`
-  (`linkUrl`/`linkFinish`, which connects an account somebody ALREADY has)
+**TWO DOORS, AND THE CHEAP ONE IS THE POINT.**
 
-Looked at on all three skins before it was committed: his, Dealio's dark one
-and the board's light one. One bug found that way — `.bigwhere` was
-`var(--ink)` on `var(--bg)`, which is the same near-black as the top block on
-both of our own skins and is two different darks fighting on his. It is
-`var(--top)` now, which is the deep colour by definition.
+| | |
+|---|---|
+| `AT="/europay"` | a path on a name we already own — `paydealio.com/europay`. Resolves today, certificate exists, can be put in a message this afternoon. |
+| `DOMAIN="pay.his.lu"` | a hostname of his own. Better in the end, and waits on a DNS record somebody else has to make. |
 
-**The face is one colour, and that is from reading the mockup rather than
-guessing.** It declared a navy and a gold; the gold appears twice, on his logo
-and his nav underline, both of which live on HIS site. The money screen in it
-was navy, white and the neutrals it already had. A partner asked for ten hex
-codes is a partner who does not reply.
+Set either, or both. It started as the hostname only; the path was the right
+first step and costs nobody anything.
 
-**He never sends a secret key, and that is structural rather than polite.**
-One `BOARD_STRIPE_KEY` serves this whole container — the board, both its
-names and Dealio — so a partner's key written here would take every payment
-on the box, his and ours together. Tom asked why a friend cannot just send
-one; this is the answer.
+**What comes off on his name:** the board bar, Dealio's front page (our
+headline, a card of Tom asking for ¥2,400, our fee, our door), the OPEN DEALIO
+button, and the tab title. Each was ours on his screen.
 
-**The direction is the opposite of the 21 Sep question above.** That asked
-Daniel to be the PLATFORM and us the connected account, because we had no
-Stripe. We have one now (Aozhou Baba, live, took a real payment 24 Sep), so
-this makes him the connected account and us the platform. Both are Daniel and
-Stripe and Luxembourg; they are not the same deal, and which way round it is
-decides who is merchant of record for a European transaction. Worth settling
-out loud before it is offered to him.
+**The face is one colour**, from reading the mockup rather than guessing: it
+declared a navy and a gold, and the gold appears twice, both on HIS site's
+chrome, never on the money screen.
 
-**Not established:** whether Connect is switched on for `acct_1UIVjEJItwOUeslJ`
-at all. `make partner` with no arguments asks Stripe and says. Also unasked:
-whether an Australian platform may link a Luxembourg account — Stripe has no
-endpoint for it, and the authorise screen is what settles it.
+**Two bugs found by looking rather than reasoning**, both real:
+
+- `.bigwhere` was `var(--ink)` on `var(--bg)` — the same near-black as the top
+  block on our own skins, two different darks fighting on his. `var(--top)`
+  now, which is the deep colour by definition.
+- The skin set only the values that change, on the reasoning that the board's
+  light palette ran underneath. True for a hostname of his own; **false the
+  moment it became a path on paydealio.com**, which IS Dealio's host, so
+  `:root` is the DARK palette and everything unset stayed dark on a light
+  page. The language button came out pale grey on near-white. It carries all
+  seventeen variables now. A skin that depends on what is underneath it breaks
+  the next time it is mounted somewhere new, and it did.
+
+**NOT "partner".** The first version named the target `make partner` and the
+box answered `Nothing to be done for 'partner'` three times: `partner/` is the
+partner *seat's* snapshot, gitignored so invisible from a clone, and make
+treats an existing directory as a target already built. `.PHONY` fixes that,
+but two meanings of "partner" one line apart in the same Makefile is a trap,
+so it is `whitelabel` everywhere — target, script, site file, env vars,
+`data-skin`.
+
+**Not established:** whether Connect is switched on for `acct_1UIVjEJItwOUeslJ`.
+`make whitelabel` with no arguments asks Stripe and says. Also unasked: whether
+an Australian platform may link a Luxembourg account — Stripe has no endpoint
+for it, and the authorise screen settles it.
+
+**Still ours behind the screen:** `/wallet#payout` and the ask-for-money
+sheets are separate files and unskinned. One tap deep and it is the board
+again.
 
 ## Voice messages — live 24 Sep, watched working on Tom's phone
 
