@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: try try-china china wallets mo-code visits app-state claire-episodes deal claire-key claire-count claire-seed claire-video listing invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who bells twice admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check post post-status post-run post-login post-code post-logins weidian-pull weidian-json weidian-reviews shop-chapter review-tidy product-names review-move
+.PHONY: try try-china china wallets mo-code visits app-state claire-episodes deal claire-key claire-count claire-seed claire-video listing invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who bells twice admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check post post-status post-run post-login post-code post-logins weidian-pull weidian-json weidian-reviews shop-chapter review-tidy product-names review-move
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -1372,6 +1372,29 @@ pay-check: ## Can this board take a payment, and if not why: make pay-check
 	@# account id.
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/pay-check.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)"
+
+partner: ## A partner on his own name, paid into his own Stripe: make partner [ID="ca_..."] [DOMAIN="pay.his.lu"] [WHO="Daniel"]
+	@# THE ARRANGEMENT: my server, my code, his domain, his Stripe. Both
+	@# halves were already built and neither was reachable without editing
+	@# .env over SSH, which is the step that never gets done.
+	@#
+	@# HE SENDS NO KEY, AND THAT IS STRUCTURAL RATHER THAN POLITE. One
+	@# BOARD_STRIPE_KEY serves this whole container — the board, both its
+	@# names and Dealio — so a partner's key written here would take every
+	@# payment on the box, his and ours together. The OAuth half of
+	@# lib/stripe.js connects the account he ALREADY has instead: his
+	@# balance, his bank, our fee off the top, and no secret in a chat.
+	@#
+	@# Run it with nothing and it says what is missing and where to get it.
+	@#
+	@# ONLY FROM THE COMMAND LINE, the same as airwallex-keys: make imports
+	@# the environment as its own variables, and a box with ID already in
+	@# its environment would otherwise have that written into .env by a
+	@# command that named no id at all.
+	@bash scripts/partner.sh \
+	  $(if $(filter command line,$(origin ID)),--id "$(ID)",) \
+	  $(if $(filter command line,$(origin DOMAIN)),--domain "$(DOMAIN)",) \
+	  $(if $(filter command line,$(origin WHO)),--who "$(WHO)",)
 
 dealsheet: ## An example deal in a real room: make dealsheet WHO="Tom" WITH="Christopher" [OFF=1]
 	@# TO SEE ONE ON A PHONE. `make try` shows every screen on a laptop, except

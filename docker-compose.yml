@@ -703,6 +703,15 @@ services:
       # and the DEALIO_HOSTS note in board/server.js.
       TOMSCODING_DEALIO_DOMAIN: ${TOMSCODING_DEALIO_DOMAIN:-dealio.localhost}
       TOMSCODING_DEALIO_WWW: ${TOMSCODING_DEALIO_WWW:-www.dealio.localhost}
+      # A PARTNER'S OWN NAME, served by this same board — see
+      # docker/sites/board-partner.caddy and `make partner`. Daniel in
+      # Luxembourg is the first: his hostname, his Stripe account through
+      # Connect, this code on this box.
+      #
+      # NOT TOMSCODING_PARTNER_DOMAIN, which is the partner SEAT above and a
+      # different product entirely. Two site blocks on one address is a
+      # startup failure that takes every site here down with it.
+      TOMSCODING_BOARD_PARTNER_DOMAIN: ${TOMSCODING_BOARD_PARTNER_DOMAIN:-boardpartner.localhost}
       TOMSCODING_BOARD_OLD_DOMAIN: ${TOMSCODING_BOARD_OLD_DOMAIN:-oldboard.localhost}
       TOMSCODING_BOARD_OLD_WWW: ${TOMSCODING_BOARD_OLD_WWW:-oldboardwww.localhost}
       TOMSCODING_BOARD_WWW: ${TOMSCODING_BOARD_WWW:-www.board.localhost}

@@ -1194,6 +1194,33 @@ have a Stripe account with trading history, and would you run a Connect
 platform on it". Their deck is tax structuring — SA, SARL, SPF, SCSp, RAIF —
 and contains no payments authorisation.
 
+### A partner on his own name, paid into his own Stripe — built 25 Sep, not deployed
+
+`make partner`. My server, my code, his domain, his Stripe. Both halves
+already existed and neither was reachable without editing `.env` over SSH:
+the OAuth pair in `board/lib/stripe.js` (`linkUrl`/`linkFinish`, which
+connects an account somebody ALREADY has), and a hostname served by this same
+board container (`docker/sites/board-partner.caddy`).
+
+**He never sends a secret key, and that is structural rather than polite.**
+One `BOARD_STRIPE_KEY` serves this whole container — the board, both its
+names and Dealio — so a partner's key written here would take every payment
+on the box, his and ours together. Tom asked why a friend cannot just send
+one; this is the answer.
+
+**The direction is the opposite of the 21 Sep question above.** That asked
+Daniel to be the PLATFORM and us the connected account, because we had no
+Stripe. We have one now (Aozhou Baba, live, took a real payment 24 Sep), so
+this makes him the connected account and us the platform. Both are Daniel and
+Stripe and Luxembourg; they are not the same deal, and which way round it is
+decides who is merchant of record for a European transaction. Worth settling
+out loud before it is offered to him.
+
+**Not established:** whether Connect is switched on for `acct_1UIVjEJItwOUeslJ`
+at all. `make partner` with no arguments asks Stripe and says. Also unasked:
+whether an Australian platform may link a Luxembourg account — Stripe has no
+endpoint for it, and the authorise screen is what settles it.
+
 ## Voice messages — live 24 Sep, watched working on Tom's phone
 
 Hold the round button beside Send, speak, let go. No calls: Tom asked for
