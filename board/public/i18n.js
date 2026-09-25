@@ -7325,6 +7325,22 @@ export const STRINGS = {
   "wl.cnChecked":      ["Payments into China are checked first, usually 1–2 days", "入境资金需先审核，一般 1–2 个工作日"],
   "wl.usuallyNextDay": ["Usually the same or next working day", "一般当天或次个工作日到账"],
   "wl.useDifferent":   ["Use a different account", "换一张卡"],
+
+  /* THE TWO ANSWERS TO "WHERE DOES THE MONEY GO", as rows on the screen that
+     asks it. Four words each and one line under, because this is the screen
+     somebody opens to get paid and not the screen to explain Stripe on.
+
+     The Chinese is written rather than translated. "打到我的银行卡" is what
+     somebody in China says about being paid — 打钱 is the everyday verb and
+     银行卡 is the card, not the account; "直接到账我的银行账户" is a form
+     asking a question, which is how the English would arrive if it were
+     carried across word by word. And Stripe keeps its own name: it has no
+     Chinese one, and inventing one would leave somebody looking for a word
+     that is not on their own dashboard. */
+  "wl.pickBank":       ["My bank account", "打到我的银行卡"],
+  "wl.pickBankSub":    ["Same or next working day", "当天或次个工作日"],
+  "wl.pickStripe":     ["My Stripe account", "我的 Stripe 账户"],
+  "wl.pickStripeSub":  ["The one you already have", "用你现有的账户"],
   "wl.accountName":    ["Name on the account", "开户人姓名"],
   "wl.asOnYourId":     ["As on your ID", "与身份证一致"],
   /* THE ABN, AND WHY IT IS NOT OPTIONAL. Without one the payer must withhold

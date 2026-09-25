@@ -768,6 +768,47 @@ function fieldHint(key, region) {
   return k ? T(k) : "";
 }
 
+/* WHICH ACCOUNT, ASKED BEFORE ANY FIELD IS DRAWN.
+ *
+ * The screen opened on a bank form: eight boxes, a country chip and a Save,
+ * with no hint that the other answer existed. Stripe Connect was already
+ * built — lib/stripe.js's linkUrl connects an account somebody ALREADY has —
+ * and the only way to it was the /china/connect deep link, which nothing on
+ * this screen mentioned. A feature reachable only by typing a URL is a
+ * feature nobody has.
+ *
+ * TWO ROWS, FOUR WORDS EACH, NOTHING ELSE. The question is "where does the
+ * money go" and it has exactly two answers. A paragraph explaining the
+ * difference is a paragraph nobody reads on the screen where they are trying
+ * to get paid; each row carries one line and the detail is behind the tap.
+ *
+ * ONLY WHEN NOTHING IS SAVED. Somebody who has already answered gets their
+ * answer and a way to change it, not the question again every time.
+ *
+ * The Stripe row goes straight to /china/api/link, which is the redirect
+ * into Stripe's own authorise page — one tap rather than two. With no client
+ * id on the box that route bounces to /china/connect?e=nolink, which says so
+ * on the screen; a dead end that explains itself beats a button that does
+ * nothing. */
+function payoutPick(onBank) {
+  /* NO LINE ABOVE THE TWO ROWS. It read "We send your money straight to your
+     bank" — which answers the question the rows are asking, and names only
+     one of the two answers while it does it. The title bar already says
+     Getting paid; the rows say the rest. */
+  return frag(
+    h("div", { class: "list" },
+      row({ title: T("wl.pickBank"), sub: T("wl.pickBankSub"), onclick: onBank }),
+      row({ title: T("wl.pickStripe"), sub: T("wl.pickStripeSub"),
+        onclick: () => { location.href = "/china/api/link"; } })),
+  );
+}
+
+/* WHICH OF THE TWO THEY CHOSE, FOR THIS VISIT ONLY. Deliberately not stored:
+   it is not a fact about them, it is where they are on a screen, and a
+   choice that outlives the visit is a screen that opens somewhere different
+   tomorrow for no reason anybody can see. */
+let PAYOUT_HOW = null;
+
 SCREENS.payout = async (_, q) => {
   /* ARRIVED HERE FROM "WHERE DO WE SEND YOUR MONEY", WITH NO WALLET.
    *
@@ -784,6 +825,18 @@ SCREENS.payout = async (_, q) => {
   if (!W.wallet) return payoutFirst();
   const w = W.wallet;
   const setup = q.get("setup") === "1";
+  /* THE QUESTION BEFORE THE FORM. Nothing saved and nothing chosen yet, so
+     neither answer has been given and neither form should be on the screen.
+     See payoutPick above. */
+  if ((!w.payoutLabel && !PAYOUT_HOW) || PAYOUT_HOW === "ask") {
+    return { title: T("wl.gettingPaid"), body: payoutPick(() => {
+      PAYOUT_HOW = "bank";
+      replace("payout" + (setup ? "?setup=1" : ""));
+      /* showNew is computed from payoutLabel further down, so somebody who
+         already had an account and came back through the question still gets
+         empty fields rather than the row they were trying to replace. */
+    }) };
+  }
   /* THE FIELDS COME FROM THE TERRITORY, NOT FROM AN `if`.
    *
    * This was two branches — Australia, mainland China, everywhere else — with
@@ -861,8 +914,13 @@ SCREENS.payout = async (_, q) => {
     list.append(row({ title: w.payoutLabel ? T("wl.myBankIs", { label: w.payoutLabel }) : T("wl.straightToMine"), sub: T("wl.usuallyNextDay") }));
     form.hidden = mode !== "bank" || (Boolean(w.payoutLabel) && !showNew);
   };
-  let showNew = !w.payoutLabel;
-  const change = w.payoutLabel ? h("button", { type: "button", class: "chip", text: T("wl.useDifferent"), onclick: () => { showNew = true; draw(); } }) : null;
+  let showNew = !w.payoutLabel || PAYOUT_HOW === "bank";
+  /* CHANGING IT REOPENS THE QUESTION, rather than dropping straight into the
+     bank form. Somebody whose money goes to a bank today may be changing it
+     precisely because they now have a Stripe account, and a chip that only
+     ever offers more bank fields answers a question they did not ask. */
+  const change = w.payoutLabel ? h("button", { type: "button", class: "chip", text: T("wl.useDifferent"),
+    onclick: () => { PAYOUT_HOW = "ask"; replace("payout" + (setup ? "?setup=1" : "")); } }) : null;
   draw();
   /* ABOVE THE FIELDS, because it decides what they are — but as a line until
      it is needed. */

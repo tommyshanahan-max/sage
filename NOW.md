@@ -1194,6 +1194,32 @@ have a Stripe account with trading history, and would you run a Connect
 platform on it". Their deck is tax structuring — SA, SARL, SPF, SCSp, RAIF —
 and contains no payments authorisation.
 
+### Where do we send your money — two answers, not one — 25 Sep
+
+`/wallet#payout` opened straight on a bank form: eight boxes, a country chip
+and a Save, with nothing to say the other answer existed. **Stripe Connect was
+already built** — `lib/stripe.js`'s `linkUrl` connects an account somebody
+already has — and the only way to it was the `/china/connect` deep link, which
+nothing on this screen mentioned. A feature reachable only by typing a URL is
+a feature nobody has.
+
+Two rows now, four words each: **My bank account** / Same or next working day,
+and **My Stripe account** / The one you already have. Only when nothing is
+saved; somebody who has already answered gets their answer and a way to change
+it. "Use a different account" reopens the question rather than dropping into
+more bank fields — somebody changing it may be changing it *because* they now
+have a Stripe account.
+
+The Stripe row goes straight to `/china/api/link` — one tap rather than two.
+**Until `BOARD_STRIPE_CLIENT_ID` is set it lands on `/china/connect?e=nolink`**,
+which says so on the screen. A dead end that explains itself beats a button
+that does nothing, but it is still a dead end until that `ca_…` is in `.env`.
+
+Checked on a real board in both languages rather than read: the rows, the tap
+into the bank form, and the tap into Stripe. The Chinese is written — 打到我的
+银行卡, because 打钱 is the everyday verb and 银行卡 is the card; a carried-across
+"直接到账我的银行账户" is a form asking a question.
+
 ### /dealio opens on the money now, not on the pitch — 25 Sep
 
 Signed in, `paydealio.com/dealio` painted the landing page: our headline
