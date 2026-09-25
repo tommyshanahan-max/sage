@@ -46,6 +46,8 @@ set -euo pipefail
 ID=""
 ACCT=""
 PCT=""
+KEY=""
+PK=""
 AT=""
 DOMAIN=""
 NAME=""
@@ -57,6 +59,8 @@ while [ $# -gt 0 ]; do
     --id)     ID="${2:-}";     shift 2 ;;
     --acct)   ACCT="${2:-}";   shift 2 ;;
     --pct)    PCT="${2:-}";    shift 2 ;;
+    --key)    KEY="${2:-}";    shift 2 ;;
+    --pk)     PK="${2:-}";     shift 2 ;;
     --at)     AT="${2:-}";     shift 2 ;;
     --domain) DOMAIN="${2:-}"; shift 2 ;;
     --name)   NAME="${2:-}";   shift 2 ;;
@@ -79,7 +83,7 @@ get() { grep -E "^${1}=" .env | tail -1 | cut -d= -f2- | tr -d '"' || true; }
 # A VALUE WITH A NEWLINE IN IT is what a copy out of a dashboard looks like
 # when the selection took the line break too. Caught here, where it can be
 # said plainly, rather than as a greyed button with no explanation.
-case "$ID$ACCT$PCT$AT$DOMAIN$NAME$INK$PAPER$WHO" in
+case "$ID$ACCT$PCT$KEY$PK$AT$DOMAIN$NAME$INK$PAPER$WHO" in
   *$'\n'*|*$'\r'*) echo "  That has a line break in it. Copy it again without the newline."; exit 1 ;;
 esac
 
@@ -103,6 +107,39 @@ case "$ID" in
     echo "  An sk_ or pk_ is a different thing and must not go in here."
     echo ""
     exit 1 ;;
+esac
+
+# HIS OWN STRIPE KEY, WHICH PUTS HIM ON A BOX OF HIS OWN.
+#
+# There is one BOARD_STRIPE_KEY per container, so a partner's key cannot go
+# on the shared board without taking every payment on it — ours, the shop's,
+# everybody's. Giving him one is what the board-wl service in
+# docker-compose.yml is for.
+#
+# NOTHING IS PRINTED BACK. Not the key, not a masked version of it: a
+# terminal is a window somebody can be standing behind, and a screenshot of a
+# working deploy is a thing that gets sent to people. The same rule
+# airwallex-keys works under.
+#
+# IT IS HIS KEY AND IT IS LIVE. A test key here means a box that looks like
+# it works and takes no money; a live one means his clients' money, in his
+# balance, from the first payment. Both are allowed and the report says which.
+case "$KEY" in
+  "") ;;
+  sk_live_*|sk_test_*)
+    case "$KEY" in
+      *[!a-zA-Z0-9_]*) echo ""; echo "  That key has something in it that is not part of a key."; echo ""; exit 1 ;;
+    esac ;;
+  *)
+    echo ""
+    echo "  A Stripe secret key starts with sk_live_ or sk_test_."
+    echo "  That one does not, and nothing was written."
+    echo ""
+    exit 1 ;;
+esac
+case "$PK" in
+  ""|pk_live_*|pk_test_*) ;;
+  *) echo ""; echo "  A publishable key starts with pk_live_ or pk_test_."; echo ""; exit 1 ;;
 esac
 
 # A PERCENTAGE, AND A SANE ONE. This is what we take of somebody else's
@@ -234,13 +271,31 @@ fi
 
 [ -n "$ACCT" ]   && put TOMSCODING_BOARD_STRIPE_DIRECT "$ACCT"
 [ -n "$PCT" ]    && put TOMSCODING_BOARD_STRIPE_DIRECT_PCT "$PCT"
+[ -n "$KEY" ]    && put TOMSCODING_WL_STRIPE_KEY "$KEY"
+[ -n "$PK" ]     && put TOMSCODING_WL_STRIPE_PK "$PK"
+
+# AND TURN THE SERVICE ON, rather than telling somebody to edit a
+# comma-separated list in a file by hand. `make up` refuses a deploy where his
+# hostname is set and the profile is not, which is the right refusal and a
+# terrible thing to meet at the end of a build. Idempotent: a profile already
+# in the list is left exactly as it is.
+if [ -n "$KEY" ]; then
+  CUR="$(get COMPOSE_PROFILES)"
+  case ",$CUR," in
+    *,board-wl,*) ;;
+    *) put COMPOSE_PROFILES "$([ -n "$CUR" ] && echo "$CUR,board-wl" || echo "board-wl")" ;;
+  esac
+  # His board needs a salt of its own or two boards that are meant to know
+  # nothing about each other hash devices to the same values.
+  [ -n "$(get TOMSCODING_WL_SALT)" ] || put TOMSCODING_WL_SALT "$(head -c 24 /dev/urandom | od -An -tx1 | tr -d ' \n')"
+fi
 [ -n "$AT" ]     && put TOMSCODING_WHITELABEL_PATH "$AT"
 [ -n "$DOMAIN" ] && put TOMSCODING_WHITELABEL_DOMAIN "$DOMAIN"
 [ -n "$NAME" ]   && put TOMSCODING_WHITELABEL_NAME "$NAME"
 [ -n "$INK" ]    && put TOMSCODING_WHITELABEL_INK "$INK"
 [ -n "$PAPER" ]  && put TOMSCODING_WHITELABEL_PAPER "$PAPER"
 
-if [ -n "$ID$ACCT$PCT$AT$DOMAIN$NAME$INK$PAPER" ]; then
+if [ -n "$ID$ACCT$PCT$KEY$PK$AT$DOMAIN$NAME$INK$PAPER" ]; then
   echo "  Writing, and bringing the box up so it reads them…"
   make up >/dev/null
 fi
@@ -250,7 +305,7 @@ fi
 # be switched off in the dashboard on a Tuesday by somebody who is not here,
 # and a command that only looks when it already suspects trouble is a command
 # that reports "fine" from memory.
-if [ -z "$ID$ACCT$PCT$AT$DOMAIN$NAME$INK$PAPER" ]; then
+if [ -z "$ID$ACCT$PCT$KEY$PK$AT$DOMAIN$NAME$INK$PAPER" ]; then
   docker compose run --rm --no-deps -T -v "$PWD/scripts:/seed:ro" \
     --entrypoint node board /seed/connect-check.mjs || true
 fi
@@ -282,10 +337,29 @@ if [ -n "$SCREEN" ]; then
   echo "  The screen:  $SCREEN"
   LABEL_NOW="$(get TOMSCODING_WHITELABEL_NAME)"
   [ -n "$LABEL_NOW" ] && echo "  It says:     $LABEL_NOW"
+  # WHOSE KEY HIS BOX IS ON, which is the thing that decides whether a
+  # payment can use WeChat Pay at all. Never the key itself.
+  K="$(get TOMSCODING_WL_STRIPE_KEY)"
+  case "$K" in
+    sk_live_*) echo "  His box:     his own Stripe, LIVE — real money into his account" ;;
+    sk_test_*) echo "  His box:     his own Stripe, TEST keys — nothing real moves" ;;
+    *)         echo "  His box:     no key of his own — this name is not served yet" ;;
+  esac
+  # WHERE THE CHARGE IS RAISED, which is a different question on his own box
+  # than on ours. With his key there is no platform in between at all — the
+  # Connect words below describe the shared board and would be a lie here.
   D="$(get TOMSCODING_BOARD_STRIPE_DIRECT)"
-  if [ -n "$D" ]; then
+  # get() ends in `|| true`, so a name that is not in .env comes back as an
+  # empty string rather than a failure — which means `$(get X || echo 0.5)`
+  # prints nothing at all. It printed "Invoice him the %." once. The default
+  # has to be taken from the variable, not from the exit status.
+  P="$(get TOMSCODING_BOARD_STRIPE_DIRECT_PCT)"; P="${P:-0.5}"
+  if [ -n "$K" ]; then
+    echo "  Charged:     on his own account — no platform in between"
+    echo "  We take:     nothing automatically. Invoice him the $P%."
+  elif [ -n "$D" ]; then
     echo "  Charged:     directly, on $D — his name, his chargebacks"
-    echo "  We take:     $(get TOMSCODING_BOARD_STRIPE_DIRECT_PCT || true)% (0.5% unless set)"
+    echo "  We take:     $P% of everything through it"
   else
     echo "  Charged:     through us — OUR name on the statement, OUR chargebacks"
   fi

@@ -1248,6 +1248,45 @@ described a transfer that does not happen.
 A bank account already saved is kept, so switching back is not retyping a wire.
 Three tests cover it; 17 across both suites.
 
+### His own box, on his own Stripe key — built 25 Sep, off by default
+
+Connect needs a live client id, which needs a platform profile, which Stripe
+reviews. So the partner path today is **a container of his own**: `board-wl`
+in `docker-compose.yml`, same image, own volume, own salt, and
+`BOARD_STRIPE_KEY` set to **his** key. `europay.paydealio.com` now proxies to
+it rather than to the shared board.
+
+**Why a container and not a skin.** A charge uses the payment methods of the
+account it is raised on. Ours reads WeChat Pay `Ineligible`; his Luxembourg
+account probably does not. There is one key per container, so using his
+account means giving him a container.
+
+**No new payment code.** `startCheckout` raises a plain charge when there is
+no payee account to transfer to — the path the shop already uses, for the same
+reason. On his box every payment is his from the start.
+
+`make whitelabel KEY="sk_…" PK="pk_…"` writes the key, mints a salt, and adds
+`board-wl` to `COMPOSE_PROFILES` itself rather than asking anybody to edit a
+comma-separated list. Nothing about the key is ever printed back. The report
+says "on his own account — no platform in between", and that **our 0.5% is
+invoiced, not taken**: `application_fee_amount` needs Connect.
+
+**`make up` now asks Caddy whether it accepts its own config**, before the
+build. Prompted by a near-miss: a block in `whitelabel.caddy` was written with
+`/* */`, which is not Caddyfile syntax. A Caddyfile Caddy refuses is not one
+bad site — it will not start and every name on the box goes with it.
+`check-sites.py` resolves addresses and finds collisions and parses none of
+the syntax around them. Skipped, not failed, when Caddy is not running.
+
+And `make up` refuses a deploy where the partner hostname is set and
+`board-wl` is not in the profiles — a certificate with a 502 behind it, found
+by his client mid-payment.
+
+**The shape after this:** once Tom has platform capabilities, it moves to
+Daniel's own domain with **Tom as a first-level merchant under Daniel** —
+which inverts who applies to Stripe, and may be the easier door given the
+20 Sep decline.
+
 ### The Stripe row is blocked on a platform profile — 25 Sep
 
 Chased the client id for half an hour. Stripe's own tooltip on the field

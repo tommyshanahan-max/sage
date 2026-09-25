@@ -1372,6 +1372,85 @@ services:
       driver: json-file
       options: { max-size: "10m", max-file: "3" }
 
+  # ---------------------------------------------------------------------------
+  # A PARTNER'S OWN BOARD, ON HIS OWN STRIPE KEY.
+  #
+  # WHY A SECOND CONTAINER AND NOT A SKIN. europay.paydealio.com was a skin on
+  # the shared board: his name, his colour, our Stripe. Our Stripe cannot do
+  # WeChat Pay — the capability reads Ineligible and no amount of connecting
+  # changes it, because a charge uses the payment methods of the account it is
+  # raised on. His Luxembourg account probably can.
+  #
+  # Connect would let us borrow his capabilities without his key, and Connect
+  # needs a live client id, which needs a platform profile, which Stripe
+  # reviews. Days, and an outcome nobody controls. THERE IS ONE KEY PER
+  # CONTAINER, so the way to use his account today is to give him a container.
+  #
+  # NO CONNECT AND NO NEW PAYMENT CODE. startCheckout raises a plain charge
+  # when there is no payee account to transfer to — the same path the shop
+  # uses, for the same reason: the money is the seller's from the start. On
+  # his box every payment is his from the start.
+  #
+  # WHAT THIS COSTS, PLAINLY: his secret key lives in .env on this box, and
+  # there is no application_fee_amount without Connect, so our 0.5% is
+  # invoiced rather than taken. Both are the price of not waiting for a
+  # review. Connect remains the path for partner number two.
+  #
+  # SHARES NOTHING WITH THE REAL BOARD — its own volume, its own salt, its own
+  # hostname and therefore its own cookies. The same guarantee board-demo
+  # makes below, for the same reason, and there is no configuration of this
+  # that can read board_data.
+  #
+  # Off unless asked for: add `board-wl` to COMPOSE_PROFILES in .env. Setting
+  # the hostname without the profile is a certificate with a 502 behind it,
+  # which `make check` refuses.
+  board-wl:
+    logging: *logs
+    build:
+      context: ./board
+    image: tomscoding-board:latest
+    container_name: tomscoding-board-wl
+    restart: unless-stopped
+    profiles: ["board-wl"]
+    user: "1000:1000"
+    environment:
+      BOARD_DIR: /data
+      BOARD_ADMIN_KEY: ${TOMSCODING_BOARD_KEY:-}
+      # ITS OWN SALT. Shared, the device hashes would match across two boards
+      # that are meant to know nothing about each other.
+      BOARD_SALT: ${TOMSCODING_WL_SALT:-}
+      BOARD_INVITE: ${TOMSCODING_WL_INVITE:-}
+      BOARD_CONTACT: ${TOMSCODING_BOARD_CONTACT:-}
+      # HIS KEY, AND THE WHOLE REASON THIS SERVICE EXISTS. Never ours: a
+      # partner's box charging on our account would put his clients' money in
+      # our balance and our name on their statements.
+      BOARD_STRIPE_KEY: ${TOMSCODING_WL_STRIPE_KEY:-}
+      BOARD_STRIPE_PK: ${TOMSCODING_WL_STRIPE_PK:-}
+      BOARD_STRIPE_VERSION: ${TOMSCODING_BOARD_STRIPE_VERSION:-}
+      BOARD_DEAL_FEE_SECRET: ${TOMSCODING_WL_DEAL_FEE_SECRET:-}
+      # The skin. Every request here is his, so the hostname matches by
+      # definition — it is passed so the same code paths run unchanged.
+      BOARD_WHITELABEL_DOMAIN: ${TOMSCODING_WHITELABEL_DOMAIN:-}
+      BOARD_WHITELABEL_NAME: ${TOMSCODING_WHITELABEL_NAME:-}
+      BOARD_WHITELABEL_INK: ${TOMSCODING_WHITELABEL_INK:-}
+      BOARD_WHITELABEL_PAPER: ${TOMSCODING_WHITELABEL_PAPER:-}
+      BOARD_WALLET: ${TOMSCODING_WL_WALLET:-}
+      BOARD_WALLET_TEST_CONFIRM: ${TOMSCODING_WL_WALLET_TEST_CONFIRM:-}
+      BOARD_NOTES: "off"
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      TZ: ${TZ:-Asia/Shanghai}
+    volumes:
+      - board_wl_data:/data
+    expose:
+      - "8080"
+    networks:
+      - tomscoding
+    deploy:
+      resources:
+        limits:
+          memory: ${TOMSCODING_WL_MEMORY:-256m}
+    cpu_shares: ${TOMSCODING_WL_CPU_SHARES:-128}
+
   board-demo:
     logging: *logs
     build:
@@ -1671,6 +1750,7 @@ volumes:
   # The demo board's, and the whole point of it being a separate one. Nothing
   # in here is a real person, and nothing in board_data is reachable from the
   # container that mounts this.
+  board_wl_data:
   board_demo_data:
   # Who each product is shared with, and what has gone out. Shared between the
   # owner's seat and the partner seats rather than living in a project

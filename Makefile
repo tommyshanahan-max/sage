@@ -131,6 +131,39 @@ up: ## Build if needed and start everything (does NOT fetch — see 'deploy')
 	@# against two synthetic presets; the file that can be wrong tonight is this
 	@# one.
 	@python3 scripts/check-sites.py .env
+	@# AND CADDY'S OWN OPINION OF ITS OWN FILE, which check-sites.py does not
+	@# have: that one resolves addresses and finds collisions, both of which
+	@# it does well, and it parses none of the syntax around them.
+	@#
+	@# A CADDYFILE CADDY REFUSES IS NOT ONE BAD SITE. It will not start, and
+	@# every name on this box goes with it — the board, the shop, the seats,
+	@# the app's counter. The near-miss was a comment: these files take `#`
+	@# and a block was written with /* */, which reads fine to anybody who
+	@# writes code all day and is not Caddy syntax.
+	@#
+	@# The site files are bind-mounted, so the running container can read a
+	@# file that has just been pulled without reloading onto it. That is what
+	@# makes this possible before the reload rather than after.
+	@#
+	@# Quiet when it passes. Skipped, not failed, when caddy is not running —
+	@# a first install has no container yet and must still be able to deploy.
+	@$(COMPOSE) exec -T caddy caddy validate --config /etc/caddy/Caddyfile >/dev/null 2>&1 \
+	  && echo "caddy config ok" \
+	  || { $(COMPOSE) exec -T caddy true >/dev/null 2>&1 \
+	       && { echo "CADDY REFUSES THIS CONFIG — not deploying."; \
+	            echo "Its own words:"; \
+	            $(COMPOSE) exec -T caddy caddy validate --config /etc/caddy/Caddyfile 2>&1 | sed 's/^/    /'; \
+	            echo "Fix docker/Caddyfile or docker/sites/*.caddy. Nothing was changed."; \
+	            exit 1; } \
+	       || echo "note: caddy is not running, so its config was not checked"; }
+	@# THE SAME TRAP, ONE HOSTNAME OVER. A partner's name pointed at a
+	@# container that is not running is a certificate, a public address and a
+	@# 502 — and the person who finds it is his client, mid-payment.
+	@grep -qE '^TOMSCODING_WHITELABEL_DOMAIN=.+' .env && ! grep -q '^COMPOSE_PROFILES=.*board-wl' .env \
+	  && { echo "TOMSCODING_WHITELABEL_DOMAIN is set but 'board-wl' is not in COMPOSE_PROFILES."; \
+	       echo "That hostname would answer with a 502: a certificate, a public address,"; \
+	       echo "and nothing behind it. Add board-wl to COMPOSE_PROFILES, or clear the domain."; \
+	       exit 1; } || true
 	@grep -qE '^TOMSCODING_BOARD_DOMAIN=.+' .env && ! grep -q '^COMPOSE_PROFILES=.*board' .env \
 	  && { echo "TOMSCODING_BOARD_DOMAIN is set but 'board' is not in COMPOSE_PROFILES."; \
 	       echo "Caddy would answer that hostname with a 502: a certificate, a public"; \
@@ -1413,6 +1446,8 @@ whitelabel: ## The money screen in somebody else's name and colour: make whitela
 	  $(if $(filter command line,$(origin AT)),--at "$(AT)",) \
 	  $(if $(filter command line,$(origin ACCT)),--acct "$(ACCT)",) \
 	  $(if $(filter command line,$(origin PCT)),--pct "$(PCT)",) \
+	  $(if $(filter command line,$(origin KEY)),--key "$(KEY)",) \
+	  $(if $(filter command line,$(origin PK)),--pk "$(PK)",) \
 	  $(if $(filter command line,$(origin DOMAIN)),--domain "$(DOMAIN)",) \
 	  $(if $(filter command line,$(origin NAME)),--name "$(NAME)",) \
 	  $(if $(filter command line,$(origin INK)),--ink "$(INK)",) \

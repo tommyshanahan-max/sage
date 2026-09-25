@@ -64,7 +64,22 @@
 		reverse_proxy analytics:3000
 	}
 
+	# HIS OWN CONTAINER, NOT THE SHARED BOARD. It was board:8080 while this
+	# was a skin — his name and colour over our Stripe key. Our Stripe cannot
+	# do WeChat Pay and his probably can, and a charge uses the payment
+	# methods of the account it is raised on, so the only way to use his
+	# account today is to give him a container with his key in it. See the
+	# note over board-wl in docker-compose.yml.
+	#
+	# THE PROFILE HAS TO BE ON OR THIS IS A 502 WITH A CERTIFICATE IN FRONT
+	# OF IT. `make check` refuses a deploy where this hostname is set and
+	# board-wl is not in COMPOSE_PROFILES — the same guard the board itself
+	# has, for the same reason.
+	#
+	# A COMMENT HERE IS `#` AND NOTHING ELSE. This block was written with
+	# /* */ for ten minutes; Caddy does not accept it, and a Caddyfile it
+	# refuses is not one bad site, it is every site on this box down at once.
 	handle {
-		reverse_proxy board:8080
+		reverse_proxy board-wl:8080
 	}
 }
