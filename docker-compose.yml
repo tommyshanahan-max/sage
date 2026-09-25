@@ -1473,7 +1473,27 @@ services:
       context: ./post
     image: tomscoding-post:latest
     container_name: tomscoding-post
-    restart: unless-stopped
+    # NOT A SERVICE, AND restart: unless-stopped MADE IT LOOP FOR EVER.
+    #
+    # The image's own Dockerfile says it plainly — "No server. Nothing here
+    # listens: every entry point is `docker compose run` from the Makefile" —
+    # and its CMD prints help and exits 0. Declared with unless-stopped and
+    # started by `make up`, that is a container which prints help, exits,
+    # gets restarted, prints help, for ever. `docker ps` showed
+    # "Restarting (0) 3 seconds ago" and had done for days.
+    #
+    # THE COST WAS THE DISK. json-file logs had no cap, so a loop running
+    # every few seconds wrote 9.5G, / reached 98%, and `make up` could not
+    # build — silently, because ssh without -t buffers the output. That is an
+    # afternoon. The cap is now on every service above; this is the other
+    # half, and it is the half that stops the writing rather than bounding it.
+    #
+    # "no" rather than removing it from the file: every one of the ten
+    # Makefile targets that uses this reaches it with `--profile post run`,
+    # which needs the service to exist. It is created, it exits once, and it
+    # stays exited — which is what a command-line tool should look like in
+    # `docker ps -a`.
+    restart: "no"
     user: "1000:1000"
     environment:
       POST_DIR: /data
@@ -1534,7 +1554,27 @@ services:
       dockerfile: browser.Dockerfile
     image: tomscoding-post-browser:latest
     container_name: tomscoding-post-browser
-    restart: unless-stopped
+    # NOT A SERVICE, AND restart: unless-stopped MADE IT LOOP FOR EVER.
+    #
+    # The image's own Dockerfile says it plainly — "No server. Nothing here
+    # listens: every entry point is `docker compose run` from the Makefile" —
+    # and its CMD prints help and exits 0. Declared with unless-stopped and
+    # started by `make up`, that is a container which prints help, exits,
+    # gets restarted, prints help, for ever. `docker ps` showed
+    # "Restarting (0) 3 seconds ago" and had done for days.
+    #
+    # THE COST WAS THE DISK. json-file logs had no cap, so a loop running
+    # every few seconds wrote 9.5G, / reached 98%, and `make up` could not
+    # build — silently, because ssh without -t buffers the output. That is an
+    # afternoon. The cap is now on every service above; this is the other
+    # half, and it is the half that stops the writing rather than bounding it.
+    #
+    # "no" rather than removing it from the file: every one of the ten
+    # Makefile targets that uses this reaches it with `--profile post run`,
+    # which needs the service to exist. It is created, it exits once, and it
+    # stays exited — which is what a command-line tool should look like in
+    # `docker ps -a`.
+    restart: "no"
     user: "1000:1000"
     # Chromium's renderer wants more shared memory than Docker's 64MB default,
     # and starved it crashes the tab rather than saying so.

@@ -1216,9 +1216,18 @@ seventeen copies — a cap somebody has to remember to paste into each new
 service is a cap the eighteenth service will not have. **It applies when
 containers are recreated, so it lands on the next deploy after this one.**
 
-**Still open:** `post` and `post-browser` are still restart-looping. Capped
-logs mean they can no longer fill the disk, but nothing has looked at *why*
-they exit.
+**And why they were looping, which is the other half.** `post` and
+`post-browser` are not servers. `post/Dockerfile` says so in as many words —
+"No server. Nothing here listens: every entry point is `docker compose run`
+from the Makefile" — and both CMDs print help and exit 0. Declared
+`restart: unless-stopped` and started by `make up`, that is a container which
+prints help, exits, restarts, prints help, for ever. It had been doing that
+for days, and it is where the 9.5G came from.
+
+Both are `restart: "no"` now. They are still in the file because all ten
+Makefile targets reach them with `--profile post run`, which needs the
+service to exist — they are created, exit once, and stay exited, which is
+what a command-line tool should look like in `docker ps -a`.
 
 **And use `ssh -t`.** Every deploy command handed over in this session lacked
 it, which is the whole reason a working build looked like a hang.
