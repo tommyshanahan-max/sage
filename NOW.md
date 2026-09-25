@@ -1471,6 +1471,86 @@ attempts in the list: four blocked on 25 Sep, five cancelled on 24 Sep.
 
 Unresolved. It is the last unknown on the Alipay path and one click answers it.
 
+### WHAT ALGOTECH ACTUALLY SELLS — 26 Sep, and it stops the portal
+
+Read their own site before building anything else for Daniel.
+**algotechcapital.com**, and the page that settles it is *Connecting your
+account*:
+
+> "Now that you have **deposited money in your PAMM investor account**…
+> Enter your PAMM MT4 details and **the amount you want to invest**."
+
+| | |
+|---|---|
+| **The broker** | **Vantage Markets** — real, regulated, holds custody |
+| **The PAMM manager** | `pamm.vantagemarkets.com/app/join/983/dfidj` — account 983, handle dfidj. Daniel |
+| **The client does** | deposits capital, picks an amount to invest |
+| **Priced products** | **two**, both crypto bots, **$129** |
+| **Everything else** | no price. "Minimum participation €500 / €1,000" and OPEN ACCOUNT |
+
+So the site is two businesses in one skin: a small software shop, and a PAMM.
+
+**HE IS PROBABLY NOT DOING ANYTHING ILLEGAL.** Custody is at Vantage, he holds
+nothing, and a PAMM manager is an ordinary role. An earlier draft of this
+entry called it an unregistered scheme and that was too strong. What is worth
+him answering is the promotion, not the custody: *"up to 30% per month"*,
+*"8% per week"*, *"1% to 1.5% daily"* on a public page, with no regulator or
+licence number anywhere on the site, and testimonials from unidentifiable
+people all quoting the same figure.
+
+**THE BLOCKER IS ON THE PAYER'S SIDE AND HAS NOTHING TO DO WITH HIM.**
+
+- China's USD 50,000 individual quota is a **current account** facility.
+  Overseas **securities investment** is capital account — excluded, and named
+  as excluded on the declaration form a bank makes you sign.
+- Alipay's and WeChat Pay's merchant terms exclude funding investment and
+  trading accounts, whoever holds the money.
+
+He can be entirely clean in Luxembourg and the payment still cannot lawfully
+be made from Shanghai. Two jurisdictions, two questions, and only one of them
+is about him.
+
+**SO THERE ARE ONLY TWO THINGS A PORTAL COULD PROCESS:**
+
+| | |
+|---|---|
+| the **$129** bots | an ordinary product sale. Clean, and 0.5% of it is **65 cents** |
+| the **PAMM deposits** | the real money, and the prohibited one |
+
+**RECOMMENDATION, 26 Sep: do not build the portal.** Not the embed, not the
+multi-tenant version. The reason there is no easy rail for a Chinese client to
+fund an offshore leveraged account is that China closed it deliberately — the
+value of the product IS the prohibition.
+
+**Nothing built this week is wasted.** The card button, direct charges, the
+white label and Connect all work for what they were made for: ordinary goods
+and services sold into China. That is the shop and Dealio, it is legal, and
+plenty of people want it. Daniel is not one of them.
+
+**STILL UNVERIFIED, AND IT IS THE ONE ACTION:** nobody has asked Alipay or
+WeChat directly. Their merchant terms are the answer that settles this, and
+they answer a merchant support ticket. Everything above about the wallets and
+SAFE is from training, not from asking — and five wrong Alipay diagnoses in
+one night is the reason that distinction is written down.
+
+### The affiliate revenue pyramid — a demo, 26 Sep
+
+A rotatable 3D pyramid: each layer a tier of the affiliate tree, each tile one
+affiliate, height = what came through their portal, hover for the name.
+Published as an artifact. **The data in it is invented** — twenty-three
+plausible rows to show the form.
+
+The idea worth keeping, whoever it is ever built for: **the viewer is the
+vertex.** Same page rooted at whoever opens it — we see everything, an
+affiliate sees only what is beneath them. It is also the retention mechanism:
+once somebody's downline is a shape they look at each morning, leaving costs
+them the view of their own business.
+
+Hand-drawn projection, no library. The CDN is blocked from the agent
+container, so a three.js version could never have been looked at before being
+handed over. Wiring it to `lib/books.js` and the real ledger is the next step
+and is small.
+
 ### CONNECT IS APPROVED — 26 Sep
 
 Stripe, by email, dated 25 Sep and found at 1:25am on the 26th:
