@@ -529,6 +529,12 @@ async function page(file, req, res, next, extra = null) {
       .split("{{SKIN}}").join(isWhitelabel(req) ? "whitelabel" : "")
       .split("{{SKINCSS}}").join(isWhitelabel(req) ? LABEL_CSS : "")
       .split("{{LABEL}}").join(isWhitelabel(req) ? LABEL_TAG : "")
+      /* WHETHER THE STRIPE ROW CAN DO ANYTHING, decided here because the
+         screen has to draw it before any fetch could answer — and because a
+         row that is tappable and goes nowhere is worse than a row that says
+         why. Tapping it bounced through /china/api/link and straight back to
+         the screen it was tapped on: a loop with nothing said. */
+      .split("{{CANLINK}}").join(stripe.canLink() ? "1" : "")
       /* WHETHER THIS IS THE APP, for the pages that have to draw a nav bar
          before any fetch could answer. Same reasoning as {{DEALIO}} above,
          and the same detection as inApp() further down — see the long note

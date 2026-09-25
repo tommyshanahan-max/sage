@@ -7341,6 +7341,11 @@ export const STRINGS = {
   "wl.pickBankSub":    ["Same or next working day", "当天或次个工作日"],
   "wl.pickStripe":     ["My Stripe account", "我的 Stripe 账户"],
   "wl.pickStripeSub":  ["The one you already have", "用你现有的账户"],
+  /* WHEN IT CANNOT YET. Not "error", not "unavailable" — it is a thing that
+     is coming and the person has done nothing wrong. Chinese written rather
+     than carried across: 还没开通 is what a Chinese product says about a
+     feature that is not switched on yet. */
+  "wl.pickStripeOff":  ["Not switched on yet", "还没开通"],
   "wl.accountName":    ["Name on the account", "开户人姓名"],
   "wl.asOnYourId":     ["As on your ID", "与身份证一致"],
   /* THE ABN, AND WHY IT IS NOT OPTIONAL. Without one the payer must withhold

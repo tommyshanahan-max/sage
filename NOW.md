@@ -1194,6 +1194,24 @@ have a Stripe account with trading history, and would you run a Connect
 platform on it". Their deck is tax structuring — SA, SARL, SPF, SCSp, RAIF —
 and contains no payments authorisation.
 
+### The Stripe row was a dead end, and my first fix made it worse — 25 Sep
+
+Tapping **My Stripe account** went to `/china/api/link`, found no
+`BOARD_STRIPE_CLIENT_ID`, and bounced to `/china/connect?e=nolink` — our
+brochure's page, with our email on it. Sending that landing home instead
+(above) turned it into a loop: tap the row, arrive back on the row, nothing
+said. **Traded a wrong page for silence, which is worse.**
+
+The row now says so. `{{CANLINK}}` is substituted by `page()` from
+`stripe.canLink()`, because the screen has to draw before any fetch could
+answer. Without a client id the row is a plain `div` — no chevron, not
+tappable — reading **"Not switched on yet"** (还没开通). With one it is a
+button again, reading "The one you already have". Both states checked on a
+real board.
+
+It stays on the screen rather than being hidden: the answer exists and is
+coming, and a row that quietly disappears teaches nobody anything.
+
 ### Two more holes in the same allowlist — 25 Sep
 
 Pressing Back out of the Stripe flow on `europay.paydealio.com` landed on

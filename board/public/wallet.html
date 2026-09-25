@@ -790,6 +790,10 @@ function fieldHint(key, region) {
  * id on the box that route bounces to /china/connect?e=nolink, which says so
  * on the screen; a dead end that explains itself beats a button that does
  * nothing. */
+/* Substituted by page() from stripe.canLink() — see the note beside
+   {{CANLINK}} in server.js. A string, because that is what a token is. */
+const CANLINK = "{{CANLINK}}" === "1";
+
 function payoutPick(onBank) {
   /* NO LINE ABOVE THE TWO ROWS. It read "We send your money straight to your
      bank" — which answers the question the rows are asking, and names only
@@ -798,8 +802,15 @@ function payoutPick(onBank) {
   return frag(
     h("div", { class: "list" },
       row({ title: T("wl.pickBank"), sub: T("wl.pickBankSub"), onclick: onBank }),
-      row({ title: T("wl.pickStripe"), sub: T("wl.pickStripeSub"),
-        onclick: () => { location.href = "/china/api/link"; } })),
+      /* OFF UNTIL STRIPE CAN ANSWER. Without BOARD_STRIPE_CLIENT_ID the
+         connect route has nowhere to send anybody, so tapping this went to
+         /china/api/link and came back here — the same screen, no message,
+         a loop. The row stays on the screen because the answer exists and
+         is coming; it says so instead of pretending. */
+      CANLINK
+        ? row({ title: T("wl.pickStripe"), sub: T("wl.pickStripeSub"),
+            onclick: () => { location.href = "/china/api/link"; } })
+        : row({ title: T("wl.pickStripe"), sub: T("wl.pickStripeOff") })),
   );
 }
 
