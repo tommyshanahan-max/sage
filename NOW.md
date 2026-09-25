@@ -1317,6 +1317,32 @@ Daniel's own domain with **Tom as a first-level merchant under Daniel** —
 which inverts who applies to Stripe, and may be the easier door given the
 20 Sep decline.
 
+### ALIPAY IS AVAILABLE. WECHAT PAY IS INELIGIBLE. THEY ARE NOT THE SAME — 26 Sep
+
+Written at the top of its own entry because it was got wrong twice in one
+night, in chat, against a file that has always said it correctly. From
+Stripe's own API, not a screen:
+
+| | |
+|---|---|
+| **Alipay** | **available** on the live account |
+| **WeChat Pay** | **ineligible** — a settled no for this business |
+| charges, payouts | enabled |
+
+So "the wallets do not work" is two different sentences with two different
+causes, and treating them as one sends every investigation down the wrong
+path. Alipay's problems have been about what happens AFTER it is offered —
+a dead mock code, an interstitial, and now a block. WeChat Pay's problem is
+that Stripe will not turn it on.
+
+**And the block is not the capability.** `pi_3UJabdJItwOUeslJ0FiqLf8l`, 25 Sep
+11:00pm: $6.51 AUD, Alipay, **Risk level Normal**, "Stripe blocked this
+payment", instantly. Normal risk rules out Radar's fraud score — so it is a
+rule, not a score, and **View risk controls** on that payment names it. Nine
+attempts in the list: four blocked on 25 Sep, five cancelled on 24 Sep.
+
+Unresolved. It is the last unknown on the Alipay path and one click answers it.
+
 ### The Stripe row is blocked on a platform profile — 25 Sep
 
 Chased the client id for half an hour. Stripe's own tooltip on the field
