@@ -2447,7 +2447,7 @@ claude: ## Run the Claude Code CLI in the workspace
 password: ## Generate a strong password for TOMSCODING_PASSWORD
 	openssl rand -base64 24
 
-save: ## Copy the board and the ledger out to ./backups — the two that cannot be rebuilt
+save: ## Copy the board, the ledger and any partner board out to ./backups
 	@# WHAT IS ACTUALLY IRREPLACEABLE ON THIS BOX. Everything else here is in
 	@# git or can be rebuilt from it. These two are not: board.json holds the
 	@# waiting list — names and the one way each of those people gave to reach
@@ -2466,10 +2466,18 @@ save: ## Copy the board and the ledger out to ./backups — the two that cannot 
 	@# file, not from the directory this is checked out into, so they are the
 	@# same whether the clone is called tc or sage.
 	mkdir -p backups
+	@# AND THE PARTNER'S BOARD, which this did not carry and had to.
+	@# board_wl_data is a partner's own members, rooms and payment records,
+	@# on a volume of its own because his box is meant to know nothing about
+	@# ours. It was created the night board-wl first came up and nothing
+	@# saved it — so the one volume belonging to somebody who is not Tom was
+	@# the one volume with no copy. Added the moment it stopped being
+	@# hypothetical that a partner's business would sit on this box.
 	@stamp=$$(date +%Y%m%d-%H%M%S); \
 	  docker run --rm -v tomscoding_board_data:/board:ro -v tomscoding_cfm_data:/cfm:ro \
+	    -v tomscoding_board_wl_data:/wl:ro \
 	    -v "$$PWD/backups:/out" alpine:3 \
-	    sh -c 'tar czf /out/data-'"$$stamp"'.tar.gz -C / board cfm' \
+	    sh -c 'tar czf /out/data-'"$$stamp"'.tar.gz -C / board cfm wl' \
 	  && echo "wrote backups/data-$$stamp.tar.gz"
 	@# And what went into it. Counted off the live volume, which is what was
 	@# just copied — see data-count.mjs for why this is printed at all.
@@ -2496,11 +2504,17 @@ restore: ## Put a saved copy back: make restore FILE=backups/data-....tar.gz YES
 	@# The live copy first, always. Restoring the wrong file is a mistake
 	@# somebody makes once, and it should not be the last thing that happens.
 	$(MAKE) save
-	$(COMPOSE) stop board cfm
+	$(COMPOSE) stop board cfm board-wl 2>/dev/null || $(COMPOSE) stop board cfm
+	@# THE PARTNER'S VOLUME IS ONLY TOUCHED BY AN ARCHIVE THAT HOLDS IT.
+	@# Archives written before `make save` learned about board_wl_data have no
+	@# wl/ in them, and wiping it on the way to restoring one of those would
+	@# delete a partner's board to fix ours, with nothing to put back.
 	docker run --rm -v tomscoding_board_data:/board -v tomscoding_cfm_data:/cfm \
+	  -v tomscoding_board_wl_data:/wl \
 	  -v "$(CURDIR)/$(FILE):/in.tar.gz:ro" alpine:3 \
-	  sh -c 'rm -rf /board/* /cfm/* && tar xzf /in.tar.gz -C /'
-	$(COMPOSE) start board cfm
+	  sh -c 'tar tzf /in.tar.gz | grep -q "^wl/" && rm -rf /wl/*; \
+	         rm -rf /board/* /cfm/*; tar xzf /in.tar.gz -C /'
+	$(COMPOSE) start board cfm board-wl 2>/dev/null || $(COMPOSE) start board cfm
 	@rm -rf backups/.peek
 	@echo "Back. Look at the queue on the site before you do anything else."
 
