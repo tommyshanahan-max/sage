@@ -46,6 +46,7 @@
 // it costs one click to find out.
 const KEY = (process.env.BOARD_STRIPE_KEY || "").trim();
 const CLIENT_ID = (process.env.BOARD_STRIPE_CLIENT_ID || "").trim();
+const DIRECT = (process.env.BOARD_STRIPE_DIRECT || "").trim();
 const VERSION = (process.env.BOARD_STRIPE_VERSION || "").trim();
 
 const pad = (s) => (s + " ".repeat(20)).slice(0, 20);
@@ -91,9 +92,24 @@ line("charges", me.json.charges_enabled ? "on" : "OFF — this account cannot ta
    platform is refused here, and the refusal names itself. Nothing is listed
    for a platform with no connected accounts either, which is the expected
    answer today and reads as success, not emptiness. */
-const conn = await get("/accounts?limit=1");
+/* TEN, AND THEIR IDS. It asked for one and printed "accounts already
+   linked", which is the fact and not the thing anybody came for: the next
+   step after somebody authorises is writing their acct_ into
+   BOARD_STRIPE_DIRECT, and that id was only readable off a dashboard page —
+   a place on a screen, at the end of a flow that is otherwise commands. */
+const conn = await get("/accounts?limit=10");
 if (conn.ok) {
-  line("connect", `on — ${conn.json.data.length ? "accounts already linked" : "no accounts linked yet"}`);
+  const rows = conn.json.data || [];
+  line("connect", `on — ${rows.length ? rows.length + " linked" : "no accounts linked yet"}`);
+  for (const a of rows) {
+    /* Whose it is, in whatever the account chose to be called. An account
+       mid-onboarding has none of these and is still the row somebody is
+       waiting on, so it says so rather than printing an empty column. */
+    const who = a.business_profile?.name || a.settings?.dashboard?.display_name
+      || a.email || "(not named yet)";
+    line("", `${a.id}  ${a.country || "?"}  ${who}`
+      + (a.charges_enabled ? "" : "  — cannot charge yet"));
+  }
 } else {
   line("connect", `OFF — ${conn.json?.error?.message || conn.status}`);
 }
@@ -110,6 +126,20 @@ if (!CLIENT_ID) {
 }
 
 console.log("");
+
+/* AND THE COMMAND, WITH THE ID ALREADY IN IT. One linked account and nothing
+   in BOARD_STRIPE_DIRECT is the exact state between "he authorised" and "the
+   charge is his", and it is the state that looks finished and is not: the
+   report still reads OUR name on the statement, OUR chargebacks, truthfully.
+   So this prints the line that ends it rather than describing it. */
+if (conn.ok && (conn.json.data || []).length && !DIRECT) {
+  const first = conn.json.data[0];
+  console.log("  Linked, but his charges are still OURS — our name on the");
+  console.log("  statement, our chargebacks. This makes them his:");
+  console.log("");
+  console.log(`      make whitelabel ACCT="${first.id}"`);
+  console.log("");
+}
 
 if (!conn.ok) {
   console.log("  Switch Connect on first:");
