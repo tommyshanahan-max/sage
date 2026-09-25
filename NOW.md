@@ -1248,6 +1248,49 @@ described a transfer that does not happen.
 A bank account already saved is kept, so switching back is not retyping a wire.
 Three tests cover it; 17 across both suites.
 
+### The Stripe row is blocked on a platform profile — 25 Sep
+
+Chased the client id for half an hour. Stripe's own tooltip on the field
+settles it:
+
+> To gain access to your live client ID, **complete the platform profile**. If
+> you've already completed your platform profile, it may still be under review.
+
+**So it is an application, and it is reviewed.** Not a setting.
+
+What IS established, from `make whitelabel` against the live key:
+
+| | |
+|---|---|
+| key | LIVE |
+| account | `acct_1UIVjEJItwOUeslJ` AU |
+| charges | on |
+| **connect** | **on** — no accounts linked yet |
+| connect a partner | no — `BOARD_STRIPE_CLIENT_ID` is not set |
+
+Connect being on was the open question all afternoon; it is answered. The
+redirect URI `https://europay.paydealio.com/china/linked` is registered. The
+"Enable OAuth" toggle stays grey until the profile clears — the URI was not
+the blocker, which is what I guessed first and was wrong about.
+
+**Three answers in that profile decide what is buildable**, and two of them
+would quietly undo work already done:
+
+- **Account type → Standard.** Daniel has his own Stripe login. Anything else
+  and OAuth is not the mechanism.
+- **Loss liability → the connected account.** This is the direct-charge
+  choice. Answering "platform" puts his chargebacks back on us by ticking a
+  box.
+- **Connected account countries → include Luxembourg.** Where the AU platform
+  → LU account question finally gets asked.
+
+Tom has not started it and said so. **Nothing can connect until it clears**,
+and "Not switched on yet" on that row is now literally true rather than a
+placeholder.
+
+Demo-able tonight without it: the white label, his name and colour, the bank
+payout, the two-answer screen, the affiliates concept. Not a live connect.
+
 ### 0.5% for a partner, not 2% and not the 5% I drew — 25 Sep
 
 `store.FEE_PCT` is 2 and is right for the board: a member paid a few thousand
