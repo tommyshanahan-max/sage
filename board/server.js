@@ -385,6 +385,75 @@ const isDealioHost = (req) =>
   DEALIO_HOSTS.size > 0
   && DEALIO_HOSTS.has(String(req.get("host") || "").toLowerCase().split(":")[0]);
 
+/* A PARTNER'S OWN NAME, WEARING A PARTNER'S OWN FACE.
+ *
+ * Daniel is a broker in Luxembourg. He wanted the money screen as a page on
+ * his own site, and the mockup that got agreed was not a new screen — it was
+ * this screen, in his navy, with his name on it, sitting in his site's
+ * chrome. So this is a skin and a hostname, not a fork: one more value of
+ * the same switch that already tells this container which product a reader
+ * asked for.
+ *
+ * THE SAME SHAPE AS DEALIO_HOSTS ABOVE, deliberately, including the www.
+ * Somebody will type it and Caddy's redirect only catches the apex-bound
+ * ones.
+ *
+ * WHAT A PARTNER ACTUALLY SUPPLIES IS ONE COLOUR. The mockup declared a navy
+ * and a gold and used the gold twice — on his logo and on his nav underline,
+ * both of which live on HIS site, not on this screen. The screen itself was
+ * navy, white and the neutrals it already had. So the skin takes his deep
+ * colour, optionally his paper, and derives the rest. A partner asked for
+ * ten hex codes is a partner who does not reply. */
+const PARTNER_HOSTS = (() => {
+  const d = String(process.env.BOARD_PARTNER_DOMAIN || "").trim().toLowerCase();
+  return d ? new Set([d, "www." + d]) : new Set();
+})();
+const isPartnerHost = (req) =>
+  PARTNER_HOSTS.size > 0
+  && PARTNER_HOSTS.has(String(req.get("host") || "").toLowerCase().split(":")[0]);
+
+/* A COLOUR OUT OF THE ENVIRONMENT GOES INTO A <style> BLOCK, which makes it
+   the one value on this page that could close the block and open a script.
+   So nothing but a hex colour is ever let through: three or six hex digits
+   after a hash, and anything else — including an empty string, a CSS
+   function, a named colour — comes back null and the skin falls back to the
+   board's own palette rather than to a half-written rule. */
+const hexColour = (v) => {
+  const t = String(v || "").trim();
+  return /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(t) ? t : null;
+};
+
+const PARTNER_NAME = String(process.env.BOARD_PARTNER_NAME || "").trim().slice(0, 40);
+const PARTNER_INK = hexColour(process.env.BOARD_PARTNER_INK);
+const PARTNER_PAPER = hexColour(process.env.BOARD_PARTNER_PAPER);
+
+/* THE SKIN, BUILT ONCE. Every value in it is either a validated hex colour
+   or a literal written here, so there is nothing in the string a hostname or
+   an env var could have put there.
+ *
+ * It overrides the board's light palette rather than replacing it — that
+ * block already runs on this host, because a partner's name is not Dealio's
+ * name, and most of what it sets is right. What differs is the deep colour
+ * (the top block and the one solid button) and, if he gave one, the paper.
+ * Everything a partner did not name keeps a value that was chosen by
+ * somebody looking at the screen. */
+const PARTNER_CSS = PARTNER_INK
+  ? `html[data-skin="partner"]{`
+    + (PARTNER_PAPER ? `--bg:${PARTNER_PAPER};` : "")
+    + `--acc:${PARTNER_INK};--accink:#FFFFFF;`
+    + `--top:${PARTNER_INK};--topBtnInk:${PARTNER_INK};`
+    + `--topInk:#EEF1F7;--topDim:#93A0B8;--topBtn:#FFFFFF;`
+    + `--topLine:rgba(255,255,255,.26);--topAcc:#EEF1F7;`
+    + `}`
+  : "";
+
+/* His name, for the tab and the line above the figure. Escaped because it is
+   an operator-set string printed into HTML, and the cost of being wrong once
+   is not worth the two lines saved. */
+const PARTNER_TAG = PARTNER_NAME
+  .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+  .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
 async function page(file, req, res, next, extra = null) {
   try {
     if (!PAGES.has(file)) PAGES.set(file, await readFile("public/" + file, "utf8"));
@@ -413,6 +482,13 @@ async function page(file, req, res, next, extra = null) {
          where somebody is going, which is before any fetch could answer — so
          it is substituted here rather than asked for. */
       .split("{{DEALIO}}").join(isDealioHost(req) ? "1" : "")
+      /* WHOSE FACE THIS SCREEN WEARS, for the same reason as {{DEALIO}}: the
+         palette has to be settled before the first paint, and a fetch cannot
+         answer before the first paint. Empty on every name but a partner's,
+         which is every name today. */
+      .split("{{SKIN}}").join(isPartnerHost(req) ? "partner" : "")
+      .split("{{SKINCSS}}").join(isPartnerHost(req) ? PARTNER_CSS : "")
+      .split("{{PARTNER}}").join(isPartnerHost(req) ? PARTNER_TAG : "")
       /* WHETHER THIS IS THE APP, for the pages that have to draw a nav bar
          before any fetch could answer. Same reasoning as {{DEALIO}} above,
          and the same detection as inApp() further down — see the long note
@@ -997,6 +1073,12 @@ app.get("/", (req, res, next) => {
      somebody who has never heard of it — what it is, what it costs, who runs
      it — and the app itself is a tap away at /dealio. */
   if (isDealioHost(req)) return page("pay.html", req, res, next);
+  /* A PARTNER'S NAME OPENS ON THE MONEY, not on the pitch. Dealio's own name
+     gets pay.html because somebody arriving there has never heard of it and
+     needs telling what it is. Daniel's clients arrive from a link on his own
+     site, having already read his: a second front page is a second thing to
+     get past. So "/" here is the screen itself. */
+  if (isPartnerHost(req)) return page("dealio.html", req, res, next);
   return page(ROOT_IS_BOARD ? "index.html" : "landing.html", req, res, next);
 });
 /* THE NUMBERS, ON A PHONE.

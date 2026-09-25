@@ -1196,11 +1196,29 @@ and contains no payments authorisation.
 
 ### A partner on his own name, paid into his own Stripe — built 25 Sep, not deployed
 
-`make partner`. My server, my code, his domain, his Stripe. Both halves
-already existed and neither was reachable without editing `.env` over SSH:
-the OAuth pair in `board/lib/stripe.js` (`linkUrl`/`linkFinish`, which
-connects an account somebody ALREADY has), and a hostname served by this same
-board container (`docker/sites/board-partner.caddy`).
+`make partner`. My server, my code, his domain, his colour, his Stripe.
+Three halves, and the third is the one that was actually the mockup:
+
+- **his name** — a hostname on this same board container
+  (`docker/sites/board-partner.caddy`), the third copy of `board-also`'s shape
+- **his face** — the money screen in his navy, his name in the tab and over
+  the figure, no board bar, and none of Dealio's front page. `data-skin` on
+  `<html>`, a palette block built in `server.js` from validated hex, the same
+  mechanism `data-dealio` has used since there were two products
+- **his Stripe** — the OAuth pair in `board/lib/stripe.js`
+  (`linkUrl`/`linkFinish`, which connects an account somebody ALREADY has)
+
+Looked at on all three skins before it was committed: his, Dealio's dark one
+and the board's light one. One bug found that way — `.bigwhere` was
+`var(--ink)` on `var(--bg)`, which is the same near-black as the top block on
+both of our own skins and is two different darks fighting on his. It is
+`var(--top)` now, which is the deep colour by definition.
+
+**The face is one colour, and that is from reading the mockup rather than
+guessing.** It declared a navy and a gold; the gold appears twice, on his logo
+and his nav underline, both of which live on HIS site. The money screen in it
+was navy, white and the neutrals it already had. A partner asked for ten hex
+codes is a partner who does not reply.
 
 **He never sends a secret key, and that is structural rather than polite.**
 One `BOARD_STRIPE_KEY` serves this whole container — the board, both its

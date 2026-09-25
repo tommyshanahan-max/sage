@@ -4,7 +4,11 @@
      two products to greet people for. On paydealio.com it is 1 and this page
      wears its own face. Reached from the board's Money tab it is empty, and
      the palette below turns into the board's. -->
-<html lang="en" data-dealio="{{DEALIO}}">
+<!-- AND WHOSE FACE, when a partner serves this screen on a name of his
+     own. Same reasoning as data-dealio above: settled before the first
+     paint, because a fetch cannot answer before the first paint. Both are
+     empty on every other host, which is every host today. -->
+<html lang="en" data-dealio="{{DEALIO}}" data-skin="{{SKIN}}" data-partner="{{PARTNER}}">
 <head>
 <meta charset="utf-8">
 {{DEMO}}
@@ -64,6 +68,21 @@
     --topBtn:#FFFFFF; --topBtnInk:#141A27; --topLine:rgba(255,255,255,.26);
     --topAcc:#8FB0FF;
   }
+  /* A PARTNER'S OWN COLOUR, BUILT IN server.js AND SUBSTITUTED HERE.
+   *
+   * Empty on every host but his, so this is one blank line in the stylesheet
+   * for everybody else. It comes after the block above and overrides part of
+   * it: his name is not Dealio's name, so that light palette already runs
+   * here and most of what it sets is right. What a partner changes is the
+   * deep colour — the top block and the one solid button — and, if he gave
+   * one, the paper under it.
+   *
+   * NOT WRITTEN OUT AS LITERALS HERE because the values belong to whoever is
+   * on the other end of the deal, and a second partner must not be a commit.
+   * Every colour in that string is validated as a hex code before it is built
+   * — see hexColour in server.js, and the note there about what a <style>
+   * block will do with an env var nobody checked. */
+  {{SKINCSS}}
   /* The bar itself, in whichever palette is in force — it is drawn from the
      same ten variables, so it is dark on one host and light on the other
      without a second rule. Hidden entirely on Dealio's own domain. */
@@ -77,10 +96,14 @@
   .boardbar a.on{color:var(--acc)}
   .boardbar svg{width:1.35rem;height:1.35rem;fill:none;stroke:currentColor;
     stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-  html[data-dealio="1"] .boardbar{display:none}
+  /* And gone on a partner's name too, for a stronger reason than on
+     Dealio's: his clients are not members of a private board and must not be
+     shown a row of tabs into one. */
+  html[data-dealio="1"] .boardbar,
+  html[data-skin="partner"] .boardbar{display:none}
   /* And the page pays for it, or the last row sits under it — the same
      mistake the board's own deck made and had measured out of it today. */
-  html:not([data-dealio="1"]) body{padding-bottom:5.5rem}
+  html:not([data-dealio="1"]):not([data-skin="partner"]) body{padding-bottom:5.5rem}
   *{box-sizing:border-box}
   html,body{margin:0;background:var(--bg);color:var(--ink)}
   body{font-family:var(--sans);font-size:16px;line-height:1.5;
@@ -268,8 +291,15 @@
   .pills button:only-child{grid-column:1/-1}
   /* THE ONE QUESTION, AT THE SIZE OF THE QUESTION. Full width, at the foot,
      under everything it is the answer to. */
+  /* THE DEEP COLOUR, NOT THE TEXT COLOUR. It was var(--ink) on var(--bg),
+     which is the same thing on both of our own skins — the board's ink and
+     its top block are two near-blacks a hair apart — and is two different
+     darks fighting on a partner's, where the top block is his navy and the
+     ink is still ours. --top IS the deep colour by definition, so this now
+     matches the block above it on every skin including the dark one, where
+     both are the light end of the palette. */
   .bigwhere{display:block;margin:1.4rem 0 .4rem;padding:1.05rem 1rem;
-    border-radius:999px;background:var(--ink);color:var(--bg);
+    border-radius:999px;background:var(--top);color:var(--topInk);
     font-weight:700;font-size:1rem;text-align:center;text-decoration:none}
   /* A SMALL WINDOW WITH A FIGURE ON IT. Shut, it is one line: what it holds
      and how much. The figure is the answer most of the time; the list behind
@@ -802,7 +832,23 @@ async function shareOrCopy(text, btn, okKey) {
 
 function top() {
   const b = el("div", "top");
-  b.append(el("span", "dot"), el("span", "wm", "Dealio"));
+  /* WHOSE SCREEN THIS IS, and on a partner's name it is his. The word was a
+     constant here, which is the one thing a white label cannot have. */
+  const mark = document.documentElement.dataset.partner || "Dealio";
+  b.append(el("span", "dot"), el("span", "wm", mark));
+  /* The tab and the phone's own chrome, which are the two places a white
+     label leaks. The title is in the file as "Dealio" so the page has a name
+     before script runs; this corrects it where there is a better one. The
+     theme colour is read off the skin rather than passed again — whatever
+     --top resolves to IS the band the phone paints, so the two cannot drift
+     apart the way a second env var would. */
+  if (mark !== "Dealio") {
+    document.title = mark;
+    const top = getComputedStyle(document.documentElement)
+      .getPropertyValue("--top").trim();
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta && top) meta.setAttribute("content", top);
+  }
   const slot = el("span", "langslot");
   b.append(slot);
   /* SIGN IN LIVES IN THE BANNER, not across the whole first screen.
@@ -937,6 +983,15 @@ let FRONT = (() => {
     const q = new URL(location.href).searchParams;
     if (q.get("in") === "1") return false;
   } catch { }
+  /* EXCEPT ON A PARTNER'S OWN NAME, where the front page is not a landing
+     page — it is a sign-in with his name over it, because everything that
+     made this screen worth opening on belongs to us and does not belong on
+     his site. There is nothing there for a signed-in person to look at, and
+     the button that would take them past it said OPEN DEALIO, which is our
+     product's name on his domain: the one thing a white label cannot do.
+     So he lands on the money. Somebody signed out still meets signedOut()
+     through the STATE check in draw(). */
+  if (document.documentElement.dataset.partner) return false;
   return true;
 })();
 
@@ -949,7 +1004,11 @@ function paintBoardBar() {
      is, so the first version of this guard hid the words from the one skin
      that shows them. The attribute is what decides the bar either way. */
   const bar = document.getElementById("boardbar");
-  if (!bar || document.documentElement.getAttribute("data-dealio") === "1") return;
+  /* And on a partner's name, where the CSS has already taken the bar off the
+     screen — painting words into a hidden bar is work nobody sees, and a bar
+     of tabs into a private board is not his to show. */
+  if (!bar || document.documentElement.getAttribute("data-dealio") === "1"
+      || document.documentElement.dataset.partner) return;
   const say = (id, key) => { const e = document.getElementById(id); if (e) e.textContent = T(key); };
   say("bbnotes", "note.inbox");
   say("bbcards", "nav.cards");
@@ -1099,6 +1158,29 @@ function pad() {
  */
 function signedOut() {
   const box = el("div", "front");
+
+  /* NOT ON A PARTNER'S OWN NAME. Everything below this is Dealio selling
+     itself — the headline is our proposition, the card is a drawing of a
+     payer being asked for ¥2,400 by somebody called Tom, and the three facts
+     include OUR fee and OUR door ("invitation only"). All of it is right on
+     our name and all of it is wrong on his: his clients arrive from a link
+     on his own site, having already read his pitch, and a second one
+     underneath it selling a different company is the opposite of a white
+     label.
+     So his front page is his name and the way in. He is the only person who
+     signs in here — a client never reaches the root, they open a payment
+     link — so there is nothing else this screen has to do. */
+  const partner = document.documentElement.dataset.partner || "";
+  if (partner) {
+    box.append(el("h1", "hero", partner));
+    const inYet = Boolean(STATE && STATE.you);
+    const only = el("button", "go wide", T(inYet ? "dl.enterApp" : "dl.signIn"));
+    only.type = "button";
+    only.addEventListener("click", inYet ? () => { FRONT = false; draw(); } : signInSheet);
+    box.append(only);
+    root.append(box);
+    return;
+  }
 
   box.append(el("h1", "hero", T("dl.heroHead")));
   box.append(el("p", "herosub", T("dl.heroSub")));

@@ -908,6 +908,27 @@ services:
       # A code drawn by us, pointing at our own checkout. No provider needed.
       # NEVER set on a box taking real money — see the note in server.js.
       BOARD_DEALIO_DEMO: ${TOMSCODING_DEALIO_DEMO:-}
+      # A PARTNER'S OWN NAME, AND THE FACE THIS SCREEN WEARS ON IT.
+      #
+      # Daniel is a broker in Luxembourg: his hostname, his colour, his name,
+      # this code, this container. Same switch as DEALIO_DOMAIN above — one
+      # more value of "which product did this reader ask for" — rather than a
+      # second board.
+      #
+      # THE DOMAIN IS NAMED TWICE ON PURPOSE. Caddy needs it to answer the
+      # name at all (TOMSCODING_BOARD_PARTNER_DOMAIN in the caddy service);
+      # the board needs it to know which requests wear his face. Two
+      # containers, two environments, one value in .env feeding both.
+      #
+      # INK is his deep colour and is the whole skin: the top block and the
+      # one solid button. PAPER is optional and is the ground under it.
+      # Anything that is not a hex code is ignored and the board's own
+      # palette stands — see hexColour in server.js for why that check is not
+      # optional on a value that ends up inside a <style> block.
+      BOARD_PARTNER_DOMAIN: ${TOMSCODING_BOARD_PARTNER_DOMAIN:-}
+      BOARD_PARTNER_NAME: ${TOMSCODING_BOARD_PARTNER_NAME:-}
+      BOARD_PARTNER_INK: ${TOMSCODING_BOARD_PARTNER_INK:-}
+      BOARD_PARTNER_PAPER: ${TOMSCODING_BOARD_PARTNER_PAPER:-}
       # Without this the admin routes refuse everything, which is the safe
       # failure: a board nobody can moderate is worse than one nobody can post
       # to.

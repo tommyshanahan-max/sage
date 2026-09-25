@@ -1373,7 +1373,7 @@ pay-check: ## Can this board take a payment, and if not why: make pay-check
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/pay-check.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)"
 
-partner: ## A partner on his own name, paid into his own Stripe: make partner [ID="ca_..."] [DOMAIN="pay.his.lu"] [WHO="Daniel"]
+partner: ## A partner on his own name, in his own colour: make partner [ID="ca_..."] [DOMAIN="pay.his.lu"] [NAME="..."] [INK="#16233D"] [WHO="Daniel"]
 	@# THE ARRANGEMENT: my server, my code, his domain, his Stripe. Both
 	@# halves were already built and neither was reachable without editing
 	@# .env over SSH, which is the step that never gets done.
@@ -1385,6 +1385,15 @@ partner: ## A partner on his own name, paid into his own Stripe: make partner [I
 	@# lib/stripe.js connects the account he ALREADY has instead: his
 	@# balance, his bank, our fee off the top, and no secret in a chat.
 	@#
+	@# AND HIS FACE ON THE SCREEN, which is the half that was the mockup:
+	@# NAME is the word over the figure and in the tab, INK is his deep
+	@# colour and is the whole skin — the top block and the one solid
+	@# button — and PAPER is the ground under it if he named one. One
+	@# colour rather than ten because the mockup's own second colour was
+	@# used twice, both times on his site's chrome and never on this
+	@# screen. A partner asked for ten hex codes is a partner who does not
+	@# reply.
+	@#
 	@# Run it with nothing and it says what is missing and where to get it.
 	@#
 	@# ONLY FROM THE COMMAND LINE, the same as airwallex-keys: make imports
@@ -1394,6 +1403,9 @@ partner: ## A partner on his own name, paid into his own Stripe: make partner [I
 	@bash scripts/partner.sh \
 	  $(if $(filter command line,$(origin ID)),--id "$(ID)",) \
 	  $(if $(filter command line,$(origin DOMAIN)),--domain "$(DOMAIN)",) \
+	  $(if $(filter command line,$(origin NAME)),--name "$(NAME)",) \
+	  $(if $(filter command line,$(origin INK)),--ink "$(INK)",) \
+	  $(if $(filter command line,$(origin PAPER)),--paper "$(PAPER)",) \
 	  $(if $(filter command line,$(origin WHO)),--who "$(WHO)",)
 
 dealsheet: ## An example deal in a real room: make dealsheet WHO="Tom" WITH="Christopher" [OFF=1]

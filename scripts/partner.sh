@@ -4,11 +4,13 @@
 #   make partner                                  where this stands, asked of Stripe
 #   make partner ID="ca_…"                        switch the connect button on
 #   make partner DOMAIN="pay.his-name.lu"         give him his own hostname
+#   make partner NAME="Daniel Brokerage" INK="#16233D"    put his face on it
 #   make partner WHO="Daniel"                     the message to send him
 #
 # All of them compose, so the whole thing is one line:
 #
-#   make partner ID="ca_…" DOMAIN="pay.his-name.lu" WHO="Daniel"
+#   make partner ID="ca_…" DOMAIN="pay.his-name.lu" \
+#     NAME="Daniel Brokerage" INK="#16233D" PAPER="#F7F7F5" WHO="Daniel"
 #
 # WHAT IT IS FOR. Daniel is a broker in Luxembourg. He wants the money screen
 # as a page on his own site, the money landing in the Stripe account he
@@ -21,6 +23,11 @@
 #   the name half     docker/sites/board-partner.caddy — his hostname, this
 #                     container. Needs TOMSCODING_BOARD_PARTNER_DOMAIN and a
 #                     DNS record he sets himself.
+#   the face half     the money screen in his colour, with his name on it and
+#                     nothing of ours — the mockup that got agreed. It is one
+#                     deep colour, because that is what the mockup actually
+#                     used: its gold appeared twice, both times on HIS site's
+#                     chrome, never on this screen.
 #
 # HE NEVER SENDS A SECRET KEY, and that is the point rather than a nicety.
 # One BOARD_STRIPE_KEY serves this whole container — the board, both its
@@ -37,11 +44,17 @@ set -euo pipefail
 
 ID=""
 DOMAIN=""
+NAME=""
+INK=""
+PAPER=""
 WHO=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --id)     ID="${2:-}";     shift 2 ;;
     --domain) DOMAIN="${2:-}"; shift 2 ;;
+    --name)   NAME="${2:-}";   shift 2 ;;
+    --ink)    INK="${2:-}";    shift 2 ;;
+    --paper)  PAPER="${2:-}";  shift 2 ;;
     --who)    WHO="${2:-}";    shift 2 ;;
     *) echo "  Unknown argument: $1"; exit 1 ;;
   esac
@@ -59,7 +72,7 @@ get() { grep -E "^${1}=" .env | tail -1 | cut -d= -f2- | tr -d '"' || true; }
 # A VALUE WITH A NEWLINE IN IT is what a copy out of a dashboard looks like
 # when the selection took the line break too. Caught here, where it can be
 # said plainly, rather than as a greyed button with no explanation.
-case "$ID$DOMAIN$WHO" in
+case "$ID$DOMAIN$NAME$INK$PAPER$WHO" in
   *$'\n'*|*$'\r'*) echo "  That has a line break in it. Copy it again without the newline."; exit 1 ;;
 esac
 
@@ -99,6 +112,39 @@ case "$DOMAIN" in
     exit 1 ;;
 esac
 
+# A COLOUR THAT IS NOT A COLOUR ends up inside a <style> block on a page
+# strangers open, so it is refused here as well as in server.js. Two checks
+# for one value is right: this one can say "copy the hex code, it looks like
+# #16233D" while somebody is still at the keyboard, and the one in server.js
+# is what actually holds if a line is ever edited into .env by hand.
+for pair in "INK:$INK" "PAPER:$PAPER"; do
+  what="${pair%%:*}"; val="${pair#*:}"
+  [ -n "$val" ] || continue
+  case "$val" in
+    "#"[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]) ;;
+    "#"[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]) ;;
+    *)
+      echo ""
+      echo "  $what has to be a hex colour — #16233D, hash and all."
+      echo "  \"$val\" is not one, and a colour that is not a colour would"
+      echo "  be ignored on the page with nothing anywhere to say why."
+      echo ""
+      exit 1 ;;
+  esac
+done
+
+# HIS NAME GOES IN A <title> AND ON THE SCREEN. server.js escapes it, so this
+# is about the screen rather than about safety: forty characters is already
+# past what fits, and a newline was caught further up.
+case "$NAME" in
+  "") ;;
+  ?????????????????????????????????????????*)
+    echo ""
+    echo "  That name is too long for the line it goes on. Forty characters."
+    echo ""
+    exit 1 ;;
+esac
+
 # WRITTEN ONLY AFTER STRIPE HAS BEEN ASKED. A client id cannot be proved by
 # an API call — it is only ever used in a redirect URL, and the authorise
 # screen is the first thing that judges it. What CAN be asked, and is the
@@ -121,8 +167,11 @@ if [ -n "$ID" ]; then
 fi
 
 [ -n "$DOMAIN" ] && put TOMSCODING_BOARD_PARTNER_DOMAIN "$DOMAIN"
+[ -n "$NAME" ]   && put TOMSCODING_BOARD_PARTNER_NAME "$NAME"
+[ -n "$INK" ]    && put TOMSCODING_BOARD_PARTNER_INK "$INK"
+[ -n "$PAPER" ]  && put TOMSCODING_BOARD_PARTNER_PAPER "$PAPER"
 
-if [ -n "$ID" ] || [ -n "$DOMAIN" ]; then
+if [ -n "$ID" ] || [ -n "$DOMAIN" ] || [ -n "$NAME" ] || [ -n "$INK" ] || [ -n "$PAPER" ]; then
   echo "  Writing, and bringing the box up so it reads them…"
   make up >/dev/null
 fi
@@ -132,7 +181,7 @@ fi
 # be switched off in the dashboard on a Tuesday by somebody who is not here,
 # and a command that only looks when it already suspects trouble is a command
 # that reports "fine" from memory.
-if [ -z "$ID" ] && [ -z "$DOMAIN" ]; then
+if [ -z "$ID$DOMAIN$NAME$INK$PAPER" ]; then
   docker compose run --rm --no-deps -T -v "$PWD/scripts:/seed:ro" \
     --entrypoint node board /seed/connect-check.mjs || true
 fi
