@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: try try-china china wallets mo-code visits app-state claire-episodes deal claire-key claire-count claire-seed claire-video listing invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who bells twice admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions whitelabel partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check post post-status post-run post-login post-code post-logins weidian-pull weidian-json weidian-reviews shop-chapter review-tidy product-names review-move
+.PHONY: try try-china china wallets mo-code visits app-state claire-episodes deal claire-key claire-count claire-seed claire-video listing invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who bells twice admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions whitelabel blocked partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check post post-status post-run post-login post-code post-logins weidian-pull weidian-json weidian-reviews shop-chapter review-tidy product-names review-move
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -1394,6 +1394,27 @@ payee-names: ## Who has a payout account, one per line: make payee-names
 	@$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/pay-check.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  --names
+
+blocked: ## Why Stripe refused ONE payment, in its own words: make blocked ID="pi_..."
+	@# NOT pay-why, WHICH ALREADY EXISTS further down and answers a different
+	@# question: that one reads this box's own logs for what Stripe said when
+	@# the box asked. This asks Stripe about one payment that a payer already
+	@# started. Defining it twice made make print "overriding recipe" and
+	@# quietly keep the other one.
+	@# THE DASHBOARD SAYS "Stripe blocked this payment." AND STOPS THERE. The
+	@# reason is one click further in, on a screen that cannot be described
+	@# over a terminal to somebody who cannot see it. The charge underneath
+	@# carries it as data, so this asks for it and prints the predicate.
+	@#
+	@# RISK LEVEL NORMAL AND BLOCKED IS THE CASE THIS WAS WRITTEN FOR. Radar's
+	@# own score blocks at the top of the range, so Normal plus blocked means
+	@# a RULE did it — and "a rule blocked it" is not an answer anybody can
+	@# act on. The predicate is.
+	@#
+	@# Read-only, one GET, safe against the live key — which is the only key
+	@# whose behaviour is worth knowing.
+	@$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/pay-why.mjs "$(ID)"
 
 pay-check: ## Can this board take a payment, and if not why: make pay-check
 	@# "Can the app do payments" is a question about the running box, and the
