@@ -941,7 +941,7 @@ app.post("/api/hook/fee", express.raw({ type: "application/json", limit: "64kb" 
  * money screen rather than an error, which is both friendlier and says
  * nothing about what does exist here. A fetch gets a 404, because a redirect
  * to an HTML page is a JSON parse error three frames later. */
-const WL_PAGES = new Set(["/", "/wallet", "/dealio"]);
+const WL_PAGES = new Set(["/", "/wallet", "/dealio", "/start"]);
 const WL_PREFIX = [
   /* BOTH SPELLINGS. wallet.html asks /api/wallet for its state and
      /api/wallet/<something> for everything else, and a prefix with the
@@ -1205,6 +1205,31 @@ app.use(async (req, res, next) => {
 
   res.status(200);
   return page("enter.html", req, res, next);
+});
+
+/* WHERE "GET STARTED" GOES, AND WHY IT IS A ROUTE RATHER THAN A LINK.
+ *
+ * It pointed at /dealio, and /dealio is the money screen: with nobody signed
+ * in it draws a name and a Sign in button and nothing else. So the front page
+ * promised a network, a pyramid and three wallets, and the button under it
+ * opened a blank screen. Reported as "it died", which is exactly what it
+ * looks like from the outside.
+ *
+ * The real next step for somebody reading that page is connecting the Stripe
+ * account they already have — and that happens on the PLATFORM's hostname,
+ * never the white label's, because board-wl has no client id and no platform
+ * role (see the note over the message block in scripts/whitelabel.sh). That
+ * is a different origin, so the page cannot know the address; the server
+ * does. A route keeps the hostname out of the markup and in the one place
+ * that is told it.
+ *
+ * With no platform hostname set there is nowhere to send anybody, so it falls
+ * back to the money screen rather than to a 404 — the old behaviour, which
+ * was at least a page. */
+app.get("/start", (req, res) => {
+  const d = String(process.env.BOARD_DEALIO_DOMAIN || "").trim().toLowerCase();
+  if (!d) return res.redirect(302, "/dealio");
+  return res.redirect(302, "https://" + d + "/china/connect");
 });
 
 app.get("/", (req, res, next) => {
