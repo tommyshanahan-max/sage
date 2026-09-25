@@ -967,6 +967,10 @@ services:
       # Both work and neither is required. Set one, the other, or both.
       BOARD_WHITELABEL_PATH: ${TOMSCODING_WHITELABEL_PATH:-}
       BOARD_WHITELABEL_NAME: ${TOMSCODING_WHITELABEL_NAME:-}
+      # "off" makes his hostname open on the money screen instead of
+      # the front page. Right the day a partner is live and his own
+      # site is what people arrive from.
+      BOARD_WHITELABEL_FRONT: ${TOMSCODING_WHITELABEL_FRONT:-}
       BOARD_WHITELABEL_INK: ${TOMSCODING_WHITELABEL_INK:-}
       BOARD_WHITELABEL_PAPER: ${TOMSCODING_WHITELABEL_PAPER:-}
       # Without this the admin routes refuse everything, which is the safe
@@ -1432,6 +1436,10 @@ services:
       # definition — it is passed so the same code paths run unchanged.
       BOARD_WHITELABEL_DOMAIN: ${TOMSCODING_WHITELABEL_DOMAIN:-}
       BOARD_WHITELABEL_NAME: ${TOMSCODING_WHITELABEL_NAME:-}
+      # "off" makes his hostname open on the money screen instead of
+      # the front page. Right the day a partner is live and his own
+      # site is what people arrive from.
+      BOARD_WHITELABEL_FRONT: ${TOMSCODING_WHITELABEL_FRONT:-}
       BOARD_WHITELABEL_INK: ${TOMSCODING_WHITELABEL_INK:-}
       BOARD_WHITELABEL_PAPER: ${TOMSCODING_WHITELABEL_PAPER:-}
       BOARD_WALLET: ${TOMSCODING_WL_WALLET:-}

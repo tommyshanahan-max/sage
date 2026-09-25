@@ -6901,6 +6901,48 @@ export const STRINGS = {
   "od.total":          ["Total", "合计"],
   "od.foot":           ["Straight from Australia · ordered from {who}'s shop",
                         "澳洲直邮 · 由 {who} 的小店下单"],
+  /* ---- THE WHITE LABEL'S FRONT DOOR -----------------------------------
+     europay.html. Written for somebody who has been sent a link by a partner
+     and has not agreed to anything: what it does for them, in one line, and
+     a button. The Chinese is written rather than translated — a reader here
+     is a merchant, not a payer, so it is plainer than the pay screens. */
+  "ep.head":           ["Your clients in China can pay you.",
+                        "中国客户直接给你付款。"],
+  "ep.sub":            ["In the wallet they already use, on a page with your name on it.",
+                        "用他们平时用的钱包，在写着你名字的页面上。"],
+  "ep.beneath":        ["Through everyone beneath you", "你下面所有人的总额"],
+  "ep.turn":           ["Drag to turn", "拖动可旋转"],
+  "ep.go":             ["Get started", "开始使用"],
+  "ep.under":          ["Nothing to install. Connect the Stripe account you already have.",
+                        "不用装任何东西，用你现有的 Stripe 账户即可。"],
+  "ep.foot":           ["Your money never passes through us.",
+                        "款项不经过我们的账户。"],
+
+  /* The three screens under the button. Labels, not sentences — they sit
+     inside a phone the size of a postcard. */
+  "ep.sBalance":       ["Balance", "余额"],
+  "ep.sAvailable":     ["Available now", "可提现"],
+  "ep.sRequest":       ["Request", "收款"],
+  "ep.sSend":          ["Send", "转账"],
+  "ep.sActivity":      ["Activity", "交易记录"],
+  "ep.sToday":         ["Today", "今天"],
+  "ep.sYesterday":     ["Yesterday", "昨天"],
+  "ep.sCut":           ["Your share", "你的分成"],
+  "ep.sPeople":        ["Your people", "你的人"],
+  "ep.sBetween":       ["Between them, this month", "他们本月合计"],
+  "ep.sPaid":          ["Getting paid", "收款方式"],
+  "ep.sWhere":         ["When someone sends you money, where should it go?",
+                        "别人给你转钱，到哪里？"],
+  "ep.sBank":          ["A bank account", "银行账户"],
+  "ep.sBankSub":       ["A day or two", "一两天到账"],
+  "ep.sStripe":        ["My Stripe account", "我的 Stripe 账户"],
+  "ep.sStripeSub":     ["The one you already have", "用你现有的账户"],
+  "ep.cWallet":        ["What you have, and what moved.", "余额和流水。"],
+  "ep.cPeople":        ["Everyone under you, and what they took.",
+                        "你下面的人，和他们的流水。"],
+  "ep.cPaid":          ["Asked once. No form — Stripe takes the details on its own page.",
+                        "只问一次。不用填表，账户资料由 Stripe 自己收。"],
+
   "od.pay":            ["To pay", "需支付"],
   "od.to":             ["Straight from Australia · {who}", "澳洲直邮 · {who}"],
   "od.wechat":         ["WeChat Pay", "微信支付"],

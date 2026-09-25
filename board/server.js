@@ -426,6 +426,11 @@ const isWhitelabelHost = (req) =>
  * colon or a star in it is an express pattern rather than a page. Anything
  * that does not match is ignored entirely and there is no such page, which
  * is the safe failure: a route nobody asked for is worse than a 404. */
+/* Whether the white label's hostname opens on a front page or on the money.
+   On for the demo, and one env var away from off the day a partner is live
+   and his own site is the front page. */
+const WL_FRONT = String(process.env.BOARD_WHITELABEL_FRONT || "").trim().toLowerCase() !== "off";
+
 const WHITELABEL_PATH = (() => {
   const t = String(process.env.BOARD_WHITELABEL_PATH || "").trim().toLowerCase();
   return /^\/[a-z0-9][a-z0-9-]{0,30}$/.test(t) ? t : "";
@@ -1212,7 +1217,18 @@ app.get("/", (req, res, next) => {
      and needs telling what it is. Daniel's clients arrive from a link on his
      own page, having already read his: a second front page is a second thing
      to get past. So "/" here is the screen itself. */
-  if (isWhitelabelHost(req)) return page("dealio.html", req, res, next);
+  /* AND HIS OWN NAME OPENS ON A FRONT PAGE AGAIN — for the demo, which is
+     what this hostname is. The reasoning above holds for a LIVE partner:
+     his clients arrive from a link on his own page and a second front page
+     is a second thing to get past. It does not hold for the name we send to
+     somebody who has agreed to nothing yet, and opening THAT on a payment
+     form tells them nothing about what they are looking at.
+     BOARD_WHITELABEL_FRONT=off puts the money screen back for a partner who
+     has gone live; the screen itself is a button away at /dealio either
+     way. */
+  if (isWhitelabelHost(req)) {
+    return page(WL_FRONT ? "europay.html" : "dealio.html", req, res, next);
+  }
   return page(ROOT_IS_BOARD ? "index.html" : "landing.html", req, res, next);
 });
 
