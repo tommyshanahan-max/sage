@@ -942,6 +942,17 @@ const WL_PREFIX = [
   "/api/books",             // the two sides of a deal, and the CSV
   "/api/pay/",              // onboarding a payee
   "/api/signin/",           // how the owner of this name gets in at all
+  /* AND WHERE GOOGLE SENDS THEM BACK. /api/signin/google only hands out the
+     URL; the browser returns to /auth/google/cb, which is not under /api and
+     was not on this list — so the first allowlist let somebody start signing
+     in and redirected the answer to the front page. Found by watching a real
+     sign-in fail rather than by reading the list again.
+     The redirect URI is built from the Host header (see googleBack), so each
+     hostname sends its own and EVERY one has to be registered in the Google
+     console. europay.paydealio.com was the third name and the first that
+     nobody had added; the symptom is Error 400 redirect_uri_mismatch, which
+     is Google's and cannot be fixed from here. */
+  "/auth/",                 // the callback Google returns to
   "/china/",                // connecting a Stripe account they already have
   "/pay/",                  // a payment link somebody was sent
 ];

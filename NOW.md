@@ -1234,6 +1234,19 @@ its own name is untouched.
 the trailing slash, so the bare `/api/wallet` every wallet screen calls first
 404'd. A list that looks right and is one character wrong.
 
+**And a second one the same way:** `/auth/google/cb` is not under `/api` and
+was not on the list, so signing in started and the answer was redirected to
+the front page. Both bugs were in a list that read correctly and was wrong.
+
+**GOOGLE HAS TO BE TOLD ABOUT EACH HOSTNAME.** The redirect URI is built from
+the Host header (`server.js:7271`), so every name sends its own and every one
+must be registered in the Google console. `europay.paydealio.com` was the
+third name and the first nobody had added — `Error 400: redirect_uri_mismatch`,
+which is Google's and cannot be fixed from this repo. Add
+`https://europay.paydealio.com/auth/google/cb` at
+console.cloud.google.com/apis/credentials. **The next new hostname will do
+this again.**
+
 ### Where do we send your money — two answers, not one — 25 Sep
 
 `/wallet#payout` opened straight on a bank form: eight boxes, a country chip
