@@ -274,30 +274,48 @@ fi
 [ -n "$KEY" ]    && put TOMSCODING_WL_STRIPE_KEY "$KEY"
 [ -n "$PK" ]     && put TOMSCODING_WL_STRIPE_PK "$PK"
 
-# AND TURN THE SERVICE ON, rather than telling somebody to edit a
-# comma-separated list in a file by hand. `make up` refuses a deploy where his
-# hostname is set and the profile is not, which is the right refusal and a
-# terrible thing to meet at the end of a build. Idempotent: a profile already
-# in the list is left exactly as it is.
-if [ -n "$KEY" ]; then
-  CUR="$(get COMPOSE_PROFILES)"
-  case ",$CUR," in
-    *,board-wl,*) ;;
-    *) put COMPOSE_PROFILES "$([ -n "$CUR" ] && echo "$CUR,board-wl" || echo "board-wl")" ;;
-  esac
-  # His board needs a salt of its own or two boards that are meant to know
-  # nothing about each other hash devices to the same values.
-  [ -n "$(get TOMSCODING_WL_SALT)" ] || put TOMSCODING_WL_SALT "$(head -c 24 /dev/urandom | od -An -tx1 | tr -d ' \n')"
-fi
 [ -n "$AT" ]     && put TOMSCODING_WHITELABEL_PATH "$AT"
 [ -n "$DOMAIN" ] && put TOMSCODING_WHITELABEL_DOMAIN "$DOMAIN"
 [ -n "$NAME" ]   && put TOMSCODING_WHITELABEL_NAME "$NAME"
 [ -n "$INK" ]    && put TOMSCODING_WHITELABEL_INK "$INK"
 [ -n "$PAPER" ]  && put TOMSCODING_WHITELABEL_PAPER "$PAPER"
 
+# AND TURN THE SERVICE ON, rather than telling somebody to edit a
+# comma-separated list in a file by hand. Idempotent: a profile already in the
+# list is left exactly as it is.
+#
+# ON THE HOSTNAME, NOT ON THE KEY — and it was on the key, which is the whole
+# of the bug. `make up` refuses a deploy where TOMSCODING_WHITELABEL_DOMAIN is
+# set and board-wl is not in COMPOSE_PROFILES. This wrote the domain and left
+# the profile alone unless a Stripe key came in the same run, so
+# `make whitelabel DOMAIN="europay.paydealio.com"` — a name with no key behind
+# it yet, which is exactly how this was set up — armed a refusal that then
+# blocked EVERY deploy of anything, including an unrelated one. It cost an
+# hour at one in the morning and three dropped ssh sessions looked like the
+# cause. The guard and the thing that satisfies it now read the same variable.
+#
+# AFTER THE PUTS, so `get` sees the domain this run just wrote.
+if [ -n "$(get TOMSCODING_WHITELABEL_DOMAIN)" ] || [ -n "$(get TOMSCODING_WL_STRIPE_KEY)" ]; then
+  CUR="$(get COMPOSE_PROFILES)"
+  case ",$CUR," in
+    *,board-wl,*) ;;
+    *) put COMPOSE_PROFILES "$([ -n "$CUR" ] && echo "$CUR,board-wl" || echo "board-wl")" ;;
+  esac
+  # His board needs a salt of its own or two boards that are meant to know
+  # nothing about each other hash devices to the same values. Minted on the
+  # hostname too, for the same reason: the container starts the moment the
+  # profile is on, and an empty BOARD_SALT is a board where nobody is anybody.
+  [ -n "$(get TOMSCODING_WL_SALT)" ] || put TOMSCODING_WL_SALT "$(head -c 24 /dev/urandom | od -An -tx1 | tr -d ' \n')"
+fi
+
 if [ -n "$ID$ACCT$PCT$KEY$PK$AT$DOMAIN$NAME$INK$PAPER" ]; then
+  # NOT SWALLOWED. `make up` builds every container and that is minutes of
+  # silence under one line of encouragement — which on this box is
+  # indistinguishable from a hang and has been read as one more than once.
+  # The report below still prints after it.
   echo "  Writing, and bringing the box up so it reads them…"
-  make up >/dev/null
+  echo ""
+  make up
 fi
 
 # WITH NOTHING TO WRITE, THIS IS A STATUS COMMAND. It asks Stripe the state

@@ -162,7 +162,14 @@ up: ## Build if needed and start everything (does NOT fetch — see 'deploy')
 	@grep -qE '^TOMSCODING_WHITELABEL_DOMAIN=.+' .env && ! grep -q '^COMPOSE_PROFILES=.*board-wl' .env \
 	  && { echo "TOMSCODING_WHITELABEL_DOMAIN is set but 'board-wl' is not in COMPOSE_PROFILES."; \
 	       echo "That hostname would answer with a 502: a certificate, a public address,"; \
-	       echo "and nothing behind it. Add board-wl to COMPOSE_PROFILES, or clear the domain."; \
+	       echo "and nothing behind it."; \
+	       echo ""; \
+	       echo "  make whitelabel DOMAIN=\"$$(sed -n 's/^TOMSCODING_WHITELABEL_DOMAIN=//p' .env | tail -1 | tr -d '\"')\""; \
+	       echo ""; \
+	       echo "That turns the service on and builds. This refusal used to end in"; \
+	       echo "\"add board-wl to COMPOSE_PROFILES\" — a line in a file to edit by hand,"; \
+	       echo "met at the end of a build, at one in the morning, with a deploy blocked"; \
+	       echo "behind it. A refusal that cannot be acted on is half a refusal."; \
 	       exit 1; } || true
 	@grep -qE '^TOMSCODING_BOARD_DOMAIN=.+' .env && ! grep -q '^COMPOSE_PROFILES=.*board' .env \
 	  && { echo "TOMSCODING_BOARD_DOMAIN is set but 'board' is not in COMPOSE_PROFILES."; \
