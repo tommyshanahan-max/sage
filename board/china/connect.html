@@ -25,10 +25,23 @@
 
   <div class="body">
     <div class="panel">
+      <!-- TWO LINES, ONE EACH. It was two then three, and the three were a
+           list to read rather than a fact to take in. "Pass on your charge"
+           is also the truer verb: the money is his from the start and we are
+           handing his client's payment to his account, not taking one.
+
+           WHAT THE TOKEN ACTUALLY GRANTS, written down here because the
+           screen does not say it: scope=read_write is broad — refunds,
+           balance and payouts are all inside it, and Stripe's own consent
+           screen lists them one page later. "We cannot" is therefore a
+           statement about what this code does, not about what the token
+           stops. Tom read that and chose this wording on 26 Sep. Anybody
+           changing these two lines should know which of the two they are
+           writing. -->
       <p class="label">We can</p>
-      <div class="list">Raise a charge on your account<br>See whether it cleared</div>
+      <div class="list">Pass on your charge and see if it clears</div>
       <p class="label">We cannot</p>
-      <div class="list no">Move or refund your money<br>See your balance or payouts<br>Change anything in your account</div>
+      <div class="list no">Move your money or see your balance</div>
     </div>
 
     <!-- THE "ONE THING TO SWITCH ON" PANEL IS GONE, and it was pointing at
