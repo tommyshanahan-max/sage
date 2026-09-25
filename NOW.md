@@ -1317,10 +1317,15 @@ Daniel's own domain with **Tom as a first-level merchant under Daniel** —
 which inverts who applies to Stripe, and may be the easier door given the
 20 Sep decline.
 
-### WHY NINE ALIPAY PAYMENTS FAILED — answered 26 Sep, 12:23am
+### WHY NINE ALIPAY PAYMENTS FAILED — narrowed, not answered — 26 Sep
 
-`make blocked ID="pi_3UJabdJItwOUeslJ0FiqLf8l"` asked Stripe rather than
-guessing:
+**ALIPAY IS ENABLED.** Settings → Payments → Payment methods → the Default
+configuration lists it green, Digital wallet, China. Tom said so hours ago and
+said so again; an entry here claimed for forty minutes that it was "displayed
+but not activated", and that was wrong. It is enabled, and `/v1/account`
+reports the capability available.
+
+What `make blocked ID="pi_3UJabdJItwOUeslJ0FiqLf8l"` got from Stripe:
 
 ```
 outcome          blocked
@@ -1331,31 +1336,33 @@ error            invalid_request_error
                  payment_intent_payment_attempt_failed
 ```
 
-**`not_sent_to_network` is the whole answer.** It never reached Alipay. Stripe
-refused the request before contacting them, so it is not the payer, not a
-Radar rule (none attached), and not the risk score — Radar never scored it,
-which is what `unknown_risk_level` with no score means.
+**What that rules out, and it is most things.** `not_sent_to_network` means it
+never reached Alipay, so it is not the payer, not a Radar rule (none
+attached), and not the risk score — Radar never scored it, which is what
+`unknown_risk_level` with no score means. And it is not the method being off,
+because the method is on.
 
-**`invalid_request_error` + `payment_intent_payment_attempt_failed` is a
-signature already written in this file**, as what happens when a method is
-switched on in the dashboard with no live capability behind it. It is the same
-error, on the same account, and it was predicted here before it was seen.
-
-So the two wallets fail for two different reasons, which is exactly why
-conflating them cost so much time:
+**WHAT IS LEFT IS THE CURRENCY, AND THE LIST SPLITS ON IT:**
 
 | | |
 |---|---|
-| **WeChat Pay** | **Ineligible** — Stripe will not turn it on. A settled no. |
-| **Alipay** | displayed, **not activated**. A form nobody finished. |
+| 25 Sep, **AUD** $6.51 × 4 | **blocked**, never sent to the network |
+| 24 Sep, **CNY** ¥31.00 × 3 | **cancelled** — a different outcome |
+| 24 Sep, AUD $6.51 × 2 | cancelled |
 
-**THE ACTION, IDENTIFIED 24 SEP AND STILL NOT DONE:** Stripe dashboard →
-Settings → Payment methods → Alipay → run the activation flow. Nine payments
-across two days failed on this, four of them tonight.
+Same account, same method, two different failures. An earlier line in this
+file says the failure is "independent of currency, which is why AUD failed
+identically" — the outcomes above disagree with that, and it should not be
+trusted until one of the CNY payments is asked the same question.
 
-**What this closes:** the mock-code chase, the VPN theory, the currency
-theory, the card-testing theory, and the Radar theory. None of them. The
-method was never switched on.
+**Next, and it is one command:**
+`make blocked ID="pi_3UJAQSJItwOUeslJ1Odnb9lF"` — a CNY one. If it carries an
+outcome and a network status, the CNY attempts got further than the AUD ones
+and the difference is the presentment currency.
+
+**Four wrong answers were given tonight before this one** — the mock code, the
+VPN, card testing, Radar, and "not activated". Every one was asserted from a
+screenshot rather than asked of Stripe. The command exists now; use it first.
 
 ### ALIPAY IS AVAILABLE. WECHAT PAY IS INELIGIBLE. THEY ARE NOT THE SAME — 26 Sep
 
