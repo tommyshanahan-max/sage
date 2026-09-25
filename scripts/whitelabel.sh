@@ -402,6 +402,18 @@ fi
 # THE STRIPE HALF, ONLY WHEN THERE IS ONE. Without a client id there is no
 # link worth sending — the button behind it is greyed — and the check at the
 # top of this run has already said where to get one.
+#
+# AND IT IS OUR HOSTNAME, NEVER HIS. This printed
+# https://$DOM_NOW/china/connect — his own white-label name — and that door
+# cannot work: board-wl has no BOARD_STRIPE_CLIENT_ID and, until he hands one
+# over, no key either, so `canLink()` is false and the screen answers
+# ?e=nolink. Which is exactly the screen that turned up on europay tonight.
+#
+# The reason is not a missing variable, it is what the two boxes ARE. His box
+# is standalone — his key, his charges, no platform in between. Connecting an
+# account to a platform happens on the PLATFORM'"'"'s hostname, which is ours.
+# So the link Daniel opens is paydealio.com/china/connect, and the redirect
+# URI registered with Stripe has to be that same host.
 [ -n "$(get TOMSCODING_BOARD_STRIPE_CLIENT_ID)" ] || exit 0
 [ -n "$DEAL" ] || exit 0
 
@@ -412,7 +424,7 @@ echo "$NAME_FOR — this is the page I mentioned. It connects the Stripe"
 echo "account you already have. Nothing new to open, and don't send"
 echo "me any keys — you authorise it yourself and I never see them."
 echo ""
-echo "https://${DOM_NOW:-$DEAL}/china/connect"
+echo "https://$DEAL/china/connect"
 echo ""
 echo "────────────────────────────────────────────────────────────"
 echo ""
