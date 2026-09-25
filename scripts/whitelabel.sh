@@ -45,6 +45,7 @@ set -euo pipefail
 
 ID=""
 ACCT=""
+PCT=""
 AT=""
 DOMAIN=""
 NAME=""
@@ -55,6 +56,7 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --id)     ID="${2:-}";     shift 2 ;;
     --acct)   ACCT="${2:-}";   shift 2 ;;
+    --pct)    PCT="${2:-}";    shift 2 ;;
     --at)     AT="${2:-}";     shift 2 ;;
     --domain) DOMAIN="${2:-}"; shift 2 ;;
     --name)   NAME="${2:-}";   shift 2 ;;
@@ -77,7 +79,7 @@ get() { grep -E "^${1}=" .env | tail -1 | cut -d= -f2- | tr -d '"' || true; }
 # A VALUE WITH A NEWLINE IN IT is what a copy out of a dashboard looks like
 # when the selection took the line break too. Caught here, where it can be
 # said plainly, rather than as a greyed button with no explanation.
-case "$ID$ACCT$AT$DOMAIN$NAME$INK$PAPER$WHO" in
+case "$ID$ACCT$PCT$AT$DOMAIN$NAME$INK$PAPER$WHO" in
   *$'\n'*|*$'\r'*) echo "  That has a line break in it. Copy it again without the newline."; exit 1 ;;
 esac
 
@@ -101,6 +103,20 @@ case "$ID" in
     echo "  An sk_ or pk_ is a different thing and must not go in here."
     echo ""
     exit 1 ;;
+esac
+
+# A PERCENTAGE, AND A SANE ONE. This is what we take of somebody else's
+# turnover, so a fat finger here is either money we are not owed or money we
+# never see. server.js falls back rather than charging zero or everything if
+# this is ever wrong; that is the last line, not the first.
+case "$PCT" in
+  "") ;;
+  *[!0-9.]*|*.*.*|.|"")
+    echo ""; echo "  \"$PCT\" is not a percentage. A number, like 0.5."; echo ""; exit 1 ;;
+  *)
+    if ! awk -v p="$PCT" 'BEGIN{exit !(p>0 && p<50)}'; then
+      echo ""; echo "  $PCT% is outside what this will accept — more than 0, less than 50."; echo ""; exit 1
+    fi ;;
 esac
 
 # AN acct_ ID AND NOTHING THAT LOOKS LIKE ONE. What this writes decides who
@@ -217,13 +233,14 @@ if [ -n "$ID" ]; then
 fi
 
 [ -n "$ACCT" ]   && put TOMSCODING_BOARD_STRIPE_DIRECT "$ACCT"
+[ -n "$PCT" ]    && put TOMSCODING_BOARD_STRIPE_DIRECT_PCT "$PCT"
 [ -n "$AT" ]     && put TOMSCODING_WHITELABEL_PATH "$AT"
 [ -n "$DOMAIN" ] && put TOMSCODING_WHITELABEL_DOMAIN "$DOMAIN"
 [ -n "$NAME" ]   && put TOMSCODING_WHITELABEL_NAME "$NAME"
 [ -n "$INK" ]    && put TOMSCODING_WHITELABEL_INK "$INK"
 [ -n "$PAPER" ]  && put TOMSCODING_WHITELABEL_PAPER "$PAPER"
 
-if [ -n "$ID$ACCT$AT$DOMAIN$NAME$INK$PAPER" ]; then
+if [ -n "$ID$ACCT$PCT$AT$DOMAIN$NAME$INK$PAPER" ]; then
   echo "  Writing, and bringing the box up so it reads them…"
   make up >/dev/null
 fi
@@ -233,7 +250,7 @@ fi
 # be switched off in the dashboard on a Tuesday by somebody who is not here,
 # and a command that only looks when it already suspects trouble is a command
 # that reports "fine" from memory.
-if [ -z "$ID$ACCT$AT$DOMAIN$NAME$INK$PAPER" ]; then
+if [ -z "$ID$ACCT$PCT$AT$DOMAIN$NAME$INK$PAPER" ]; then
   docker compose run --rm --no-deps -T -v "$PWD/scripts:/seed:ro" \
     --entrypoint node board /seed/connect-check.mjs || true
 fi
@@ -268,6 +285,7 @@ if [ -n "$SCREEN" ]; then
   D="$(get TOMSCODING_BOARD_STRIPE_DIRECT)"
   if [ -n "$D" ]; then
     echo "  Charged:     directly, on $D — his name, his chargebacks"
+    echo "  We take:     $(get TOMSCODING_BOARD_STRIPE_DIRECT_PCT || true)% (0.5% unless set)"
   else
     echo "  Charged:     through us — OUR name on the statement, OUR chargebacks"
   fi

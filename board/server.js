@@ -9456,6 +9456,29 @@ const DIRECT_ACCTS = new Set(
     .split(",").map((x) => x.trim()).filter((x) => /^acct_[A-Za-z0-9]+$/.test(x)),
 );
 const paidDirectly = (acct) => Boolean(acct) && DIRECT_ACCTS.has(String(acct));
+
+/* AND WHAT WE TAKE FROM ONE, WHICH IS NOT WHAT WE TAKE FROM A MEMBER.
+ *
+ * store.FEE_PCT is 2 and is right for the board: a member being paid a few
+ * thousand yuan for a piece of work, on rails that cost us real money.
+ *
+ * A PARTNER'S BUSINESS IS VOLUME AND 2% WOULD NOT SURVIVE CONTACT WITH IT.
+ * Daniel's clients are funding accounts he then trades on; two per cent at
+ * the door is more than the trade is worth, and 5% — which is what the
+ * example on his own screen was drawn at, wrongly — is not a number anybody
+ * would sign. 0.5% is what was agreed, and it is a different business: a
+ * tenth of the rate on ten times the money.
+ *
+ * A NUMBER RATHER THAN A CONSTANT because the next partner will not be on
+ * this one, and a rate welded into the source is a deploy every time
+ * somebody negotiates. Guarded the same way MARGIN_PCT is: anything that is
+ * not a sensible percentage falls back rather than charging zero or
+ * everything.
+ */
+const DIRECT_PCT = (() => {
+  const n = Number(String(process.env.BOARD_STRIPE_DIRECT_PCT || "").trim());
+  return Number.isFinite(n) && n > 0 && n < 50 ? n : 0.5;
+})();
 /* A LOOK, NOT A PAYMENT.
  *
  * `make try` sets this so the payer's screens can be walked on a laptop with
@@ -10343,13 +10366,17 @@ async function startCheckout({ d, i, method, payeeAcct, ref, done }) {
   /* THE BOARD'S CUT, IN THE SAME UNIT AND ROUNDED DOWN. Up would take a cent
      more than two per cent, every time, from everybody — small, permanent and
      exactly the kind of thing that is noticed once and never forgiven. */
-  const fee = Math.floor(amount * store.FEE_PCT / 100);
+  /* WHOSE RATE, DECIDED BEFORE THE ROUNDING rather than after — a fee worked
+     out at one rate and charged at another is the kind of difference nobody
+     sees until a partner adds up a month. Still floored: up would take a
+     fraction more than the rate, every time, from everybody. */
+  const direct = paidDirectly(payeeAcct);
+  const fee = Math.floor(amount * (direct ? DIRECT_PCT : store.FEE_PCT) / 100);
   try {
     /* ONE OR THE OTHER, NEVER BOTH — see paidDirectly above, and the note
        over checkout() for which risk each one moves where. The cut and the
        rounding are identical either way, which is the point of them being
        computed here rather than at each caller. */
-    const direct = paidDirectly(payeeAcct);
     const session = await stripe.checkout({
       amount, currency: d.cur, fee,
       ...(direct ? { direct: payeeAcct } : { destination: payeeAcct }),

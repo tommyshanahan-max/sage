@@ -1248,6 +1248,25 @@ described a transfer that does not happen.
 A bank account already saved is kept, so switching back is not retyping a wire.
 Three tests cover it; 17 across both suites.
 
+### 0.5% for a partner, not 2% and not the 5% I drew — 25 Sep
+
+`store.FEE_PCT` is 2 and is right for the board: a member paid a few thousand
+yuan for a piece of work, on rails that cost real money. **A partner's
+business is volume and 2% would not survive contact with it** — Daniel's
+clients are funding accounts he then trades on, and two per cent at the door
+is more than the trade is worth.
+
+`BOARD_STRIPE_DIRECT_PCT`, default **0.5**, used for any account in
+`BOARD_STRIPE_DIRECT`. Set it with `make whitelabel PCT="0.5"`, which refuses
+anything that is not a sensible percentage; `server.js` falls back rather
+than charging zero or everything if it is ever wrong anyway.
+
+**Two numbers disagreed and neither was right.** The till charged 2%; the
+example on his own screen was drawn at 5%. The example is now 0.5% with the
+volumes ten times larger — same cut figures, truer shape, and the rate is in
+the sentence so the column can be checked: *"They take money from China. You
+take 0.5% of every payment, without touching it."*
+
 ### Daniel's second question, as a row — 25 Sep
 
 **What your merchants earn**, on the white-label home screen only, above the

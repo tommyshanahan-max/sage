@@ -1575,14 +1575,21 @@ function treeSvg(size) {
   return g;
 }
 
-/* THE EXAMPLE, IN ONE PLACE. Names that are plainly not his clients, and a
-   share that is the same percentage on every row so the arithmetic is
-   checkable by anybody who wants to. */
+/* THE EXAMPLE, IN ONE PLACE. Names that are plainly not his clients, and the
+   same rate on every row so the arithmetic is checkable by anybody who
+   bothers.
+   DRAWN AT 5% FIRST, WHICH WAS TWO MISTAKES AT ONCE: the code charges a
+   partner 0.5% (see DIRECT_PCT in server.js) so the picture disagreed with
+   the till, and 0.5% is the number precisely because 5% is not one anybody
+   would sign on money being funded into a trading account. The cut figures
+   are unchanged and the volumes are ten times larger, which is also the
+   truer shape of it — this is a volume business or it is nothing. */
+const TREE_PCT = 0.5;
 const TREE_EG = [
-  { who: "Ravenna Studio", took: 18400, cut: 920 },
-  { who: "Nord Interiors", took: 7250, cut: 363 },
-  { who: "Atelier Six", took: 3100, cut: 155 },
-];
+  { who: "Ravenna Trading", took: 184000 },
+  { who: "Nord Markets", took: 72500 },
+  { who: "Atelier Six", took: 31000 },
+].map((r) => ({ ...r, cut: Math.round(r.took * TREE_PCT / 100) }));
 const euro = (n) => "\u20ac" + n.toLocaleString("en-GB");
 
 function treeRow() {
@@ -1608,7 +1615,7 @@ function treeSheet() {
   art.append(treeSvg(76));
   card.append(art);
 
-  card.append(el("p", "notep", T("dl.affWhat")));
+  card.append(el("p", "notep", T("dl.affWhat", { pct: TREE_PCT })));
 
   const rows = el("div", "treelist");
   for (const r of TREE_EG) {

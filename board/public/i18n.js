@@ -7363,8 +7363,11 @@ export const STRINGS = {
   "dl.affSub":         ["An example — none yet", "示例 — 还没有商户"],
   "dl.affExample":     ["Example figures", "示例数字"],
   "dl.affHead":        ["Merchants under you", "你的下级商户"],
-  "dl.affWhat":        ["They take money from China. You take a share of every payment, without touching it.",
-                        "他们收中国客户的钱，每一笔你都分成，钱不经你的手。"],
+  /* THE RATE IS IN THE SENTENCE, because a column of figures nobody can
+     check is a column nobody believes — and this is the sentence the whole
+     idea is being sold on. */
+  "dl.affWhat":        ["They take money from China. You take {pct}% of every payment, without touching it.",
+                        "他们收中国客户的钱，每一笔你抽 {pct}%，钱不经你的手。"],
   "dl.affYours":       ["Your share", "你的分成"],
   "wl.accountName":    ["Name on the account", "开户人姓名"],
   "wl.asOnYourId":     ["As on your ID", "与身份证一致"],

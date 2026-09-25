@@ -1033,6 +1033,15 @@ services:
       #
       # Set it with: make whitelabel ACCT="acct_…"
       BOARD_STRIPE_DIRECT: ${TOMSCODING_BOARD_STRIPE_DIRECT:-}
+      # AND WHAT WE TAKE OF IT. store.FEE_PCT is 2 and is right for a member
+      # being paid for a piece of work. A partner's business is volume and
+      # two per cent would not survive contact with it — his clients are
+      # funding accounts he then trades on. 0.5 unless this says otherwise:
+      # a tenth of the rate on ten times the money.
+      #
+      # Anything that is not a sensible percentage falls back rather than
+      # charging zero or everything. See DIRECT_PCT in server.js.
+      BOARD_STRIPE_DIRECT_PCT: ${TOMSCODING_BOARD_STRIPE_DIRECT_PCT:-}
       # Stripe's webhook signing secret. Without it the hook route refuses
       # everything, which is the safe failure: an unsigned route that writes
       # "this was paid" is a route anybody on the internet can write to.
