@@ -11842,8 +11842,28 @@ function audCents(fen) {
 }
 
 function orderWays() {
-  if (dealioQr()) return ["wechat", "alipay"];
-  return stripe.configured() ? ["alipay"] : [];
+  const ways = dealioQr() ? ["wechat", "alipay"] : [];
+  /* AND A CARD, WHICH IS STRIPE'S AND NOBODY ELSE'S.
+   *
+   * Not a third wallet — it is the rail underneath both of them, and it is
+   * here because the wallets are what this account cannot reliably take:
+   * WeChat Pay is ineligible and every Alipay attempt on 24-25 Sep came back
+   * `not_sent_to_network · invalid_request_error` with Radar showing Normal
+   * and nothing else to point at. A card goes through on this account today,
+   * which is the only thing on this page that is presently true of any
+   * method, and ordinary card history is also what an account under method
+   * review is judged on.
+   *
+   * It is drawn BELOW the wallet row rather than in it — see payBox in
+   * order.html. Three buttons abreast on a phone is three things to read
+   * where the design says one, and a card is what somebody reaches for when
+   * the wallet did not work, which is a second thought and belongs a line
+   * down. */
+  if (stripe.configured()) {
+    if (!ways.length) ways.push("alipay");
+    ways.push("card");
+  }
+  return ways;
 }
 
 /** Whether this request was made by the person whose account the money goes
@@ -13613,7 +13633,7 @@ app.get("/api/orders", async (req, res) => {
 app.post("/api/order/:id/pay", express.json({ limit: "1kb" }), async (req, res) => {
   const id = shop.cleanId(req.params.id);
   const method = String(req.body?.method || "wechat");
-  if (!id || !["wechat", "alipay"].includes(method)) return res.status(400).json({ error: "no" });
+  if (!id || !["wechat", "alipay", "card"].includes(method)) return res.status(400).json({ error: "no" });
   const p = dealioQr();
 
   const board = await store.load(FILE);
@@ -13652,10 +13672,14 @@ app.post("/api/order/:id/pay", express.json({ limit: "1kb" }), async (req, res) 
    * ever settles for somebody else, this branch is wrong and it is a licence
    * question before it is a code question.
    *
-   * The card is not offered here. The button that got pressed said Alipay.
+   * AND THE CARD COMES THROUGH HERE TOO. It has no code rail and never
+   * will — there is no wallet to draw for it — so it is Stripe or nothing,
+   * and it is the one method this account has taken money on. Same session,
+   * same currency, same reference; the only thing that changes is which
+   * payment_method_type Stripe is asked for. See orderWays().
    */
   const viaStripe = async () => {
-    if (method !== "alipay" || !stripe.configured()) {
+    if (!["alipay", "card"].includes(method) || !stripe.configured()) {
       return res.status(400).json({ error: "off" });
     }
     /* THE CURRENCY STRIPE IS ASKED FOR — see audRate above. The order stays
@@ -13664,7 +13688,7 @@ app.post("/api/order/:id/pay", express.json({ limit: "1kb" }), async (req, res) 
     try {
       const session = await stripe.checkout({
         amount: cents || total, currency: cents ? "aud" : "cny", fee: 0, destination: "",
-        method: "alipay",
+        method,
         /* A THIRD SHAPE OF REFERENCE — see the webhook. `order:` because a
            bare id there already means a room's own fee, and two things
            answering to one id is how the wrong row gets marked paid. */
@@ -13673,7 +13697,7 @@ app.post("/api/order/:id/pay", express.json({ limit: "1kb" }), async (req, res) 
         label: o.lines[0]?.name || "Order",
       });
       if (!session?.client_secret) return res.status(502).json({ error: "stripe" });
-      return res.json({ ok: true, how: "alipay",
+      return res.json({ ok: true, how: method,
         amount: store.fromMinor(total, "cny"),
         secret: session.client_secret, pk: STRIPE_PK });
     } catch (err) {
@@ -13681,7 +13705,11 @@ app.post("/api/order/:id/pay", express.json({ limit: "1kb" }), async (req, res) 
       return res.status(502).json({ error: "stripe" });
     }
   };
-  if (!p) return viaStripe();
+  /* A CARD HAS NO CODE TO DRAW. The native rail mints wallet codes and
+     nothing else, so a card press goes to Stripe whether or not a provider
+     is connected — asking qrPay for one would be asking a wallet for a thing
+     wallets do not have. */
+  if (!p || method === "card") return viaStripe();
   try {
     const r = await p.qrPay({
       amount: total, currency: "CNY", method,

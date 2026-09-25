@@ -82,6 +82,16 @@
      like one of a pair with its partner missing; full width it reads as the
      one thing to do on the screen, which is what it is. */
   .ways.one button{max-width:none}
+  /* THE CARD IS UNDER THE ROW, NOT IN IT. Three buttons abreast on a phone
+     is three things to read where the screen should carry one, and a card
+     is not a third wallet — it is what somebody reaches for after the
+     wallet did not work. So it is full width, a line down, and quiet:
+     outlined rather than filled, which says "the other way" without
+     competing with the thing she came to press. */
+  .later{display:block;width:100%;margin:.6rem 0 0;border:1px solid var(--line);
+    border-radius:999px;font:inherit;font-size:.95rem;font-weight:600;
+    padding:.8rem 1rem;background:transparent;color:var(--ink)}
+  .later:disabled{color:var(--mut)}
   .track{font-size:1.05rem;letter-spacing:.04em}
   .foot{padding:1rem .4rem 0;font-size:.75rem;line-height:1.7;color:var(--mut)}
 </style>
@@ -190,6 +200,11 @@ function draw() {
  */
 const WAY = { wechat: "od.wechat", alipay: "od.alipay" };
 const ONLY = { wechat: "od.payWechat", alipay: "od.payAlipay" };
+/* AND THE CARD, WHICH IS NEVER IN THAT ROW. It has no logo to stand next to
+   the other two and no code rail behind it — it is Stripe's form, the one
+   thing this account has actually taken money on — so it always says the
+   verb and always sits below. See orderWays() in server.js. */
+const CARD = "od.payCard";
 
 function payBox() {
   const box = el("div", "box pay");
@@ -209,24 +224,64 @@ function payBox() {
      server decides it — see audRate() in server.js — because the rate lives
      in .env and a page cannot see it. Above the button rather than below:
      it is a thing to know before pressing, not a footnote afterwards. */
-  if (PAYCUR === "aud") box.append(el("p", "else", T("od.audNote")));
+  /* Alipay by name only while it is the one thing on the screen. Under a
+     card button that sentence is about the wrong button, and the charge is
+     in Australian dollars whichever gets pressed. */
+  if (PAYCUR === "aud") {
+    box.append(el("p", "else", T(WAYS.length === 1 && WAYS[0] === "alipay"
+      ? "od.audNote" : "od.audAll")));
+  }
 
-  const ways = el("div", "ways" + (WAYS.length === 1 ? " one" : ""));
-  const buttons = WAYS.map((how) => {
+  const wallets = WAYS.filter((how) => how !== "card");
+  const ways = el("div", "ways" + (wallets.length === 1 ? " one" : ""));
+  const buttons = wallets.map((how) => {
     const b = el("button", how === "alipay" ? "alt" : null,
-      T(WAYS.length === 1 ? ONLY[how] : WAY[how]));
+      T(wallets.length === 1 ? ONLY[how] : WAY[how]));
     b.type = "button";
+    b.dataset.how = how;
     b.addEventListener("click", () => code(how, box, buttons));
     return b;
   });
   ways.append(...buttons);
   box.append(ways);
+  if (WAYS.includes("card")) {
+    const b = el("button", "later", T(CARD));
+    b.type = "button";
+    b.dataset.how = "card";
+    b.addEventListener("click", () => code("card", box, buttons));
+    /* In the same list as the wallet buttons so one press disables all of
+       them and back() puts every one of them right — it is a button on the
+       same screen doing the same job, and only the row it sits in differs. */
+    buttons.push(b);
+    box.append(b);
+  }
   return box;
+}
+
+/** What a button says when it is not busy. The row's two read as a pair of
+ *  wallets or as one verb depending on how many there are; the card always
+ *  reads as the verb. Kept in one place because the press has to put it back
+ *  exactly as payBox drew it. */
+/** EVERY BUTTON THAT STARTS A PAYMENT, OFF THE SCREEN AND IN ORDER — the
+ *  wallet row and the card under it, which are two nodes and were one until
+ *  the card was added. Returned rather than dropped so the mount-that-threw
+ *  path can put them back exactly where they were. */
+function takeWays(box) {
+  const out = [box.querySelector(".ways"), box.querySelector(".later")].filter(Boolean);
+  for (const n of out) n.remove();
+  return out;
+}
+
+function sayOn(b, buttons) {
+  const how = b.dataset.how;
+  if (how === "card") return T(CARD);
+  const wallets = buttons.filter((x) => x.dataset.how !== "card");
+  return T(wallets.length === 1 ? ONLY[how] : WAY[how]);
 }
 
 async function code(how, box, buttons) {
   for (const b of buttons) b.disabled = true;
-  const pressed = buttons[WAYS.indexOf(how)];
+  const pressed = buttons.find((b) => b.dataset.how === how);
   if (pressed) pressed.textContent = T("od.making");
   /* Buttons back the way they were, and ONE sentence however many times she
      presses. Appending it meant a third press left three identical lines
@@ -235,8 +290,7 @@ async function code(how, box, buttons) {
   const back = (key) => {
     for (const b of buttons) {
       b.disabled = false;
-      const which = WAYS[buttons.indexOf(b)];
-      b.textContent = T(WAYS.length === 1 ? ONLY[which] : WAY[which]);
+      b.textContent = sayOn(b, buttons);
     }
     if (!key) return;
     const said = box.querySelector(".said") || el("p", "else said");
@@ -259,9 +313,13 @@ async function code(how, box, buttons) {
       /* HELD, NOT LOOKED UP AGAIN. Once it is detached box.querySelector
          answers null, and appending null puts the word "null" on the screen
          — which is how a message box became the literal string `null` on a
-         phone on 23 Sep. The node goes in a variable before it leaves. */
-      const ways = box.querySelector(".ways");
-      ways.remove();
+         phone on 23 Sep. The nodes go in a variable before they leave.
+
+         BOTH OF THEM, because the card button is not inside .ways — it sits
+         under the row, and removing only the row left "Pay with card" under
+         Stripe's own form, which is an invitation to start a second payment
+         for the same order. */
+      const ways = takeWays(box);
       const slot = el("div", "frame");
       box.append(slot);
       /* A MOUNT THAT THROWS IS NOT A PRESS THAT DID NOTHING. This was
@@ -274,7 +332,7 @@ async function code(how, box, buttons) {
       } catch (err) {
         sayWhy({ how, at: err?.at, err });
         slot.remove();
-        box.append(ways);
+        box.append(...ways);
         back("od.payNo");
         return;
       }
@@ -282,7 +340,7 @@ async function code(how, box, buttons) {
       return;
     }
     if (r.ok && j?.qr) {
-      box.querySelector(".ways").remove();
+      takeWays(box);
       const img = el("img", "qr");
       img.src = j.qr.png;
       img.alt = "";

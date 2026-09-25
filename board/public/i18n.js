@@ -6920,6 +6920,17 @@ export const STRINGS = {
   "od.audNote":        ["Alipay charges in Australian dollars, at its rate on the day.",
                         "支付宝按澳元扣款，汇率以支付宝当日为准。"],
   "od.payWechat":      ["Pay with WeChat Pay", "微信支付"],
+  /* THE CARD, WHICH SITS UNDER THE WALLET ROW AND ALWAYS SAYS THE VERB. It
+     is never one of a pair of logos — it is the other way to pay when the
+     wallet did not work — so it does not get the two-wallet treatment above.
+     银行卡 rather than 信用卡: a debit card is the commoner one and this
+     takes both. */
+  "od.payCard":        ["Pay with card", "银行卡支付"],
+  /* THE SAME WARNING AS od.audNote, FOR THE SCREEN THAT OFFERS MORE THAN
+     ALIPAY. Naming Alipay under a card button is a line about the wrong
+     button, and the charge is in Australian dollars either way. */
+  "od.audAll":         ["Charged in Australian dollars, at the day's rate.",
+                        "按澳元扣款，汇率以当日为准。"],
   /* Said instead of a button that cannot work. The order is real and she has
      already typed her address into it, which is the half worth telling her. */
   "od.noWay":          ["Payment is off right now. Your order is saved.",

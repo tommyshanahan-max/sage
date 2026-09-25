@@ -1364,6 +1364,31 @@ and the difference is the presentment currency.
 VPN, card testing, Radar, and "not activated". Every one was asserted from a
 screenshot rather than asked of Stripe. The command exists now; use it first.
 
+### The shop order page takes a card now — 25 Sep, NOT DEPLOYED
+
+`aozhoubaba.com/order/…` offered one button, 支付宝, and every Alipay attempt
+on that account since 24 Sep has failed (see the table above). A card has not:
+one went through. So the order page draws a card button as well.
+
+| | |
+|---|---|
+| **Where** | under the wallet row, full width, outlined — not a third wallet |
+| **Rail** | Stripe only. A card has no 收款码 to draw, so it never touches the native provider |
+| **Currency** | the same AUD conversion Alipay gets — `BOARD_AUD_PER_CNY`, unset means yuan |
+| **Money** | the seller's from the start. No destination, no fee, same as before |
+
+Two reasons, and the second is the one that matters this week: it is the only
+method this account has actually taken money on, and **ordinary card history
+is what an account under payment-method review is judged on.**
+
+The AUD warning changed with it. "Alipay charges in Australian dollars" is a
+line about the wrong button once there are two, so a screen with a card on it
+says `Charged in Australian dollars, at the day's rate.` / `按澳元扣款，汇率
+以当日为准。` instead.
+
+Needs `make deploy` — it is `board/server.js` and two files under
+`board/public/`, all of them COPYed into the image.
+
 ### ALIPAY IS AVAILABLE. WECHAT PAY IS INELIGIBLE. THEY ARE NOT THE SAME — 26 Sep
 
 Written at the top of its own entry because it was got wrong twice in one
