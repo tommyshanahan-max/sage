@@ -1463,7 +1463,8 @@ export const STRINGS = {
      examples and a clause, and the clause was the half that got truncated. */
   "wait.reach":        ["WeChat or email", "微信或邮箱"],
   "wait.why":          ["One line about you (optional)", "一句话介绍自己（选填）"],
-  "wait.go":           ["Join the list", "加入名单"],
+  "wait.go":           ["Create a profile and enter a room",
+                        "创建资料，进入房间"],
   /* On a room door, where the room is the point and the list is only how
      the room is kept small. One field, and the button says what happens. */
   "wait.goRoom":       ["Join this room", "进这个房间"],
@@ -1495,8 +1496,8 @@ export const STRINGS = {
      that says the first while quietly doing the second is the kind of thing
      this board exists not to be. One clause, on the line people read. */
   "wait.note": [
-    "Members and the others waiting see your name and your line — that is how somebody brings you in. Your WeChat or email is shown to nobody; if it is an email, it is also how you get your place back on a new phone. Deleted either way.",
-    "成员和其他在等的人能看到你的名字和这句话——你就是这样被带进来的。微信或邮箱不给任何人看；要是填的是邮箱，换手机的时候也靠它把你的位置找回来。无论结果如何都会删掉。",
+    "Everybody on the board sees your name and your line — that is how a member decides to vouch you into the invite-only rooms. Your WeChat or email is shown to nobody; if it is an email, it is also how you get your place back on a new phone.",
+    "板子上的人都能看到你的名字和这句话——成员就是照着这个，决定把你引荐进邀请制房间的。微信或邮箱不给任何人看；要是填的是邮箱，换手机的时候也靠它把你的位置找回来。",
   ],
   /* THE SAME PROMISE WITH ONE AUDIENCE TAKEN OUT. On a door sent to people who
      compete with each other, the other names in the queue are the reason not
@@ -4344,11 +4345,11 @@ export const STRINGS = {
   /* /join — the link for a group. One screen, one thing on it. */
   "join.tab":          ["交换 · The Exchange — ask to join", "交换 · 申请加入"],
   "join.lede": [
-    "Ask to join The Exchange.",
-    "申请加入交换。"],
+    "Put yourself on The Exchange.",
+    "把自己放到交换上。"],
   "join.sub": [
-    "A private board for people connecting in China, and with China. Put your name down and somebody already inside decides. Your WeChat or email is shown to nobody.",
-    "一个私密板子，给在中国、和跟中国打交道的人。留个名字，由已经在里面的人来定。你的微信或邮箱谁都看不到。"],
+    "Cross-border trade, both directions. Browse everybody, and write to everybody who came in the way you did. Your WeChat or email is shown to nobody.",
+    "跨境生意，两个方向。所有人都能看，跟你一样进来的人都能聊。你的微信或邮箱谁都看不到。"],
   "join.has":          ["Already have a password?", "已经有口令了？"],
 
   /* /agents — one page for one WeChat group of film agents. Its own keys
