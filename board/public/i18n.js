@@ -6910,8 +6910,8 @@ export const STRINGS = {
      category before the promise — "Your clients in China can pay you" is the
      benefit and says nothing about what the thing IS. Tom's own words, kept
      because they are plainer than anything written for them. */
-  "ep.kicker":         ["China payment software for agents and the clients they invoice",
-                        "\u4ee3\u7406\u5411\u5ba2\u6237\u5f00\u7968\u6536\u6b3e\u7684\u4e2d\u56fd\u6536\u6b3e\u7cfb\u7edf"],
+  "ep.kicker":         ["China payment software for multi-level agent networks",
+                        "\u9762\u5411\u591a\u5c42\u7ea7\u4ee3\u7406\u7f51\u7edc\u7684\u4e2d\u56fd\u6536\u6b3e\u7cfb\u7edf"],
   "ep.head":           ["Your clients in China can pay you.",
                         "中国客户直接给你付款。"],
   /* THE MARKS, WHICH ARE THE PROOF. A Chinese merchant scans a payments page
@@ -6935,9 +6935,9 @@ export const STRINGS = {
      who has to parse a label has already stopped looking at the picture.
      Two short lines instead: what it is, then how to read it. */
   "ep.pyrLab":         ["Your network", "\u4f60\u7684\u56e2\u961f"],
-  "ep.pyrWhat":        ["Each block is one person you introduced. The taller it is, the more they invoiced.",
-                        "\u6bcf\u4e2a\u65b9\u5757\u662f\u4f60\u4ecb\u7ecd\u8fdb\u6765\u7684\u4e00\u4e2a\u4eba\uff0c\u8d8a\u9ad8\u5f00\u7968\u8d8a\u591a\u3002"],
-  "ep.beneath":        ["Through everyone you introduced", "你介绍的所有人合计"],
+  "ep.pyrWhat":        ["Each block is one person under you. The taller it is, the more they brought in.",
+                        "\u6bcf\u4e2a\u65b9\u5757\u662f\u4f60\u4e0b\u9762\u7684\u4e00\u4e2a\u4eba\uff0c\u8d8a\u9ad8\u8d5a\u5f97\u8d8a\u591a\u3002"],
+  "ep.beneath":        ["Through everyone beneath you", "你下面所有人的总额"],
   "ep.tapBack":        ["Tap the same square for the total", "\u518d\u70b9\u4e00\u6b21\u770b\u603b\u989d"],
   "ep.theirOwnLine":   ["Their own, this month", "\u4ed6\u672c\u6708\u81ea\u5df1\u7684"],
   "ep.turn":           ["Drag to turn", "拖动可旋转"],
@@ -6970,15 +6970,15 @@ export const STRINGS = {
   "ep.sStripeSub":     ["The one you already have", "用你现有的账户"],
   /* The fourth screen: a row opened. Labels for a person's own card. */
   "ep.sTheirOwn":      ["Their own", "\u4ed6\u81ea\u5df1\u7684"],
-  "ep.sTheirPeople":   ["They introduced", "\u4ed6\u4ecb\u7ecd\u7684\u4eba"],
+  "ep.sTheirPeople":   ["Their people", "\u4ed6\u4e0b\u9762\u7684\u4eba"],
   "ep.sEarnedYou":     ["Earned you", "\u7ed9\u4f60\u8d5a\u7684"],
   "ep.sJoined":        ["Joined", "\u52a0\u5165\u65f6\u95f4"],
-  "ep.sWithBelow":     ["Including everyone they introduced", "\u542b\u4ed6\u4ecb\u7ecd\u7684\u6240\u6709\u4eba"],
-  "ep.cPerson":        ["Any of them, opened. Who they introduced, and what it brings you.",
-                        "\u70b9\u5f00\u5176\u4e2d\u4e00\u4e2a\uff1a\u4ed6\u4ecb\u7ecd\u7684\u4eba\uff0c\u548c\u4ed6\u7ed9\u4f60\u5e26\u6765\u7684\u3002"],
+  "ep.sWithBelow":     ["With everyone beneath them", "\u542b\u4ed6\u4e0b\u9762\u6240\u6709\u4eba"],
+  "ep.cPerson":        ["Any of them, opened. Their tree, and what it brings you.",
+                        "\u70b9\u5f00\u5176\u4e2d\u4e00\u4e2a\uff1a\u4ed6\u7684\u56e2\u961f\uff0c\u548c\u4ed6\u7ed9\u4f60\u5e26\u6765\u7684\u3002"],
   "ep.cWallet":        ["What you have, and what moved.", "余额和流水。"],
-  "ep.cPeople":        ["Everyone you introduced, and what they invoiced.",
-                        "你介绍的人，和他们的流水。"],
+  "ep.cPeople":        ["Everyone under you, and what they took.",
+                        "你下面的人，和他们的流水。"],
   "ep.cPaid":          ["Asked once. No form — Stripe takes the details on its own page.",
                         "只问一次。不用填表，账户资料由 Stripe 自己收。"],
 

@@ -19,7 +19,7 @@ hostname. `europay.paydealio.com` is the demo instance.
 |---|---|
 | **Sells** | a Chinese client can pay a foreign business in the wallet they already use |
 | **Why anybody needs it** | Stripe, Shopify and a bespoke portal all fail the same way: no WeChat Pay or Alipay from a payer inside China |
-| **Who it was drawn for** | Daniel (Algotech). See §11 — `NOW.md` recommends that portal NOT be built, and the software outlives the deal |
+| **Who it was drawn for** | Daniel (Algotech). See §10 — `NOW.md` recommends that portal NOT be built, and the software outlives the deal |
 | **What it is not** | a wallet, a custodian, or anything holding money. Money never passes through us |
 
 The same hostname serves the board's code with a different skin. There is no
@@ -34,7 +34,7 @@ separate application.
 | We take | **0.5%** of each charge, automatically | a subscription |
 | Mechanism | `application_fee_amount` on a direct charge | `scope=read_only` OAuth, we read their charges |
 | Needs | the payment to go through our checkout | nothing but the connect |
-| Honest scope | `read_write` (see §6) | `read_only` |
+| Honest scope | `read_write` (see §5) | `read_only` |
 
 **The 0.5% only exists where we raise the charge.** A merchant who keeps their
 own checkout and just wants commission reporting is the read-only product, and
@@ -42,40 +42,7 @@ taking a percentage there would mean money we never touched. Do not blur these.
 
 ---
 
-## 3. The words. This is a payments risk, not a style note
-
-**Do not describe this product as multi-level, as a network with people
-beneath you, or as anything paid on recruitment.** Two reasons, and either one
-alone is enough:
-
-| **Stripe** | its prohibited businesses list names *"multilevel marketing services offering commission or recruitment-based sales"*. Everything here settles through Stripe Connect on the platform account in §4 |
-|---|---|
-| **China** | in the mainland, where every reader of the page is, that same vocabulary (传销 / 多层级) describes a **criminal offence**, not a business model |
-
-Fixed in `ae122c9` — the strapline, the caption under the blocks and four
-phone-screen labels. The current wording:
-
-| was | now |
-|---|---|
-| multi-level agent networks | agents and the clients they invoice |
-| one person **under you** | one person **you introduced** |
-| everyone **beneath you** | everyone **you introduced** |
-| their people | they introduced |
-
-**Nothing about the mechanics changed.** The tree shows what it showed; it is
-described as introducing rather than as depth. Key names and code comments
-keep the old words because nobody reads those — so `ep.beneath` and
-`ep.pyrWhat` are still the keys, and grepping for the old vocabulary will
-find them.
-
-**This applies to anything new.** A commission that pays on a second or third
-tier is the thing to be careful about describing, whatever it is called. If a
-page needs to show more than one tier, describe each person by what they
-**invoiced**, never by their depth under somebody.
-
----
-
-## 4. The Stripe accounts, and which key is which
+## 3. The Stripe accounts, and which key is which
 
 | | |
 |---|---|
@@ -111,7 +78,7 @@ the demo flag and never checked the key.
 
 ---
 
-## 5. Direct vs destination charges — the whole decision
+## 4. Direct vs destination charges — the whole decision
 
 `board/lib/stripe.js` → `checkout()`. The two are one question with two
 answers; sending both throws before Stripe sees it.
@@ -145,7 +112,7 @@ plus an `account` field naming whose it was.
 
 ---
 
-## 6. Connecting an account somebody already has
+## 5. Connecting an account somebody already has
 
 `board/lib/stripe.js` → `canLink()`, the authorize URL builder.
 
@@ -185,7 +152,7 @@ behaves like. Two of these would quietly undo built work:
 
 ---
 
-## 7. The fee
+## 6. The fee
 
 | | |
 |---|---|
@@ -199,7 +166,7 @@ more than the trade is worth. Tom cut it from 5% on 25 Sep.
 
 ---
 
-## 8. Environment variables — the naming trap
+## 7. Environment variables — the naming trap
 
 **`.env` holds `TOMSCODING_*`. The container sees `BOARD_*`.**
 `docker-compose.yml` maps one to the other.
@@ -227,7 +194,7 @@ Names that matter here:
 
 ---
 
-## 9. The white label
+## 8. The white label
 
 | | |
 |---|---|
@@ -248,7 +215,7 @@ a name and a Sign in button to somebody who has agreed to nothing.
 
 ---
 
-## 10. Deploying
+## 9. Deploying
 
 **Claude has no network path to the server.** Every deploy is a command handed
 to Tom. Never claim something is live until he says it is.
@@ -271,7 +238,7 @@ ssh -t root@45.77.8.166 'cd ~/tc && git fetch origin && git reset --hard origin/
 
 ---
 
-## 11. What is NOT settled
+## 10. What is NOT settled
 
 These are the lines that decide whether any of this ships. None of them is a
 code question.
@@ -283,12 +250,12 @@ code question.
 | **The blocker is on the payer's side** | and is independent of Daniel's legality. He is not doing anything illegal — the brokerage takes custody, not him |
 | **Nobody has asked** | Stripe, WeChat or Alipay about any of this |
 | **WeChat Pay ineligibility** | unexplained; check Settings → Business details for the filed industry |
-| **The three Connect profile answers** | §6 — unread since approval |
+| **The three Connect profile answers** | §5 — unread since approval |
 | **Our 0.5% comes out of principal** | a percentage of a deposit, taken from the client's own capital before a single trade. Different to disclose than a cut of revenue |
 
 ---
 
-## 12. Where the code is
+## 11. Where the code is
 
 | `board/lib/stripe.js` | `checkout()`, `canLink()`, the OAuth URL, `makePayee` |
 |---|---|
@@ -301,7 +268,7 @@ code question.
 | `scripts/connect-check.mjs` | lists connected accounts |
 | `docs/prototypes/` | the pyramid, standalone, invented numbers |
 
-## 13. House rules that apply to anything written here
+## 12. House rules that apply to anything written here
 
 - Strings go in `i18n.js` in **both** languages, Chinese written rather than
   translated. After every edit:
