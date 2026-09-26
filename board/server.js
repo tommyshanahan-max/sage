@@ -4917,10 +4917,25 @@ app.post("/api/tally", express.json({ limit: "1kb" }), async (req, res) => {
   TALLY.set("all", n);
   if (n > TALLY_BURST) return res.json({ ok: true });
 
-  const day = new Date().toISOString().slice(0, 10);
+  const now = new Date().toISOString();
+  const day = now.slice(0, 10);
+  /* AND THE HOUR, IN A SECOND BUCKET RATHER THAN A FINER FIRST ONE.
+   *
+   * The day key is what `make doors` has always read and what answers "did
+   * that post work" a week later; changing its shape would have thrown away
+   * every figure this board has. So the hour is written beside it, keyed the
+   * same way with the hour on the end, and kept for three days — see
+   * cleanHours.
+   *
+   * It exists because the question asked ten minutes after a link goes up is
+   * "is anybody arriving now", and a UTC day cannot answer it: at two in the
+   * morning in Tokyo that day is already seventeen hours old. */
+  const hour = now.slice(0, 13);
   await change((board) => {
-    const key = day + "|" + room + "|" + what;
-    board.counts[key] = (board.counts[key] || 0) + 1;
+    const tail = "|" + room + "|" + what;
+    board.counts[day + tail] = (board.counts[day + tail] || 0) + 1;
+    if (!board.hours) board.hours = {};
+    board.hours[hour + tail] = (board.hours[hour + tail] || 0) + 1;
     return { ok: true };
   });
   res.json({ ok: true });
@@ -4930,7 +4945,7 @@ app.post("/api/tally", express.json({ limit: "1kb" }), async (req, res) => {
 app.get("/api/counts", admin, async (_req, res) => {
   const board = await store.load(FILE);
   res.set("Cache-Control", "no-store");
-  res.json({ counts: board.counts || {} });
+  res.json({ counts: board.counts || {}, hours: board.hours || {} });
 });
 
 /* WHAT THE FRONT DOOR SHOWS SOMEBODY WHO HAS NEVER BEEN HERE.

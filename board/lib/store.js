@@ -3168,6 +3168,43 @@ export function cleanCounts(raw) {
   return out;
 }
 
+/* THE SAME THREE COUNTS, BUCKETED BY THE HOUR.
+ *
+ * WHY THERE ARE TWO. `counts` is keyed by day and answers "did that post
+ * work" a week later; it is the figure `make doors` has always printed and
+ * nothing here changes it. But the question actually asked, ten minutes after
+ * a link goes up, is "is anybody arriving NOW" — and a UTC day is the wrong
+ * bucket for that twice over: at two in the morning in Tokyo the day is
+ * seventeen hours old, so "today" is nearly a full day of history wearing the
+ * word today.
+ *
+ * KEPT FOR THREE DAYS AND NO LONGER. An hour bucket per room per event is
+ * roughly five hundred keys a day, which would grow the board file for ever
+ * to answer a question nobody asks about last month. Pruned on load and on
+ * save, like everything else with a cap here.
+ *
+ * STILL A COUNTER AND NOTHING ELSE. No address, no device, no order of
+ * arrival — see the note over /api/tally about why the rate limit is one
+ * shared bucket rather than one per caller. A finer clock does not make this
+ * a log of anybody. */
+export const HOURS_KEEP = 3 * 24;
+
+export function cleanHours(raw, now = Date.now()) {
+  const out = {};
+  if (!raw || typeof raw !== "object") return out;
+  const cut = now - HOURS_KEEP * 3600_000;
+  for (const [k, v] of Object.entries(raw)) {
+    const m = /^(\d{4}-\d{2}-\d{2}T\d{2})\|([a-z]{1,10})\|([a-z]{1,10})$/.exec(String(k));
+    if (!m || !TALLY_WHAT.includes(m[3])) continue;
+    // The key IS the timestamp, so nothing else has to be stored to expire it.
+    const t = Date.parse(m[1] + ":00:00Z");
+    if (!Number.isFinite(t) || t < cut) continue;
+    const n = Math.max(0, Math.min(10_000_000, Math.floor(Number(v) || 0)));
+    if (n > 0) out[k] = n;
+  }
+  return out;
+}
+
 export function cleanBoard(raw) {
   const rows = Array.isArray(raw) ? raw : Array.isArray(raw?.posts) ? raw.posts : [];
   const seen = new Set();
@@ -3532,7 +3569,8 @@ export function cleanBoard(raw) {
     reviews: reviews.slice(-REVIEW_MAX),
     asks: asks.slice(-ASK_MAX),
     cashouts: cashouts.slice(-CASHOUT_MAX),
-    counts: cleanCounts(raw?.counts) };
+    counts: cleanCounts(raw?.counts),
+    hours: cleanHours(raw?.hours) };
 }
 
 /** Read, change, write — through a temporary file and a rename, so an

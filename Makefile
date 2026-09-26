@@ -1578,14 +1578,14 @@ show: ## Put them back:  make show WHO="their name"
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/person-out.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" --who "$(WHO)" --back
 
-doors: ## Did anybody come off that link:  make doors [DAYS=30]
+doors: ## Did anybody come off that link:  make doors [DAYS=30] [HOURS=2]
 	@# Three numbers a day per room — opened, began the form, joined — and
 	@# nothing else. No addresses and no devices, so there is nothing here
 	@# that could say who came. It tells you which of three things went
 	@# wrong: the post did not travel, the door did not convince them, or
 	@# the form lost them.
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
-	  /seed/doors.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" $(DAYS)
+	  /seed/doors.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" "$(DAYS)" "$(HOURS)"
 
 waiting-rooms: ## The queue by room and by which half of the sentence they are
 	@# Who to let in is a question about pairs, not about people — see the note
