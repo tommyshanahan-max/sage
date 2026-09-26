@@ -1229,7 +1229,15 @@ app.use(async (req, res, next) => {
  * was at least a page. */
 app.get("/start", (req, res) => {
   const d = String(process.env.BOARD_DEALIO_DOMAIN || "").trim().toLowerCase();
-  if (!d) return res.redirect(302, "/dealio");
+  if (!d) {
+    /* NOT /dealio. Unset, this sent the one button on the partner's landing
+       page to a route that is not in this build, and the partner got a line
+       of raw JSON — {"error":"not in this version"} — as their first
+       experience of the product. The set-up instructions are the right next
+       screen for somebody who has just read the pitch anyway: the record to
+       add, what it does and does not connect, and somebody to ask. */
+    return res.redirect(302, "/europay-setup.html");
+  }
   return res.redirect(302, "https://" + d + "/china/connect");
 });
 
