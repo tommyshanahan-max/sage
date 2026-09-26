@@ -2478,6 +2478,20 @@ export function cleanNote(raw) {
     text: s(raw.text, 600),
     // Read by the person it was sent to. Only ever set by them.
     seen: Boolean(raw.seen),
+    /* WHETHER THE INBOX EMAIL HAS GONE, so it goes once and only when it is
+     * needed.
+     *
+     * The email used to fire the moment a note was written, which meant
+     * somebody sitting in the app read the message and then got told about it
+     * — and the point of the email is the person who is NOT here. So the note
+     * is left a few minutes and mailed only if it is still unseen by then.
+     *
+     * A FLAG ON THE ROW, NOT A TIMER IN MEMORY. A setTimeout does not survive
+     * a deploy, so a restart in the wrong minute either loses the mail or,
+     * with a map, sends it twice after the map is rebuilt. The row is the only
+     * thing that outlives the process, so the row is where this lives — the
+     * same argument as cardAt on a person. */
+    mailed: Boolean(raw.mailed),
     // Somebody said this should not have been sent. Carries their words.
     report: s(raw.report, 400),
     /* SOMETHING SAID RATHER THAN TYPED. The same shape a line in a room

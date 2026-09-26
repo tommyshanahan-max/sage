@@ -9354,13 +9354,13 @@ app.post("/api/note", notesOff, express.json({ limit: "16kb" }), async (req, res
   /* And the inbox, which is the one most of them will actually see. The
      link is built here because this runs after the response, when the
      request is gone. */
-  /* THE LINK OPENS THE CONVERSATION, not the inbox — see `key` above. It
-     falls back to a bare /notes rather than a broken anchor when there is no
-     key, which is a sender with neither a page nor a waiting row and should
-     not be reachable; the inbox is the honest landing for it. */
-  mailThem(out.note.to, out.from,
-    backHere(req, out.key ? "/notes#" + encodeURIComponent(out.key) : "/notes"))
-    .catch((err) => console.error("note mail:", err.message));
+  /* NO EMAIL FROM HERE ANY MORE — see mailUnread below. Sending it now told
+     somebody about a message they were about to read, or had already read by
+     the time it arrived: the person the email is for is the one who is NOT
+     in the app. The sweep picks it up in a few minutes if it is still unread.
+     The link it will carry is built there, from the same `key`. */
+  noteLink.set(out.note.id,
+    backHere(req, out.key ? "/notes#" + encodeURIComponent(out.key) : "/notes"));
 });
 
 /* SOMETHING SAID INTO A THREAD, RATHER THAN TYPED.
@@ -9430,10 +9430,9 @@ app.post("/api/note/voice", notesOff, express.json({ limit: "12mb" }), async (re
   res.status(201).json({ ok: true, id: out.note.id, answering: out.answering });
   // The same two nudges a typed note sends, for the same reasons — see above.
   tellThem(out.note.to).catch(() => { /* a push that failed is a push that did not arrive */ });
-  // The same link as /api/note — the conversation, not the inbox.
-  mailThem(out.note.to, out.from,
-    backHere(req, out.key ? "/notes#" + encodeURIComponent(out.key) : "/notes"))
-    .catch((err) => console.error("voice mail:", err.message));
+  // Same as /api/note: the sweep sends it, if it is still unread.
+  noteLink.set(out.note.id,
+    backHere(req, out.key ? "/notes#" + encodeURIComponent(out.key) : "/notes"));
 });
 
 /* THE AUDIO ON A LINE IN A THREAD. The two people in it and nobody else.
@@ -9489,6 +9488,88 @@ app.get("/api/note/:id/voice", notesOff, async (req, res) => {
  * bounce is not theirs to know about.
  */
 const mailedAt = new Map();
+
+/* THE PATH BACK TO A CONVERSATION, held between the write and the sweep.
+ *
+ * The link is "/notes#<the sender's key>", and the key is resolved inside the
+ * write, where the sender's row is already in hand. The sweep runs minutes
+ * later with no request and no sender row, so rather than resolve it twice —
+ * two places computing one address is how the two drift — it is kept here.
+ *
+ * A MISS IS NOT A FAILURE. Lost to a restart, the sweep falls back to the
+ * inbox, which is where every one of these landed until tonight. A worse link
+ * is a far better outcome than no email. */
+const noteLink = new Map();
+
+/* EVERY MESSAGE NOBODY READ, ONCE, A FEW MINUTES LATE.
+ *
+ * The email exists for the person who is not in the app. Sending it the
+ * instant a note is written told people about messages they were already
+ * reading — so a note waits, and is mailed only if it is still unseen when
+ * the sweep reaches it.
+ *
+ * Every minute, because the delay is minutes and a sweep coarser than the
+ * thing it is waiting for would make the wait meaningless. It walks notes
+ * from the end, where the new ones are, and stops at the first one too old to
+ * matter — so a board with a year of messages on it does not read all of them
+ * every minute.
+ *
+ * `mailed` is written whatever the send returns. A provider having a bad
+ * afternoon is not a reason to try the same message every minute for ever,
+ * and a notification that is an hour late is not worth having.
+ */
+const MAIL_WAIT = num("BOARD_MAIL_WAIT_MIN", 4);
+
+async function mailUnread() {
+  if (!mailReady()) return;
+  try {
+    const now = Date.now();
+    const ripe = now - MAIL_WAIT * 60_000;
+    // Old enough that nothing under it can still be waiting: one sweep's
+    // worth of slack past the wait, so a minute lost to a slow tick does not
+    // strand a note for ever.
+    const stale = now - (MAIL_WAIT + 30) * 60_000;
+    const board = await store.load(FILE);
+    const due = [];
+    for (let i = board.notes.length - 1; i >= 0; i--) {
+      const n = board.notes[i];
+      const at = Date.parse(n.at || "") || 0;
+      if (at < stale) break;
+      if (n.seen || n.mailed || n.report) continue;
+      if (at > ripe) continue;                  // still inside its grace
+      due.push(n);
+    }
+    if (!due.length) return;
+    /* STAMPED BEFORE ANY OF THEM IS SENT. The send is a network call that
+       takes seconds; a second tick landing in the middle of it would find the
+       same rows unstamped and send them again. */
+    const ids = new Set(due.map((n) => n.id));
+    await change((b) => {
+      for (const n of b.notes) if (ids.has(n.id)) n.mailed = true;
+      return { ok: true };
+    });
+    for (const n of due) {
+      const from = board.people.find((q) => q.by === n.by);
+      const wait = from ? null : board.waits.find((w) => w.by === n.by && w.name);
+      const name = from?.handle || wait?.name || "";
+      if (!name) continue;                      // nobody to say it is from
+      /* THE WHOLE ADDRESS, kept from the write, because only the request
+         knows which hostname this board is being read on — liuxuesheng.io and
+         thexchange.app are both real doors to it. A link built here would
+         have to guess one, and guessing sends half the members to a name they
+         have never seen.
+         Nothing to hand back but the inbox if the map lost it to a restart. */
+      const link = noteLink.get(n.id);
+      noteLink.delete(n.id);
+      if (!link) continue;
+      await mailThem(n.to, name, link).catch(() => { /* one is not all */ });
+    }
+    console.log("note mail: sent " + due.length);
+  } catch (err) {
+    console.error("note mail:", err.message);
+  }
+}
+setInterval(() => { mailUnread(); }, 60_000).unref?.();
 
 async function mailThem(to, from, link) {
   if (!mailReady() || !to || !from) return;
