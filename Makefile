@@ -592,15 +592,21 @@ book-on: ## Show a hidden teacher again: make book-on NAME="Li Wei"
 book-cancel: ## Free a booked slot: make book-cancel ID=… (the id is in book-list)
 	@$(COMPOSE) exec -T $(BOOK_ENV) book node cli.mjs cancel
 
-book-alerts: ## WeChat message on every booking — reuses the Server酱 key in /root/notify.env
+book-alerts: ## WeChat message on every booking: make book-alerts KEY=SCT... (or reuses /root/notify.env)
 	@# ONE COMMAND, ONCE. The key already exists for Study Pal's new-user alert
 	@# (study-pal repo, deploy/notify-new-users.sh), in /root/notify.env. This
 	@# copies it into .env under the name docker-compose.yml hands the book
 	@# container, restarts that container, and says which it did.
-	@key=$$(sed -n 's/^SCT_KEY=//p' /root/notify.env 2>/dev/null | tail -1 | tr -d "'\""); \
-	  if [ -z "$$key" ]; then echo "No SCT_KEY in /root/notify.env — get one at https://sct.ftqq.com and put SCT_KEY=... there, then run this again."; exit 1; fi; \
+	@# Or give it the key: make book-alerts KEY=SCT... — written to both places,
+	@# so Study Pal's new-user alert (which reads /root/notify.env) gets it too.
+	@key="$(KEY)"; \
+	  if [ -n "$$key" ]; then \
+	    grep -q '^SCT_KEY=' /root/notify.env 2>/dev/null || { printf 'SCT_KEY=%s\n' "$$key" >> /root/notify.env; chmod 600 /root/notify.env; }; \
+	    sed -i '/^TOMSCODING_SCT_KEY=/d' .env; \
+	  else key=$$(sed -n 's/^SCT_KEY=//p' /root/notify.env 2>/dev/null | tail -1 | tr -d "'\""); fi; \
+	  if [ -z "$$key" ]; then echo "No key yet. Get one at https://sct.ftqq.com (scan with WeChat, copy the SendKey), then: make book-alerts KEY=SCT..."; exit 1; fi; \
 	  if grep -q '^TOMSCODING_SCT_KEY=' .env; then echo "Already in .env."; \
-	  else printf '\nTOMSCODING_SCT_KEY=%s\n' "$$key" >> .env; echo "Copied into .env."; fi
+	  else printf '\nTOMSCODING_SCT_KEY=%s\n' "$$key" >> .env; echo "Key saved."; fi
 	@$(COMPOSE) up -d book >/dev/null 2>&1 && echo "Booking alerts on: every lesson booked now messages your WeChat."
 
 book-test: ## Book a test lesson and print its two video links (phone + laptop)
