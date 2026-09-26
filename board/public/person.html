@@ -196,6 +196,17 @@
      photograph — it is a fact about them, not part of their picture. */
   .count{margin:.9rem 0 0;font-size:.9rem;color:var(--muted);
     font-variant-numeric:tabular-nums}
+  /* THE SAME LINE, WHEN IT IS YOURS AND IT OPENS SOMETHING.
+     It has to LOOK pressable or it is a link nobody presses: a grey sentence
+     that happens to be an anchor is the state this was already in. The
+     chevron rather than an underline, because the row is a destination and
+     not a word in a paragraph. */
+  a.count.go{display:inline-flex;align-items:center;gap:.3rem;
+    color:var(--accent);text-decoration:none;font-weight:500}
+  a.count.go::after{content:"\203a";font-size:1.15em;line-height:1}
+  a.count.go:hover{text-decoration:underline}
+  a.count.go:focus-visible{outline:2px solid var(--accent);outline-offset:3px;
+    border-radius:.3rem}
   .brought{margin:.7rem 0 0;font-size:.88rem;color:var(--ink-2)}
   .brought b{font-weight:500;color:var(--ink)}
   .goal{margin:1rem 0 0;font-family:var(--serif);font-size:1.1rem;line-height:1.6;
@@ -1399,9 +1410,26 @@ function paint() {
      holding it. */
   if (q.followers) {
     const one = q.followers === 1;
-    head.append(el("p", "count", q.mine
+    const words = q.mine
       ? T(one ? "bud.followersMine1" : "bud.followersMine", { n: q.followers })
-      : T(one ? "bud.followers1" : "bud.followers", { n: q.followers })));
+      : T(one ? "bud.followers1" : "bud.followers", { n: q.followers });
+    /* ON YOUR OWN PAGE IT IS A DOOR, because there is a room behind it.
+     *
+     * The list of who follows you has been drawn since the tray existed —
+     * face, name, when — inside the bell on the home screen. This line is the
+     * only place in the app that says the number, and it was a grey sentence
+     * with nothing to press, on a different page from the list. "Why can't I
+     * see who is following me": you could, and there was no way in.
+     *
+     * Only on your own page. Whose followers somebody else has is their
+     * business and there is no such list to open. */
+    if (q.mine) {
+      const a = el("a", "count go", words);
+      a.href = "/browse#followers";
+      head.append(a);
+    } else {
+      head.append(el("p", "count", words));
+    }
   }
 
   /* ---- what they are looking for -------------------------------------------

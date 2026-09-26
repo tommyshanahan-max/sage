@@ -9766,7 +9766,12 @@ app.get("/api/wake", async (req, res) => {
   }
   const c = cardFor(board, q, day);
   if (!cardWorth(c)) return res.json({ ...said, to: "/notes" });
-  return res.json({ ...cardWords(c, lang), to: "/#card" });
+  /* /browse, NOT "/". The app is served at /browse, /feed and /cards; "/" is
+     the landing page — the one an investor or a stranger finds on the web,
+     with no #notif on it and nothing to open. A notification pointing there
+     would have tapped through to marketing copy. Caught by following the
+     same link from the profile page, which had it too. */
+  return res.json({ ...cardWords(c, lang), to: "/browse#card" });
 });
 
 /* THE SEND, ONCE A DAY, COUNTED THE SAME WAY THE LIFT IS.

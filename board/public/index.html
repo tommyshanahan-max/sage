@@ -6370,13 +6370,17 @@ $("profhead").addEventListener("click", () => {
  *
  * The hash is cleared afterwards so that a reload, or somebody pressing back
  * later in the day, does not re-open a panel they have already shut. */
-function openCard() {
+function openTray() {
   const box = $("notif");
-  if (box) {
-    box.hidden = false;
-    $("bell").setAttribute("aria-expanded", "true");
-    TRAYSEEN = true; drawTray();
-  }
+  if (!box) return false;
+  box.hidden = false;
+  $("bell").setAttribute("aria-expanded", "true");
+  TRAYSEEN = true; drawTray();
+  return true;
+}
+
+function openCard() {
+  openTray();
   PROFOPEN = true;
   const body = $("profbody"), head = $("profhead");
   if (body) body.hidden = false;
@@ -6384,11 +6388,29 @@ function openCard() {
   const prof = $("prof");
   if (prof) prof.scrollIntoView({ block: "center" });
 }
-if (location.hash === "#card") {
+
+/* WHO IS FOLLOWING YOU, WHICH WAS BUILT AND UNREACHABLE.
+ *
+ * drawFollowers has drawn the whole list — face, name, when — since the tray
+ * existed. It lives inside the bell, on this screen. And the one line in the
+ * app that names that number, "12 following you" on your own page, is a grey
+ * sentence on a different page with nothing to press. Asked out loud: "why
+ * can't I see who is following me". You could; there was no door.
+ *
+ * Same mechanism as #card, one hash along. */
+function openFollowers() {
+  if (!openTray()) return;
+  const box = $("notiffol");
+  if (box) box.scrollIntoView({ block: "center" });
+}
+
+const HASHDOOR = { "#card": openCard, "#followers": openFollowers };
+if (HASHDOOR[location.hash]) {
+  const go = HASHDOOR[location.hash];
   history.replaceState(null, "", location.pathname + location.search);
   /* After the first draw, or there is nothing to scroll to and drawProf will
      overwrite aria-expanded from PROFOPEN a moment later anyway. */
-  setTimeout(openCard, 0);
+  setTimeout(go, 0);
 }
 
 $("bell").addEventListener("click", () => {
