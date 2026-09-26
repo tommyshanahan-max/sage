@@ -4368,6 +4368,18 @@ export const STRINGS = {
      waiting at a door any more, they are standing in the room. */
   "front.inRoom":      ["{n} in", "{n} 人在"],
   /* On the two arrows over a member's photograph. Read out, never shown. */
+  /* THE OTHER REASON TO BE HERE. Everything else on this page is people;
+     this is the thing the people are trying to do. Said in the payer's terms
+     — 收款 is the word on every merchant's code in China and the word the
+     board already uses on the money tab, so the promise and the product
+     agree.
+     "Coming soon" is carried in its own chip rather than buried in the
+     sentence, because it is the part that makes the line honest and the part
+     somebody skimming would otherwise miss. */
+  "front.paidHead":    ["Get paid across the border", "跨境收款"],
+  "front.paidSub":     ["Your client pays in yuan from WeChat or Alipay; it lands in your own bank.",
+                        "客户用微信或支付宝付人民币，钱进你自己的银行账户。"],
+  "front.paidTag":     ["Coming soon", "即将上线"],
   "front.back":        ["Back", "上一个"],
   "front.next":        ["Next", "下一个"],
   /* Said when nobody has come through the public door yet, which is true on
