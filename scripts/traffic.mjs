@@ -43,7 +43,12 @@ if (!d || !Array.isArray(d.people)) {
 }
 
 const people = d.people;
-const waits = Array.isArray(d.waits) ? d.waits : [];
+/* ONLY THE ONES WHO ARE NOT ALSO A PERSON. A wait row whose device already
+   has a page is the same human twice, and counting both is what made the
+   first real run print "Jackson Soana · link" and "Jackson Soana · on the
+   list" in the same week and double the all-time figure. The join is done on
+   the box — see the note over isPerson in /api/public. */
+const waits = (Array.isArray(d.waits) ? d.waits : []).filter((w) => !w.became);
 
 /* THE BOARD MUST BE RUNNING THE CODE THIS SCRIPT WAS WRITTEN AGAINST.
  *
@@ -57,7 +62,7 @@ const waits = Array.isArray(d.waits) ? d.waits : [];
  *
  * Checked on publicDoor, which is a boolean the route always sends now, so
  * `undefined` can only mean old code. */
-if (d.publicDoor === undefined) {
+if (d.publicDoor === undefined || d.people.some((q) => q.fromList === undefined)) {
   console.log("\n  The board is running older code than this command.");
   console.log("  board/ is built into the image, so a fetch alone does not move it:");
   console.log("");
@@ -121,11 +126,25 @@ say("ALL TIME", people.length, waits.length);
 console.log("");
 console.log("  WHICH DOOR");
 console.log("");
+/* THREE ROWS, NOT TWO, BECAUSE "via: door" MEANS TWO DIFFERENT THINGS.
+ *
+ * Tier two is stamped `door` whether somebody tapped the link or was moved
+ * across from the waiting list by `make tier-two` — correctly, they are both
+ * tier two. But the first run of this printed "51 came through the public
+ * link" on a board where fifty of them were a migration run an hour earlier,
+ * which is the one number somebody promoting a link would act on, and it was
+ * wrong by fifty.
+ *
+ * `fromList` is the difference: whether a waiting row for that same device
+ * exists. Somebody who tapped the link and joined straight in has none. */
 const viaDoor = people.filter(door);
+const straight = viaDoor.filter((q) => !q.fromList);
+const moved = viaDoor.filter((q) => q.fromList);
 const viaVouch = people.filter((q) => !door(q));
-console.log("    " + num(viaDoor.length, 4) + "  came through the public link");
+console.log("    " + num(straight.length, 4) + "  came in through the public link");
 console.log("    " + num(viaVouch.length, 4) + "  vouched in by a member");
-console.log("    " + num(waits.length, 4) + "  on the list, never made a page");
+console.log("    " + num(moved.length, 4) + "  were already on the list when tier two opened");
+console.log("    " + num(waits.length, 4) + "  still on the list, no page yet");
 if (!d.publicDoor) {
   /* NOT "nobody came through the link". With the flag off nobody CAN, and a
      report that cannot tell a quiet link from a shut door is the same trap as
@@ -161,7 +180,9 @@ if (!any) console.log("    Nothing in the last " + DAYS + " days.");
    dozen it is `make who` you want and not this. */
 const fresh = [...people.filter((q) => dayOf(q.at) >= since).map((q) => ({
                  name: q.handle || "(no name yet)",
-                 note: made(q) ? (door(q) ? "link" : "vouched") : "unfinished" })),
+                 note: !made(q) ? "unfinished"
+                   : !door(q) ? "vouched"
+                   : q.fromList ? "was on the list" : "link" })),
                ...waits.filter((w) => dayOf(w.at) >= since).map((w) => ({
                  name: w.name, note: "on the list" }))];
 if (fresh.length && fresh.length <= 12) {

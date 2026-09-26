@@ -18300,6 +18300,22 @@ app.get("/api/public", admin, async (req, res) => {
     if (!c) return "";
     return c.wechat ? "wechat " + c.wechat : String(c.line || "").trim();
   };
+  /* THE SAME HUMAN ON TWO ROWS, JOINED HERE BECAUSE THE JOIN KEY MAY NOT
+   * LEAVE THE BOX.
+   *
+   * A wait row and a person row both carry `by` — the device hash — and
+   * /api/tier-two makes a person FROM a wait row and leaves the wait row
+   * standing. So the two rows are one person, and anything counting both
+   * counts them twice. `make traffic` did exactly that on its first real run:
+   * it printed the same two names under "made a page" and "on the list" in
+   * the same week, and doubled the all-time figure.
+   *
+   * It cannot be joined on the far side. `by` is a device hash and has no
+   * business leaving this box — which is why it is resolved to a boolean
+   * here, the same way fromWait resolves the invite chain rather than
+   * publishing the middle of it. */
+  const isPerson = new Set(board.people.map((q) => q.by).filter(Boolean));
+  const waitBy = new Set(board.waits.map((w) => w.by).filter(Boolean));
   const byName = new Map(board.waits.map((w) => [String(w.name).toLowerCase(), w]));
   const waitOf = (q) => {
     if (!q.by) return null;
@@ -18368,6 +18384,13 @@ app.get("/api/public", admin, async (req, res) => {
          names and dates. Blank means they were here before the door existed,
          which counts as vouched — same rule as tierOf. */
       via: q.via,
+      /* WHETHER THEY JOINED THE LIST FIRST, which is the difference between
+         somebody the public link brought in and somebody who was already
+         waiting when tier two was created. Both are stamped `via: "door"` —
+         correctly, they are both tier two — so `via` alone cannot tell a
+         migration of fifty people from fifty arrivals, and `make traffic`
+         reported the first as the second. */
+      fromList: Boolean(q.by && waitBy.has(q.by)),
     })),
     /* EVERYBODY WHO JOINED THE LIST AND STOPPED THERE. They are not people
        rows — no page, so nothing above counts them — and they are half of
@@ -18375,7 +18398,12 @@ app.get("/api/public", admin, async (req, res) => {
        and did not finish. A traffic report that leaves them out says the link
        brought fewer people than it did. Dates only, and the name, which is
        all `make traffic` prints. */
-    waits: board.waits.map((w) => ({ at: w.at, name: w.name })),
+    waits: board.waits.map((w) => ({
+      at: w.at, name: w.name,
+      // They already have a page, so they are not a separate arrival — see
+      // the join above.
+      became: Boolean(w.by && isPerson.has(w.by)),
+    })),
     /* WHETHER THE PUBLIC DOOR IS EVEN OPEN. With it shut, "nobody came
        through the link" is not a fact about the link — it is a fact about
        this flag, and a report that cannot tell those apart is the same trap
