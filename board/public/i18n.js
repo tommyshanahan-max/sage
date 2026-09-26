@@ -6919,9 +6919,16 @@ export const STRINGS = {
      wallet they already use" is the slow way to say what two logos say at a
      glance. English keeps both scripts — a reader who cannot read the
      characters still needs to see them, because seeing them IS the message. */
-  "ep.mAli":           ["支付宝 Alipay", "支付宝"],
-  "ep.mWx":            ["微信支付 WeChat Pay", "微信支付"],
-  "ep.mCard":          ["Card", "银行卡"],
+  /* The same in both languages, on purpose. The mark IS the message — a
+     reader who cannot read the characters still has to see them — so the
+     character set is the large line in English too, and the latin name is
+     the small one under it rather than trailing it on the same line. */
+  "ep.mAli":           ["支付宝", "支付宝"],
+  "ep.mAliSub":        ["Alipay", "Alipay"],
+  "ep.mWx":            ["微信支付", "微信支付"],
+  "ep.mWxSub":         ["WeChat Pay", "WeChat Pay"],
+  "ep.mCard":          ["银行卡", "银行卡"],
+  "ep.mCardSub":       ["Visa \u00b7 Mastercard", "Visa \u00b7 Mastercard"],
   /* WHAT THE BLOCKS ARE, because a stranger meets a rotating 3D shape with
      no idea what it is showing them. "Multi-level hierarchical affiliate
      revenue tracking" is the thing itself and is five nouns deep; a person
@@ -6939,6 +6946,8 @@ export const STRINGS = {
                         "不用装任何东西，用你现有的 Stripe 账户即可。"],
   "ep.foot":           ["Your money never passes through us.",
                         "款项不经过我们的账户。"],
+
+  "ep.lookLab":        ["What it looks like", "\u957f\u4ec0\u4e48\u6837"],
 
   /* The three screens under the button. Labels, not sentences — they sit
      inside a phone the size of a postcard. */

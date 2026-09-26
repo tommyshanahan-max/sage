@@ -16,44 +16,70 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<meta name="theme-color" content="#0B0E15">
+<meta name="theme-color" content="#0A1418">
 <title>Europay</title>
 <meta name="description" content="China payment software for multi-level agent networks.">
 <meta name="robots" content="noindex">
 <style>
   :root{
-    --bg:#0B0E15; --card:#141A27; --ink:#EDF1F8; --ink2:#AEBACD; --mut:#7E8CA3;
-    --line:#242C3D; --acc:#2E7BF6; --ok:#3FBF7F;
-    --top:#141A27; --topInk:#EDF1F8;
-    --l0:#b7d3f6; --l1:#86b6ef; --l2:#3987e5; --l3:#256abf;
+    /* The unskinned palette — what europay.paydealio.com itself wears. It was
+       a generic product-blue on near-black, which is the look every payments
+       startup has and therefore says nothing. Deep water and gold: it reads as
+       a thing somebody chose, and the gold is legible on both grounds, which
+       a saturated blue accent is not.
+       --accink is declared HERE and not only in the skin. It was set only in
+       LABEL_CSS, so .go hardcoded #fff — fine on a dark blue button, invisible
+       the moment the button went gold. Anything the skin defines must also
+       have a default, or the unskinned page is the broken one. */
+    --bg:#0A1418; --card:#101F26; --ink:#EFF3F2; --ink2:#B4C4C4; --mut:#7E9291;
+    --line:#22363E; --acc:#C9A356; --accink:#0A1418; --ok:#5FA8A0;
+    --top:#101F26; --topInk:#EFF3F2;
   }
   {{SKINCSS}}
   *{box-sizing:border-box}
   html,body{margin:0;padding:0}
+  /* NO WEBFONT ON THIS PAGE. The serif is the whole flavour of the design, and
+     the obvious way to get one is a <link> to fonts.googleapis.com — which is
+     blocked in China, where every reader of this page is. That is a
+     render-blocking stylesheet that never returns. So: the serifs already on
+     the device, in the order they exist. */
   body{background:var(--bg);color:var(--ink);
-    font:400 17px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,
+    font:400 17px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,
       "PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
-    padding:0 16px;-webkit-text-size-adjust:100%}
-  .wrap{max-width:860px;margin:0 auto;
-    padding-block:calc(2.2rem + env(safe-area-inset-top,0px))
-                 calc(3rem + env(safe-area-inset-bottom,0px))}
+    padding:0 20px;-webkit-text-size-adjust:100%}
+  .wrap{max-width:820px;margin:0 auto;
+    padding-block:calc(3rem + env(safe-area-inset-top,0px))
+                 calc(4rem + env(safe-area-inset-bottom,0px))}
 
-  .name{font-size:.78rem;font-weight:800;letter-spacing:.16em;text-transform:uppercase;
-    color:var(--mut);margin:0 0 1.1rem}
-  /* The category, above the promise. Small, because it is the thing you read
-     second — but it has to be there, or the headline is a benefit attached
-     to nothing. */
-  .kicker{font-size:.95rem;font-weight:600;color:var(--acc);margin:0 0 .55rem;
-    max-width:34ch}
-  h1{font-size:clamp(2.1rem,7.5vw,3.4rem);line-height:1.06;letter-spacing:-.025em;
-    font-weight:700;margin:0 0 .5rem;text-wrap:balance}
-  /* Three marks where a sentence was. They sit high on purpose: on a
-     payments page this is the thing a merchant looks for first, and it
-     answers "will my customers recognise this" without a word of copy. */
-  .marks{display:flex;flex-wrap:wrap;gap:.45rem;margin:.9rem 0 0}
-  .marks span{font-size:.95rem;font-weight:700;padding:.45rem .9rem;
-    border-radius:999px;background:var(--card);border:1px solid var(--line);
-    color:var(--ink2)}
+  /* One eyebrow style, used for the brand and for every section label below,
+     so the page has one recurring mark instead of four sizes of small grey. */
+  .name,h2{font-size:.72rem;font-weight:700;letter-spacing:.26em;
+    text-transform:uppercase;color:var(--mut);margin:0}
+  .name{margin-bottom:1.5rem}
+  h2{margin:3.4rem 0 1.1rem}
+
+  /* The category, above the promise, in the serif. A cold visitor needs the
+     category before the benefit — "Your clients in China can pay you" says
+     nothing about what the thing IS — and the order has been right since it
+     was written. What changed is that it now looks like a standfirst rather
+     than a caption that got lost above a headline. */
+  .kicker{font:400 clamp(1.1rem,3.6vw,1.4rem)/1.45
+      "Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    color:var(--acc);letter-spacing:.01em;margin:0 0 .7rem;max-width:30ch}
+  h1{font-size:clamp(2.2rem,8vw,3.6rem);line-height:1.08;letter-spacing:-.02em;
+    font-weight:600;margin:0;text-wrap:balance;max-width:18ch}
+
+  /* THE MARKS, WHICH ARE THE PROOF — and they were three grey pills, which is
+     the shape of a tag, not of a fact. A merchant scans this page for two
+     words before reading anything, so they get the weight of a fact: the
+     character set large, the latin name under it, hairlines between. */
+  .marks{display:grid;grid-template-columns:repeat(3,1fr);
+    gap:.1rem;margin:2.6rem 0 0;border-top:1px solid var(--line)}
+  .marks div{padding:1rem .2rem;border-bottom:1px solid var(--line)}
+  .marks b{display:block;font-size:1.25rem;font-weight:600;letter-spacing:.01em}
+  .marks span{display:block;font-size:.78rem;color:var(--mut);margin-top:.15rem;
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    letter-spacing:.04em}
 
   /* The shape, given the room it needs. It is the only thing on this page
      nobody else shows them, so it gets the screen rather than a corner. */
@@ -62,43 +88,43 @@
      so a stage painted outside that palette is dark text on dark ground the
      moment somebody sets a light paper. Anything the skin does not define
      must not sit behind anything it does. */
-  .pyrlab{font-size:.74rem;font-weight:800;letter-spacing:.15em;text-transform:uppercase;
-    color:var(--mut);margin:1.7rem 0 .5rem}
+  .stage{position:relative;background:var(--card);border:1px solid var(--line);
+    border-radius:.5rem;margin:0;overflow:hidden;touch-action:none;
+    aspect-ratio:10/7}
+  .stage canvas{display:block;width:100%;height:100%}
+  .stage .amt{position:absolute;left:1.1rem;top:1rem;pointer-events:none}
+  .stage .amt b{display:block;color:var(--ink);font-size:clamp(1.6rem,6vw,2.4rem);line-height:1;
+    letter-spacing:-.035em;font-variant-numeric:tabular-nums;font-weight:600}
+  .stage .amt span{display:block;font-size:.85rem;color:var(--mut);margin-top:.3rem;
+    max-width:18ch}
+  .stage .turn{position:absolute;right:1rem;bottom:.8rem;font-size:.78rem;
+    color:var(--mut);pointer-events:none}
   /* Under the shape, not over it. What a thing IS goes above it; how to read
      it goes below, which is where somebody looks once the picture has failed
      to explain itself. */
-  .pyrwhat{font-size:.95rem;color:var(--ink2);margin:.7rem 0 0;max-width:38ch}
-  .stage{position:relative;background:var(--card);border:1px solid var(--line);
-    border-radius:1.1rem;margin:0;overflow:hidden;touch-action:none;
-    aspect-ratio:10/7}
-  .stage canvas{display:block;width:100%;height:100%}
-  .stage .amt{position:absolute;left:1rem;top:.9rem;pointer-events:none}
-  .stage .amt b{display:block;color:var(--ink);font-size:clamp(1.6rem,6vw,2.4rem);line-height:1;
-    letter-spacing:-.035em;font-variant-numeric:tabular-nums}
-  .stage .amt span{display:block;font-size:.85rem;color:var(--mut);margin-top:.25rem;
-    max-width:18ch}
-  .stage .turn{position:absolute;right:.9rem;bottom:.75rem;font-size:.8rem;
-    color:var(--mut);pointer-events:none}
+  .pyrwhat{font-size:.95rem;color:var(--ink2);margin:1rem 0 0;max-width:38ch}
 
   .go{display:block;width:100%;border:0;border-radius:999px;background:var(--acc);
-    color:#fff;font:inherit;font-size:1.08rem;font-weight:700;padding:1.02rem;
-    margin:1.3rem 0 0;text-align:center;text-decoration:none;
+    color:var(--accink);font:inherit;font-size:1.06rem;font-weight:700;
+    padding:1.05rem;margin:3rem 0 0;text-align:center;text-decoration:none;
     letter-spacing:.02em}
-  .under{font-size:.88rem;color:var(--mut);text-align:center;margin:.7rem 0 0}
+  .under{font-size:.88rem;color:var(--mut);text-align:center;margin:.85rem 0 0}
 
-  /* WHAT IT LOOKS LIKE, three screens, below the fold on purpose. The page
+  /* WHAT IT LOOKS LIKE, four screens, below the fold on purpose. The page
      has to work for somebody who reads the headline, presses the button and
      never scrolls — so nothing above this line depends on it. */
-  .shots{display:grid;gap:1.1rem;margin:2.8rem 0 0;
+  .shots{display:grid;gap:1.3rem;margin:0;
     grid-template-columns:repeat(auto-fit,minmax(185px,1fr))}
-  .phone{background:#000;border-radius:1.6rem;padding:.42rem}
-  .scr{background:var(--card);border-radius:1.3rem;overflow:hidden;
+  /* #000, and deliberately not a token: a phone bezel is black on every phone
+     anybody reading this owns, on a light paper as much as a dark one. */
+  .phone{background:#000;border-radius:1.5rem;padding:.4rem}
+  .scr{background:var(--card);border-radius:1.2rem;overflow:hidden;
     height:23.5rem;display:flex;flex-direction:column;padding:.85rem}
-  .eyebrow{font-size:.66rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
-    color:var(--mut);margin:.2rem 0 .3rem}
-  .big{font-size:1.9rem;line-height:1;letter-spacing:-.035em;margin:0;
+  .eyebrow{font-size:.64rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;
+    color:var(--mut);margin:.2rem 0 .35rem}
+  .big{font-size:1.9rem;line-height:1;letter-spacing:-.035em;margin:0;font-weight:600;
     font-variant-numeric:tabular-nums}
-  .cap{font-size:.82rem;color:var(--ink2);margin:.3rem 0 0}
+  .cap{font-size:.82rem;color:var(--ink2);margin:.35rem 0 0}
   .r{display:flex;align-items:center;gap:.5rem;padding:.55rem 0;
     border-bottom:1px solid var(--line);font-size:.88rem}
   .r:last-child{border-bottom:0}
@@ -106,15 +132,16 @@
     text-overflow:ellipsis;white-space:nowrap}
   .r .vv{font-variant-numeric:tabular-nums;font-weight:700}
   .r small{display:block;font-weight:400;color:var(--mut);font-size:.72rem}
-  .pill{display:inline-block;font-size:.78rem;font-weight:700;padding:.35rem .7rem;
-    border-radius:999px;background:var(--line);color:var(--ink2);margin:.2rem .3rem 0 0}
-  .shots figcaption{font-size:.88rem;color:var(--mut);margin:.6rem 0 0}
+  .pill{display:inline-block;font-size:.78rem;font-weight:600;padding:.35rem .75rem;
+    border-radius:999px;border:1px solid var(--line);color:var(--ink2);
+    margin:.2rem .3rem 0 0}
+  .shots figcaption{font-size:.86rem;color:var(--mut);margin:.7rem 0 0;line-height:1.5}
 
-  .foot{margin:2.6rem 0 0;padding-top:1.2rem;border-top:1px solid var(--line);
-    font-size:.86rem;color:var(--mut)}
-  .lang{position:absolute;right:16px;top:calc(1.5rem + env(safe-area-inset-top,0px));
+  .foot{margin:3.4rem 0 0;padding-top:1.3rem;border-top:1px solid var(--line);
+    font-size:.84rem;color:var(--mut);line-height:1.8}
+  .lang{position:absolute;right:20px;top:calc(2.4rem + env(safe-area-inset-top,0px));
     background:none;border:1px solid var(--line);color:var(--ink2);
-    font:inherit;font-size:.82rem;padding:.3rem .75rem;border-radius:999px}
+    font:inherit;font-size:.8rem;padding:.3rem .8rem;border-radius:999px}
 </style>
 </head>
 <body>
@@ -124,22 +151,25 @@
   <p class="name" id="brand">EUROPAY</p>
   <p class="kicker" id="kicker"></p>
   <h1 id="head"></h1>
+
   <div class="marks">
-    <span id="mAli"></span><span id="mWx"></span><span id="mCard"></span>
+    <div><b id="mAli"></b><span id="mAliSub"></span></div>
+    <div><b id="mWx"></b><span id="mWxSub"></span></div>
+    <div><b id="mCard"></b><span id="mCardSub"></span></div>
   </div>
 
-  <p class="pyrlab" id="pyrLab"></p>
+  <h2 id="pyrLab"></h2>
   <div class="stage" id="stage">
     <canvas id="cv"></canvas>
     <div class="amt"><b id="amt">$134,860</b><span id="amtSub"></span></div>
     <div class="turn" id="turn"></div>
   </div>
-
   <p class="pyrwhat" id="pyrWhat"></p>
 
   <a class="go" href="/start" id="go"></a>
   <p class="under" id="under"></p>
 
+  <h2 id="lookLab"></h2>
   <div class="shots" id="shots"></div>
 
   <p class="foot" id="foot"></p>
@@ -180,7 +210,7 @@ function shots() {
 
   const who = [["Algotech","12","$18,400"],["Lin · Shanghai","4","$6,200"],
     ["Zhao · Shenzhen","3","$4,900"],["Chen · Guangzhou","2","$3,800"],
-    ["Ho · Hong Kong","3","$3,300"],["Wu · Chengdu","2","$3,100"]];
+    ["Ho · Hong Kong","3","$3,300"]];
   make('<p class="eyebrow">' + T("ep.sPeople") + ' · 37</p>'
      + '<p class="big">$134,860</p>'
      + '<p class="cap">' + T("ep.sBetween") + '</p>'
@@ -218,12 +248,16 @@ function paint() {
   $("kicker").textContent = T("ep.kicker");
   $("head").textContent = T("ep.head");
   $("mAli").textContent = T("ep.mAli");
+  $("mAliSub").textContent = T("ep.mAliSub");
   $("mWx").textContent = T("ep.mWx");
+  $("mWxSub").textContent = T("ep.mWxSub");
   $("mCard").textContent = T("ep.mCard");
+  $("mCardSub").textContent = T("ep.mCardSub");
   $("amtSub").textContent = T("ep.beneath");
   $("turn").textContent = T("ep.turn");
   $("pyrLab").textContent = T("ep.pyrLab");
   $("pyrWhat").textContent = T("ep.pyrWhat");
+  $("lookLab").textContent = T("ep.lookLab");
   $("go").textContent = T("ep.go");
   $("under").textContent = T("ep.under");
   $("foot").textContent = T("ep.foot");
@@ -290,6 +324,22 @@ const depthOf = (id) => { let d = 0, c = ROWS.find((r) => r.id === id);
   while (c && c.parent) { d++; c = ROWS.find((r) => r.id === c.parent); } return d; };
 
 const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+/* THE FOUR LEVEL COLOURS ARE DERIVED FROM --acc, not written down.
+   They used to be --l0..--l3, four hex values the skin has never heard of —
+   so a partner who set a light paper got a pale blue pyramid on white and the
+   top two levels vanished. Mixing his own accent toward --ink at the top and
+   --card at the bottom means the shape follows whatever palette it is wearing,
+   and there is one fewer colour that can go invisible. */
+function mix(a, b, t) {
+  const A = hexv(a), B = hexv(b);
+  return "rgb(" + [0,1,2].map((i) => Math.round(A[i] + (B[i] - A[i]) * t)).join(",") + ")";
+}
+function levels() {
+  const acc = css("--acc") || "#C9A356";
+  const ink = css("--ink") || "#EFF3F2";
+  const card = css("--card") || "#101F26";
+  return [mix(acc, ink, 0.55), mix(acc, ink, 0.22), acc, mix(acc, card, 0.42)];
+}
 const cv = $("cv"), ctx = cv.getContext("2d");
 const CELL = 0.92, GAP = 0.11, LIFT = 1.05, CAMZ = 11, FOCAL = 8.4;
 let boxes = [], W = 0, H = 0, DPR = 1, rotY = 0.62, rotX = 0.36, SPAN = 8;
@@ -297,7 +347,7 @@ let PICKED = null;   // declared here because draw() reads it on first paint
 
 function build() {
   boxes = [];
-  const cols = [css("--l0"), css("--l1"), css("--l2"), css("--l3")];
+  const cols = levels();
   const max = Math.max.apply(null, ROWS.map((r) => r.own).concat([1]));
   for (let d = 0; d <= 3; d++) {
     const at = ROWS.filter((r) => depthOf(r.id) === d);
@@ -351,8 +401,14 @@ function rotN(n) {
   const cx=Math.cos(rotX),sx=Math.sin(rotX);
   return [x, n[1]*cx-z*sx, n[1]*sx+z*cx];
 }
+/* Hex OR rgb(), because levels() hands back both and shade() multiplies
+   whatever it is given. A colour that arrived as "rgb(201,163,86)" and was
+   parsed as hex came out NaN, and NaN fills paint nothing at all — a face
+   that is simply missing rather than wrong, which is the hard kind to see. */
 function hexv(c) {
-  const h=c.replace("#",""); const v=h.length===3?h.split("").map((x)=>x+x).join(""):h;
+  const m = String(c).match(/rgba?\(([^)]+)\)/);
+  if (m) return m[1].split(",").slice(0,3).map((n) => parseInt(n,10) || 0);
+  const h=String(c).replace("#",""); const v=h.length===3?h.split("").map((x)=>x+x).join(""):h;
   return [parseInt(v.slice(0,2),16),parseInt(v.slice(2,4),16),parseInt(v.slice(4,6),16)];
 }
 function shade(c,k) {
