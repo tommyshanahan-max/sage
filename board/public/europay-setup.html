@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Putting Europay On Your Domain</title>
+<style>
+  :root{
+    --bg:#0E1F1A; --card:#16302A; --raise:#1B3A32; --ink:#EDF2EF; --ink2:#B3C6BF;
+    --mut:#7C948C; --line:#22463D; --acc:#E8B44C; --accink:#0E1F1A; --ok:#6FC3A0;
+    --warn:#E2705F;
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+  }
+  @media print{ :root{--bg:#fff;--card:#f6f6f4;--raise:#eee;--ink:#111;--ink2:#333;
+    --mut:#666;--line:#ccc;--acc:#8a6a1f;--accink:#fff} body{padding:0} }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:400 17px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    padding:44px 16px 80px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:720px;margin:0 auto}
+  .eb{font-size:.7rem;font-weight:700;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--mut);margin:0 0 10px}
+  h1{font-family:var(--serif);font-weight:400;font-size:clamp(30px,5vw,42px);
+    line-height:1.12;margin:0 0 12px}
+  .stand{margin:0 0 8px;color:var(--ink2)}
+  .stand b{color:var(--ink);font-weight:600}
+  h2{font-family:var(--serif);font-weight:400;font-size:24px;margin:38px 0 10px}
+  p{margin:0 0 14px;color:var(--ink2)}
+  p.tight{margin-bottom:6px}
+  .step{display:grid;grid-template-columns:34px 1fr;gap:16px;margin:0 0 26px;align-items:start}
+  .num{width:34px;height:34px;border-radius:50%;background:var(--acc);color:var(--accink);
+    display:grid;place-items:center;font-weight:700;font-size:16px}
+  .step h3{margin:4px 0 6px;font-size:19px;font-weight:600;color:var(--ink)}
+  .step p{margin:0 0 8px}
+  pre{background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:14px 16px;overflow-x:auto;margin:0 0 10px}
+  code{font:600 14.5px/1.7 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--ok)}
+  table{width:100%;border-collapse:collapse;margin:0 0 10px;font-size:15px}
+  td{padding:9px 12px;border:1px solid var(--line)}
+  td:first-child{color:var(--mut);width:34%;background:var(--card)}
+  td code{color:var(--ink);font-size:14px}
+  .box{background:var(--card);border:1px solid var(--line);border-radius:12px;
+    padding:18px 20px;margin:0 0 16px}
+  .box.warn{border-left:3px solid var(--warn)}
+  .box h3{margin:0 0 6px;font-size:17px;font-weight:600}
+  .box p{margin:0;font-size:15.5px}
+  ul{margin:0 0 14px;padding-left:20px;color:var(--ink2)}
+  li{margin:0 0 6px}
+
+  /* the schematic */
+  figure{margin:0 0 16px}
+  figure svg{display:block;width:100%;height:auto}
+  figcaption{color:var(--mut);font-size:14px;margin-top:8px}
+  .reach{display:grid;grid-template-columns:1fr;gap:12px;margin:0 0 16px}
+  @media (min-width:560px){.reach{grid-template-columns:1fr 1fr}}
+  .reach div{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+  .reach h3{margin:0 0 8px;font-size:16px;font-weight:600}
+  .reach ul{margin:0;padding-left:18px;font-size:15px}
+  .reach li{margin:0 0 5px}
+  .yes h3{color:var(--ok)} .no h3{color:var(--warn)}
+
+  /* the agent */
+  .ask{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px}
+  .ask h3{margin:0 0 4px;font-size:18px;font-weight:600}
+  .ask .lead{margin:0 0 12px;font-size:15px;color:var(--mut)}
+  .askrow{display:flex;gap:8px;flex-wrap:wrap}
+  .askrow input{flex:1;min-width:200px;font:inherit;font-size:16px;color:var(--ink);
+    background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:11px 13px}
+  .askrow button{font:inherit;font-size:16px;font-weight:600;background:var(--acc);
+    color:var(--accink);border:none;border-radius:9px;padding:11px 22px;cursor:pointer}
+  .askrow button[disabled]{opacity:.5;cursor:default}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+  .chips button{font:inherit;font-size:13.5px;color:var(--ink2);background:transparent;
+    border:1px solid var(--line);border-radius:999px;padding:6px 13px;cursor:pointer}
+  .chips button:hover{border-color:var(--acc);color:var(--ink)}
+  .thread{margin-top:14px;display:flex;flex-direction:column;gap:12px}
+  .turn{font-size:15.5px;line-height:1.6}
+  .turn.q{color:var(--ink);font-weight:600}
+  .turn.a{color:var(--ink2);white-space:pre-wrap}
+  .turn.err{color:var(--warn)}
+  @media print{ .ask{display:none} }
+
+
+  /* EP AI — a floating assistant, always present. It never hides itself: a
+     partner who cannot reach Claude still gets an answer, by email. */
+  .ep-dock{position:sticky;bottom:18px;z-index:40;display:flex;flex-direction:column;
+    align-items:flex-end;gap:10px;pointer-events:none;padding:0 4px}
+  .ep-dock > *{pointer-events:auto}
+  .ep-fab{display:flex;align-items:center;
+    gap:9px;background:var(--acc);color:var(--accink);border:none;border-radius:999px;
+    padding:13px 20px 13px 14px;font:inherit;font-size:15px;font-weight:700;cursor:pointer;
+    box-shadow:0 8px 26px rgba(0,0,0,.42)}
+  .ep-fab .dot{width:24px;height:24px;border-radius:50%;background:var(--accink);
+    color:var(--acc);display:grid;place-items:center;font-size:11px;font-weight:800;
+    letter-spacing:.5px}
+  .ep-panel{width:min(370px,calc(100vw - 40px));max-height:min(60vh,520px);background:var(--card);border:1px solid var(--line);
+    border-radius:16px;box-shadow:0 18px 50px rgba(0,0,0,.55);display:flex;flex-direction:column;
+    overflow:hidden}
+  .ep-panel[hidden]{display:none}
+  .ep-head{display:flex;align-items:center;gap:10px;padding:14px 14px 12px;
+    border-bottom:1px solid var(--line)}
+  .ep-head .dot{width:26px;height:26px;border-radius:50%;background:var(--acc);
+    color:var(--accink);display:grid;place-items:center;font-size:11px;font-weight:800}
+  .ep-head b{font-size:15px;font-weight:700;flex:1}
+  .ep-head button{background:transparent;border:none;color:var(--mut);font-size:20px;
+    cursor:pointer;line-height:1;padding:2px 4px}
+  .ep-body{padding:14px;overflow-y:auto;display:flex;flex-direction:column;gap:11px;flex:1}
+  .ep-hi{margin:0;font-size:14.5px;color:var(--ink2);line-height:1.5}
+  .ep-turn{font-size:14.5px;line-height:1.55;margin:0}
+  .ep-turn.q{color:var(--ink);font-weight:600}
+  .ep-turn.a{color:var(--ink2);white-space:pre-wrap}
+  .ep-turn.err{color:var(--warn)}
+  .ep-chips{display:flex;flex-wrap:wrap;gap:6px}
+  .ep-chips button{font:inherit;font-size:13px;color:var(--ink2);background:transparent;
+    border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer;text-align:left}
+  .ep-chips button:hover{border-color:var(--acc);color:var(--ink)}
+  .ep-foot{display:flex;gap:7px;padding:12px 14px;border-top:1px solid var(--line)}
+  .ep-foot input{flex:1;min-width:0;font:inherit;font-size:15px;color:var(--ink);
+    background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:10px 12px}
+  .ep-foot button{font:inherit;font-size:15px;font-weight:700;background:var(--acc);
+    color:var(--accink);border:none;border-radius:9px;padding:10px 16px;cursor:pointer}
+  .ep-foot button[disabled]{opacity:.45;cursor:default}
+  @media print{ .ep-fab,.ep-panel{display:none} }
+
+  .foot{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--mut);font-size:14.5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eb">Europay · setting up</p>
+  <h1>Putting Europay on your own domain.</h1>
+  <p class="stand">Your payment page lives at an address you own — <b>pay.yourcompany.com</b> — wearing your name and your colours. <b>It runs on our servers.</b> You are not installing software, hosting anything, or maintaining anything. You point one name at us and we do the rest.</p>
+  <p class="stand">Everything we need from you is on this page. It takes about ten minutes, most of which is waiting.</p>
+
+  <h2>What we need from you</h2>
+
+  <div class="step">
+    <span class="num">1</span>
+    <div>
+      <h3>The address you want it on</h3>
+      <p>A subdomain of a domain you already own. Most people use <code>pay.</code> — <code>pay.yourcompany.com</code>. It can be anything: <code>china.</code>, <code>invoice.</code>, <code>checkout.</code>.</p>
+      <p class="tight"><b>Tell us the exact hostname.</b> We set it up our end before you change anything.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <span class="num">2</span>
+    <div>
+      <h3>One DNS record</h3>
+      <p>Once we confirm we are ready, add a single CNAME record wherever your domain's DNS is managed — the registrar you bought it from, or Cloudflare, or your host's control panel.</p>
+      <table>
+        <tr><td>Type</td><td><code>CNAME</code></td></tr>
+        <tr><td>Name / Host</td><td><code>pay</code></td></tr>
+        <tr><td>Value / Target</td><td><code>europay.paydealio.com</code></td></tr>
+        <tr><td>TTL</td><td><code>300</code> (or Automatic)</td></tr>
+        <tr><td>Proxy / CDN</td><td><code>OFF</code> — see below</td></tr>
+      </table>
+      <p>That is the whole change. Nothing else on your domain is touched, and your website, email and existing records all keep working exactly as they do now.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <span class="num">3</span>
+    <div>
+      <h3>Your name and two colours</h3>
+      <p>The page wears your brand, not ours.</p>
+      <ul>
+        <li><b>The name</b> as it should be printed — the one your clients know.</li>
+        <li><b>A deep colour</b>, as a hex code, for the header and the pay button.</li>
+        <li><b>A paper colour</b> if you want one, also hex. Leave it out and we use a soft off-white.</li>
+      </ul>
+      <p>Two colours, not ten. If you have a brand guide, send the page with the hex codes on it and we will pick.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <span class="num">4</span>
+    <div>
+      <h3>Connect your Stripe</h3>
+      <p>One authorisation, on Stripe's own website, with your own Stripe login. We never see your password and no account is created on your behalf.</p>
+      <p>Charges are raised <b>on your account</b>. Your name is on every statement, the money settles to your bank, and you can revoke the connection from your Stripe dashboard at any moment.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <span class="num">5</span>
+    <div>
+      <h3>An email address for us to reach you</h3>
+      <p>One human who can answer a question about a payment. Not a shared inbox nobody reads.</p>
+    </div>
+  </div>
+
+  <h2>Two things that catch people out</h2>
+
+  <div class="box warn">
+    <h3>Turn the proxy off</h3>
+    <p>If your DNS is on Cloudflare, the record must be <b>DNS only</b> — the grey cloud, not the orange one. With the proxy on, the security certificate cannot be issued and the page will show a warning to your clients. You can turn it back on later if you want to; tell us first.</p>
+  </div>
+
+  <div class="box warn">
+    <h3>Do not add the record until we say we are ready</h3>
+    <p>If the name points at us before your side is configured, visitors get a certificate error rather than a page. We will tell you the moment it is safe, and the certificate is issued automatically within a few minutes of the record appearing.</p>
+  </div>
+
+
+  <h2>What the record actually connects</h2>
+
+  <figure>
+    <svg viewBox="0 0 720 300" role="img" aria-label="Your domain on the left with its website, shop, email and admin all staying on your own server. Only the pay subdomain points across to the Europay server on the right. The Europay server reaches nothing else.">
+      <rect x="8" y="30" width="330" height="250" rx="14" fill="none" stroke="#22463D" stroke-width="1.4"/>
+      <text x="24" y="54" font-size="13" font-weight="700" letter-spacing="2" fill="#7C948C">YOUR DOMAIN</text>
+
+      <g font-size="14">
+        <rect x="24" y="70" width="298" height="38" rx="8" fill="#16302A"/>
+        <text x="40" y="94" fill="#EDF2EF">www.yourcompany.com</text>
+        <text x="306" y="94" text-anchor="end" fill="#7C948C" font-size="12">your server</text>
+
+        <rect x="24" y="116" width="298" height="38" rx="8" fill="#16302A"/>
+        <text x="40" y="140" fill="#EDF2EF">shop.yourcompany.com</text>
+        <text x="306" y="140" text-anchor="end" fill="#7C948C" font-size="12">your server</text>
+
+        <rect x="24" y="162" width="298" height="38" rx="8" fill="#16302A"/>
+        <text x="40" y="186" fill="#EDF2EF">mail, admin, everything else</text>
+        <text x="306" y="186" text-anchor="end" fill="#7C948C" font-size="12">your server</text>
+
+        <rect x="24" y="214" width="298" height="44" rx="8" fill="#1B3A32" stroke="#E8B44C" stroke-width="1.6"/>
+        <text x="40" y="241" fill="#E8B44C" font-weight="700">pay.yourcompany.com</text>
+      </g>
+
+      <line x1="330" y1="236" x2="452" y2="236" stroke="#E8B44C" stroke-width="2"/>
+      <polygon points="452,230 466,236 452,242" fill="#E8B44C"/>
+      <text x="392" y="224" text-anchor="middle" font-size="12" fill="#E8B44C">CNAME</text>
+
+      <rect x="470" y="196" width="238" height="84" rx="14" fill="#16302A" stroke="#E8B44C" stroke-width="1.6"/>
+      <text x="589" y="230" text-anchor="middle" font-size="15" font-weight="700" fill="#EDF2EF">Europay server</text>
+      <text x="589" y="252" text-anchor="middle" font-size="12.5" fill="#7C948C">serves this one page</text>
+
+      <line x1="470" y1="120" x2="350" y2="120" stroke="#E2705F" stroke-width="1.6" stroke-dasharray="5 5"/>
+      <line x1="356" y1="112" x2="344" y2="128" stroke="#E2705F" stroke-width="2"/>
+      <line x1="344" y1="112" x2="356" y2="128" stroke="#E2705F" stroke-width="2"/>
+      <text x="480" y="112" font-size="12.5" fill="#E2705F">no route back</text>
+      <text x="480" y="132" font-size="12.5" fill="#E2705F">to anything else</text>
+    </svg>
+    <figcaption>A CNAME is a signpost, not a key. It tells the world where one name lives. It grants nothing.</figcaption>
+  </figure>
+
+  <div class="reach">
+    <div class="yes">
+      <h3>What reaches our server</h3>
+      <ul>
+        <li>Requests to <code>pay.yourcompany.com</code> and pages beneath it.</li>
+        <li>The payment requests you create and what your clients pay.</li>
+        <li>Nothing else, because nothing else is pointed at us.</li>
+      </ul>
+    </div>
+    <div class="no">
+      <h3>What does not</h3>
+      <ul>
+        <li>Your website, shop, blog or admin — different names, your own machines.</li>
+        <li>Your email. MX records are untouched.</li>
+        <li>Your database, your files, your customer list.</li>
+        <li>Your site's logins and sessions — a different hostname is a different origin, so a browser will not hand your cookies to us.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="box">
+    <h3>One honest exception</h3>
+    <p>If your site sets cookies on the whole domain — <code>Domain=.yourcompany.com</code> rather than on <code>www</code> — a browser sends those to every subdomain, this one included. Most sites do not. If yours does and you would rather it did not reach us, use a separate domain for the payment page instead and we will set that up the same way.</p>
+  </div>
+
+  <h2>What you do not have to do</h2>
+  <ul>
+    <li>No software to install, on your site or anywhere else.</li>
+    <li>No code to paste into your pages.</li>
+    <li>No certificate to buy, renew or configure — we issue and renew it.</li>
+    <li>No server, no hosting, no updates. The page is served from our machines.</li>
+    <li>No change to your existing checkout. It keeps taking cards exactly as it does today.</li>
+  </ul>
+
+  <h2>What happens next</h2>
+  <p>We configure the hostname, then email you to say go. You add the record. Within about ten minutes the address is live with a valid certificate, in your colours, and you can send your first payment request that afternoon.</p>
+
+
+</div>
+
+
+<div class="wrap">
+  <p class="foot">Europay is payment software. Money never passes through us — payments are processed and held by a licensed payment provider and settle to your own account.</p>
+</div>
+
+<div class="ep-dock">
+<button class="ep-fab" id="epFab" type="button" aria-expanded="false" aria-controls="epPanel">
+  <span class="dot" aria-hidden="true">EP</span> Assistant
+</button>
+
+<div class="ep-panel" id="epPanel" role="dialog" aria-label="EP AI Assistant" hidden>
+  <div class="ep-head">
+    <span class="dot" aria-hidden="true">EP</span>
+    <b>EP AI Assistant</b>
+    <button id="epClose" type="button" aria-label="Close">&times;</button>
+  </div>
+  <div class="ep-body" id="epBody">
+    <p class="ep-hi">I know this page. Ask me anything about the set-up &mdash; your DNS, the colours, Stripe, or what we can and cannot see.</p>
+    <div class="ep-chips" id="epChips"></div>
+  </div>
+  <div class="ep-foot">
+    <input id="epQ" type="text" placeholder="Where do I add the CNAME?" aria-label="Your question">
+    <button id="epGo" type="button">Ask</button>
+  </div>
+</div>
+</div>
+
+<script>
+(function(){
+  var FACTS = [
+    "You are EP AI Assistant, embedded in Europay's partner set-up page.",
+    "Answer only about putting Europay on a partner's own domain. Anything else:",
+    "say it is outside what you can help with and give mo@thexchange.app.",
+    "",
+    "The facts you may rely on, and nothing beyond them:",
+    "- The partner's payment page lives on a subdomain they own, e.g. pay.yourcompany.com.",
+    "- It runs on Europay's servers. The partner installs nothing and hosts nothing.",
+    "- The only change on their side is ONE DNS record: type CNAME, name 'pay',",
+    "  value europay.paydealio.com, TTL 300, proxy OFF.",
+    "- They must NOT add it until Europay says the hostname is configured, or visitors",
+    "  get a certificate error.",
+    "- On Cloudflare it must be DNS only (grey cloud), not proxied, or the certificate",
+    "  cannot be issued.",
+    "- Europay issues and renews the certificate automatically, usually within about",
+    "  ten minutes of the record appearing.",
+    "- Europay also needs: the exact hostname, their name as printed, a deep hex colour,",
+    "  optionally a paper hex colour, and one human email address.",
+    "- Stripe is connected by one authorisation on Stripe's own site with their own login.",
+    "  Charges are raised on THEIR account, their name is on every statement, money settles",
+    "  to their bank, and they can revoke it any time.",
+    "- Money never passes through Europay. A licensed payment provider holds and moves it.",
+    "- A CNAME routes one hostname only. Europay cannot reach their website, shop, email,",
+    "  admin, database or customer data, and a different hostname is a different browser",
+    "  origin so their site's cookies are not sent to us. The one exception is a cookie",
+    "  deliberately scoped to the whole domain (Domain=.yourcompany.com).",
+    "",
+    "Answer in two or three sentences. Be concrete. Never invent a price, a date, a limit",
+    "or a technical detail that is not above \u2014 say you do not know and give the email."
+  ].join("\n");
+
+  var EXAMPLES = ["Where do I add the CNAME?","Can you see my other pages?",
+    "What if I use Cloudflare?","Do I need an SSL certificate?","Whose Stripe is charged?"];
+
+  var fab=document.getElementById("epFab"), panel=document.getElementById("epPanel"),
+      body=document.getElementById("epBody"), chips=document.getElementById("epChips"),
+      input=document.getElementById("epQ"), go=document.getElementById("epGo"),
+      close=document.getElementById("epClose");
+  var turns=[], sample=null, ready=false, busy=false;
+
+  function say(cls, text){
+    var p=document.createElement("p"); p.className="ep-turn "+cls; p.textContent=text;
+    body.append(p); body.scrollTop=body.scrollHeight; return p;
+  }
+  function offline(){
+    say("err","I can't answer here. Email mo@thexchange.app and a person will reply.");
+    input.disabled=true; go.disabled=true;
+  }
+  function copyFor(code){
+    if(code==="rate_limited") return "Too many questions at once \u2014 try again in a minute.";
+    if(code==="session_expired") return "Please sign in again, then ask.";
+    if(code==="not_granted"||code==="sampling_disabled"||code==="not_declared")
+      return "I can't answer here. Email mo@thexchange.app and a person will reply.";
+    return "Something went wrong answering that. Email mo@thexchange.app.";
+  }
+
+  function ask(text){
+    text=(text||"").trim();
+    if(!text||busy) return;
+    if(!ready){ say("q",text); say("err","Still waking up \u2014 try again in a moment."); return; }
+    if(!sample){ say("q",text); offline(); return; }
+    busy=true; go.disabled=true; input.value="";
+    say("q",text);
+    var a=say("a","Thinking\u2026");
+    turns.push({role:"user",content:text});
+    /* cache:false so a repeat really asks again; the standing instructions ride
+       as a leading user turn because sample has no system role. */
+    sample([{role:"user",content:FACTS}].concat(turns),{
+      cache:false, modelTier:"quick",
+      onText:function(u){ a.textContent=u.text; body.scrollTop=body.scrollHeight; }
+    }).then(function(r){
+      a.textContent=r.text;
+      turns.push({role:"assistant",content:r.text});
+      if(turns.length>8) turns=turns.slice(-8);
+    }).catch(function(e){
+      a.className="ep-turn err"; a.textContent=copyFor(e.code); turns.pop();
+    }).then(function(){ busy=false; go.disabled=false; body.scrollTop=body.scrollHeight; });
+  }
+
+  EXAMPLES.forEach(function(t){
+    var b=document.createElement("button"); b.type="button"; b.textContent=t;
+    b.addEventListener("click",function(){ ask(t); });
+    chips.append(b);
+  });
+  go.addEventListener("click",function(){ ask(input.value); });
+  input.addEventListener("keydown",function(e){ if(e.key==="Enter") ask(input.value); });
+  function open(v){
+    panel.hidden=!v; fab.hidden=v; fab.setAttribute("aria-expanded",String(v));
+    if(v) input.focus();
+  }
+  fab.addEventListener("click",function(){ open(true); });
+  close.addEventListener("click",function(){ open(false); });
+  document.addEventListener("keydown",function(e){ if(e.key==="Escape"&&!panel.hidden) open(false); });
+
+  /* Resolve the capability without assuming window.claude exists: served
+     anywhere but a Claude viewer it is simply absent, and a ReferenceError
+     here would take the whole widget down with it. */
+  (function(){
+    var c = (typeof window!=="undefined" && window.claude) ? window.claude : null;
+    if(!c || typeof c.use!=="function"){ ready=true; return; }
+    Promise.resolve(c.use("sample")).then(function(s){ sample=s; }, function(){ sample=null; })
+      .then(function(){ ready=true; });
+  })();
+})();
+</script>
+</body>
+</html>

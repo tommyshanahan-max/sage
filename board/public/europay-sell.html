@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Europay</title>
+<meta name="description" content="China payment software for agents and the clients they invoice.">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0E1F1A">
+<style>
+  :root{
+    /* EVERY NAME HERE IS ONE THE WHITE-LABEL SKIN ALSO SETS. LABEL_CSS in
+       server.js repaints --bg, --card, --ink, --ink2, --mut, --line, --hair,
+       --ok, --acc and --accink, and nothing else. A token of our own invented
+       here would keep its dark value while the ground around it turned to
+       paper — mint headlines on a near-white page. Learned from the spec,
+       which learned it twice. */
+    --bg:#0E1F1A; --card:#16302A; --raise:#1B3A32; --ink:#EDF2EF; --ink2:#B3C6BF;
+    --mut:#7C948C; --line:#22463D; --acc:#E8B44C; --accink:#0E1F1A;
+    --ok:#6FC3A0;
+    --top:#16302A; --topInk:#EDF2EF;
+  }
+  {{SKINCSS}}
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  /* THE DISPLAY FACE IS SERVED FROM THIS BOX, not from Google. A
+     fonts.googleapis.com link is a render-blocking request that never returns
+     behind the Great Firewall, which is where every reader of this page is.
+     Archivo is SIL Open Font Licence, so self-hosting is allowed; this is the
+     latin subset at 34 KB, one variable file covering 700 to 900.
+     font-display:swap, so the headline is readable in the system face while
+     the file arrives and nobody ever waits on it. Body text stays on the
+     system stack, which already carries the Chinese. */
+  @font-face{
+    font-family:"Archivo";
+    src:url(/fonts/archivo.woff2) format("woff2");
+    font-weight:700 900;
+    font-style:normal;
+    font-display:swap;
+  }
+  body{background:var(--bg);color:var(--ink);
+    font:400 17px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,
+      "PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    -webkit-text-size-adjust:100%;overflow-x:hidden}
+  .wrap{max-width:1120px;margin:0 auto;padding-inline:clamp(20px,5vw,40px)}
+  a{color:inherit;text-decoration:none}
+  :focus-visible{outline:2px solid var(--acc);outline-offset:3px;border-radius:5px}
+  .num{font-variant-numeric:tabular-nums}
+  .eb{font-size:.7rem;font-weight:700;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--mut);margin:0}
+
+  /* ---- top ---- */
+  .top{display:flex;align-items:center;justify-content:space-between;gap:1rem;
+    padding-block:1.3rem}
+  .brand{display:flex;align-items:center;gap:.55rem}
+  .brand .g{width:1.35rem;height:1.35rem;border-radius:.35rem;overflow:hidden;display:flex}
+  .brand .g i{width:50%;height:100%;display:block}
+  .brand .g i:first-child{background:var(--acc)}
+  .brand .g i:last-child{background:var(--ok)}
+  .brand b{font-size:.84rem;font-weight:700;letter-spacing:.22em}
+  .top .r{display:flex;align-items:center;gap:.5rem}
+  .lang{font:inherit;font-size:.82rem;font-weight:600;color:var(--ink2);background:transparent;
+    border:1px solid var(--line);border-radius:999px;padding:.38rem .9rem;cursor:pointer}
+
+  /* ---- the shout ---- */
+  .hero{padding-block:clamp(2.4rem,7vw,5rem) clamp(2rem,5vw,3.4rem)}
+  h1{margin:0;font-family:"Archivo",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    text-transform:uppercase;font-weight:900;
+    font-size:clamp(2.7rem,10.2vw,6.6rem);line-height:.9;letter-spacing:-.035em;
+    color:var(--ink);max-width:15ch}
+  .lede{margin:clamp(1.4rem,3vw,2rem) 0 0;font-size:clamp(1.05rem,2.1vw,1.35rem);
+    line-height:1.45;color:var(--ink2);max-width:46ch}
+  .lede b{color:var(--ink);font-weight:600}
+  .cta{display:flex;flex-wrap:wrap;align-items:center;gap:1.1rem;margin-top:2rem}
+  .go{display:inline-block;background:var(--acc);color:var(--accink);font-weight:700;
+    font-size:1.05rem;padding:1.05rem 2.2rem;border-radius:999px}
+  .go2{font-weight:600;color:var(--ink);border-bottom:2px solid var(--acc);padding-bottom:2px}
+  .third{margin:1.4rem 0 0;color:var(--mut);font-size:1rem}
+  .third a{color:var(--ink2);border-bottom:1px solid var(--line);padding-bottom:1px}
+  .third a:hover{color:var(--ink);border-color:var(--acc)}
+
+  /* ---- marks ---- */
+  .marks{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:2.2rem}
+  .marks span{border:1px solid var(--line);border-radius:999px;padding:.5rem 1.1rem;
+    font-size:.92rem;color:var(--ink2)}
+  .marks span b{color:var(--ink);font-weight:600}
+
+  /* ---- the product, big ---- */
+  .shot{background:var(--card);border:1px solid var(--line);border-top-left-radius:1.2rem;
+    border-top-right-radius:1.2rem;border-bottom:0;padding:clamp(1.6rem,4vw,3rem);
+    margin-top:clamp(2.4rem,6vw,4rem);display:grid;grid-template-columns:1fr;gap:2rem;
+    align-items:center}
+  @media (min-width:820px){.shot{grid-template-columns:1fr 1fr;gap:3rem}}
+  .shot h2{margin:0 0 .8rem;font-size:clamp(1.5rem,3vw,2.1rem);line-height:1.15;
+    letter-spacing:-.025em;font-weight:700;max-width:16ch}
+  .shot p{margin:0;color:var(--ink2);max-width:40ch}
+  .req{background:var(--bg);border:1px solid var(--line);border-radius:1rem;
+    padding:1.5rem;display:flex;flex-direction:column;gap:.85rem;max-width:23rem}
+  .req .row{display:flex;justify-content:space-between;align-items:baseline}
+  .req .amt{font-size:2.6rem;line-height:1;font-weight:700;letter-spacing:-.04em;margin:0}
+  .req .what{margin:0;color:var(--mut);font-size:.88rem}
+  .req .pay{background:var(--acc);color:var(--accink);border-radius:.7rem;padding:.95rem;
+    text-align:center;font-weight:700}
+  .req .ways{display:flex;justify-content:center;gap:1rem;font-size:.78rem;color:var(--mut)}
+  .req .land{border-top:1px solid var(--line);padding-top:.85rem;display:flex;
+    justify-content:space-between;align-items:baseline;font-size:.92rem}
+  .req .land b{font-size:1.3rem;font-weight:700;letter-spacing:-.02em}
+  .req .land span{color:var(--ok);font-size:.82rem;font-weight:600}
+
+  /* ---- bands ---- */
+  .band{padding-block:clamp(3rem,7vw,5rem);border-top:1px solid var(--line)}
+  .band h2{margin:.7rem 0 0;font-family:"Archivo",-apple-system,BlinkMacSystemFont,sans-serif;
+    font-size:clamp(1.7rem,4.4vw,2.9rem);line-height:1.02;
+    letter-spacing:-.03em;font-weight:900;text-transform:uppercase;max-width:17ch;color:var(--ink)}
+  .band .say{margin:1rem 0 0;color:var(--ink2);max-width:52ch}
+  .steps{display:grid;grid-template-columns:1fr;gap:1.6rem;margin-top:2.4rem}
+  @media (min-width:760px){.steps{grid-template-columns:repeat(3,1fr);gap:2.4rem}}
+  .step .n{font-family:"Archivo",-apple-system,sans-serif;font-size:2.4rem;font-weight:900;letter-spacing:-.04em;color:var(--acc);line-height:1}
+  .step h3{margin:.5rem 0 .4rem;font-size:1.25rem;font-weight:700}
+  .step p{margin:0;color:var(--ink2);font-size:.98rem}
+
+  .price{display:flex;flex-wrap:wrap;align-items:baseline;gap:clamp(1rem,4vw,2.6rem);margin-top:1.6rem}
+  .price .big{font-family:"Archivo",-apple-system,sans-serif;
+    font-size:clamp(4.5rem,15vw,9rem);line-height:.85;font-weight:900;
+    letter-spacing:-.05em;color:var(--acc);margin:0}
+  .price p{margin:0;color:var(--ink2);max-width:36ch}
+
+  .embed{background:var(--card);border:1px solid var(--line);border-radius:1rem;
+    padding:1.4rem 1.6rem;margin-top:1.8rem}
+  .embed pre{margin:0;overflow-x:auto}
+  .embed code{font:600 .88rem/1.7 ui-monospace,SFMono-Regular,Menlo,monospace;
+    color:var(--ok);white-space:pre}
+  .embed p{margin:.9rem 0 0;color:var(--mut);font-size:.88rem}
+  .who{display:grid;grid-template-columns:1fr;gap:1rem;margin-top:2.2rem}
+  @media (min-width:760px){.who{grid-template-columns:1fr 1fr}}
+  .box{background:var(--card);border:1px solid var(--line);border-radius:1rem;padding:1.6rem}
+  .box h3{margin:0 0 .5rem;font-size:1.15rem;font-weight:700}
+  .box p{margin:0;color:var(--ink2);font-size:.98rem}
+
+  ul.plain{margin:2rem 0 0;padding:0;list-style:none}
+  ul.plain li{padding:1rem 0;border-top:1px solid var(--line);color:var(--ink2);max-width:64ch}
+  ul.plain li b{color:var(--ink);font-weight:600}
+
+  .end{text-align:center;padding-block:clamp(3.4rem,8vw,6rem);border-top:1px solid var(--line)}
+  .end h2{margin:0 auto;max-width:18ch}
+  .end .cta{justify-content:center;margin-top:2rem}
+  .foot{padding-block:2rem 3.4rem;border-top:1px solid var(--line);color:var(--mut);
+    font-size:.86rem;line-height:1.6}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="top">
+    <div class="brand"><span class="g" aria-hidden="true"><i></i><i></i></span><b>EUROPAY</b></div>
+    <div class="r"><button class="lang" type="button">中文</button></div>
+  </div>
+</div>
+
+<div class="wrap">
+  <section class="hero">
+    <p class="eb">For your Chinese clients</p>
+    <h1>Add China to the checkout you already have.</h1>
+    <p class="lede">Most checkouts offer a client in China nothing they can actually pay with. <b>One line of code and yours offers WeChat Pay and Alipay.</b> The money lands in your own bank, in euros.</p>
+    <div class="cta">
+      <a class="go" href="#widget">Install the widget</a>
+      <a class="go2" href="/dealio/try">See it work first</a>
+    </div>
+    <p class="third">No checkout of your own? <a href="/start">Open an account instead &#8594;</a></p>
+    <div class="marks">
+      <span><b>支付宝</b> Alipay</span>
+      <span><b>微信支付</b> WeChat Pay</span>
+      <span><b>银行卡</b> Visa · Mastercard</span>
+    </div>
+  </section>
+
+  <section class="shot">
+    <div>
+      <h2>One link. Two currencies. Nothing to install.</h2>
+      <p>You type an amount and what it is for. They get a page in Chinese with a code they long-press. You get euros, and an invoice number that matches on both sides.</p>
+    </div>
+    <div class="req">
+      <div class="row"><span class="eb">Europay · request</span><span class="eb" style="color:var(--acc)">Unpaid</span></div>
+      <p class="amt num">¥18,400</p>
+      <p class="what">Brand identity · second instalment</p>
+      <div class="pay">去付 ¥18,400</div>
+      <div class="ways"><span>微信支付</span><span>支付宝</span></div>
+      <div class="land"><span>You receive<br><b class="num">€2,385</b></span><span>In your bank in 2 days</span></div>
+    </div>
+  </section>
+</div>
+
+<div class="wrap">
+  <section class="band" id="widget">
+    <p class="eb">One line, and you are done</p>
+    <h2>Nothing you already run has to change.</h2>
+    <p class="say">Europay sits beside your existing checkout rather than replacing it. A payer in China gets a code they can actually use; everybody else sees exactly what they saw yesterday.</p>
+    <div class="embed">
+      <pre><code>&lt;script src="https://europay.paydealio.com/w.js"
+        data-account="acct_..."&gt;&lt;/script&gt;</code></pre>
+      <p>One line in the page you already have.</p>
+    </div>
+    <div class="who">
+      <div class="box"><h3>Nothing moves</h3><p>Your existing checkout keeps taking cards exactly as it does now. The widget appears only when the payer is in China.</p></div>
+      <div class="box"><h3>One dashboard</h3><p>The payment lands beside your others, with the same invoice number, in the account you already reconcile against.</p></div>
+    </div>
+  </section>
+
+  <section class="band">
+    <p class="eb">How it works</p>
+    <h2>Three steps, two of them one tap.</h2>
+    <div class="steps">
+      <div class="step"><div class="n">1</div><h3>You ask.</h3><p>Type the amount and what it is for. You get a link.</p></div>
+      <div class="step"><div class="n">2</div><h3>They pay.</h3><p>They open it, long-press the code and pay in WeChat or Alipay. No account, no app, no sign-up.</p></div>
+      <div class="step"><div class="n">3</div><h3>You are paid.</h3><p>Euros settle to your own bank account, usually inside two days.</p></div>
+    </div>
+  </section>
+
+
+
+  <section class="band">
+    <p class="eb">What it costs</p>
+    <div class="price">
+      <p class="big">[ __ ]%</p>
+      <p>All in, taken from the amount received. One number with nothing under it — the wallet's charge, the conversion out of yuan, and ours. Your client is charged what they owe and nothing more. Nothing to join, nothing monthly, and nothing at all if nobody pays you.</p>
+    </div>
+  </section>
+
+  <section class="band">
+    <p class="eb">Who it is for</p>
+    <h2>People and small firms, not corporates.</h2>
+    <p class="say">Consultants, designers, translators, teachers, agencies, studios and suppliers across Europe, with clients inside China.</p>
+    <div class="who">
+      <div class="box"><h3>What you already have</h3><p>A bank account, a company number or none at all, and a phone. That is the whole requirement.</p></div>
+      <div class="box"><h3>What you were told you needed</h3><p>A Chinese entity, a merchant account, an ICP filing and a finance person. Ordinary payment services are built for that. Most people doing this work have none of it.</p></div>
+    </div>
+  </section>
+
+  <section class="band">
+    <p class="eb">What Europay does not do</p>
+    <h2>It never holds your money.</h2>
+    <ul class="plain">
+      <li>Payments are processed and funds held by a <b>licensed payment provider</b>. Europay is not a bank and is not a money transmitter.</li>
+      <li>Each recipient is identity-checked by that provider, and money settles to their own account. It does not pass through a Europay balance.</li>
+      <li>No cash. No cryptocurrency. No bearer instruments.</li>
+      <li>No goods trade, no marketplace, no escrow. Payment for services between two parties who already know each other.</li>
+      <li>It is not a way around anybody's reporting requirements or limits. The provider's own limits and checks apply to every payment.</li>
+    </ul>
+  </section>
+
+  <section class="end">
+    <h2 style="font-size:clamp(1.9rem,5.4vw,3.4rem);line-height:1.02;letter-spacing:-.03em;font-weight:900;font-family:Archivo,-apple-system,sans-serif;text-transform:uppercase;color:var(--ink)">Your next invoice can be paid this week.</h2>
+    <div class="cta">
+      <a class="go" href="/start">Open an account</a>
+      <a class="go2" href="/dealio/try">See it work first</a>
+    </div>
+    <p class="third">Already take payments? <a href="#widget">Install it into your own checkout as a widget &#8594;</a></p>
+  </section>
+
+  <p class="foot">Europay is payment software for agents and the clients they invoice. Example figures throughout.</p>
+</div>
+
+</body>
+</html>

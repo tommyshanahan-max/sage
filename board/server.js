@@ -484,7 +484,7 @@ const LABEL_CSS = LABEL_INK
   ? `html[data-skin="whitelabel"]{`
     + `--bg:${LABEL_PAPER || "#EEF0F4"};--card:#F7F8FB;`
     + `--ink:#151B28;--ink2:#4E5968;--mut:#8A939F;`
-    + `--line:#E3E6EC;--hair:#EAECF1;--ok:#2A9D63;`
+    + `--line:#E3E6EC;--hair:#EAECF1;--ok:#2A9D63;--warn:#C0392B;`
     + `--acc:${LABEL_INK};--accink:#FFFFFF;`
     + `--top:${LABEL_INK};--topBtnInk:${LABEL_INK};`
     + `--topInk:#EEF1F7;--topDim:#93A0B8;--topBtn:#FFFFFF;`
