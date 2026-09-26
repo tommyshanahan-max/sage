@@ -31,8 +31,9 @@ import http from "node:http";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { load, save, newId, slotsFor, shown, cleanBooking } from "./lib/store.mjs";
+import { load, save, newId, slotsFor, shown, cleanBooking, splitFor } from "./lib/store.mjs";
 import * as room from "./lib/room.mjs";
+import { teamView, tutorView } from "./lib/team.mjs";
 import * as notify from "./lib/notify.mjs";
 
 // Where the service is reached from outside — for links put in messages.
@@ -134,7 +135,10 @@ const server = http.createServer(async (req, res) => {
     const slot = slotsFor(db, t, { days: 14 }).flatMap((d) => d.slots).find((x) => x.start === b.start);
     if (!slot) return send(res, 400, { error: "slot" });
     if (!slot.free) return send(res, 409, { error: "taken" });
+    const sp = splitFor(db, t);
     const row = cleanBooking({
+      money: t.fee ? { tutor: sp.tutor, lead: sp.lead, house: sp.house, price: sp.price,
+        ...(sp.team ? { team: sp.team.id } : {}) } : undefined,
       id: newId(), teacher: t.id, start: slot.start, name, contact,
       note: String(b.note || "").trim().slice(0, 200), at: new Date().toISOString(), off: false,
     });
@@ -155,6 +159,37 @@ const server = http.createServer(async (req, res) => {
       // `make book-list`, for Tom to send them.
       room: "/room/" + row.id + "#" + row.sKey,
     });
+  }
+
+  /* ---- A TEAM LEAD'S PORTAL — see lib/team.mjs ----------------------------
+     /team#<key> is the page. Every call is a POST with the key in the body,
+     so it never lands in a proxy's log the way a query string would. */
+  if (req.method === "GET" && p === "/team") {
+    try { return send(res, 200, readFileSync(path.join(HERE, "public/team.html")), "text/html; charset=utf-8"); }
+    catch { return send(res, 404, { error: "missing" }); }
+  }
+  m = p.match(/^\/api\/team(?:\/(tutor|bank))?$/);
+  if (req.method === "POST" && m) {
+    const b = await readBody(req, 4096);
+    const db = load();
+    const team = b && db.teams.find((x) => x.key === String(b.key || ""));
+    if (!team) return send(res, 403, { error: "key" });
+    if (!m[1]) return send(res, 200, teamView(db, team));
+    if (m[1] === "tutor") {
+      const v = tutorView(db, team, String(b.id || ""));
+      return v ? send(res, 200, v) : send(res, 404, { error: "gone" });
+    }
+    // The bank. Kept as typed; a card number with fewer than 12 digits is
+    // not a card number, and saying so now beats a payout that bounces.
+    // "KEEP": the card field left blank on a bank already saved — the page
+    // never has the full number to send back, only the last four.
+    const card = b.card === "KEEP" && team.bank ? team.bank.card.replace(/\D/g, "") : String(b.card || "").replace(/\D/g, "");
+    if (card.length < 12 || card.length > 19) return send(res, 400, { error: "card" });
+    if (!String(b.name || "").trim() || !String(b.bank || "").trim()) return send(res, 400, { error: "bank" });
+    team.bank = { bank: String(b.bank).trim().slice(0, 60), name: String(b.name).trim().slice(0, 60),
+      card: card.replace(/(\d{4})(?=\d)/g, "$1 "), branch: String(b.branch || "").trim().slice(0, 80) };
+    save(db);
+    return send(res, 200, teamView(db, team));
   }
 
   /* ---- THE LESSON ROOM — see lib/room.mjs ---------------------------------

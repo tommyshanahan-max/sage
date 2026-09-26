@@ -1,0 +1,192 @@
+<!doctype html>
+<!-- A TEAM LEAD'S PORTAL. Julia first: what she made this month, what each of
+     her tutors made and her share of it, when her money comes, and where it
+     goes. The four screens of the mockup Tom approved, drawn from lib/team.mjs.
+     The link Tom sends her carries her key in the #fragment; the page keeps it
+     on her phone and takes it out of the address bar, so a screenshot of the
+     portal is not a way into it. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Team</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:#F4F5F7;color:#10243F;
+    font:17px/1.4 -apple-system,BlinkMacSystemFont,"PingFang SC","Segoe UI",Helvetica,Arial,sans-serif}
+  main{max-width:30rem;margin:0 auto;padding:max(16px,env(safe-area-inset-top)) 0 40px}
+  a{color:inherit;text-decoration:none}
+  .top{display:flex;align-items:center;justify-content:space-between;padding:4px 20px 0}
+  .top b{font-size:15px;color:#6E7C93;letter-spacing:.12em;text-transform:uppercase}
+  .av{width:36px;height:36px;border-radius:50%;background:#256abf;color:#fff;display:grid;place-items:center;font-weight:700}
+  .back{display:inline-block;padding:4px 16px 0;font-size:30px;color:#6E7C93}
+  .hero{margin:14px 16px 0;border-radius:22px;padding:20px;color:#fff;background:linear-gradient(140deg,#10243F,#184f95 60%,#256abf)}
+  .hero.green{background:linear-gradient(140deg,#0B4F3A,#0B6E4F)}
+  .hero small{display:block;font-size:14px;opacity:.85}
+  .big{font-size:44px;font-weight:800;letter-spacing:-.02em;line-height:1.1;margin:4px 0 14px;font-variant-numeric:tabular-nums}
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .split div{background:rgba(255,255,255,.12);border-radius:14px;padding:10px 12px}
+  .split b{display:block;font-size:20px}.split span{font-size:13px;opacity:.9}
+  .card{margin:12px 16px 0;background:#fff;border-radius:18px;padding:6px 16px;box-shadow:0 1px 3px rgba(16,36,63,.06),0 6px 18px rgba(16,36,63,.06)}
+  .pay{display:flex;align-items:center;gap:12px;padding:10px 0}
+  .pay .i{width:44px;height:44px;border-radius:12px;background:#E3F3EC;color:#0B6E4F;display:grid;place-items:center;font-size:22px;flex:none}
+  .pay.set .i{background:#FDE6D6;color:#C2561B}
+  .pay div{flex:1}.pay b{display:block;font-size:18px}.pay span{font-size:14px;color:#3D4E68}
+  .go{display:flex;justify-content:space-between;align-items:center;margin:12px 16px 0;background:#10243F;color:#fff;border-radius:16px;padding:16px 18px;font-weight:700;font-size:18px}
+  .lab{margin:18px 20px 6px;font-size:13px;font-weight:700;letter-spacing:.12em;color:#6E7C93;text-transform:uppercase}
+  .row{display:flex;align-items:center;gap:12px;padding:12px 0}.row+.row{border-top:1px solid #EEF1F6}
+  .f{width:42px;height:42px;border-radius:50%;color:#fff;display:grid;place-items:center;font-weight:700;flex:none}
+  .row .m{flex:1;min-width:0}.row .m b{display:block;font-size:17px}.row .m span{font-size:13px;color:#6E7C93}
+  .row .r{text-align:right}.row .r b{display:block;font-size:17px;font-variant-numeric:tabular-nums}.row .r span{font-size:13px;color:#0B6E4F;font-weight:600}
+  .chev{color:#B5BFCD;font-size:22px}
+  h1{margin:6px 20px 0;font-size:28px;line-height:1.15}
+  .sub{margin:2px 20px 0;color:#3D4E68;font-size:15px}
+  .who{display:flex;align-items:center;gap:14px;margin:6px 20px 0}
+  .who .f{width:60px;height:60px;font-size:24px}
+  label{display:block;margin:12px 16px 0;font-size:14px;color:#3D4E68}
+  input{display:block;width:100%;margin-top:6px;background:#fff;border:1px solid #D6DCE5;border-radius:14px;padding:14px 16px;font:inherit;font-size:17px;color:#10243F}
+  .save{display:block;width:calc(100% - 32px);margin:18px 16px 0;border:0;background:#0B6E4F;color:#fff;border-radius:16px;padding:16px;font:inherit;font-weight:700;font-size:18px;cursor:pointer}
+  .note{margin:10px 20px 0;font-size:13px;color:#6E7C93;text-align:center}
+  .err{margin:10px 20px 0;color:#b3261e;text-align:center;min-height:1.2em}
+  .none{padding:16px 0;color:#6E7C93;text-align:center}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<script>
+(() => {
+  const zh = (navigator.language || "").startsWith("zh");
+  const W = zh ? {
+    team: "{name}的团队", made: "本月收入", own: "你上的课", fromTeam: "团队分成", onFri: "周五到账 ¥{n}",
+    to: "打到 {bank} ••{last4} · {date}", setBank: "设置收款银行卡", setBankSub: "设好了每周五到账",
+    yourTeam: "你的团队 · {n} 位老师", week: "本周", lessons: "{n} 节课", you: "+¥{n} 给你",
+    teamSub: "{n} 位老师 · 每节课你拿 {cut}%", teamNone: "还没有老师。", tutorMade: "{name}本月收入",
+    yourCut: "你的 {cut}%", latest: "最近的课", noLessons: "还没上过课。",
+    bankTitle: "钱打到哪里", bankSub: "每周五到账", bank: "开户银行", accName: "户名", card: "卡号",
+    cardKeep: "卡号（尾号 {last4}，要换就重新填）", branch: "开户支行", branchPh: "比如 上海浦东支行",
+    save: "保存银行卡", saved: "已保存", only: "只有你看得到。随时可以改。",
+    badCard: "卡号不对，检查一下。", badBank: "写上银行和户名。", fail: "没保存成功，再试一次。",
+    key: "这个链接打不开。找 Tom 要一个新的。", today: "今天", yesterday: "昨天",
+  } : {
+    team: "{name}'s team", made: "You made this month", own: "your lessons", fromTeam: "from your team", onFri: "¥{n} on Friday",
+    to: "To {bank} ••{last4} · {date}", setBank: "Set up your bank", setBankSub: "Then it's paid every Friday",
+    yourTeam: "Your team · {n} tutors", week: "This week", lessons: "{n} lessons", you: "+¥{n} you",
+    teamSub: "{n} tutors · you get {cut}% on each lesson", teamNone: "No tutors yet.", tutorMade: "{name} made this month",
+    yourCut: "your {cut}%", latest: "Latest lessons", noLessons: "No lessons yet.",
+    bankTitle: "Where your money goes", bankSub: "Paid every Friday · 每周五到账", bank: "Bank · 开户银行", accName: "Name on the account · 户名", card: "Card number · 卡号",
+    cardKeep: "Card number (ends {last4} — type a new one to change it)", branch: "Branch · 开户支行", branchPh: "e.g. 上海浦东支行",
+    save: "Save bank", saved: "Saved", only: "Only you see this. Change it any time.",
+    badCard: "That card number doesn't look right.", badBank: "Add the bank and the name on the account.", fail: "That didn't save. Try again.",
+    key: "This link doesn't open a team. Ask Tom for a new one.", today: "Today", yesterday: "Yesterday",
+  };
+  const fill = (s, v) => s.replace(/\{(\w+)\}/g, (_, k) => v[k] ?? "");
+  const yuan = (n) => "¥" + Math.round(n).toLocaleString("en-US");
+  const TINT = ["#E0A13A", "#2A9D63", "#7268C4", "#D4485C", "#2F8C9E", "#8A6D5A"];
+  const tint = (s) => TINT[[...String(s)].reduce((n, c) => n + c.charCodeAt(0), 0) % TINT.length];
+  const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const BASE = location.pathname.replace(/\/team$/, "");
+
+  /* THE KEY: off the link once, into this phone, out of the address bar. */
+  let KEY = "";
+  try { KEY = localStorage.getItem("book:teamkey") || ""; } catch { /* private window */ }
+  const h0 = location.hash.slice(1);
+  if (/^[a-f0-9]{24}$/.test(h0)) {
+    KEY = h0;
+    try { localStorage.setItem("book:teamkey", KEY); } catch { /* keeps working for this visit */ }
+    history.replaceState(null, "", location.pathname + "#/");
+  }
+  const call = (p, body) => fetch(BASE + "/api/team" + p, {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key: KEY, ...body }),
+  });
+  const app = document.getElementById("app");
+  let V = null;
+
+  const when = (iso) => {
+    const d = iso.slice(0, 10), t = iso.slice(11, 16);
+    const today = new Date(Date.now() + 8 * 3600e3).toISOString().slice(0, 10);
+    const yest = new Date(Date.now() - 16 * 3600e3).toISOString().slice(0, 10);
+    return (d === today ? W.today : d === yest ? W.yesterday : Number(d.slice(5, 7)) + "/" + Number(d.slice(8))) + " " + t;
+  };
+  const dateWord = (ymd) => new Date(ymd + "T12:00:00+08:00").toLocaleDateString(zh ? "zh-CN" : "en-GB", { day: "numeric", month: "short" });
+
+  const tutorRow = (t, week) => `<a class="row" href="#/t/${t.id}"><span class="f" style="background:${tint(t.name)}">${esc([...t.name][0])}</span>
+    <div class="m"><b>${esc(t.name)}</b><span>${fill(W.lessons, { n: week ? t.weekLessons : t.lessons })}</span></div>
+    <div class="r"><b>${yuan(week ? t.weekMade : t.made)}</b><span>${(week ? t.weekYou : t.you) ? fill(W.you, { n: (week ? t.weekYou : t.you).toLocaleString("en-US") }) : ""}</span></div>
+    ${week ? "" : '<span class="chev">›</span>'}</a>`;
+
+  function home() {
+    const v = V;
+    const pay = v.bank
+      ? `<a class="pay" href="#/bank"><span class="i">¥</span><div><b>${fill(W.onFri, { n: v.owed.toLocaleString("en-US") })}</b>
+         <span>${fill(W.to, { bank: esc(v.bank.bank), last4: v.bank.last4, date: dateWord(v.payday) })}</span></div><span class="chev">›</span></a>`
+      : `<a class="pay set" href="#/bank"><span class="i">!</span><div><b>${W.setBank}</b><span>${W.setBankSub}</span></div><span class="chev">›</span></a>`;
+    const week = v.tutors.filter((t) => t.weekLessons).slice(0, 3);
+    app.innerHTML = `
+      <div class="top"><b>${esc(fill(W.team, { name: v.name }))}</b><span class="av">${esc([...v.name][0])}</span></div>
+      <div class="hero"><small>${W.made}</small><div class="big">${yuan(v.month.total)}</div>
+        <div class="split"><div><b>${yuan(v.month.own)}</b><span>${W.own}</span></div><div><b>${yuan(v.month.team)}</b><span>${W.fromTeam}</span></div></div></div>
+      <div class="card">${pay}</div>
+      <a class="go" href="#/team"><span>${fill(W.yourTeam, { n: v.tutors.length })}</span><span>›</span></a>
+      ${week.length ? `<p class="lab">${W.week}</p><div class="card" style="margin-top:0">${week.map((t) => tutorRow(t, true)).join("")}</div>` : ""}`;
+  }
+
+  function team() {
+    const v = V;
+    app.innerHTML = `<a class="back" href="#/">‹</a><h1>${zh ? "你的团队" : "Your team"}</h1>
+      <p class="sub">${fill(W.teamSub, { n: v.tutors.length, cut: v.cut })}</p>
+      <div class="card">${v.tutors.length ? v.tutors.map((t) => tutorRow(t, false)).join("") : `<p class="none">${W.teamNone}</p>`}</div>`;
+  }
+
+  async function tutor(id) {
+    const r = await call("/tutor", { id });
+    if (!r.ok) { location.hash = "#/team"; return; }
+    const t = await r.json();
+    app.innerHTML = `<a class="back" href="#/team">‹</a>
+      <div class="who"><span class="f" style="background:${tint(t.name)}">${esc([...t.name][0])}</span>
+        <div><h1 style="margin:0">${esc(t.name)}</h1><p class="sub" style="margin:0">${esc(t.line || "")}</p></div></div>
+      <div class="hero green"><small>${esc(fill(W.tutorMade, { name: t.name }))}</small><div class="big">${yuan(t.made)}</div>
+        <div class="split"><div><b>${t.lessons}</b><span>${zh ? "节课" : "lessons"}</span></div><div><b>${yuan(t.you)}</b><span>${fill(W.yourCut, { cut: t.cut })}</span></div></div></div>
+      <p class="lab">${W.latest}</p>
+      <div class="card" style="margin-top:0">${t.latest.length ? t.latest.map((l) => `<div class="row"><div class="m"><b>${esc(l.student)}</b><span>${when(l.start)}</span></div>
+        <div class="r"><b>${yuan(l.made)}</b><span>${l.you ? fill(W.you, { n: l.you }) : ""}</span></div></div>`).join("") : `<p class="none">${W.noLessons}</p>`}</div>`;
+  }
+
+  function bank() {
+    const b = V.bank;
+    app.innerHTML = `<a class="back" href="#/">‹</a><h1>${W.bankTitle}</h1><p class="sub">${W.bankSub}</p>
+      <label>${W.bank}<input id="bk" value="${esc(b ? b.bank : "")}" placeholder="中国工商银行 ICBC"></label>
+      <label>${W.accName}<input id="nm" value="${esc(b ? b.name : "")}" autocomplete="name"></label>
+      <label>${b ? fill(W.cardKeep, { last4: b.last4 }) : W.card}<input id="cd" inputmode="numeric" autocomplete="off" placeholder="${b ? "•••• •••• •••• " + b.last4 : "6222 ..."}"></label>
+      <label>${W.branch}<input id="br" value="${esc(b ? b.branch : "")}" placeholder="${W.branchPh}"></label>
+      <button class="save" id="sv">${W.save}</button><p class="err" id="er"></p><p class="note">${W.only}</p>`;
+    document.getElementById("sv").onclick = async () => {
+      const $ = (id) => document.getElementById(id).value;
+      const er = document.getElementById("er");
+      // Blank card with a card already saved: keep the old one.
+      if (!$("cd").trim() && !b) { er.textContent = W.badCard; return; }
+      const r = await call("/bank", { bank: $("bk"), name: $("nm"), branch: $("br"), card: $("cd").trim() || "KEEP" }).catch(() => null);
+      if (r && r.ok) { V = await r.json(); document.getElementById("sv").textContent = W.saved; setTimeout(() => { location.hash = "#/"; }, 700); return; }
+      const j = r ? await r.json().catch(() => ({})) : {};
+      er.textContent = j.error === "card" ? W.badCard : j.error === "bank" ? W.badBank : W.fail;
+    };
+  }
+
+  async function route() {
+    if (!V) {
+      const r = await call("").catch(() => null);
+      if (!r || !r.ok) { app.innerHTML = `<p class="err" style="margin-top:40vh">${W.key}</p>`; return; }
+      V = await r.json();
+    }
+    const h = location.hash.replace(/^#\/?/, "");
+    window.scrollTo(0, 0);
+    if (h === "team") team();
+    else if (h === "bank") bank();
+    else if (h.startsWith("t/")) tutor(h.slice(2));
+    else home();
+  }
+  addEventListener("hashchange", route);
+  route();
+})();
+</script>
+</body>
+</html>
