@@ -2948,6 +2948,47 @@ app.get("/api/rooms", admin, async (_req, res) => {
  * Not a reader — this app has no way to know about those, and would not want
  * one.
  */
+/* EVERYBODY ALREADY STANDING AT THE DOOR BECOMES TIER TWO.
+ *
+ * There is no queue any more, so sixty-three people are waiting for something
+ * that no longer exists. They are also the only reason an arrival from a link
+ * does not land on an empty board — the first person through the door has to
+ * find somebody to do business with, and these are them.
+ *
+ * ONE WAY, AND IT DOES NOT RUN TWICE. A browser that already has a person row
+ * is skipped rather than overwritten: a row made here and then filled in by
+ * the person themselves must not be flattened back to what the form said.
+ *
+ * The wait row is left alone and not marked done. They are still standing at
+ * whichever door they chose — that is what the rooms and the vouch read — and
+ * what has changed is that the board now shows them.
+ */
+app.post("/api/tier-two", admin, async (_req, res) => {
+  const out = await change((board) => {
+    const has = new Set(board.people.filter((q) => q.by).map((q) => q.by));
+    let made = 0, already = 0, nameless = 0;
+    for (const w of board.waits) {
+      if (!w.by) { nameless++; continue; }
+      if (has.has(w.by)) { already++; continue; }
+      const name = String(w.name || "").trim();
+      if (!name) { nameless++; continue; }
+      const why = String(w.why || "").trim();
+      board.people.push(store.cleanPerson({
+        id: store.newId(), at: w.at || new Date().toISOString(), by: w.by,
+        handle: name.slice(0, 40),
+        // Their own words where they are safe to show, and nothing where they
+        // are not — same rule as the door itself.
+        goal: why && !store.contactShaped(why) ? why : "",
+        state: "published", looking: true, via: "door",
+      }));
+      has.add(w.by);
+      made++;
+    }
+    return { ok: true, made, already, nameless };
+  });
+  res.json(out);
+});
+
 app.post("/api/admit-existing", admin, async (_req, res) => {
   const now = new Date().toISOString();
   let added = 0, already = 0;
@@ -5078,6 +5119,44 @@ app.post("/api/wait", express.json({ limit: "4kb" }), async (req, res) => {
         whyAlt2: row.why === was.why ? (was.whyAlt2 || "") : "",
         whyLang: row.why === was.why ? (was.whyLang || "") : "" };
     } else board.waits.push(row);
+
+    /* AND THEY ARE SOMEBODY ON THE BOARD, NOT SOMEBODY OUTSIDE IT.
+     *
+     * There is no queue any more. Tier two is the queue, and it is one people
+     * can work in: they browse everybody, they are browsable, and they can
+     * write to anyone who arrived the way they did. What they are waiting for
+     * is a member's vouch into the invite-only rooms — not permission to
+     * exist.
+     *
+     * THE WAIT ROW STAYS. The doors, the room greetings, Mo, the panel and
+     * the vouch all read `waits`, and tearing that out to make a person is a
+     * night's work and a month of finding what broke. So the row goes on
+     * meaning "standing at this door" and the person row is what the board
+     * shows — two lists, one meaning each, which is the rule this file
+     * already keeps for members and guests in a group.
+     *
+     * Their `reach` is deliberately NOT copied across. The form promises it
+     * is shown to nobody, and the person row is the thing everybody reads.
+     */
+    if (PUBLIC_DOOR && me && !board.people.some((q) => q.by === me)) {
+      /* The same rule /api/me enforces, checked here because this is now a
+         second door onto the same table: a line with a phone number in it is
+         somebody routing around the board, and it must not get in by coming
+         through the form instead. The person is still made — only the line
+         is dropped, because a profile with no sentence is fixable and a
+         refused arrival is not. */
+      const why = String(req.body?.why || "").trim();
+      const clean = why && !store.contactShaped(why) ? why : "";
+      board.people.push(store.cleanPerson({
+        id: store.newId(), at: new Date().toISOString(), by: me,
+        handle: name.slice(0, 40),
+        goal: clean,
+        state: "published",
+        looking: true,
+        via: "door",
+      }));
+    }
+
     const live = at >= 0 ? board.waits[at] : row;
     if (String(live.why || "").trim() && !live.whyAlt) {
       whyFor = live.id; whyText = live.why;
