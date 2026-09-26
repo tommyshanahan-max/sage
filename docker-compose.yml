@@ -1233,6 +1233,39 @@ services:
   #
   # Off unless asked for: add `board-demo` to COMPOSE_PROFILES in .env.
   # ClaireTv: vertical micro-drama, and the console a partner runs it from.
+  # BOOK — one-to-one lessons, as a widget any app can carry.
+  #
+  # A shelf of teachers, their free hours, and bookings, behind a script tag:
+  #   <div data-book="studypal"></div>
+  #   <script src="https://<board domain>/book/widget.js" async></script>
+  # See book/server.mjs.
+  #
+  # ON THE BOARD'S PROFILE AND UNDER THE BOARD'S HOSTNAME, at /book/, so it
+  # comes up with the board and needs no DNS record or .env line of its own —
+  # see docker/sites/board.caddy. Nothing here is the board's: its own
+  # container, its own volume, and it can move to a name of its own without
+  # the widget changing, because the widget reads its address off its src.
+  #
+  # Teachers go on from the terminal (`make book-teacher`), never the web.
+  # ---------------------------------------------------------------------------
+  book:
+    profiles: ["board"]
+    build:
+      context: ./book
+    image: tomscoding-book:latest
+    container_name: tomscoding-book
+    restart: unless-stopped
+    user: "1000:1000"
+    environment:
+      BOOK_DIR: /data
+      TZ: Asia/Shanghai
+    volumes:
+      - book_data:/data
+    expose:
+      - "8080"
+    networks:
+      - tomscoding
+
   #
   # Off unless asked for, like every other optional service here — add `claire`
   # to COMPOSE_PROFILES in .env to switch it on. A new product does not get to
@@ -1524,6 +1557,9 @@ volumes:
   # anything: this is a separate product and the day it moves to its own box is
   # a day it should be one `docker volume` to carry.
   board_data:
+  # The booking shelf — teachers and who booked them. Its own volume so the
+  # day it moves to a box of its own it is one `docker volume` to carry.
+  book_data:
   # ClaireTv's catalogue, its coin ledger and who unlocked what. Its own
   # volume for the same reason every other product here has one: a separate
   # product, and the day it moves to its own box it should be one

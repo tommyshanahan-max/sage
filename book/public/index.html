@@ -1,0 +1,26 @@
+<!doctype html>
+<!-- THE WIDGET, ON A PAGE OF ITS OWN. /book/?shelf=demo shows any shelf, which
+     is how a new one is checked before an app carries it, and the source of
+     this page is the whole of what an app has to add: the div and the script. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Book a lesson</title>
+<style>
+  body{margin:0;background:#efe9df;min-height:100vh}
+  main{max-width:30rem;margin:0 auto;padding:max(16px,env(safe-area-inset-top)) 12px 24px}
+</style>
+</head>
+<body>
+<main>
+  <div id="book" data-book="demo"></div>
+</main>
+<script>
+  // ?shelf=<name> picks the shelf; the default is the made-up one.
+  const s = new URLSearchParams(location.search).get("shelf");
+  if (s) document.getElementById("book").setAttribute("data-book", s);
+</script>
+<script src="widget.js" async></script>
+</body>
+</html>

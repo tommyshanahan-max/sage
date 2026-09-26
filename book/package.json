@@ -1,0 +1,6 @@
+{
+  "name": "book",
+  "private": true,
+  "type": "module",
+  "description": "One-to-one lessons: a shelf of teachers, their free hours, and a widget any app can drop in."
+}
