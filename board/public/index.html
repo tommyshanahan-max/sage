@@ -765,6 +765,14 @@
   .sendbtn{display:block;width:100%;margin:.85rem 0 0;padding:.7rem 1rem;
     border:0;background:var(--accent);color:var(--accent-ink);
     border-radius:99px;font-size:1rem;font-weight:500}
+  /* THE SECOND NAMED ROUTE IS NOT A SECOND PRIMARY. Two filled buttons of the
+     same colour, one above the other, is a screen asking somebody to choose
+     between two identical things — and on this board the first one is the
+     answer far more often than the second. Same size and same shape, outlined
+     rather than filled: it is the same kind of action, not the same weight.
+     Tighter to the one above it, so the pair reads as one choice. */
+  .sendbtn.alt{margin-top:.5rem;background:transparent;color:var(--accent);
+    border:1px solid var(--accent)}
   .sendbtn:hover{opacity:.92}
   .feedbtn{display:block;width:100%;margin:.5rem 0 0;padding:.5rem 1rem;border:0;
     background:none;color:var(--accent);font-size:.88rem}
@@ -2444,8 +2452,33 @@
            somebody reading their own header should see both. -->
       <span class="url" id="myinvurl"></span>
       <span class="tap" id="myinvtap"></span>
-      <button class="sendbtn" type="button" id="myinvsend"></button>
-      <button class="feedbtn" type="button" id="myinvfeed"></button>
+      <!-- TWO WAYS TO SEND IT, AND NOTHING ELSE.
+           This was "Send the invite" and "Put it on the feed", and the second
+           one published a password to everybody two lines under the sentence
+           saying "One person, then it changes". Said plainly: it does not
+           make sense. What belongs in a sheet called Bring somebody in is
+           how to get it to them, so that is what the two buttons are now —
+           the phone's own share sheet, and the clipboard for everywhere the
+           share sheet is not offered, which inside WeChat is everywhere. -->
+      <!-- NAMED ROUTES, NOT A VERB.
+           "Send the invite" hands the job to the phone's share sheet and
+           hopes. WhatsApp itself is the model here: it does not say "share",
+           it says INVITE TO WHATSAPP, because the useful button names where
+           the person you are thinking of actually is. Two names cover
+           everybody this board is for — the Chinese side is on WeChat and
+           the other side is on WhatsApp — and the clipboard is underneath
+           for everything else.
+           WeChat first: it is the one this product is built around, and a
+           page inside WeChat cannot open a share sheet at all. -->
+      <button class="sendbtn" type="button" id="myinvwx"></button>
+      <!-- THREE, AND THESE THREE. WeChat is where the Chinese half of this
+           board already is; a phone number and an email address are the two
+           things everybody else has. WhatsApp was here for a moment and is
+           not: it is one more app to be on, and the two below it reach
+           somebody whether they are on it or not. -->
+      <button class="sendbtn alt" type="button" id="myinvsms"></button>
+      <button class="sendbtn alt" type="button" id="myinvmail"></button>
+      <button class="feedbtn" type="button" id="myinvsend"></button>
       <!-- THE OTHER HALF OF INVITING SOMEBODY. The code above lets one person
            through the door, which is right for the one you would vouch for by
            name and useless for the twenty you would happily tell. This is a
@@ -5959,14 +5992,19 @@ function drawMyInvite() {
   if (!MYCODE && MYNEED.length) { drawNeed(b); return; }
   if (!MYCODE) { b.hidden = true; return; }
   b.hidden = false;
-  for (const id of ["myinvcode", "myinvurl", "myinvtap", "myinvsend", "myinvfeed",
+  for (const id of ["myinvcode", "myinvurl", "myinvtap", "myinvsend", "myinvsms",
                     "myinvshare"]) {
     $(id).hidden = false;
   }
   // myinvmore and myinvextra decide for themselves below: both are about an
   // allowance most members do not have.
   $("myinvneed").hidden = true;
-  $("myinvlab").textContent = T("inv.head");
+  /* NOT A SECOND HEADING. The sheet is already titled "Bring somebody in"
+     and this said "Bring someone in" directly under it — the same sentence
+     twice, in two wordings, which reads as a panel that has been pasted
+     inside another one. The sheet keeps the title; this row says what the
+     thing under it IS. */
+  $("myinvlab").textContent = T("inv.todayIs");
   $("myinvcode").textContent = MYCODE;
   $("myinvcode").title = T("inv.codeTap");
   /* THE REST OF THEM, under the first. Drawn into the label slot rather than
@@ -5981,8 +6019,15 @@ function drawMyInvite() {
   $("myinvmore").textContent = T("inv.more", { n: MYLEFT });
   $("myinvurl").textContent = location.host + "/enter";
   $("myinvtap").textContent = T("inv.tap");
+  $("myinvwx").textContent = T("inv.toWeChat");
+  $("myinvsms").textContent = T("inv.toSMS");
+  $("myinvmail").textContent = T("inv.toMail");
+  /* The phone's own sheet stays, under the two named ones, for a person on
+     Telegram or Line or a plain text message. Not offered inside WeChat,
+     where it cannot open. */
+  $("myinvsend").hidden = IN_WECHAT || !navigator.share;
   $("myinvsend").textContent = T("inv.send");
-  $("myinvfeed").textContent = T("inv.toFeed");
+
   /* Only once there is a page to credit. The link carries an id and the server
      checks it against the roll, so one sent before the profile exists would
      quietly credit nobody — better no button than a button doing half of what
@@ -6192,7 +6237,7 @@ function drawTodo() {
  *  what a member does here, which is also the answer to what this place is. */
 function drawNeed(b) {
   b.hidden = false;
-  for (const id of ["myinvcode", "myinvurl", "myinvtap", "myinvsend", "myinvfeed",
+  for (const id of ["myinvcode", "myinvurl", "myinvtap", "myinvsend", "myinvsms",
                     "myinvmore", "myinvextra"]) {
     $(id).hidden = true;
   }
@@ -6339,37 +6384,55 @@ $("myinvshare").hidden = true;
  * today finds a spare — and how a member with nobody to invite gives theirs
  * to whoever does.
  */
-$("myinvfeed").addEventListener("click", async () => {
-  if (!MYCODE) return;
-  const b = $("myinvfeed");
-  let who = "";
-  try { who = localStorage.getItem("board:who") || ""; } catch { /* private window */ }
-  if (!who) who = (prompt(T("act.answerAs")) || "").trim();
-  if (!who) return;
-  try { localStorage.setItem("board:who", who); } catch { /* fine */ }
+/* THE CLIPBOARD, WHICH IS THE ONLY ROUTE INSIDE WECHAT.
+ *
+ * A page inside WeChat may not open a share sheet — the ⋯ menu is the only
+ * way — so the button that says "share" there is a button that does nothing.
+ * This copies the whole message, link and code together, ready to paste into
+ * the conversation the person is already in.
+ *
+ * The same words the share sheet sends, from the same key, so the two routes
+ * cannot drift into saying different things. */
+/* The one sentence both routes send, built once so they cannot drift. */
+function inviteWords() {
+  const url = location.origin + "/enter";
+  return T(IN_WECHAT ? "inv.sharedWx" : "inv.shared", { url, code: MYCODE });
+}
 
-  b.disabled = true;
-  b.textContent = T("act.sending");
-  try {
-    const r = await fetch("/api/post", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        note: T("inv.feedWords", { url: location.origin + "/enter", code: MYCODE }),
-        handle: who, topic: "Getting in", device,
-      }),
-    });
-    const d = await r.json().catch(() => ({}));
-    if (toDoorIf(d, r.status)) return;
-    if (!r.ok) throw new Error("no");
-    // The feed is on this page, so it should show what just landed on it —
-    // and the confirmation goes on AFTER that, because the redraw rewrites
-    // every label in the tray including this one.
-    await load();
-    b.textContent = T("inv.onFeed");
-  } catch {
-    b.disabled = false;
-    b.textContent = T("act.again");
-  }
+/* WECHAT HAS NO LINK THAT OPENS A CHAT WITH TEXT IN IT, and every scheme that
+   claims to either needs the app's own SDK or opens the app at whatever screen
+   it was last on, losing the message. So this is honest about what it does:
+   it copies, says so, and the person pastes into the conversation they are
+   already in. That is the gesture a Chinese user makes a hundred times a day
+   and it needs no explaining — see the note about writing for fluency in
+   CLAUDE.md. */
+$("myinvwx").addEventListener("click", () => {
+  if (!MYCODE) return;
+  $("myinvwx").textContent = copyText(inviteWords())
+    ? T("inv.wxCopied") : T("act.again");
+  setTimeout(drawMyInvite, 3000);
+});
+
+/* AN EMAIL, PREFILLED. Same shape as the text message below: the phone opens
+   its own composer with no recipient on it, so the member picks the person
+   and nothing here ever sees an address.
+   The subject is its own line rather than the first line of the body — an
+   invitation arriving with no subject reads as spam, which is the one thing
+   an invitation must not. */
+$("myinvmail").addEventListener("click", () => {
+  if (!MYCODE) return;
+  location.href = "mailto:?subject=" + encodeURIComponent(T("inv.mailSubject"))
+    + "&body=" + encodeURIComponent(inviteWords());
+});
+
+/* A TEXT MESSAGE, PREFILLED. sms: takes the body after a "?&", which is the
+   one spelling both iOS and Android accept — iOS wants "&body=", Android
+   wants "?body=", and "?&body=" satisfies each of them. The phone opens its
+   own composer with no recipient, so the member picks the person; nothing
+   here ever sees a number. */
+$("myinvsms").addEventListener("click", () => {
+  if (!MYCODE) return;
+  location.href = "sms:?&body=" + encodeURIComponent(inviteWords());
 });
 
 /* THE TRAY, AND THE COUNT ON THE BELL.
@@ -7377,10 +7440,32 @@ function drawTier() {
 
 const deckLen = () => PEOPLE.length + (needsFace() && PEOPLE.length ? 1 : 0);
 
+/* WHETHER THE NEXT DRAW IS SOMEBODY MOVING ON, or the page arriving.
+ *
+ * The card behind is drawn at scale(.96) as a depth cue. When the front one
+ * goes, drawDeck rebuilds the deck and that same person is drawn again as the
+ * new front — at full size, as a NEW element, so there is nothing for a
+ * transition to run from. Described exactly: "the front card doesn't move,
+ * but the back card jumps a little becoming bigger when the front card is
+ * fully off the screen." It is a four per cent pop with nothing easing it.
+ *
+ * So the new front card starts where the old back card was standing and rises
+ * from there. Only when somebody actually moved on — a card that eased up on
+ * every load would be the page animating at somebody who has not touched it
+ * yet. */
+let RISE = false;
+/* Somebody who has asked their phone to stop animating things has asked for
+   this too. Read once: the setting does not change mid-session, and asking
+   the browser on every card flick is a match that costs more than the query
+   is worth. */
+const MOTIONLESS = window.matchMedia
+  ? window.matchMedia("(prefers-reduced-motion: reduce)").matches : false;
+
 function nextPerson() {
   const n = deckLen();
   if (!n) return;
   AT = (AT + 1) % n;
+  RISE = true;
   drawDeck();
 }
 
@@ -8947,6 +9032,23 @@ function drawDeck() {
   }
   const top = at(AT, true);
   deck.append(top);
+  /* THE CARD BEHIND RISES INTO PLACE — see RISE. It is the same transform the
+     card behind is wearing, released on the next frame so the browser has a
+     start and an end to interpolate between; set in the same frame it would
+     have nothing to run from and would pop exactly as before.
+     The transition is cleared afterwards because dragCard writes to this same
+     property on every pointer move, and a flick through an easing curve
+     lags the thumb. */
+  if (RISE && !MOTIONLESS) {
+    top.style.transition = "none";
+    top.style.transform = "scale(.96) translateY(10px)";
+    requestAnimationFrame(() => {
+      top.style.transition = "transform .18s ease-out";
+      top.style.transform = "";
+      setTimeout(() => { top.style.transition = ""; }, 220);
+    });
+  }
+  RISE = false;
   /* A TAP PEEKS; IT DOES NOT LEAVE.
    *
    * It used to go straight to their page, and on a deck that is the wrong

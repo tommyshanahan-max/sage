@@ -4218,7 +4218,32 @@ export const STRINGS = {
   /* AND ONTO THE FEED, on its own. Everybody who can read the feed is already
      in, so this is not how strangers arrive — it is how somebody who has spent
      their own code today finds a spare to pass on. */
+  /* inv.toFeed is retired — the button is gone. It published the day's
+     password to everybody, two lines under the sentence saying "One person,
+     then it changes", which is the feature arguing with itself. The key stays
+     so that a board still serving an older page does not print a blank. */
   "inv.toFeed":        ["Put it on the feed", "发到动态里"],
+  /* The second way to send it, and inside WeChat the only one: a page there
+     may not open a share sheet, so a button offering to share is a button
+     that does nothing. */
+  "inv.copyIt":        ["Copy the message", "复制邀请内容"],
+  /* NAMED, THE WAY WHATSAPP NAMES IT. Not "share" — the useful button says
+     where the person you are thinking of actually is. */
+  "inv.toWeChat":      ["Send on WeChat", "用微信发给他"],
+  "inv.toMail":        ["Send by email", "用邮件发"],
+  /* An invitation with no subject line reads as spam, which is the one thing
+     an invitation must not. */
+  "inv.mailSubject":   ["An invitation to The Exchange", "交换的邀请"],
+  /* For somebody on neither. WhatsApp's own invite does exactly this: not on
+     WhatsApp, so it opens a text message with the words already in it. */
+  "inv.toSMS":         ["Send as a text", "发短信"],
+  /* WeChat has no link that opens a chat with text in it, so this says what
+     it did rather than pretending. The paste is a gesture every WeChat user
+     already makes; it does not need teaching. */
+  "inv.wxCopied":      ["Copied — paste it in WeChat", "已复制，粘贴到微信"],
+  /* Under the sheet's own title rather than repeating it. What the six
+     characters ARE, which is the one thing the row has to say. */
+  "inv.todayIs":       ["Today's way in", "今天的进门口令"],
   /* AN ALLOWANCE, which most members do not have — see BOARD_CODES in the
      server. Said as codes in hand rather than as a rank: nobody needs to know
      who is on the list, least of all the people who are not. */
