@@ -374,11 +374,15 @@
     text=(text||"").trim();
     if(!text||busy) return;
     if(!ready){ say("q",text); say("err","Still waking up \u2014 try again in a moment."); return; }
-    if(!sample){ say("q",text); offline(); return; }
     busy=true; go.disabled=true; input.value="";
     say("q",text);
     var a=say("a","Thinking\u2026");
     turns.push({role:"user",content:text});
+    /* TWO WAYS TO ASK, AND THE READER NEVER KNOWS WHICH RAN. Inside a Claude
+       viewer the page uses the reader's own sampling. Served from the box —
+       which is what a partner actually sees — window.claude does not exist,
+       so it posts to /api/ep/ask and the server asks on the same brief. */
+    if(!sample){ return server(a); }
     /* cache:false so a repeat really asks again; the standing instructions ride
        as a leading user turn because sample has no system role. */
     sample([{role:"user",content:FACTS}].concat(turns),{
@@ -391,6 +395,34 @@
     }).catch(function(e){
       a.className="ep-turn err"; a.textContent=copyFor(e.code); turns.pop();
     }).then(function(){ busy=false; go.disabled=false; body.scrollTop=body.scrollHeight; });
+  }
+
+  function server(a){
+    fetch("/api/ep/ask",{
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({turns:turns})
+    }).then(function(r){
+      return r.json().then(function(j){ return {ok:r.ok, j:j}; });
+    }).then(function(x){
+      if(!x.ok || !x.j || !x.j.text){
+        var why = x.j && x.j.error;
+        a.className="ep-turn err";
+        a.textContent = why==="enough" || why==="busy"
+          ? "That is as many as I can answer just now. Email mo@thexchange.app."
+          : "I can't answer here. Email mo@thexchange.app and a person will reply.";
+        turns.pop();
+        return;
+      }
+      a.textContent=x.j.text;
+      turns.push({role:"assistant",content:x.j.text});
+      if(turns.length>8) turns=turns.slice(-8);
+    }).catch(function(){
+      a.className="ep-turn err";
+      a.textContent="I can't answer here. Email mo@thexchange.app and a person will reply.";
+      turns.pop();
+    }).then(function(){
+      busy=false; go.disabled=false; body.scrollTop=body.scrollHeight;
+    });
   }
 
   EXAMPLES.forEach(function(t){

@@ -43,6 +43,7 @@ import { ask as askHostess, configured as hostessReady } from "./lib/hostess.js"
 import { send as sendMail, configured as mailReady } from "./lib/mail.js";
 import * as intake from "./lib/intake.js";
 import * as butler from "./lib/butler.js";
+import * as epai from "./lib/epai.js";
 import * as say from "./lib/say.js";
 import * as hear from "./lib/hear.js";
 import * as push from "./lib/push.js";
@@ -638,7 +639,7 @@ const ROOT_IS_BOARD = process.env.BOARD_AT_ROOT === "1";
    the button was never on the screen. The POST to /china/api/connect came
    back as door.html too, and an HTML page from a JSON fetch fails silently.
    `china` and not `china\/`: /china itself is the fork. */
-const OPEN_PATHS = /^\/(china|enter|auth\/google|i\/|w\/|r\/|s\/|d\/|pay\/|demo(?:\.png)?$|api\/demo\/ask$|sell$|api\/sell$|dealio|api\/pay\/onboard$|api\/dealio\/try\/qr$|shop\/|order\/|orders$|api\/shop\/|api\/shop-media$|api\/order\/|api\/orders$|api\/product\/|api\/memo\/|api\/request(?:s|\/|$)|api\/say\/|api\/snap|api\/door$|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.(?:html|pdf)|g\/|share-exchange\.png|share-square\.png|about|rules|terms|privacy|rewards|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/offer|api\/wait|api\/butler$|api\/butler-voice$|api\/butler-hear$|api\/write\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
+const OPEN_PATHS = /^\/(china|enter|auth\/google|i\/|w\/|r\/|s\/|d\/|pay\/|demo(?:\.png)?$|api\/demo\/ask$|sell$|api\/sell$|dealio|api\/pay\/onboard$|api\/dealio\/try\/qr$|shop\/|order\/|orders$|api\/shop\/|api\/shop-media$|api\/order\/|api\/orders$|api\/product\/|api\/memo\/|api\/request(?:s|\/|$)|api\/say\/|api\/snap|api\/door$|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.(?:html|pdf)|g\/|share-exchange\.png|share-square\.png|about|rules|terms|privacy|rewards|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/offer|api\/wait|api\/butler$|api\/ep\/ask$|api\/butler-voice$|api\/butler-hear$|api\/write\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
 
 /* ---- BEING SOMEBODY YOU SPEAK FOR ----------------------------------------
  *
@@ -5825,6 +5826,25 @@ function screenFacts(board, me, mine, where) {
 
   return [];
 }
+
+/* EP AI, the assistant on the partner set-up page. Public and
+ * unauthenticated on purpose: the reader is somebody at a partner company who
+ * has agreed to nothing yet, which is exactly who the page is for. The cap
+ * lives in lib/epai.js, per caller and per day, because a public route that
+ * calls a model is otherwise a bill anybody can run up.
+ *
+ * The page prefers the reader's own Claude when it is inside a viewer and only
+ * falls back to here. Both read the same brief, so the two answers agree. */
+app.post("/api/ep/ask", express.json({ limit: "16kb" }), async (req, res) => {
+  if (!epai.configured()) return res.status(503).json({ error: "unconfigured" });
+  const who = String(req.headers["x-forwarded-for"] || req.ip || "anon").split(",")[0].trim();
+  const out = await epai.ask(req.body && req.body.turns, who);
+  if (out.error) {
+    console.error("ep/ask: " + out.error);
+    return res.status(out.error === "upstream" ? 502 : 429).json({ error: out.error });
+  }
+  res.json({ text: out.text });
+});
 
 app.post("/api/butler", express.json({ limit: "16kb" }), async (req, res) => {
   /* EVERY REFUSAL SAYS WHICH ONE IT WAS.
