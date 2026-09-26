@@ -1841,6 +1841,31 @@
       -webkit-backdrop-filter:blur(14px) saturate(.9);
       backdrop-filter:blur(14px) saturate(.9)}
   }
+  /* WHILE IT IS OPEN, THE PHOTOGRAPH IS THE WHOLE CARD.
+   *
+   * The peek fills the card, and the bottom two fifths of the card is
+   * .scrim — a SOLID #0a0e16 panel. A backdrop blur over a solid colour is
+   * that colour, so the panel came out as a photograph on top and a flat
+   * black slab underneath, with the button floating on the line between
+   * them and dead space below it. That is what "the button is not fitted to
+   * the space" was: the space was two different spaces.
+   *
+   * So the picture is stretched over the whole card for as long as the peek
+   * is up, and the scrim goes with it — its name and sentence are both
+   * repeated inside the panel anyway, which is the duplication that was
+   * ghosting through before. One surface, one blur, content centred in it.
+   *
+   * THE PICTURE MOVES TO THE CARD, IT DOES NOT MOVE ITSELF. The first try
+   * made the <img> position:absolute so it would cover the scrim, and an
+   * absolute child is out of flow — so the card had nothing setting its
+   * height any more and collapsed from 554px to 193. The photograph is
+   * painted as the CARD's own background instead (see peek(), which has the
+   * id and the crop already), and the img and the scrim are only hidden:
+   * hidden, so both keep their boxes and the card is exactly the height it
+   * was a moment ago. Nothing moves when it opens. */
+  .pc.peeking img,.pc.peeking .noshot,.pc.peeking .scrim{visibility:hidden}
+  /* The share button belongs to the card, not to what is over it. */
+  .pc.peeking .share{display:none}
   @keyframes peekin{from{opacity:0}to{opacity:1}}
   @media (prefers-reduced-motion:reduce){.pc .peek{animation:none}}
   .pc .peekx{position:absolute;top:.55rem;right:.6rem;width:2.1rem;height:2.1rem;
@@ -1854,8 +1879,12 @@
     line-height:1.55;color:rgba(255,255,255,.92);white-space:pre-wrap}
   .pc .peekgo{width:100%;padding:.8rem 1rem;border:0;border-radius:99px;
     background:var(--accent);color:var(--accent-ink);font:inherit;font-size:1rem;
-    cursor:pointer}
+    font-weight:600;cursor:pointer}
   .pc .peekgo:focus-visible{outline:2px solid #fff;outline-offset:2px}
+  /* The panel itself takes focus when it opens — see peek(). It is not a
+     control, so it does not wear a ring for it. */
+  .pc .peek:focus{outline:none}
+  .pc .peek:focus-visible{outline:none}
   .pacts{display:flex;gap:.6rem;width:100%}
   /* Flex hands a child its longest word before it takes space from a sibling,
      so both need telling they may be narrower than their content. */
@@ -9022,7 +9051,35 @@ function drawDeck() {
 function peek(card, q, bio, goPage) {
   if (card.querySelector(".peek")) return;
   const wrap = el("div", "peek");
-  const shut = () => { wrap.remove(); document.removeEventListener("keydown", esc); };
+  /* The card becomes one surface for as long as this is up — see .peeking.
+     Taken off in the same place it goes on, so a card that is flicked away
+     while open cannot be left stretched. */
+  card.classList.add("peeking");
+  /* The card wears the photograph for as long as the panel is up, so the
+     blur has one surface under it for the card's whole height rather than a
+     picture on top and a solid panel below. No photograph is the accent, the
+     same flat colour .noshot was already showing. */
+  const shot = q.photo
+    ? "url(\"/api/public-media?id=" + encodeURIComponent(q.photo) + "\")"
+    : "";
+  card.style.backgroundImage = shot;
+  card.style.backgroundSize = "cover";
+  card.style.backgroundPosition = "50% "
+    + (Number.isFinite(Number(q.photoAt)) ? Number(q.photoAt) : 50) + "%";
+  if (!shot) card.style.backgroundColor = "var(--accent)";
+  const shut = () => {
+    card.classList.remove("peeking");
+    // Put the card back exactly as it was. personCard builds a fresh element
+    // on every draw, but a card that is peeked and closed without a redraw is
+    // the same node — and one left wearing a background is a card with
+    // somebody's face behind their own photograph.
+    card.style.backgroundImage = "";
+    card.style.backgroundSize = "";
+    card.style.backgroundPosition = "";
+    card.style.backgroundColor = "";
+    wrap.remove();
+    document.removeEventListener("keydown", esc);
+  };
   const esc = (e) => { if (e.key === "Escape") shut(); };
 
   const x = el("button", "peekx", "\u00d7");
@@ -9045,7 +9102,24 @@ function peek(card, q, bio, goPage) {
   wrap.addEventListener("pointerdown", (e) => e.stopPropagation());
   document.addEventListener("keydown", esc);
   card.append(wrap);
-  go.focus({ preventScroll: true });
+  /* FOCUS GOES TO THE PANEL, NOT TO THE BUTTON.
+   *
+   * This was go.focus(), which is the right instinct — opening something over
+   * the screen should move focus into it, or Escape and a screen reader both
+   * land nowhere — and the wrong element. Chrome treats a programmatic focus
+   * as keyboard focus, so :focus-visible matched on every tap and drew a 2px
+   * white ring with a 2px gap around the button. On a phone, where nobody is
+   * using a keyboard at all, that read as the button being badly fitted to
+   * its space: a fat double border with the panel's edge crowding it.
+   *
+   * The panel takes the focus instead. Escape still works, the dialog is
+   * still announced, and the ring on the button is back to meaning what it
+   * means everywhere else — somebody tabbed to it. */
+  wrap.setAttribute("role", "dialog");
+  wrap.setAttribute("aria-modal", "true");
+  wrap.setAttribute("aria-label", q.handle || "");
+  wrap.tabIndex = -1;
+  wrap.focus({ preventScroll: true });
 }
 
 function dragCard(box, onTap) {
