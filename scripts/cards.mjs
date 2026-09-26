@@ -60,11 +60,33 @@ if (!d.on) {
   console.log("");
 }
 
+/* THE OPERATOR'S OWN LINE, FIRST, because it is the one he is checking.
+   It is a different report from everybody else's — the whole board rather
+   than his own page — and it arrives on a quiet night as well, so the
+   question "is my nightly report on" has to be answerable separately from
+   "will the members get theirs". */
+if (!d.boss) {
+  console.log("  Nobody is set to get the whole-board report.");
+  console.log("  To get it yourself:  TOMSCODING_BOSS=<your handle> in .env, then make deploy");
+  console.log("");
+} else {
+  console.log("  YOURS (" + d.boss + "), every night, quiet day or not:");
+  console.log("      \u201c" + d.bossSays + "\u201d");
+  if (!d.snap) {
+    console.log("      Tapping it opens nothing yet — TOMSCODING_BOARD_SNAP is unset.");
+    console.log("      make snap prints the line to add.");
+  }
+  console.log("");
+}
+
 console.log("  " + pad("who", 16) + num("opened", 8) + num("followed", 10)
   + num("replied", 9) + num("wrote", 7) + "   phones");
 console.log("  " + "-".repeat(66));
 let worth = 0, reachable = 0;
 for (const q of d.rows) {
+  // He is printed above with his own report; counting him among the members
+  // would say somebody is getting a card about their page views who is not.
+  if (d.boss && q.who.toLowerCase() === d.boss) continue;
   if (q.worth) worth++;
   if (q.worth && q.phones && !q.sentToday) reachable++;
   console.log("  " + pad(q.who, 16) + num(q.opened, 8) + num(q.followed, 10)
@@ -74,13 +96,14 @@ for (const q of d.rows) {
 }
 
 console.log("");
-console.log("  " + d.rows.length + " members. " + worth + " had something happen today. "
-  + reachable + (reachable === 1 ? " would get" : " would get") + " a card now.");
+const members = d.rows.filter((q) => !(d.boss && q.who.toLowerCase() === d.boss)).length;
+console.log("  " + members + " members. " + worth + " had something happen today. "
+  + reachable + " would get a card now.");
 /* THE QUIET ONES ARE NOT A FAILURE AND THE REPORT SHOULD NOT LOOK LIKE ONE.
    Most members on most days have nothing, and a card saying "nobody looked at
    you" is a reason to delete the app — so silence is the design and it is
    said here rather than left to be read as a bug. */
-if (worth < d.rows.length) {
+if (worth < members) {
   console.log("  The rest had a quiet day and are sent nothing. That is deliberate:");
   console.log("  a nightly \"nobody looked at you\" is a reason to turn notifications off.");
 }

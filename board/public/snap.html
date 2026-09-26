@@ -223,6 +223,33 @@ async function draw() {
     box.append(block("Rooms", c));
   }
 
+  /* TODAY, ABOVE THE SHAPE OF THE PLACE.
+   *
+   * These four are the answer to "any traffic?" and they were only ever
+   * obtainable by opening a laptop, ssh-ing into the box and running two make
+   * targets — which means they were asked on the days somebody was at a desk,
+   * and the question gets asked ten minutes after posting a link, from a
+   * phone. The block below is the shape of the board and changes slowly;
+   * this one is the last day and is the reason to open the page at all, so it
+   * goes first.
+   *
+   * The same numbers the nightly notification reads, from the same function,
+   * so the line on the lock screen and the figures behind it cannot disagree.
+   * Absent on a box that has not deployed them yet, which is a missing block
+   * rather than a row of zeroes claiming a quiet day. */
+  if (d.day) {
+    const t = el("div", "nums");
+    for (const [n, what] of [[d.day.opened, "opened the door"],
+                             [d.day.arrived, "arrived"],
+                             [d.day.madePage, "made a page"],
+                             [d.day.said, "things said"]]) {
+      const one = el("div");
+      one.append(el("b", null, String(n)), el("span", null, what));
+      t.append(one);
+    }
+    box.append(block("The last day", t));
+  }
+
   const nums = el("div", "nums");
   for (const [n, what] of [[d.board.inBrowse, "in Browse"],
                            [d.board.peek, "shown outside"],

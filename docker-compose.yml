@@ -1115,6 +1115,10 @@ services:
       # exists to avoid and one this box has fallen into before.
       BOARD_CARD: ${TOMSCODING_CARD:-}
       BOARD_CARD_HOUR: ${TOMSCODING_CARD_HOUR:-}
+      # WHOSE PHONE GETS THE WHOLE-BOARD REPORT INSTEAD OF A MEMBER'S CARD.
+      # A handle, the way BOARD_DEALIO_OWNER names one. Unset, nobody gets it
+      # and everybody including him gets the ordinary member card.
+      BOARD_BOSS: ${TOMSCODING_BOSS:-}
       # THE STANDING WAY BACK IN — one code, chosen, never spent, that puts
       # one named person's page onto whatever browser types it. Set both or
       # there is no such code. See the note over BACK_CODE in server.js for

@@ -9530,6 +9530,83 @@ const CARD_HOUR = num("BOARD_CARD_HOUR", 12);
    for ever. Somebody has to mean this. */
 const CARD_ON = String(process.env.BOARD_CARD || "").trim().toLowerCase() === "on";
 
+/* WHOSE PHONE GETS THE OPERATOR'S CARD.
+ *
+ * A handle, the same way BOARD_DEALIO_OWNER names one — not the admin key,
+ * because a key is a credential and this is a person with a phone, and not a
+ * device hash, because those are not things anybody can type into .env. */
+const BOSS = String(process.env.BOARD_BOSS || "").trim().toLowerCase();
+
+/* THE WHOLE BOARD IN THE LAST DAY, for whoever runs it.
+ *
+ * A ROLLING DAY AND NOT A CALENDAR ONE, for the same reason /api/snap gives:
+ * he opens it at midnight or at noon, and "since 00:00" is a screen that says
+ * nothing every morning and everything every evening. The member card is a
+ * calendar day because it is sent at a fixed hour and reads as "today"; this
+ * is read whenever he picks the phone up.
+ *
+ * ARRIVALS ARE DISTINCT HUMANS. A wait row and the person row made from it
+ * share a device — see the note over isPerson in /api/public, and the two
+ * wrong numbers make traffic printed before that join existed. Counting both
+ * doubles the one figure this whole thing is for.
+ */
+function boardDay(board) {
+  const cut = Date.now() - 86400_000;
+  const fresh = (x) => (Date.parse(String(x || "")) || 0) > cut;
+  const isPerson = new Set(board.people.map((q) => q.by).filter(Boolean));
+  const waitBy = new Set(board.waits.map((w) => w.by).filter(Boolean));
+
+  const newPeople = board.people.filter((q) => fresh(q.at));
+  // Only the ones who are not also a person: the same human, twice.
+  const newWaits = board.waits.filter((w) => fresh(w.at) && !(w.by && isPerson.has(w.by)));
+
+  /* The door funnel, out of the hour buckets — which is the only counter here
+     with a clock finer than a day on it. See cleanHours. */
+  const keys = [];
+  for (let i = 0; i < 24; i++) keys.push(new Date(Date.now() - i * 3600_000).toISOString().slice(0, 13));
+  /* WAITROOMS already ends in "other" — adding it again on the side counted
+     every doorless arrival twice, which on a board whose commonest room IS
+     "other" is most of the number. */
+  const hr = (what) => keys.reduce((a, h) => a + store.WAITROOMS.reduce(
+    (b, r) => b + Number((board.hours || {})[h + "|" + r + "|" + what] || 0), 0), 0);
+
+  return {
+    arrived: newPeople.length + newWaits.length,
+    madePage: newPeople.filter((q) => q.state === "published" && q.handle).length,
+    /* Straight in through the link, as opposed to carried across from the
+       list — the distinction make traffic had to learn the hard way. */
+    throughLink: newPeople.filter((q) => q.via === "door" && !(q.by && waitBy.has(q.by))).length,
+    opened: hr("door"), began: hr("form"), joined: hr("joined"),
+    inBrowse: board.people.filter((q) => q.state === "published" && q.looking && q.handle).length,
+    outside: board.waits.filter((w) => !w.done).length,
+    /* What was actually SAID, which is the difference between a board people
+       joined and a board people use. Mo's own welcomes do not count — he
+       announces every arrival, and counting them would have the house be the
+       busiest member every night. */
+    said: board.says.filter((m) => fresh(m.at) && m.by !== store.MO && m.text && !m.evt).length,
+  };
+}
+
+/* HIS ONE LINE. Three numbers at most and never a paragraph — it is a lock
+ * screen, and the page behind it has everything.
+ *
+ * A QUIET DAY IS STILL SENT, which is the opposite of the rule for members
+ * and right for the same reason. A member hearing "nobody looked at you" is
+ * being told they are failing; the operator asking "any traffic?" is asking a
+ * question, and "none" is the answer to it. The whole point is not having to
+ * open a laptop to find out. */
+function bossWords(b) {
+  if (!b.arrived && !b.opened && !b.said) {
+    return { title: "交换 · The Exchange", body: "Quiet day. Nobody came." };
+  }
+  const bits = [];
+  if (b.opened) bits.push(b.opened + " opened the door");
+  if (b.arrived) bits.push(b.arrived + " arrived");
+  if (b.madePage) bits.push(b.madePage + " made a page");
+  if (!bits.length && b.said) bits.push(b.said + " things said");
+  return { title: "交换 · The Exchange", body: bits.slice(0, 3).join(" · ") };
+}
+
 /** What happened to one person today, in numbers and nothing else. */
 function cardFor(board, q, day) {
   const on = (x) => String(x || "").slice(0, 10) === day;
@@ -9649,6 +9726,23 @@ app.get("/api/wake", async (req, res) => {
      card and anything else is a message. Without that test every message
      after eight in the evening would arrive wearing the card's sentence. */
   if (!q || q.cardAt !== day) return res.json({ ...said, to: "/notes" });
+  /* THE OPERATOR GETS A DIFFERENT CARD, and it is the only one he gets.
+   *
+   * His own page views are not what he is asking about at eight in the
+   * evening; whether anybody came to the board is. So the whole-app report
+   * REPLACES his member card rather than arriving beside it — two cards a
+   * night to one person is one too many, and the one he would ignore is the
+   * one about himself.
+   *
+   * It taps to the snapshot page, which is the only place on this board that
+   * holds the operator's whole view and needs no key typed into it. The token
+   * is a secret in a URL, which is why it is answered only to a signed cookie
+   * that resolves to the handle named in BOARD_BOSS — and not at all when
+   * BOARD_SNAP is unset, where there is no such page to send anybody to. */
+  if (BOSS && String(q.handle || "").toLowerCase() === BOSS) {
+    const b = boardDay(board);
+    return res.json({ ...bossWords(b), to: SNAP ? "/s/" + SNAP : "/#card" });
+  }
   const c = cardFor(board, q, day);
   if (!cardWorth(c)) return res.json({ ...said, to: "/notes" });
   return res.json({ ...cardWords(c, lang), to: "/#card" });
@@ -9678,10 +9772,20 @@ async function sendCards(now = false) {
     const board = await store.load(FILE);
     const subbed = new Set((board.pushes || []).map((x) => x.by).filter(Boolean));
     const send = [];
+    const b = boardDay(board);
     for (const q of board.people) {
       if (q.cardAt === day) continue;             // already had tonight's
       if (!q.by || !subbed.has(q.by)) continue;   // nothing to buzz
       if (q.state !== "published" || !q.handle) continue;
+      /* THE OPERATOR IS ALWAYS SENT ONE, which is the opposite of the rule
+         for everybody else and right for the same reason. A member hearing
+         "nobody looked at you" is being told they are failing; the person who
+         asked "any traffic?" is asking a question, and "none" is the answer
+         to it. The whole point of this is not having to open a laptop. */
+      if (BOSS && String(q.handle).toLowerCase() === BOSS) {
+        send.push({ by: q.by, id: q.id, boss: true, words: bossWords(b) });
+        continue;
+      }
       const c = cardFor(board, q, day);
       if (!cardWorth(c)) continue;
       send.push({ by: q.by, id: q.id, c });
@@ -9697,7 +9801,10 @@ async function sendCards(now = false) {
          read different languages and the sentence is built for each. */
       const subs = (board.pushes || []).filter((x) => x.by === row.by);
       for (const s of subs) {
-        await push.tell([s], cardWords(row.c, s.lang || "")).catch(() => {});
+        // His line is one sentence in one language: it is numbers and the
+        // board's own name, and there is nothing in it to translate.
+        await push.tell([s], row.boss ? row.words : cardWords(row.c, s.lang || ""))
+          .catch(() => {});
       }
     }
     console.log("cards: sent " + send.length);
@@ -9745,7 +9852,15 @@ app.post("/api/admin/cards", admin, express.json({ limit: "1kb" }), async (req, 
       };
     });
   const out = { day, hour: CARD_HOUR, on: CARD_ON,
-                push: push.configured() || push.apnsOn(), rows };
+                push: push.configured() || push.apnsOn(), rows,
+                /* The operator's own line, printed beside everybody else's so
+                   that "is my nightly report on" is answered by the same
+                   command as "what will the members get". Null when nobody is
+                   named — which is not the same as an empty report, and the
+                   script says which. */
+                boss: BOSS || "",
+                bossSays: BOSS ? bossWords(boardDay(board)).body : "",
+                snap: Boolean(SNAP) };
   if (req.body?.send === true) {
     /* The hour is the only thing skipped. Everything else — the stamp, the
        quiet-day test, whether they have a phone at all — is the real path,
@@ -19059,6 +19174,13 @@ app.get("/api/snap", snapGate, async (_req, res) => {
       }),
     rooms,
     waiting: { held, faces },
+    /* THE NUMBERS HE WAS SSHING IN FOR. make traffic and make doors answer
+       these from a terminal, which means they get asked on the days somebody
+       is at a desk — and "did anybody come" is a question asked from a phone,
+       ten minutes after posting a link. Same rolling day as everything else
+       on this page; the same function the nightly buzz reads, so the line on
+       the lock screen and the figures behind it cannot disagree. */
+    day: boardDay(board),
     /* AND THE SHAPE OF THE PLACE, last, because it changes slowly. */
     board: {
       inBrowse: board.people.filter((q) =>
