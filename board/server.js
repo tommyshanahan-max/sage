@@ -2963,13 +2963,49 @@ app.get("/api/rooms", admin, async (_req, res) => {
  * whichever door they chose — that is what the rooms and the vouch read — and
  * what has changed is that the board now shows them.
  */
-app.post("/api/tier-two", admin, async (_req, res) => {
+app.post("/api/tier-two", express.json({ limit: "1kb" }), admin, async (req, res) => {
+  /* FILL BACKFILLS THE ROWS AN EARLIER RUN ALREADY MADE.
+   *
+   * The first version of this carried a name and a line and dropped the
+   * photograph and the sentence, so fifty people became fifty initials. They
+   * cannot be made again — they have profiles now — and re-running skips
+   * them, which is right for a migration and useless for fixing one.
+   *
+   * So: fill in what is EMPTY and never touch what is not. Somebody who has
+   * since written their own line, chosen their own sentence or uploaded their
+   * own face keeps all three; a row that has been sitting blank since the
+   * migration gets what the door already had. A backfill that overwrites is
+   * not a backfill, it is a restore, and nobody asked for one.
+   */
+  const fill = req.body?.fill === true;
   const out = await change((board) => {
-    const has = new Set(board.people.filter((q) => q.by).map((q) => q.by));
-    let made = 0, already = 0, nameless = 0;
+    const mine = new Map();
+    for (const q of board.people) if (q.by && !mine.has(q.by)) mine.set(q.by, q);
+    let made = 0, already = 0, nameless = 0, filled = 0;
     for (const w of board.waits) {
       if (!w.by) { nameless++; continue; }
-      if (has.has(w.by)) { already++; continue; }
+      if (mine.has(w.by)) {
+        already++;
+        if (!fill) continue;
+        const q = mine.get(w.by);
+        let touched = false;
+        const put = (k, v) => { if (v && !q[k]) { q[k] = v; touched = true; } };
+        put("goal", String(w.why || "").trim() && !store.contactShaped(String(w.why))
+          ? String(w.why).trim() : "");
+        put("levelBand", w.levelBand || "");
+        put("type", w.type || "");
+        /* The photograph and its state move together or not at all. A photo id
+           without the state it was reviewed in would either hide a picture
+           somebody approved or show one nobody has looked at. */
+        if (w.photo && !q.photo) {
+          q.photo = w.photo; q.photoState = w.photoState || ""; touched = true;
+        }
+        if (w.me && w.want && !(Array.isArray(q.say) && q.say.length)) {
+          q.say = [{ me: w.me, want: w.want }]; touched = true;
+        }
+        if (touched) filled++;
+        continue;
+      }
       const name = String(w.name || "").trim();
       if (!name) { nameless++; continue; }
       const why = String(w.why || "").trim();
@@ -2997,10 +3033,10 @@ app.post("/api/tier-two", admin, async (_req, res) => {
         levelBand: w.levelBand || "", type: w.type || "",
         state: "published", looking: true, via: "door",
       }));
-      has.add(w.by);
+      mine.set(w.by, board.people[board.people.length - 1]);
       made++;
     }
-    return { ok: true, made, already, nameless };
+    return { ok: true, made, already, filled, nameless };
   });
   res.json(out);
 });

@@ -278,8 +278,13 @@ tier-two: ## Turn everybody standing at the door into tier two, once
 	@# reason somebody arriving from a link does not land on an empty screen.
 	@# Safe to run twice: a browser that already has a profile is skipped, not
 	@# overwritten.
+	@# FILL=1 also backfills rows an earlier run already made — the face and
+	@# the sentence the first version dropped. It only ever fills a field that
+	@# is EMPTY, so anybody who has since written their own line or uploaded
+	@# their own photograph keeps it.
 	$(COMPOSE) exec -T board node -e "const go=(n)=>fetch('http://127.0.0.1:8080/api/tier-two',\
-	  {method:'POST',headers:{'x-admin-secret':process.env.BOARD_ADMIN_KEY}})\
+	  {method:'POST',headers:{'x-admin-secret':process.env.BOARD_ADMIN_KEY,\
+	   'content-type':'application/json'},body:JSON.stringify({fill:$(if $(FILL),true,false)})})\
 	  .then(r=>r.json()).then(d=>console.log(JSON.stringify(d)))\
 	  .catch(e=>{if(n<=0)throw e;setTimeout(()=>go(n-1),1000)});go(10)"
 
