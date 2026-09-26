@@ -10,6 +10,20 @@ WORKDIR /app
 COPY package.json ./
 RUN npm install --omit=dev --no-audit --no-fund
 
+# WHICH COMMIT THIS IMAGE WAS BUILT FROM.
+#
+# board/ is COPYed in, so a git reset on the box with no rebuild leaves the
+# container serving the old code with the new commit sitting on disk beside
+# it — and nothing anywhere says so. That gap cost most of a night: a fix
+# pushed, a deploy run, the fault still there, and no way to tell whether the
+# box had the fix. `make version` reads this file and compares it with git.
+#
+# An ARG rather than a RUN git, because there is no git in the image and no
+# .git in the build context. The Makefile passes it; absent, it is "unknown",
+# which is honest and still better than nothing.
+ARG BUILT=unknown
+RUN echo "$BUILT" > /app/BUILT
+
 COPY server.js ./
 COPY lib ./lib
 COPY public ./public

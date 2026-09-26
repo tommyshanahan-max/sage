@@ -922,6 +922,12 @@ services:
     logging: *logs
     build:
       context: ./board
+      # WHICH COMMIT THIS IMAGE HOLDS — see the note in board/Dockerfile
+      # and `make version`. BUILT comes from the environment, which the
+      # Makefile fills from git; a build run any other way gets "unknown",
+      # which is honest rather than a claim about what is deployed.
+      args:
+        BUILT: ${BUILT:-unknown}
     image: tomscoding-board:latest
     container_name: tomscoding-board
     restart: unless-stopped

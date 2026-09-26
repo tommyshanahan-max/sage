@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: faces cards traffic tier-two try try-china china wallets mo-code visits app-state claire-episodes deal claire-key claire-count claire-seed claire-video listing invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who bells twice admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions whitelabel blocked partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check post post-status post-run post-login post-code post-logins weidian-pull weidian-json weidian-reviews shop-chapter review-tidy product-names review-move
+.PHONY: version faces cards traffic tier-two try try-china china wallets mo-code visits app-state claire-episodes deal claire-key claire-count claire-seed claire-video listing invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who bells twice admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions whitelabel blocked partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check post post-status post-run post-login post-code post-logins weidian-pull weidian-json weidian-reviews shop-chapter review-tidy product-names review-move
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -33,6 +33,11 @@ deploy: ## Fetch the latest commits, then build and start everything
 	       echo "Check with: git status -sb && git log --oneline -3"; \
 	       exit 1; }
 	@$(MAKE) --no-print-directory up
+
+# The commit every build is stamped with — see board/Dockerfile and
+# `make version`. Computed once here so `up` and `deploy` cannot disagree,
+# and empty outside a checkout rather than failing the build.
+export BUILT := $(shell git rev-parse --short HEAD 2>/dev/null || echo unknown)
 
 up: ## Build if needed and start everything (does NOT fetch — see 'deploy')
 	test -f .env || { echo "no .env — run: cp .env.example .env && \$$EDITOR .env"; exit 1; }
@@ -2169,6 +2174,31 @@ traffic: ## Did anybody arrive, and through which door: make traffic [DAYS=14]
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/traffic.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  "$(or $(DAYS),14)"
+
+version: ## Which commit this box is actually running: make version
+	@# THE QUESTION THAT KEPT COMING BACK. A fix is pushed, a deploy is run,
+	@# the fault is still there — and nobody can tell whether the box has the
+	@# fix or the deploy silently landed on an older commit. Both of us spent
+	@# rounds guessing at it from terminal scrollback and timestamps.
+	@#
+	@# It prints what is on disk AND what the running board was built from,
+	@# because those are different questions: board/ is COPYed into the image,
+	@# so a git reset with no build leaves the container serving the old code
+	@# with the new commit sitting on disk beside it. That gap is the trap
+	@# CLAUDE.md opens with, and this is the command that shows it.
+	@printf '\n'
+	@printf '  on disk    %s\n' "$$(git log --oneline -1)"
+	@printf '  branch     %s\n' "$$(git rev-parse --abbrev-ref HEAD)"
+	@built=$$($(COMPOSE) exec -T board sh -c 'cat /app/BUILT 2>/dev/null' 2>/dev/null); \
+	if [ -n "$$built" ]; then printf '  running    %s\n' "$$built"; \
+	else printf '  running    (the image does not say — it predates this)\n'; fi
+	@printf '\n'
+	@if [ -n "$$($(COMPOSE) exec -T board sh -c 'cat /app/BUILT 2>/dev/null' 2>/dev/null)" ] \
+	  && [ "$$($(COMPOSE) exec -T board sh -c 'cat /app/BUILT 2>/dev/null' 2>/dev/null)" != "$$(git rev-parse --short HEAD)" ]; then \
+	  printf '  THE BOARD IS RUNNING OLDER CODE THAN THE DISK.\n'; \
+	  printf '  board/ is built into the image, so a fetch alone does not move it:\n\n'; \
+	  printf '    make up\n\n'; \
+	fi
 
 faces: ## Whose photo is not showing, and put one back: make faces [WHO="Nicole"]
 	@# "Her photo got removed when she was put on the waiting list." It was
