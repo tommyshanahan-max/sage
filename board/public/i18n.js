@@ -1938,7 +1938,7 @@ export const STRINGS = {
      TO EACH OTHER AND NOBODY ELSE, so what that does and does not mean is
      spelled out rather than implied — including the part people assume and we
      will not claim. */
-  "pv.hchat":          ["Messages", "私信"],
+  "pv.hchat":          ["Chat", "聊天"],
   "pv.pchat1": [
     "A message holds what you wrote, who it was to, and when. It is kept on the same server as everything else. Nobody but the two of you reads it — not other members, not us — with one exception, and the exception is the point: if the person who received a message reports it, that is when somebody reads it. That is the whole reason these are not built so that we cannot read them. A room nobody can read is a room nobody can be removed from.",
     "一条私信保存的是：你写的内容、写给谁、什么时候写的，和其他内容存在同一台服务器上。除了你们两个人，没有别人会读——其他成员不会，我们也不会——只有一个例外，而这个例外正是关键：如果收信的人举报了这条消息，那时才会有人来读。这也正是我们没有把私信做成「连我们自己都读不了」的原因——一个没有人能读的房间，也就没有人能被请出去。",
@@ -2990,7 +2990,7 @@ export const STRINGS = {
     "你可以先在这里跟{who}聊——一个只有你们两个人看得见的房间。任何一方随时都可以退出，退出时也不会通知对方。",
   ],
   "match.chatGo":      ["Message {who}", "给{who}发消息"],
-  "match.chatSent":    ["Sent. It is in Messages.", "已发送，可以在私信里看到。"],
+  "match.chatSent":    ["Sent. It is in Chat.", "已发送，在聊天里。"],
 
   "match.why":         ["Why this is a match", "为什么算匹配"],
   "match.becauseOne": [
@@ -6370,8 +6370,8 @@ export const STRINGS = {
     "确定退群？之后你就看不到它了，你说过的话会留在原处。",
   ],
 
-  "note.inbox":        ["Messages", "私信"],
-  "note.inboxSub":     ["Introductions to you, and the ones you sent.", "别人写给你的，和你写出去的。"],
+  "note.inbox":        ["Chat", "聊天"],
+  "note.inboxSub":     ["Everyone you are talking to.", "你在聊的人。"],
   "note.none":         ["Nothing yet", "还没有消息"],
   /* IT STILL TALKED ABOUT STUDYING TOGETHER, which is what this board was
      before it was this one. */
@@ -6904,7 +6904,7 @@ export const STRINGS = {
   "sh.chatPhone":      ["This conversation lives on this phone.", "这个对话只在这台手机上。"],
 
   /* The shopkeeper's side. */
-  "mn.chats":          ["Messages", "消息"],
+  "mn.chats":          ["Chat", "聊天"],
   "mn.chatNone":       ["Nobody has asked anything yet.", "还没有人来问。"],
   "mn.buyer":          ["A buyer", "买家"],
   "mn.reply":          ["Reply", "回复"],
