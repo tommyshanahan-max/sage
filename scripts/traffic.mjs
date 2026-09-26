@@ -45,6 +45,27 @@ if (!d || !Array.isArray(d.people)) {
 const people = d.people;
 const waits = Array.isArray(d.waits) ? d.waits : [];
 
+/* THE BOARD MUST BE RUNNING THE CODE THIS SCRIPT WAS WRITTEN AGAINST.
+ *
+ * scripts/ is bind-mounted and board/ is COPYed into the image, so a fetch
+ * with no build puts this file on disk in front of a server that has never
+ * heard of `via`, `waits` or `publicDoor`. Every one of them would come back
+ * undefined and the report would print, in confident columns, that nobody
+ * came through the link, nobody is on the list, and the door is shut — three
+ * falsehoods, none of them marked as missing data. An answer that cannot
+ * tell "no" from "not asked" is worse than no answer.
+ *
+ * Checked on publicDoor, which is a boolean the route always sends now, so
+ * `undefined` can only mean old code. */
+if (d.publicDoor === undefined) {
+  console.log("\n  The board is running older code than this command.");
+  console.log("  board/ is built into the image, so a fetch alone does not move it:");
+  console.log("");
+  console.log("    make up && make traffic");
+  console.log("");
+  process.exit(1);
+}
+
 /* THE DAY SOMETHING HAPPENED, IN THE ONLY TIME ZONE THAT MATTERS HERE.
  * Rows are stamped in UTC and Tom reads this in Tokyo, where the box is. A
  * report that puts last night's arrivals on yesterday is a report that says
