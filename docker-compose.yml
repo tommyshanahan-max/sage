@@ -1102,6 +1102,14 @@ services:
       # existed. "read" is what people mean by invite only; "post" lets anybody
       # read and only members write.
       BOARD_INVITE: ${TOMSCODING_BOARD_INVITE:-}
+      # THE PUBLIC DOOR. "on" and anybody who fills in the form gets a
+      # profile, browses everybody, and can write to everybody who arrived the
+      # same way. What they cannot do is open with somebody a member brought
+      # in — see pairState. Anything else, including unset, and the board is
+      # what it was: a code or nothing.
+      # It is here because BOARD_PUBLIC without this line is a variable the
+      # container never sees, which is the trap this file exists to close.
+      BOARD_PUBLIC: ${TOMSCODING_PUBLIC:-}
       # THE STANDING WAY BACK IN — one code, chosen, never spent, that puts
       # one named person's page onto whatever browser types it. Set both or
       # there is no such code. See the note over BACK_CODE in server.js for
@@ -1424,6 +1432,9 @@ services:
       # that are meant to know nothing about each other.
       BOARD_SALT: ${TOMSCODING_WL_SALT:-}
       BOARD_INVITE: ${TOMSCODING_WL_INVITE:-}
+      # ITS OWN SWITCH, AND NOT THE MAIN BOARD'S. A partner's board opening
+      # its door because ours did is a decision nobody made.
+      BOARD_PUBLIC: ${TOMSCODING_WL_PUBLIC:-}
       BOARD_CONTACT: ${TOMSCODING_BOARD_CONTACT:-}
       # HIS KEY, AND THE WHOLE REASON THIS SERVICE EXISTS. Never ours: a
       # partner's box charging on our account would put his clients' money in
