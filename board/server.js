@@ -9354,7 +9354,12 @@ app.post("/api/note", notesOff, express.json({ limit: "16kb" }), async (req, res
   /* And the inbox, which is the one most of them will actually see. The
      link is built here because this runs after the response, when the
      request is gone. */
-  mailThem(out.note.to, out.from, backHere(req, "/notes#" + encodeURIComponent(out.from)))
+  /* THE LINK OPENS THE CONVERSATION, not the inbox — see `key` above. It
+     falls back to a bare /notes rather than a broken anchor when there is no
+     key, which is a sender with neither a page nor a waiting row and should
+     not be reachable; the inbox is the honest landing for it. */
+  mailThem(out.note.to, out.from,
+    backHere(req, out.key ? "/notes#" + encodeURIComponent(out.key) : "/notes"))
     .catch((err) => console.error("note mail:", err.message));
 });
 
@@ -9412,7 +9417,9 @@ app.post("/api/note/voice", notesOff, express.json({ limit: "12mb" }), async (re
     if (!note) return { error: "no" };
     board.notes.push(note);
     const waiting = mine?.handle ? null : board.waits.find((w) => w.by === me && w.name);
+    // The thread's key, not the name — see the note in /api/note.
     return { note, from: mine?.handle || waiting?.name || "",
+             key: mine?.id || (waiting ? "w:" + waiting.id : ""),
              answering: Boolean(state.answering) };
   });
 
@@ -9423,8 +9430,10 @@ app.post("/api/note/voice", notesOff, express.json({ limit: "12mb" }), async (re
   res.status(201).json({ ok: true, id: out.note.id, answering: out.answering });
   // The same two nudges a typed note sends, for the same reasons — see above.
   tellThem(out.note.to).catch(() => { /* a push that failed is a push that did not arrive */ });
-  mailThem(out.note.to, out.from, backHere(req, "/notes#" + encodeURIComponent(out.from)))
-    .catch((err) => console.error("note mail:", err.message));
+  // The same link as /api/note — the conversation, not the inbox.
+  mailThem(out.note.to, out.from,
+    backHere(req, out.key ? "/notes#" + encodeURIComponent(out.key) : "/notes"))
+    .catch((err) => console.error("voice mail:", err.message));
 });
 
 /* THE AUDIO ON A LINE IN A THREAD. The two people in it and nobody else.
