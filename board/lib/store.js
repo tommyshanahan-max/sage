@@ -2373,7 +2373,32 @@ export function cleanPush(raw) {
     at: String(raw.at || "").slice(0, 40) || new Date().toISOString() };
 }
 
-export const followersOf = (follows, id) =>
+/* HOW MANY PEOPLE FOLLOW SOMEBODY, COUNTING ONLY THE ONES YOU CAN SEE.
+ *
+ * "Why does it say 12 follow me and then show me 3 people?" Because it was
+ * counting follow ROWS and listing PEOPLE, and those are different sets: a
+ * row whose author never finished a page, or took it down, or is still held,
+ * has nobody behind it. /api/followers has always dropped those — "a follow
+ * with nobody behind it" is its own comment — and the count beside it never
+ * did, so the two disagreed by nine on a board of twelve.
+ *
+ * The count follows the list rather than the other way round, because the
+ * list is the part somebody can act on. A number nobody can reach the people
+ * behind is a number that makes the app look broken, and it is the number
+ * that gets quoted.
+ *
+ * `people` is optional so that nothing which only has the rows has to change
+ * — without it this is the old behaviour exactly.
+ */
+export const followersOf = (follows, id, people) => {
+  if (!Array.isArray(people)) return countRows(follows, id);
+  const live = new Set(people
+    .filter((q) => q.state === "published" && q.handle && q.by)
+    .map((q) => q.by));
+  return follows.reduce((n, f) => n + (f.who === id && live.has(f.by) ? 1 : 0), 0);
+};
+
+const countRows = (follows, id) =>
   follows.reduce((n, f) => n + (f.who === id ? 1 : 0), 0);
 
 /* ---------------------------------------------------------------------------

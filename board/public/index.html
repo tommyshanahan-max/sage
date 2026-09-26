@@ -9551,7 +9551,6 @@ async function saveMe(patch) {
     return { error: T(d.error === "tooBig" ? "post.tooBig" : "err.general") };
   }
   ME = d.person;
-  settled();
   if (typeof d.waiting === "number") WAITING = d.waiting;
   if (typeof d.people === "number") MEMBERS = d.people;
   if (d.rank) RANK = d.rank;
@@ -10846,6 +10845,14 @@ fetch("/api/me", { headers: device ? { "x-board-device": device } : {} })
   .then((d) => {
     ME = d.person;
     ME_KNOWN = true;
+    /* THE PAGE IS SHOWN HERE, because THIS is the request that decides which
+       rows exist above the deck — see #vbrowse.settling.
+       It was put in saveMe(), which runs when somebody saves their profile
+       and never on a load, so every visit waited out the two-second fallback
+       instead: the screen sat blank and then arrived all at once, which is
+       the jump moved to the end rather than removed. Measured as a reveal at
+       t=2173ms when everything had settled by t=958. */
+    settled();
     /* THE FIXED HALF, and it arrives before anything draws the sentence. A
        string when they answered it on the way in, "" when nobody asked. */
     SAYME = typeof d.sayMe === "string" ? d.sayMe : "";

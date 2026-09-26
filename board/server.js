@@ -31,6 +31,7 @@ import { timingSafeEqual, randomUUID, createHmac } from "node:crypto";
 import { AsyncLocalStorage } from "node:async_hooks";
 import path from "node:path";
 import * as store from "./lib/store.js";
+import * as assets from "./lib/assets.js";
 import * as memo from "./lib/memo.js";
 import * as request from "./lib/request.js";
 import * as fapiao from "./lib/fapiao.js";
@@ -500,9 +501,55 @@ const LABEL_TAG = LABEL_NAME
   .replace(/&/g, "&amp;").replace(/</g, "&lt;")
   .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
+/* THE HASHED, COMMENT-FREE COPIES OF public/*.js — see lib/assets.js.
+ *
+ * Built once at startup. If it throws, the board still serves: `ASSETS` stays
+ * null, no import specifier is rewritten, and express.static answers /i18n.js
+ * exactly as it did before. A caching change must never be the reason a board
+ * will not start. */
+let ASSETS = null;
+try {
+  ASSETS = await assets.build("public");
+  console.log("assets: " + ASSETS.files.size + " files at build " + ASSETS.id);
+} catch (err) {
+  console.error("assets: not built (" + err.message + ") — serving the plain files");
+}
+
+/* Immutable, because the address contains a hash of the content: a changed
+   file is a different address, so this copy can never be stale.
+ *
+ * AND A BUILD THAT NO LONGER EXISTS IS STILL ANSWERED. Pages are no-cache so
+ * a reload always asks for the current build — but a tab left open across a
+ * deploy holds the old HTML, and the moment it imports anything lazily it
+ * asks for an address that has just stopped existing. A 404 on an import is
+ * a screen that throws rather than a screen that is a version behind. So an
+ * unknown hash on a KNOWN name gets the current file, with no-cache on it:
+ * helpful, and it cannot poison a cache, because the one thing that must
+ * never be cached under the wrong address is the wrong bytes. */
+app.get(/^\/([a-z0-9-]+)\.([a-f0-9]{12})\.js$/, (req, res, next) => {
+  if (!ASSETS) return next();
+  const want = req.params[0] + "." + req.params[1] + ".js";
+  const now = req.params[0] + "." + ASSETS.id + ".js";
+  const body = ASSETS.files.get(want) ?? ASSETS.files.get(now);
+  if (body === undefined) return next();
+  res.set("Content-Type", "text/javascript; charset=utf-8");
+  res.set("Cache-Control", want === now
+    ? "public, max-age=31536000, immutable" : "no-cache");
+  res.set("X-Content-Type-Options", "nosniff");
+  res.send(body);
+});
+
 async function page(file, req, res, next, extra = null) {
   try {
-    if (!PAGES.has(file)) PAGES.set(file, await readFile("public/" + file, "utf8"));
+    if (!PAGES.has(file)) {
+      let html = await readFile("public/" + file, "utf8");
+      /* ONCE, HERE, AND NOT PER REQUEST. Every page imports /i18n.js and
+         index.html is half a megabyte — running the rewrite on every load
+         would spend more than the caching saves. PAGES already exists to
+         read each file once; this rides on it. */
+      if (ASSETS) html = ASSETS.rewrite(html);
+      PAGES.set(file, html);
+    }
     const proto = String(req.get("x-forwarded-proto") || req.protocol || "https").split(",")[0];
     const host = String(req.get("host") || "").replace(/[^A-Za-z0-9.:-]/g, "").slice(0, 253);
     const origin = host ? proto + "://" + host : "";
@@ -17094,7 +17141,9 @@ app.post("/api/follow", express.json({ limit: "8kb" }), async (req, res) => {
       : board.people.find((x) => x.id === who && x.state === "published");
     if (!target) return null;
     // Following yourself is not a thing anybody means to do.
-    if (target.by === me) return { count: store.followersOf(board.follows, who), following: false };
+    if (target.by === me) {
+      return { count: store.followersOf(board.follows, who, board.people), following: false };
+    }
 
     /* YOU CANNOT REACH FOR SOMEBODY WHILE YOU ARE A GHOST.
      *
@@ -17174,7 +17223,7 @@ app.post("/api/follow", express.json({ limit: "8kb" }), async (req, res) => {
     if (!on && had >= 0) board.follows.splice(had, 1);
     /* AND WHETHER THAT WAS THE SECOND HALF OF IT. The page says "you can
        write to them now" rather than leaving somebody to discover it. */
-    return { count: store.followersOf(board.follows, who), following: on,
+    return { count: store.followersOf(board.follows, who, board.people), following: on,
              both: on && bothFollow(board, me, target.by) };
   });
   // Told apart, because they are different things to do next: one is a toggle
@@ -17221,7 +17270,9 @@ app.get("/api/person", async (req, res) => {
       mine: q.by === me,
       speaksFor: speaksFor(board, q),
       roster: rosterOf(board, q),
-      followers: store.followersOf(board.follows, q.id),
+      // The people you can actually open, which is what the list behind this
+      // number shows — see followersOf.
+      followers: store.followersOf(board.follows, q.id, board.people),
       // Whether YOU follow them. Never who else does — a count is a fact about
       // a person, a list is a social graph.
       following: Boolean(me) && board.follows.some((f) => f.by === me && f.who === q.id),
