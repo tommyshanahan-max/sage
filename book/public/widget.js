@@ -285,6 +285,11 @@
     el.setAttribute("data-book-on", "");
     mount(el);
   });
+  /* FOR APPS THAT DRAW PAGES WITHOUT RELOADING (Next.js, say): the script
+     loads once, so a <div data-book> that appears later is found by calling
+     window.bookWidget() after it is on the page. Safe to call any number of
+     times — a div already drawn is skipped. */
+  window.bookWidget = start;
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
   else start();
 })();

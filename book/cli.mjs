@@ -82,6 +82,9 @@ if (cmd === "teacher") {
   save(db);
   console.log(`Cancelled — ${when(b.start)} is free again.`);
 } else if (cmd === "demo") {
+  // The "demo" shelf unless told otherwise — SHELF=studypal puts the same four
+  // made-up teachers where Study Pal will find them, to test it end to end.
+  const shelf = (E.SHELF || "demo").toLowerCase();
   const db = load();
   const demo = [
     ["Li Wei", "李薇", "Beginners · speaks English", "¥120", "mon-sun 09:00 19:00 20:00 21:00", "Beginner,Speaking"],
@@ -90,13 +93,13 @@ if (cmd === "teacher") {
     ["Wang Min", "王敏", "Kids and teens", "¥110", "sat-sun 09:00 10:00 11:00 15:00", "Kids"],
   ];
   for (const [name, zh, line, price, hours, tags] of demo) {
-    const old = db.teachers.find((t) => t.shelf === "demo" && t.name === name);
-    const row = cleanTeacher({ id: old?.id || newId(), shelf: "demo", name, zh, line, price,
+    const old = db.teachers.find((t) => t.shelf === shelf && t.name === name);
+    const row = cleanTeacher({ id: old?.id || newId(), shelf, name, zh, line, price,
       tags: tags.split(","), hours: parseHours(hours) });
     db.teachers = db.teachers.filter((t) => t.id !== row.id).concat(row);
   }
   save(db);
-  console.log('Four made-up teachers on the "demo" shelf. See them at /book/?shelf=demo');
+  console.log(`Four made-up teachers on the "${shelf}" shelf. See them at /book/?shelf=${shelf}`);
 } else {
   const db = load();
   const shelves = [...new Set(db.teachers.map((t) => t.shelf))].sort();

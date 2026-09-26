@@ -552,8 +552,8 @@ book-on: ## Show a hidden teacher again: make book-on NAME="Li Wei"
 book-cancel: ## Free a booked slot: make book-cancel ID=… (the id is in book-list)
 	@$(COMPOSE) exec -T $(BOOK_ENV) book node cli.mjs cancel
 
-book-demo: ## Four made-up teachers on the "demo" shelf, to see the widget working
-	@$(COMPOSE) exec -T book node cli.mjs demo
+book-demo: ## Four made-up teachers on a shelf (default "demo"; SHELF=studypal for Study Pal)
+	@$(COMPOSE) exec -T $(BOOK_ENV) book node cli.mjs demo
 
 ferry-keys: ## Make the keypair Ferry needs to send notifications
 	@# VAPID: the standard that lets a server push to Apple's and Google's
