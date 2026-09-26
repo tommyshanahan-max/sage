@@ -1962,7 +1962,10 @@ between Tom's phone and his Mac**, through `make book-test`'s two links.
   up to a7a44b4. So the "never deployed" sections below that were on that
   branch by then are on the box and built — not watched working. A session
   deploying the other branch without merging this one takes Book down.
-- Nobody is told when a lesson is booked, and payment is only a link.
+- Booking alerts to Tom's WeChat (Server酱, the key Study Pal's new-user
+  alert already uses) are built 26 Sep, not yet deployed: `make book-alerts`
+  once. Each carries the teacher's room link, ready to forward.
+- Payment is only a link.
 
 ## Voice messages — live 24 Sep, watched working on Tom's phone
 

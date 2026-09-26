@@ -33,6 +33,10 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { load, save, newId, slotsFor, shown, cleanBooking } from "./lib/store.mjs";
 import * as room from "./lib/room.mjs";
+import * as notify from "./lib/notify.mjs";
+
+// Where the service is reached from outside — for links put in messages.
+const PUBLIC = (process.env.BOOK_PUBLIC || "https://thexchange.app/book").replace(/\/$/, "");
 
 room.turnSetup();
 
@@ -137,6 +141,14 @@ const server = http.createServer(async (req, res) => {
     db.bookings.push(row);
     save(db);
     console.log(`booked ${t.name} ${slot.start} for ${name}`);
+    /* To Tom's WeChat, with the teacher's room link ready to forward — see
+       lib/notify.mjs. The time as Beijing reads it: that is where he is. */
+    const when = slot.start.slice(5, 10).replace("-", "/") + " " + slot.start.slice(11, 16);
+    notify.tell(`Lesson booked · ${t.name} · ${when}`, [
+      `**${name}** booked **${t.name}**, ${when} Beijing, ${t.minutes} min.`,
+      `WeChat: ${contact}` + (row.note ? `  \nNote: ${row.note}` : ""),
+      `Send ${t.name} this room link:  \n${PUBLIC}/room/${row.id}#${row.tKey}`,
+    ].join("\n\n"));
     return send(res, 200, {
       ok: true, id: row.id, start: row.start, pay: t.pay || "",
       // The student's way into the lesson. The teacher's is printed by

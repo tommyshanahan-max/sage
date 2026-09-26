@@ -1361,6 +1361,10 @@ services:
       # The box's public address, for the video relay below. Not a secret —
       # it is the address every site here already answers on.
       BOOK_TURN_IP: ${TOMSCODING_TURN_IP:-45.77.8.166}
+      # A WeChat message to Tom on every booking, through Server酱 — the same
+      # SendKey Study Pal's new-user alert uses. `make book-alerts` copies it
+      # here from /root/notify.env once. Unset, bookings are silent.
+      SCT_KEY: ${TOMSCODING_SCT_KEY:-}
     volumes:
       - book_data:/data
     expose:
