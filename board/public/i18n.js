@@ -81,6 +81,15 @@ export const STRINGS = {
     "To keep this on your home screen: tap \u22ef top right, open in the browser.",
     "想放到主屏幕：点右上角 \u22ef，用浏览器打开。",
   ],
+  /* Instagram cannot install either, and its way out is not WeChat's. On iOS
+     the menu is ⋯ bottom right and the row says "Open in external browser";
+     on Android it is ⋮ top right. Named rather than described, same rule as
+     ins.ios above — a paraphrase sends somebody hunting for a row that is not
+     there. */
+  "ins.ig": [
+    "To keep this on your home screen: tap \u22ef, then Open in external browser.",
+    "想放到主屏幕：点 \u22ef，选「在浏览器中打开」。",
+  ],
   "ins.no":  ["Not now", "以后再说"],
 
   /* THE OTHER PICTURES. Said as a state, not as an apology — a person who has

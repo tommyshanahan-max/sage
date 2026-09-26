@@ -33,6 +33,23 @@ import { NATIVE } from "/native.js";
 
 const KEY = "board:noinstall";
 const WX = /micromessenger/i.test(navigator.userAgent);
+/* INSTAGRAM HAS WECHAT'S PROBLEM AND A DIFFERENT WAY OUT.
+ *
+ * Its in-app browser cannot install anything either, and it is where every
+ * visitor from a link in a bio or a story arrives. Told nothing, they tap the
+ * share sheet, find no "Add to Home Screen", and conclude the app is broken —
+ * the exact failure the WeChat branch below was written for.
+ *
+ * It is worse than WeChat in one way that matters more than the install:
+ * Instagram's webview keeps its own storage, so `board:device` in
+ * localStorage does not follow them out to Safari. Somebody who joins in here
+ * and then opens the real browser arrives as a stranger. Getting them out
+ * EARLY, before they have a profile to lose, is the whole point of saying it.
+ *
+ * Facebook's webview (FBAN/FBAV) is the same engine and the same menu.
+ */
+const IG = /instagram/i.test(navigator.userAgent)
+  || /\bFBAN\b|\bFBAV\b/.test(navigator.userAgent);
 /* iPadOS 13+ reports itself as a Mac. The touch point count is the tell, and
    it is the only one that survives — the UA string does not say iPad. */
 const IOS = /iphone|ipad|ipod/i.test(navigator.userAgent)
@@ -114,14 +131,17 @@ export function offerInstall(slot, member) {
 
   let off = false;
   try { off = localStorage.getItem(KEY) === "1"; } catch (e) { /* private mode */ }
-  const can = WX || IOS || waiting;
+  const can = WX || IG || IOS || waiting;
   if (!member || off || installed() || !can) { slot.hidden = true; slot.textContent = ""; return; }
 
   slot.hidden = false;
   while (slot.firstChild) slot.removeChild(slot.firstChild);
 
   const say = document.createElement("span");
-  if (WX) say.textContent = T("ins.wx");
+  /* IG before WX: nothing is ever both, but the order says which branch owns
+     the case if a future webview reports both strings. */
+  if (IG) say.textContent = T("ins.ig");
+  else if (WX) say.textContent = T("ins.wx");
   else if (waiting) say.textContent = T("ins.can");
   else withGlyph("ins.ios", say);
   slot.appendChild(say);
