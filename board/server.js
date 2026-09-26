@@ -19193,6 +19193,118 @@ app.get("/api/snap", snapGate, async (_req, res) => {
   });
 });
 
+/* WHY SOMEBODY'S PHOTOGRAPH IS NOT SHOWING, AND WHAT WOULD PUT IT BACK.
+ *
+ * WHAT HAPPENED. A picture uploaded at the door goes onto the WAIT row as
+ * "held" — nobody has looked at it yet — and when that row becomes a person
+ * the state comes across unchanged, deliberately: carrying the state rather
+ * than the permission is the difference between moving a row and approving
+ * it. The consequence nobody thought about is that the photograph then
+ * vanishes from every screen at the moment the person is let in, because
+ * shownPerson publishes a face only when photoState is "published". From the
+ * outside that is indistinguishable from the upload having failed, and it was
+ * reported as "her photo got removed when she was put on the waiting list".
+ *
+ * It is not removed. There are three different places it can be and they want
+ * three different answers, which is the whole reason this route exists:
+ *
+ *   held    the photograph is on their row, waiting to be looked at.
+ *           Releasing it is the fix.
+ *   behind  their row has none and the waiting row they came in on still has
+ *           one. It never came across. Copying it over is the fix.
+ *   gone    there is no photograph anywhere, and the honest answer is that
+ *           they have to put one up again.
+ *
+ * Telling those apart by hand meant a screen, and the person who has to do it
+ * cannot use one — see the note about screens in CLAUDE.md. Read-only.
+ */
+app.get("/api/admin/faces-why", admin, async (_req, res) => {
+  const board = await store.load(FILE);
+  res.set("Cache-Control", "no-store");
+  /* Their waiting row, found by device rather than by name: a handle is what
+     somebody chose to be called and the name on the join form is what they
+     typed, and matching those two finds almost nobody — the same chain
+     /api/public resolves, and the same reason. */
+  const waitOf = (q) => (q.by ? board.waits.find((w) => w.by === q.by) : null) || null;
+  res.json({
+    people: board.people.filter((q) => q.handle).map((q) => {
+      const w = waitOf(q);
+      const showing = q.photoState === "published" && Boolean(q.photo);
+      const why = showing ? ""
+        : q.photo ? "held"
+        : (w && w.photo) ? "behind"
+        : "gone";
+      return {
+        handle: q.handle, id: q.id,
+        showing, why,
+        /* Whether letting the face out would also let the PERSON out. The
+           release route publishes both — a face on a held profile shows
+           nowhere, so publishing one without the other fixes nothing — and
+           that is a bigger thing than a photograph, so it is said out loud
+           before it happens rather than discovered after. */
+        alsoAdmits: q.state !== "published",
+      };
+    }).sort((a, b) => a.handle.localeCompare(b.handle)),
+  });
+});
+
+/* PUT ONE BACK, whichever of the three it is.
+ *
+ * By handle, because a handle is what the operator types at every other
+ * target on this box and a person id is not a thing anybody has in their
+ * hand.
+ *
+ * EXACT FIRST, THEN THE FIRST NAME, AND NEVER A GUESS BETWEEN TWO PEOPLE.
+ * Some handles on this board are a first name ("Christopher") and some are a
+ * whole one ("Ray Chen"), so exact-only refuses half the names the operator
+ * actually says out loud — and "Not on this board" reads as the person being
+ * missing when they are not, which is the failure CLAUDE.md warns about by
+ * name. So a single person whose first name matches is taken, and TWO are
+ * refused with both names printed: publishing the wrong person's face is not
+ * a mistake that can be taken back once somebody has seen it.
+ */
+app.post("/api/admin/face-fix", admin, express.json({ limit: "1kb" }), async (req, res) => {
+  const want = String(req.body?.who || "").trim().toLowerCase();
+  if (!want) return res.status(400).json({ error: "who" });
+  const out = await change((board) => {
+    const low = (x) => String(x.handle || "").toLowerCase();
+    const first = (x) => low(x).split(/\s+/)[0];
+    let same = board.people.filter((x) => low(x) === want);
+    // Only when nothing matched outright, so an exact "Ray" is never dragged
+    // off by a "Ray Chen" standing next to him.
+    if (!same.length) same = board.people.filter((x) => x.handle && first(x) === want);
+    if (!same.length) return { error: "nobody" };
+    if (same.length > 1) {
+      return { error: "two", n: same.length, who: same.map((x) => x.handle).slice(0, 6) };
+    }
+    const q = same[0];
+    const w = q.by ? board.waits.find((x) => x.by === q.by) : null;
+    /* WHERE IT CAME FROM, RECORDED BEFORE ANYTHING MOVES.
+     *
+     * It cannot be read off the row afterwards, and the first run of this got
+     * it wrong in exactly that way: cleanPerson defaults photoState to "held"
+     * when there is none, so somebody whose picture had never come across at
+     * all was reported as having had one "on her row the whole time". The two
+     * are different failures and the operator is owed the right one. */
+    const from = q.photo ? "row" : (w && w.photo ? "wait" : "");
+    if (from === "wait") {
+      // It never came across. The picture itself was never deleted — only the
+      // row that pointed at it changed hands.
+      q.photo = w.photo;
+      if (w.cover) q.cover = w.cover;
+    }
+    if (!q.photo) return { error: "gone", handle: q.handle };
+    const was = { from, photoState: from === "row" ? (q.photoState || "") : "",
+                  state: q.state || "" };
+    q.photoState = "published";
+    if (q.state !== "published") q.state = "published";
+    Object.assign(q, store.cleanPerson(q));
+    return { ok: true, handle: q.handle, was, admitted: was.state !== "published" };
+  });
+  if (out?.error) return res.status(out.error === "nobody" ? 404 : 400).json(out);
+  res.json(out);
+});
+
 app.get("/api/faces", admin, async (_req, res) => {
   const board = await store.load(FILE);
   res.set("Cache-Control", "no-store");
