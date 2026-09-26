@@ -4376,6 +4376,12 @@ export const STRINGS = {
      "Coming soon" is carried in its own chip rather than buried in the
      sentence, because it is the part that makes the line honest and the part
      somebody skimming would otherwise miss. */
+  /* On a member's photograph. "Vouched" and not "Member": member is what the
+     heading above the deck already calls them, and this has to add the thing
+     the heading does not — that somebody already here put their name to it.
+     引荐 is the same word the door uses for the vouch, so the badge and the
+     thing you have to get are called the same thing. */
+  "front.vouched":     ["Vouched", "有人引荐"],
   "front.paidHead":    ["Get paid across the border", "跨境收款"],
   "front.paidSub":     ["Your client pays in yuan from WeChat or Alipay; it lands in your own bank.",
                         "客户用微信或支付宝付人民币，钱进你自己的银行账户。"],
