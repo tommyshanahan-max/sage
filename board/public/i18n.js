@@ -3451,6 +3451,11 @@ export const STRINGS = {
      member reads the same word in both places. */
   "brw.qpfor":         ["Waiting for you", "在等你"],
   "brw.qpn":           ["{n} {who} waiting", "{n} 位{who}在等"],
+  /* "1 directors waiting" was on a live screen. English needs the singular,
+     and it needs the ARTICLE with it — "1 director waiting" reads as a tally
+     and "a director is waiting" reads as a person, which is what it is. The
+     Chinese line is the same sentence either way. */
+  "brw.qpn1":          ["{who} is waiting", "有 1 位{who}在等"],
   /* The stronger half: they are what you are after AND you are what they are
      after. One line, because two numbers that mean different things need the
      difference said out loud. */

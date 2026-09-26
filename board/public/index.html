@@ -1819,12 +1819,28 @@
     font-size:.7rem;font-weight:500;background:rgba(255,255,255,.16);color:rgba(255,255,255,.6)}
   .pc .pdays b.on{background:#fff;color:#14203a}
 
-  /* The peek — see the function of that name. Dark enough that serif text on
-     any photograph reads, and it fills the card rather than the screen. */
+  /* The peek — see the function of that name. It fills the card rather than
+     the screen, and the face stays visible through it.
+     .9 AND A 3px BLUR WAS A BLACK MODAL. Ninety per cent of #080b12 over a
+     photograph leaves a photograph nobody can see, so tapping a face to read
+     about that person took the face away — and the card underneath still
+     showed its own name faintly through the last tenth, so the screen carried
+     the same name twice, once solid and once as a ghost.
+     The legibility is the blur's job, not the ink's. 14px of blur makes serif
+     text read against anything, including a white studio wall, and at .62 the
+     person is still recognisably there behind their own words. A backdrop
+     filter is the one thing that lets those two be true at once.
+     The floor is there because a browser with no backdrop-filter gets nothing
+     from the blur, and .62 over a bright photograph is unreadable — so those
+     get the old opaque wash instead of an unreadable one. */
   .pc .peek{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;
     justify-content:center;padding:1.2rem;border-radius:1.3rem;
-    background:rgba(8,11,18,.9);-webkit-backdrop-filter:blur(3px);
-    backdrop-filter:blur(3px);animation:peekin .16s ease}
+    background:rgba(8,11,18,.88);animation:peekin .16s ease}
+  @supports ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+    .pc .peek{background:rgba(8,11,18,.62);
+      -webkit-backdrop-filter:blur(14px) saturate(.9);
+      backdrop-filter:blur(14px) saturate(.9)}
+  }
   @keyframes peekin{from{opacity:0}to{opacity:1}}
   @media (prefers-reduced-motion:reduce){.pc .peek{animation:none}}
   .pc .peekx{position:absolute;top:.55rem;right:.6rem;width:2.1rem;height:2.1rem;
@@ -8360,7 +8376,14 @@ function drawPairs(pairs) {
   box.append(el("b", null, T("brw.qpfor")));
   for (const p of rows) {
     const line = el("p", "qp");
-    const n = el("b", null, T("brw.qpn", { n: p.waiting, who: many(p.want) }));
+    /* "1 DIRECTORS WAITING" was on a live screen. One key for one and one for
+       the rest, the same as board.inRoom1 and cards.n1 — English needs the
+       singular and the Chinese line is the same sentence either way, which is
+       why this is a key and not a count check. `one` is the role word with
+       its article, which is what the rest of the app says out loud. */
+    const n = el("b", null, p.waiting === 1
+      ? T("brw.qpn1", { who: T("role.a." + p.want) })
+      : T("brw.qpn", { n: p.waiting, who: many(p.want) }));
     line.append(n);
     /* The second number is the stronger one and needs the difference said:
        these are the ones whose own sentence points back at this member. */
