@@ -1962,9 +1962,11 @@ between Tom's phone and his Mac**, through `make book-test`'s two links.
   up to a7a44b4. So the "never deployed" sections below that were on that
   branch by then are on the box and built — not watched working. A session
   deploying the other branch without merging this one takes Book down.
-- Booking alerts to Tom's WeChat (Server酱, the key Study Pal's new-user
-  alert already uses) are built 26 Sep, not yet deployed: `make book-alerts`
-  once. Each carries the teacher's room link, ready to forward.
+- Booking alerts, built 26 Sep, not yet deployed: each booking is a line
+  from Mo in a hand-kept room called **Bookings**, and the board pushes it
+  like any message — `make book-alerts` makes the room. Carries the
+  teacher's room link, ready to forward. Server酱 (WeChat) is optional
+  (`KEY=SCT...`): its WeChat login opened a blank page on Tom's phone.
 - Payment is only a link.
 
 ## Voice messages — live 24 Sep, watched working on Tom's phone

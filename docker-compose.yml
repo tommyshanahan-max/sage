@@ -1365,6 +1365,10 @@ services:
       # SendKey Study Pal's new-user alert uses. `make book-alerts` copies it
       # here from /root/notify.env once. Unset, bookings are silent.
       SCT_KEY: ${TOMSCODING_SCT_KEY:-}
+      # And, first, on Tom's own board: Mo says each booking into a room called
+      # Bookings and the phone buzzes. The board's own admin key, so nothing
+      # new to set — the book container asks board:8080 on the shared network.
+      BOOK_BOARD_KEY: ${TOMSCODING_BOARD_KEY:-}
     volumes:
       - book_data:/data
     expose:

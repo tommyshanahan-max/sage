@@ -1,4 +1,4 @@
-/* TELLING TOM A LESSON WAS BOOKED — to WeChat, where he already is.
+/* TELLING TOM A LESSON WAS BOOKED — on his board first, WeChat optionally.
  *
  * The same channel Study Pal's new-user alert uses (study-pal repo,
  * deploy/notify-new-users.sh): Server酱, a service that turns one HTTPS call
@@ -16,11 +16,30 @@
  */
 const KEY = (process.env.SCT_KEY || "").trim();
 const URL_T = (process.env.NOTIFY_URL || "").trim();
+/* FIRST CHOICE: TOM'S OWN BOARD. Mo says the booking into a room called
+   Bookings that only Tom is in, and the board buzzes his phone the way it
+   does for any message — no outside service at all. This came second in time:
+   Server酱's WeChat login opened a blank page on Tom's phone, and a channel he
+   cannot sign up for is not a channel. `make book-alerts` makes the room. */
+const BOARD = (process.env.BOOK_BOARD_URL || "http://board:8080").replace(/\/$/, "");
+const BOARD_KEY = (process.env.BOOK_BOARD_KEY || "").trim();
+const ROOM = process.env.BOOK_ALERT_ROOM || "Bookings";
 
-export const on = () => Boolean(KEY || URL_T);
+export const on = () => Boolean(BOARD_KEY || KEY || URL_T);
 
 export function tell(title, body) {
-  if (!on()) return;
+  if (BOARD_KEY) {
+    // One plain line for Mo — the room is not markdown.
+    const text = (title + "\n" + body).replace(/\*\*/g, "").replace(/  \n/g, "\n");
+    fetch(BOARD + "/api/admin/room-say", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-admin-secret": BOARD_KEY },
+      body: JSON.stringify({ name: ROOM, text }),
+      signal: AbortSignal.timeout(10e3),
+    }).then((r) => { if (!r.ok) console.log(`notify board: ${r.status} (is there a "${ROOM}" room? make book-alerts)`); })
+      .catch((e) => console.log(`notify board: ${e.message}`));
+  }
+  if (!KEY && !URL_T) return;
   const go = KEY
     ? fetch(`https://sctapi.ftqq.com/${encodeURIComponent(KEY)}.send`, {
       method: "POST",

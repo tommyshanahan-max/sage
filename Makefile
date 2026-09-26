@@ -592,22 +592,20 @@ book-on: ## Show a hidden teacher again: make book-on NAME="Li Wei"
 book-cancel: ## Free a booked slot: make book-cancel ID=… (the id is in book-list)
 	@$(COMPOSE) exec -T $(BOOK_ENV) book node cli.mjs cancel
 
-book-alerts: ## WeChat message on every booking: make book-alerts KEY=SCT... (or reuses /root/notify.env)
-	@# ONE COMMAND, ONCE. The key already exists for Study Pal's new-user alert
-	@# (study-pal repo, deploy/notify-new-users.sh), in /root/notify.env. This
-	@# copies it into .env under the name docker-compose.yml hands the book
-	@# container, restarts that container, and says which it did.
-	@# Or give it the key: make book-alerts KEY=SCT... — written to both places,
-	@# so Study Pal's new-user alert (which reads /root/notify.env) gets it too.
-	@key="$(KEY)"; \
-	  if [ -n "$$key" ]; then \
-	    grep -q '^SCT_KEY=' /root/notify.env 2>/dev/null || { printf 'SCT_KEY=%s\n' "$$key" >> /root/notify.env; chmod 600 /root/notify.env; }; \
-	    sed -i '/^TOMSCODING_SCT_KEY=/d' .env; \
-	  else key=$$(sed -n 's/^SCT_KEY=//p' /root/notify.env 2>/dev/null | tail -1 | tr -d "'\""); fi; \
-	  if [ -z "$$key" ]; then echo "No key yet. Get one at https://sct.ftqq.com (scan with WeChat, copy the SendKey), then: make book-alerts KEY=SCT..."; exit 1; fi; \
-	  if grep -q '^TOMSCODING_SCT_KEY=' .env; then echo "Already in .env."; \
-	  else printf '\nTOMSCODING_SCT_KEY=%s\n' "$$key" >> .env; echo "Key saved."; fi
-	@$(COMPOSE) up -d book >/dev/null 2>&1 && echo "Booking alerts on: every lesson booked now messages your WeChat."
+book-alerts: ## Every lesson booked arrives in a "Bookings" room on your board, and buzzes: make book-alerts [WHO=Tom]
+	@# NO OUTSIDE SERVICE. Mo says each booking into a room kept by hand called
+	@# Bookings, and the board pushes it to your phone like any message — see
+	@# /api/admin/room-say in board/server.js. This makes that room with you in
+	@# it (WHO is your handle; Tom unless told otherwise) and restarts the book
+	@# container so it picks up the board's key. Safe to run twice.
+	@# KEY=SCT... as well sends a WeChat copy through Server酱 — optional; its
+	@# WeChat login opened a blank page on Tom's phone, which is why this exists.
+	@$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/handroom.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  --name "Bookings" --who "$(or $(WHO),Tom)" >/dev/null && echo "Bookings room: ready, with $(or $(WHO),Tom) in it."
+	@if [ -n "$(KEY)" ]; then \
+	  sed -i '/^TOMSCODING_SCT_KEY=/d' .env; printf '\nTOMSCODING_SCT_KEY=%s\n' "$(KEY)" >> .env; echo "WeChat copy: on."; fi
+	@$(COMPOSE) up -d book >/dev/null 2>&1 && echo "Booking alerts on: each lesson booked is a message from Mo in Bookings."
 
 book-test: ## Book a test lesson and print its two video links (phone + laptop)
 	@$(COMPOSE) exec -T $(BOOK_ENV) book node cli.mjs test

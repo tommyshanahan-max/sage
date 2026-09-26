@@ -2723,6 +2723,35 @@ app.post("/api/room/deal", admin, express.json({ limit: "2kb" }), async (req, re
   res.json(out);
 });
 
+/** ONE LINE FROM MO INTO A HAND-KEPT ROOM, AND A BUZZ FOR EVERYBODY IN IT.
+ *
+ *  For the other services on this box to tell Tom something where he already
+ *  looks. The first was Book (book/lib/notify.mjs): a lesson booked arrives as
+ *  a line in a room called Bookings, with the phone's own notification — no
+ *  outside service, no key, nothing to sign up for. The alternative tried
+ *  first was Server酱, and its WeChat login opened a blank page on Tom's phone.
+ *
+ *  Only into a room kept by hand (`make handroom`), so nothing here can put
+ *  words into a room its members made themselves. Mo says it word for word;
+ *  no model runs on it. */
+app.post("/api/admin/room-say", admin, express.json({ limit: "8kb" }), async (req, res) => {
+  const name = String(req.body?.name || "").trim().slice(0, 60);
+  const text = String(req.body?.text || "").trim();
+  if (!name || !text) return res.status(400).json({ error: "bad" });
+  const out = await change((board) => {
+    const g = board.groups.find((x) => x.hand && x.name === name);
+    if (!g) return { error: "room" };
+    const row = store.cleanSay({ id: store.newId(), group: g.id, by: store.MO, text });
+    if (!row) return { error: "bad" };
+    board.says.push(row);
+    return { ok: true, say: row.id, tell: [...g.members] };
+  });
+  if (out?.error) return res.status(out.error === "room" ? 404 : 400).json(out);
+  renderSay(out.say, text);
+  for (const h of out.tell) tellThem(h).catch(() => { /* a buzz that failed did not arrive */ });
+  res.json({ ok: true });
+});
+
 /** Who is in one. Names, never a word anybody said — same rule as /api/rooms. */
 app.get("/api/room/hand", admin, async (req, res) => {
   res.set("Cache-Control", "no-store");
