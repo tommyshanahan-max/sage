@@ -2635,7 +2635,15 @@ export const STRINGS = {
   // The arrow that just goes back, wherever back was.
   "nav.back":          ["Back", "返回"],
   "nav.feed":          ["Feed", "动态"],
-  "nav.cards":         ["Cards", "名片"],
+  /* NOT "CARDS". A shelf of cards is a wallet, and a wallet is a thing you
+     keep — which is the wrong idea about the one screen on this board that is
+     about other people. What is on it is who you have connected with, and the
+     buttons that fill it have said "Connect" for months (cards.give,
+     cards.giveGo, cards.swapDone), so the tab was the last thing still
+     calling it by the object rather than by what it is for.
+     人脉 is the word a Chinese business reader already uses for exactly this
+     and 名片夹 is, literally, the card wallet. */
+  "nav.cards":         ["Connects", "人脉"],
   "nav.profile":       ["Profile", "我的"],
   /* THE FIFTH TAB. 收款 rather than 钱包: nothing is held here, and a wallet
      that holds nothing is a promise the product does not keep. It is the same
@@ -3133,7 +3141,7 @@ export const STRINGS = {
   "off.gone":          ["There is no offer at this address.", "这个地址上没有邀约。"],
   "off.nocode":        ["That link is missing its code.", "这个链接少了邀约码。"],
 
-  "cards.head":        ["Your cards", "你的名片夹"],
+  "cards.head":        ["Connects", "人脉"],
   /* Two strings, because "1 people you have matched with" is the product
      miscounting the one thing on the screen. */
   "cards.n1":          ["1 match", "1 个匹配"],
@@ -3156,7 +3164,7 @@ export const STRINGS = {
      actually asking about. */
   "cards.paid1":       ["{amount} paid · 1 job", "已付 {amount} · 1 单"],
   "cards.paid":        ["{amount} paid · {n} jobs", "已付 {amount} · {n} 单"],
-  "cards.none":        ["No cards yet.", "还没有名片。"],
+  "cards.none":        ["Nobody yet.", "还没有人。"],
   "cards.noneWhy": [
     "A card lands here when you and somebody else follow each other and want the same kind of thing. Nothing arrives on its own — go and look at who is here.",
     "当你和某个人互相关注、而且想找的东西对得上时，这里就会多一张名片。名片不会自己出现，先去看看这里都有谁。"],
@@ -4318,13 +4326,18 @@ export const STRINGS = {
   "inv.countShut":     ["{n} posts up. Invite only.", "已发布 {n} 条。邀请制。"],
   /* The line under the name, for somebody already inside. It counted posts —
      see the note where it is set. */
-  "board.inRoom":      ["{n} people in the room. Invite only.",
-                        "房间里有 {n} 个人。邀请制。"],
+  /* "INVITE ONLY" CAME OFF THIS LINE, because it stopped being true. The
+     public door is open: a member reading Browse is looking at a room that
+     anybody with the link can now be standing in, and the app telling them
+     otherwise on the line above the faces is the app lying to the people it
+     most needs to trust it. What separates the two kinds of person is a
+     control directly under this line — see .tiertog — which says it better
+     than a claim does, because it does something. */
+  "board.inRoom":      ["{n} people in the room.", "房间里有 {n} 个人。"],
   /* ONE IS NOT "1 people". English needs the second string; the Chinese line
      is the same sentence either way, which is why this is a key and not a
      count check in the page. */
-  "board.inRoom1":     ["One person in the room. Invite only.",
-                        "房间里有 1 个人。邀请制。"],
+  "board.inRoom1":     ["One person in the room.", "房间里有 1 个人。"],
   "inv.one":           ["One person each, and a new one tomorrow.",
                         "一个口令进一个人，明天再给你一个新的。"],
   "door.sub":          ["Not open to everybody yet", "还没有对所有人开放"],
@@ -4856,6 +4869,20 @@ export const STRINGS = {
   // The row under the deck, and the card at the end of it. Both only exist
   // while there is no face on this phone, and both go the moment there is.
   "brw.you":           ["You", "你"],
+  /* THE MARK ON SOMEBODY WHO CAME IN THROUGH THE LINK, and only a member is
+     ever sent the fact — see the `waiting` line in /api/people. One word,
+     because it is a badge beside a name and not a status line: what it means
+     is on the toggle directly above the deck.
+     The Chinese says what the English implies. "等候中" is waiting in a queue
+     at a bank; 待引荐 is waiting for somebody to vouch, which is the only
+     thing this is waiting for and the only thing the reader can do about it. */
+  "brw.waiting":       ["Waiting", "待引荐"],
+  /* THE TOGGLE OVER THE DECK, for members. Two words, one each side.
+     "Everyone" rather than "All": all of WHAT is a question, everyone is not.
+     It is only drawn when there is somebody waiting to be filtered out — a
+     control with nothing behind it teaches people not to press things. */
+  "brw.tierAll":       ["Everyone", "所有人"],
+  "brw.tierMem":       ["Members", "会员"],
   "brw.mine":          ["Add your photo", "加上你的照片"],
   "brw.mineWhy":       ["Nobody here can see who you are yet.", "这里还没人知道你是谁。"],
   // Your own card is not in the deck — browsing your own photograph is not a

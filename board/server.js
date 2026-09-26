@@ -3673,6 +3673,21 @@ const shownPerson = (q, mine) => ({
      own. Dropped here for the reason given above: a route added later must not
      be able to publish it by forgetting to. */
   mail: mine ? q.mail : undefined,
+  /* WHICH DOOR SOMEBODY CAME THROUGH, AND IT IS NOT PUBLISHED.
+   *
+   * `...q` above means every field on a person row leaves the building unless
+   * this object takes it off again, and these two arrived by that route: the
+   * tier stamp was readable by every reader of /api/people, which makes the
+   * boundary a thing the PAGE chooses to draw rather than a thing the server
+   * decides. A member is shown who is waiting; somebody who came through the
+   * door must not be able to read the same fact out of the response and draw
+   * it themselves. See the `waiting` line in /api/people, which is the only
+   * way this leaves at all, and only to a member.
+   *
+   * `vouchedBy` goes to NOBODY, owner included: it is another person's id, so
+   * publishing it on a row would hand out the map of who brought whom in. */
+  via: mine ? q.via : undefined,
+  vouchedBy: undefined,
   /* THE LAYER, AND NOT THE NUMBER UNDERNEATH IT.
    *
    * `seq` is where somebody stands in arrival order and it stays on the
@@ -4782,6 +4797,25 @@ app.get("/api/people", async (req, res) => {
      localStorage, and had quietly stopped being applied at all — see
      cleanBlock in store.js. */
   const iBlocked = new Set(board.blocks.filter((x) => x.by === me).map((x) => x.who));
+  /* WHO IS WAITING, AND ONLY A MEMBER IS TOLD.
+   *
+   * Somebody a member vouched for and somebody who tapped a link on Instagram
+   * are the same card on this screen, which leaves a member with no way to
+   * tell the room from the queue standing in it — and vouching is the one
+   * thing only a member can do, so the one person who can act on the fact was
+   * the one person not being told it.
+   *
+   * ASYMMETRIC, LIKE THE BOUNDARY ITSELF. A mark saying "still waiting" is
+   * useful to the member who could end the waiting and humiliating to the
+   * person wearing it, so it goes out to members and to nobody else — which
+   * is a decision made HERE, in the response, not in the page. shownPerson
+   * takes `via` off every row for the same reason: a flag the browser is
+   * never sent is a flag no page can accidentally draw.
+   *
+   * Blank counts as a member. Everybody who was here before the public door
+   * existed has no stamp at all — same rule as tierOf. */
+  const mineRow = myRow(board, me);
+  const iAmMember = Boolean(mineRow) && mineRow.via !== "door";
   const live = board.people.filter((q) => (
     q.state === "published" && q.looking && q.handle && !iBlocked.has(q.id)));
   res.json({
@@ -4808,6 +4842,10 @@ app.get("/api/people", async (req, res) => {
            card names what it is and why the button is not there, which is the
            only thing that makes an invite worth wanting. */
         upTier: st.upTier,
+        /* Undefined rather than false for a reader who is not a member, so the
+           field is absent from the response instead of present and negative —
+           there is nothing there to be flipped by anybody reading it. */
+        waiting: iAmMember && q.by !== me && q.via === "door" ? true : undefined,
       };
     }),
   });
