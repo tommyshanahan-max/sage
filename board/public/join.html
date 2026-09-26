@@ -91,17 +91,19 @@
   .flab{font-size:.68rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;
     color:var(--muted);margin:1.8rem 0 .55rem}
   .flab em{font-style:normal;letter-spacing:.06em;text-transform:none;font-weight:400}
-  .fstrip{display:flex;gap:.5rem;overflow-x:auto;margin:0 -1.15rem;
-    padding:0 1.15rem .4rem;scrollbar-width:none}
+  .fstrip{display:flex;gap:.6rem;overflow-x:auto;margin:0 -1.15rem;
+    padding:0 1.15rem .5rem;scrollbar-width:none}
   .fstrip::-webkit-scrollbar{display:none}
-  .frm{flex:none;display:flex;align-items:center;gap:.5rem;border:1px solid var(--line);
-    background:var(--card);border-radius:999px;padding:.42rem .85rem .42rem .45rem;
-    font:inherit;color:var(--ink);cursor:pointer;text-decoration:none}
-  .frm i{width:1.75rem;height:1.75rem;border-radius:50%;display:grid;place-items:center;
-    font-style:normal;font-size:.8rem;font-weight:700;flex:none;
-    background:var(--accent-soft);color:var(--accent)}
-  .frm b{font-weight:600;font-size:.9rem;white-space:nowrap}
-  .frm span{font-size:.78rem;color:var(--muted);white-space:nowrap}
+  .frm{flex:none;width:7.6rem;border:1px solid var(--line);background:var(--card);
+    border-radius:.9rem;padding:.85rem .8rem;font:inherit;color:var(--ink);
+    cursor:pointer;text-decoration:none;display:block;text-align:left}
+  .frm i{width:2.2rem;height:2.2rem;border-radius:.65rem;display:grid;
+    place-items:center;font-style:normal;font-size:.95rem;font-weight:700;
+    background:var(--accent-soft);color:var(--accent);margin-bottom:.6rem}
+  /* The name wraps rather than being cut: "Factories & buyers" is two words
+     and a room nobody can read the name of is not a door. */
+  .frm b{display:block;font-weight:600;font-size:.9rem;line-height:1.25}
+  .frm span{display:block;font-size:.76rem;color:var(--muted);margin-top:.25rem}
 
   /* One member at the size of a person. It is the only thing on this page a
      stranger cannot have, which is what makes it worth showing large. */
@@ -218,7 +220,7 @@ function drawRooms() {
     const nm = T("waitroom." + r.key);
     a.innerHTML = '<i>' + first(nm) + '</i><b></b><span></span>';
     a.querySelector("b").textContent = nm;
-    a.querySelector("span").textContent = r.n ? String(r.n) : "";
+    a.querySelector("span").textContent = r.n ? T("front.inRoom", { n: r.n }) : "";
     box.append(a);
   }
 }

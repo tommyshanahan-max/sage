@@ -4364,6 +4364,9 @@ export const STRINGS = {
   "front.open":        ["Open to anyone", "所有人都能聊"],
   "front.openSub":     ["· you can write to these", "· 这些人你能直接联系"],
   "front.of":          ["{n} of {all}", "第 {n} 个，共 {all} 个"],
+  /* On the room card, under its name. "in" rather than "waiting" — nobody is
+     waiting at a door any more, they are standing in the room. */
+  "front.inRoom":      ["{n} in", "{n} 人在"],
   /* Said when nobody has come through the public door yet, which is true on
      the first day and stops being true quickly. Not "no results" — this is
      a board with nobody on one side of it, and saying so is better than an
