@@ -4371,6 +4371,7 @@ export const STRINGS = {
   "front.noneOpen":    ["Nobody yet. You would be the first.",
                         "还没有人，你会是第一个。"],
 
+  "join.signin":       ["Sign in", "登录"],
   "join.has":          ["Already have a password?", "已经有口令了？"],
 
   /* /agents — one page for one WeChat group of film agents. Its own keys
