@@ -3522,12 +3522,22 @@ function fitDeck() {
    * two lines of bio. Guessing that from here would be a number to keep in
    * step with the CSS for ever; the card already knows.
    *
-   * Falls back to the picture alone before the first card exists — fitDeck
-   * runs once in drawDeck before anything is appended, and again after. */
+   * WITH NO CARD TO MEASURE IT LEAVES THE HEIGHT ALONE. It used to guess —
+   * the picture's own 4:5 off the width — and that guess is the glitch
+   * somebody watched on a phone: the deck loads at the CSS height, the
+   * observer fires while the rows above are still arriving and writes the
+   * guess over it, fires again at a slightly different width and writes a
+   * different guess, and only then does a card arrive and get measured.
+   * Four heights, three of them wrong, all of them painted. Recorded on a
+   * 400x900 window with the API held for 700ms: 543 -> 451 -> 487 -> 554.
+   *
+   * The guess was never needed. .deck has a height in CSS whose whole job is
+   * to hold that space until there is something in it, and it is closer to
+   * the answer than the guess was. So: measure a card or change nothing. */
   const top = deck.lastElementChild;
   const shot = top && top.querySelector("img, .noshot");
   const panel = top && top.querySelector(".scrim");
-  if (!shot || !panel) { deck.style.height = Math.round(w * 1.25) + "px"; return; }
+  if (!shot || !panel) return;
   /* THE PICTURE TAKES WHAT IS LEFT, AND NEVER MORE THAN 4:5.
    *
    * The words are a panel under the photograph now, so the card is taller
