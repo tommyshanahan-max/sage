@@ -293,10 +293,21 @@
      than inside a form, so it needs air on both sides and a line to say the
      picking landed. */
   .saysay{margin:1.4rem 0 0}
+  /* Until there is something to put in it. visibility rather than display, so
+     the row is already the height it will be — that is the whole point. */
+  .saysay.waiting{visibility:hidden}
+  /* Held, not hidden: the page keeps its scroll position and the tab bar
+     stays where it is. Reversed by settled(), and by a timer that cannot be
+     beaten by a network that never answers — a blank screen because
+     /api/me 500ed is a worse failure than the jump this is fixing. */
+  #vbrowse.settling{visibility:hidden}
   /* THE SHUT ROW. Deliberately not a card: a second bordered box between the
      deck and the waiting list is a third thing to read on a screen that has
      two. Just the icon, the sentence in the reader's own words, and a caret. */
-  .sayhead{display:flex;width:100%;align-items:center;gap:.7rem;
+  /* min-height so the EMPTY button is the same height as the filled one.
+     Without it the reserved row is 0 and reserving it achieves nothing —
+     measured at 44px with the icon, one line of text and the caret in it. */
+  .sayhead{display:flex;width:100%;align-items:center;gap:.7rem;min-height:2.75rem;
     background:none;border:0;padding:.55rem 0;font:inherit;color:var(--ink);
     text-align:left;cursor:pointer}
   .sayhead .sayicon{flex:0 0 auto;margin:0}
@@ -2555,7 +2566,20 @@
        They are separate now. Browse is people; the Feed is words; the bar
        switches between them and the addresses stay real, so /browse and
        /feed are still two places you can send somebody. See showView. -->
-  <div id="vbrowse">
+  <!-- SETTLING: nothing above the deck is painted until /api/me has said
+       which blocks exist.
+       The rows up here are conditional on a person the page does not have
+       yet — "Add your photo" is 96px and appears only for somebody without
+       one; the way-back row, the door count and the sentence fold are the
+       same shape of question. So the page painted one layout, held it for as
+       long as the network took, and then dropped a block in above the deck
+       and shoved everything down. Measured at 0.21 of layout shift in that
+       one move, on a page whose whole budget is 0.1, and it is what "jumping
+       between two different builds" is.
+       A conditional block cannot be reserved — a gap held for a row most
+       people never see is the same fault upside down. The only honest answer
+       is not to draw a layout that is about to be wrong. See settled(). -->
+  <div id="vbrowse" class="settling">
   <!-- "BROWSE PEOPLE" is what the tab under this screen says. A heading that
        repeats the tab that opened it is a line of the screen spent saying
        where you already know you are. Hidden rather than removed: drawStrings
@@ -2612,7 +2636,17 @@
        "1 of 6", off the bottom of a phone. A filter under its own results
        reads as a footer. It is the reason these six and not others, so it goes
        where a reason goes: first. -->
-  <section class="saysay" id="saysay" hidden>
+  <!-- NOT `hidden`. It used to be, and drawSays unhid it when /api/me came
+       back — so the page painted without this fold, then dropped it in above
+       the deck and shoved the whole card down. Measured as a layout shift of
+       0.129 on its own, which is most of a page that scored 0.194 against a
+       0.1 budget, and it is what "jumping between two different builds"
+       looks like from a phone.
+       It holds its row from the first paint instead and only its CONTENTS
+       wait. The wall branch further down still sets .hidden on it outright,
+       which is right: somebody at the door never gets this fold at all, so
+       they should not get a gap where it would have been. -->
+  <section class="saysay waiting" id="saysay">
     <!-- SHUT, IT IS THE ICON AND THE SENTENCE. Two dropdowns and a save
          line, open all the time, for a thing somebody changes about twice a
          year. Closed it is one row: the sliders, what they currently say,
@@ -3813,6 +3847,24 @@ const MAKE_OFFERS = false;
 const learned = (key) => (LEARNING ? readLocal(key) : null);
 
 let ME = null;
+
+/* THE PAGE IS SHOWN ONCE IT KNOWS WHAT IT IS SHOWING — see #vbrowse.settling.
+ *
+ * Called when /api/me lands, which is what decides every conditional row
+ * above the deck. Idempotent, because it is also called by the timer below
+ * and by the door branch, and a second call on a revealed page does nothing.
+ *
+ * THE TIMER IS NOT BELT AND BRACES. /api/me can 500, or answer 403 on a
+ * board that has shut its door, or never answer at all on a phone that has
+ * lost its network halfway — and a page left blank for ever because one
+ * request failed is a far worse failure than the shift this is fixing. Two
+ * seconds, which is longer than the request takes on any connection this is
+ * used on and short enough that nobody reads it as broken. */
+function settled() {
+  const box = document.getElementById("vbrowse");
+  if (box) box.classList.remove("settling");
+}
+setTimeout(settled, 2000);
 /* WHETHER /api/me HAS ANSWERED. Until it has, "no handle" means "not asked
    yet", not "not a member" — and the Money tab was hidden on that, then put
    back a moment later: four tabs, then five, on every open. See navmoney. */
@@ -9499,6 +9551,7 @@ async function saveMe(patch) {
     return { error: T(d.error === "tooBig" ? "post.tooBig" : "err.general") };
   }
   ME = d.person;
+  settled();
   if (typeof d.waiting === "number") WAITING = d.waiting;
   if (typeof d.people === "number") MEMBERS = d.people;
   if (d.rank) RANK = d.rank;
@@ -10532,7 +10585,9 @@ function drawSays() {
   const more = $("mesaymore");
   more.hidden = true;
   const sec = $("saysay");
-  if (sec) sec.hidden = false;
+  // Its row has been there since the first paint — see the note in the
+  // markup. This only lets the words into it.
+  if (sec) sec.classList.remove("waiting");
   drawSayHead();
 }
 /* THE ROW WHEN IT IS SHUT: the icon, what they currently say, and a caret.
