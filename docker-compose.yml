@@ -1,7 +1,28 @@
 name: tomscoding
 
+# EVERY CONTAINER'S LOG, CAPPED — and this is here because the box filled up.
+#
+# 25 September: / hit 98%, 1.5G free, and `make up` could not build. The space
+# was 9.5G of container logs. Docker's json-file driver has NO limit by
+# default, so a container that restarts every few seconds writes for ever, and
+# two of them had been doing exactly that. The deploy did not fail loudly; it
+# sat there with no output for twenty minutes while somebody watched a blank
+# screen and wondered whether ssh had hung.
+#
+# Truncating the logs fixed that morning. This stops the next one. 30MB a
+# container, 19 containers, so the ceiling is about 600MB however badly
+# anything misbehaves.
+#
+# One anchor rather than nineteen copies: a cap somebody has to remember to
+# paste into each new service is a cap the twentieth service will not have.
+x-logs: &logs
+  driver: json-file
+  options: { max-size: "10m", max-file: "3" }
+
+
 services:
   workspace:
+    logging: *logs
     build:
       context: ./docker/workspace
     image: tomscoding-workspace:latest
@@ -48,6 +69,7 @@ services:
   # makes the second build instant, and it removes any ordering assumption
   # about which service tags the image first.
   workspace-2:
+    logging: *logs
     profiles: ["seat2"]
     build:
       context: ./docker/workspace
@@ -94,6 +116,7 @@ services:
   # Off unless COMPOSE_PROFILES includes "browser" — a browser is the heaviest
   # thing on this box and most days you will not want it running.
   browser:
+    logging: *logs
     profiles: ["browser"]
     image: lscr.io/linuxserver/firefox:latest
     container_name: tomscoding-browser
@@ -157,6 +180,7 @@ services:
   # here because this one publishes no port, has no inbound path and has a
   # fixed job; it is not somewhere to add things casually. See docs/security.md.
   autoheal:
+    logging: *logs
     profiles: ["browser"]
     # Pinned, not :latest. Everything else here can float; a container holding
     # the Docker socket should not change under you without your saying so.
@@ -186,6 +210,7 @@ services:
   # Off unless COMPOSE_PROFILES includes "agent", and useless without
   # ANTHROPIC_API_KEY — `make up` checks for it.
   agent:
+    logging: *logs
     profiles: ["agent"]
     build:
       context: ./agent
@@ -332,6 +357,7 @@ services:
   # with a chosen branch and records which commit that was. Nothing the partner
   # does can advance it, and nothing you do here reaches your workspace.
   partner:
+    logging: *logs
     profiles: ["partner"]
     build:
       context: ./agent
@@ -447,6 +473,7 @@ services:
   # Same shape as workspace-2 next to workspace, for the same reason: when a
   # second one is a copy rather than a fork, a fix to either is a fix to both.
   partner-2:
+    logging: *logs
     profiles: ["partner2"]
     build:
       context: ./agent
@@ -518,6 +545,7 @@ services:
   # only the mockups directory writable. Changes to the product are mocked up
   # here and shipped by the owner from his own seat.
   thefeed:
+    logging: *logs
     profiles: ["thefeed"]
     build:
       context: ./agent
@@ -593,6 +621,7 @@ services:
   # matter in an argument, and it has no reason to reach the board or the
   # workspace to do its job.
   cfm:
+    logging: *logs
     build:
       context: ./cfm
     image: tomscoding-cfm:latest
@@ -642,6 +671,7 @@ services:
     cpu_shares: ${TOMSCODING_CFM_CPU_SHARES:-128}
 
   caddy:
+    logging: *logs
     image: caddy:2-alpine
     container_name: tomscoding-caddy
     restart: unless-stopped
@@ -703,6 +733,15 @@ services:
       # and the DEALIO_HOSTS note in board/server.js.
       TOMSCODING_DEALIO_DOMAIN: ${TOMSCODING_DEALIO_DOMAIN:-dealio.localhost}
       TOMSCODING_DEALIO_WWW: ${TOMSCODING_DEALIO_WWW:-www.dealio.localhost}
+      # A PARTNER'S OWN NAME, served by this same board — see
+      # docker/sites/whitelabel.caddy and `make whitelabel`. Daniel in
+      # Luxembourg is the first: his hostname, his Stripe account through
+      # Connect, this code on this box.
+      #
+      # NOT TOMSCODING_PARTNER_DOMAIN, which is the partner SEAT above and a
+      # different product entirely. Two site blocks on one address is a
+      # startup failure that takes every site here down with it.
+      TOMSCODING_WHITELABEL_DOMAIN: ${TOMSCODING_WHITELABEL_DOMAIN:-whitelabel.localhost}
       TOMSCODING_BOARD_OLD_DOMAIN: ${TOMSCODING_BOARD_OLD_DOMAIN:-oldboard.localhost}
       TOMSCODING_BOARD_OLD_WWW: ${TOMSCODING_BOARD_OLD_WWW:-oldboardwww.localhost}
       TOMSCODING_BOARD_WWW: ${TOMSCODING_BOARD_WWW:-www.board.localhost}
@@ -782,6 +821,7 @@ services:
   # password, and just the two public paths under /a/ on the brand page, so a
   # page can report without the dashboard being on that origin at all.
   analytics:
+    logging: *logs
     profiles: ["analytics"]
     build:
       context: ./analytics
@@ -879,6 +919,7 @@ services:
   # hostname is a certificate, a moderation duty and a thing to defend.
   # ---------------------------------------------------------------------------
   board:
+    logging: *logs
     build:
       context: ./board
     image: tomscoding-board:latest
@@ -899,6 +940,39 @@ services:
       # A code drawn by us, pointing at our own checkout. No provider needed.
       # NEVER set on a box taking real money — see the note in server.js.
       BOARD_DEALIO_DEMO: ${TOMSCODING_DEALIO_DEMO:-}
+      # A PARTNER'S OWN NAME, AND THE FACE THIS SCREEN WEARS ON IT.
+      #
+      # Daniel is a broker in Luxembourg: his hostname, his colour, his name,
+      # this code, this container. Same switch as DEALIO_DOMAIN above — one
+      # more value of "which product did this reader ask for" — rather than a
+      # second board.
+      #
+      # THE DOMAIN IS NAMED TWICE ON PURPOSE. Caddy needs it to answer the
+      # name at all (TOMSCODING_WHITELABEL_DOMAIN in the caddy service);
+      # the board needs it to know which requests wear his face. Two
+      # containers, two environments, one value in .env feeding both.
+      #
+      # INK is his deep colour and is the whole skin: the top block and the
+      # one solid button. PAPER is optional and is the ground under it.
+      # Anything that is not a hex code is ignored and the board's own
+      # palette stands — see hexColour in server.js for why that check is not
+      # optional on a value that ends up inside a <style> block.
+      BOARD_WHITELABEL_DOMAIN: ${TOMSCODING_WHITELABEL_DOMAIN:-}
+      # OR A PATH ON A NAME WE ALREADY OWN — paydealio.com/europay. The
+      # cheap half, and the one to ship first: this name resolves and has a
+      # certificate already, so the screen exists the moment the box is up
+      # and can be put in a message. A hostname of his own needs a DNS
+      # record from him and is therefore always tomorrow.
+      #
+      # Both work and neither is required. Set one, the other, or both.
+      BOARD_WHITELABEL_PATH: ${TOMSCODING_WHITELABEL_PATH:-}
+      BOARD_WHITELABEL_NAME: ${TOMSCODING_WHITELABEL_NAME:-}
+      # "off" makes his hostname open on the money screen instead of
+      # the front page. Right the day a partner is live and his own
+      # site is what people arrive from.
+      BOARD_WHITELABEL_FRONT: ${TOMSCODING_WHITELABEL_FRONT:-}
+      BOARD_WHITELABEL_INK: ${TOMSCODING_WHITELABEL_INK:-}
+      BOARD_WHITELABEL_PAPER: ${TOMSCODING_WHITELABEL_PAPER:-}
       # Without this the admin routes refuse everything, which is the safe
       # failure: a board nobody can moderate is worse than one nobody can post
       # to.
@@ -935,6 +1009,7 @@ services:
       # and is only sent to somebody who has pressed Pay.
       BOARD_STRIPE_KEY: ${TOMSCODING_BOARD_STRIPE_KEY:-}
       BOARD_STRIPE_PK: ${TOMSCODING_BOARD_STRIPE_PK:-}
+      BOARD_AUD_PER_CNY: ${TOMSCODING_BOARD_AUD_PER_CNY:-}
       # WHICH API VERSION EVERY CALL ASKS FOR. Unset, Stripe serves whatever
       # the dashboard is set to, and that moves without a commit here — which
       # is how a working checkout call started being refused with nothing
@@ -947,6 +1022,30 @@ services:
       # Unset, /china/connect greys its first button and says so on the
       # screen; make pay-check prints it either way.
       BOARD_STRIPE_CLIENT_ID: ${TOMSCODING_BOARD_STRIPE_CLIENT_ID:-}
+      # WHOSE TURNOVER IS THEIRS AND NOT OURS. A comma-separated list of
+      # acct_ ids charged DIRECTLY instead of through a destination charge:
+      # the charge is raised on their account, their name is on the payer's
+      # statement, and a chargeback is theirs rather than this platform's.
+      # Our fee still comes off the top either way.
+      #
+      # Empty on every box today, which means every charge is a destination
+      # charge exactly as before. It is a list rather than a default because
+      # every id in it is a business we did not onboard and have not
+      # audited, and flipping the default would silently move who is liable
+      # for every member of this board. See the note over checkout() in
+      # board/lib/stripe.js, and DIRECT_ACCTS in server.js.
+      #
+      # Set it with: make whitelabel ACCT="acct_…"
+      BOARD_STRIPE_DIRECT: ${TOMSCODING_BOARD_STRIPE_DIRECT:-}
+      # AND WHAT WE TAKE OF IT. store.FEE_PCT is 2 and is right for a member
+      # being paid for a piece of work. A partner's business is volume and
+      # two per cent would not survive contact with it — his clients are
+      # funding accounts he then trades on. 0.5 unless this says otherwise:
+      # a tenth of the rate on ten times the money.
+      #
+      # Anything that is not a sensible percentage falls back rather than
+      # charging zero or everything. See DIRECT_PCT in server.js.
+      BOARD_STRIPE_DIRECT_PCT: ${TOMSCODING_BOARD_STRIPE_DIRECT_PCT:-}
       # Stripe's webhook signing secret. Without it the hook route refuses
       # everything, which is the safe failure: an unsigned route that writes
       # "this was paid" is a route anybody on the internet can write to.
@@ -1310,7 +1409,91 @@ services:
       driver: json-file
       options: { max-size: "10m", max-file: "3" }
 
+  # ---------------------------------------------------------------------------
+  # A PARTNER'S OWN BOARD, ON HIS OWN STRIPE KEY.
+  #
+  # WHY A SECOND CONTAINER AND NOT A SKIN. europay.paydealio.com was a skin on
+  # the shared board: his name, his colour, our Stripe. Our Stripe cannot do
+  # WeChat Pay — the capability reads Ineligible and no amount of connecting
+  # changes it, because a charge uses the payment methods of the account it is
+  # raised on. His Luxembourg account probably can.
+  #
+  # Connect would let us borrow his capabilities without his key, and Connect
+  # needs a live client id, which needs a platform profile, which Stripe
+  # reviews. Days, and an outcome nobody controls. THERE IS ONE KEY PER
+  # CONTAINER, so the way to use his account today is to give him a container.
+  #
+  # NO CONNECT AND NO NEW PAYMENT CODE. startCheckout raises a plain charge
+  # when there is no payee account to transfer to — the same path the shop
+  # uses, for the same reason: the money is the seller's from the start. On
+  # his box every payment is his from the start.
+  #
+  # WHAT THIS COSTS, PLAINLY: his secret key lives in .env on this box, and
+  # there is no application_fee_amount without Connect, so our 0.5% is
+  # invoiced rather than taken. Both are the price of not waiting for a
+  # review. Connect remains the path for partner number two.
+  #
+  # SHARES NOTHING WITH THE REAL BOARD — its own volume, its own salt, its own
+  # hostname and therefore its own cookies. The same guarantee board-demo
+  # makes below, for the same reason, and there is no configuration of this
+  # that can read board_data.
+  #
+  # Off unless asked for: add `board-wl` to COMPOSE_PROFILES in .env. Setting
+  # the hostname without the profile is a certificate with a 502 behind it,
+  # which `make check` refuses.
+  board-wl:
+    logging: *logs
+    build:
+      context: ./board
+    image: tomscoding-board:latest
+    container_name: tomscoding-board-wl
+    restart: unless-stopped
+    profiles: ["board-wl"]
+    user: "1000:1000"
+    environment:
+      BOARD_DIR: /data
+      BOARD_ADMIN_KEY: ${TOMSCODING_BOARD_KEY:-}
+      # ITS OWN SALT. Shared, the device hashes would match across two boards
+      # that are meant to know nothing about each other.
+      BOARD_SALT: ${TOMSCODING_WL_SALT:-}
+      BOARD_INVITE: ${TOMSCODING_WL_INVITE:-}
+      BOARD_CONTACT: ${TOMSCODING_BOARD_CONTACT:-}
+      # HIS KEY, AND THE WHOLE REASON THIS SERVICE EXISTS. Never ours: a
+      # partner's box charging on our account would put his clients' money in
+      # our balance and our name on their statements.
+      BOARD_STRIPE_KEY: ${TOMSCODING_WL_STRIPE_KEY:-}
+      BOARD_STRIPE_PK: ${TOMSCODING_WL_STRIPE_PK:-}
+      BOARD_STRIPE_VERSION: ${TOMSCODING_BOARD_STRIPE_VERSION:-}
+      BOARD_DEAL_FEE_SECRET: ${TOMSCODING_WL_DEAL_FEE_SECRET:-}
+      # The skin. Every request here is his, so the hostname matches by
+      # definition — it is passed so the same code paths run unchanged.
+      BOARD_WHITELABEL_DOMAIN: ${TOMSCODING_WHITELABEL_DOMAIN:-}
+      BOARD_WHITELABEL_NAME: ${TOMSCODING_WHITELABEL_NAME:-}
+      # "off" makes his hostname open on the money screen instead of
+      # the front page. Right the day a partner is live and his own
+      # site is what people arrive from.
+      BOARD_WHITELABEL_FRONT: ${TOMSCODING_WHITELABEL_FRONT:-}
+      BOARD_WHITELABEL_INK: ${TOMSCODING_WHITELABEL_INK:-}
+      BOARD_WHITELABEL_PAPER: ${TOMSCODING_WHITELABEL_PAPER:-}
+      BOARD_WALLET: ${TOMSCODING_WL_WALLET:-}
+      BOARD_WALLET_TEST_CONFIRM: ${TOMSCODING_WL_WALLET_TEST_CONFIRM:-}
+      BOARD_NOTES: "off"
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      TZ: ${TZ:-Asia/Shanghai}
+    volumes:
+      - board_wl_data:/data
+    expose:
+      - "8080"
+    networks:
+      - tomscoding
+    deploy:
+      resources:
+        limits:
+          memory: ${TOMSCODING_WL_MEMORY:-256m}
+    cpu_shares: ${TOMSCODING_WL_CPU_SHARES:-128}
+
   board-demo:
+    logging: *logs
     build:
       context: ./board
     image: tomscoding-board:latest
@@ -1378,6 +1561,7 @@ services:
   # rather than promised.
   # ---------------------------------------------------------------------------
   ferry:
+    logging: *logs
     profiles: ["ferry"]
     build:
       context: ./ferry
@@ -1427,12 +1611,33 @@ services:
   # cannot do, long before all six APIs have been approved.
   # ---------------------------------------------------------------------------
   post:
+    logging: *logs
     profiles: ["post"]
     build:
       context: ./post
     image: tomscoding-post:latest
     container_name: tomscoding-post
-    restart: unless-stopped
+    # NOT A SERVICE, AND restart: unless-stopped MADE IT LOOP FOR EVER.
+    #
+    # The image's own Dockerfile says it plainly — "No server. Nothing here
+    # listens: every entry point is `docker compose run` from the Makefile" —
+    # and its CMD prints help and exits 0. Declared with unless-stopped and
+    # started by `make up`, that is a container which prints help, exits,
+    # gets restarted, prints help, for ever. `docker ps` showed
+    # "Restarting (0) 3 seconds ago" and had done for days.
+    #
+    # THE COST WAS THE DISK. json-file logs had no cap, so a loop running
+    # every few seconds wrote 9.5G, / reached 98%, and `make up` could not
+    # build — silently, because ssh without -t buffers the output. That is an
+    # afternoon. The cap is now on every service above; this is the other
+    # half, and it is the half that stops the writing rather than bounding it.
+    #
+    # "no" rather than removing it from the file: every one of the ten
+    # Makefile targets that uses this reaches it with `--profile post run`,
+    # which needs the service to exist. It is created, it exits once, and it
+    # stays exited — which is what a command-line tool should look like in
+    # `docker ps -a`.
+    restart: "no"
     user: "1000:1000"
     environment:
       POST_DIR: /data
@@ -1486,13 +1691,34 @@ services:
   # tab that dies mid-upload — which looks like the platform refusing.
   # ---------------------------------------------------------------------------
   post-browser:
+    logging: *logs
     profiles: ["post"]
     build:
       context: ./post
       dockerfile: browser.Dockerfile
     image: tomscoding-post-browser:latest
     container_name: tomscoding-post-browser
-    restart: unless-stopped
+    # NOT A SERVICE, AND restart: unless-stopped MADE IT LOOP FOR EVER.
+    #
+    # The image's own Dockerfile says it plainly — "No server. Nothing here
+    # listens: every entry point is `docker compose run` from the Makefile" —
+    # and its CMD prints help and exits 0. Declared with unless-stopped and
+    # started by `make up`, that is a container which prints help, exits,
+    # gets restarted, prints help, for ever. `docker ps` showed
+    # "Restarting (0) 3 seconds ago" and had done for days.
+    #
+    # THE COST WAS THE DISK. json-file logs had no cap, so a loop running
+    # every few seconds wrote 9.5G, / reached 98%, and `make up` could not
+    # build — silently, because ssh without -t buffers the output. That is an
+    # afternoon. The cap is now on every service above; this is the other
+    # half, and it is the half that stops the writing rather than bounding it.
+    #
+    # "no" rather than removing it from the file: every one of the ten
+    # Makefile targets that uses this reaches it with `--profile post run`,
+    # which needs the service to exist. It is created, it exits once, and it
+    # stays exited — which is what a command-line tool should look like in
+    # `docker ps -a`.
+    restart: "no"
     user: "1000:1000"
     # Chromium's renderer wants more shared memory than Docker's 64MB default,
     # and starved it crashes the tab rather than saying so.
@@ -1568,6 +1794,7 @@ volumes:
   # The demo board's, and the whole point of it being a separate one. Nothing
   # in here is a real person, and nothing in board_data is reachable from the
   # container that mounts this.
+  board_wl_data:
   board_demo_data:
   # Who each product is shared with, and what has gone out. Shared between the
   # owner's seat and the partner seats rather than living in a project

@@ -1,0 +1,518 @@
+<title>Your Pyramid</title>
+<style>
+  :root{
+    --paper:#F4F5F7; --card:#FFFFFF; --ink:#10243F; --ink2:#3D4E68;
+    --mut:#6E7C93; --line:#D6DCE5;
+    --l0:#184f95; --l1:#256abf; --l2:#3987e5; --l3:#86b6ef;
+    --stage:#E8EBF0;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#0B1220; --card:#141D2E; --ink:#EDF1F8; --ink2:#BAC5D8;
+      --mut:#8794AB; --line:#27324A;
+      --l0:#b7d3f6; --l1:#86b6ef; --l2:#3987e5; --l3:#256abf;
+      --stage:#111A2B;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#0B1220; --card:#141D2E; --ink:#EDF1F8; --ink2:#BAC5D8;
+    --mut:#8794AB; --line:#27324A;
+    --l0:#b7d3f6; --l1:#86b6ef; --l2:#3987e5; --l3:#256abf;
+    --stage:#111A2B;
+  }
+
+  body{background:var(--paper);color:var(--ink);
+    font:400 17px/1.5 ui-sans-serif,-apple-system,"Segoe UI",Roboto,sans-serif;
+    padding:0 16px;-webkit-text-size-adjust:100%}
+  .wrap{max-width:1000px;margin:0 auto;padding-block:32px 56px}
+
+  h1{font-size:clamp(1.8rem,5vw,2.6rem);line-height:1.1;letter-spacing:-.02em;
+     margin:0 0 .3rem;text-wrap:balance}
+  .sub{color:var(--ink2);margin:0 0 1.3rem;font-size:1.05rem;max-width:46ch}
+
+  .who{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin:0 0 1rem}
+  .who em{font-style:normal;color:var(--mut);font-size:.9rem;
+    letter-spacing:.08em;text-transform:uppercase;font-weight:700}
+  /* WHERE YOU HAVE DRILLED TO, AND THE WAY BACK. It only ever reaches back to
+     the person you signed in as — you can walk down your own tree and no
+     further up than where you started. */
+  .trail{display:flex;flex-wrap:wrap;align-items:center;gap:.3rem;margin:.9rem 0 0;
+    font-size:.95rem}
+  .trail button{padding:.35rem .75rem;font-size:.9rem}
+  .trail span{color:var(--mut)}
+  button{font:inherit;font-size:.95rem;font-weight:600;padding:.5rem .95rem;
+    border-radius:999px;border:1px solid var(--line);background:var(--card);
+    color:var(--ink);cursor:pointer}
+  button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+  button[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+
+  .stage{position:relative;background:var(--stage);border:1px solid var(--line);
+    border-radius:1rem;overflow:hidden;touch-action:none;cursor:grab}
+  .stage.drag{cursor:grabbing}
+  .stage canvas{display:block;width:100%;height:auto}
+
+  /* The headline number lives INSIDE the stage, so the line into the apex
+     stays in one coordinate space instead of crossing from HTML into a
+     canvas and going wrong at every breakpoint. */
+  .head{position:absolute;left:1.1rem;top:1rem;pointer-events:none}
+  .head b{display:block;font-size:clamp(1.9rem,5.4vw,2.9rem);line-height:1;
+    letter-spacing:-.035em;font-variant-numeric:tabular-nums}
+  .head span{display:block;color:var(--mut);font-size:.9rem;margin-top:.2rem;max-width:20ch}
+
+  .hint{position:absolute;right:.95rem;bottom:.75rem;font-size:.85rem;
+    color:var(--mut);pointer-events:none}
+  #tip{position:absolute;pointer-events:none;background:var(--card);
+    border:1px solid var(--line);border-radius:.6rem;padding:.5rem .7rem;
+    font-size:.95rem;line-height:1.35;box-shadow:0 6px 20px rgba(0,0,0,.16);
+    transform:translate(-50%,-128%);white-space:nowrap}
+  #tip b{display:block;font-weight:700}
+  #tip i{font-style:normal;color:var(--mut);font-size:.86rem}
+
+  .row{display:flex;gap:.6rem;flex-wrap:wrap;margin:1.1rem 0 0}
+  /* The per-layer totals, under the picture rather than over it. Same
+     information, none of it competing with the shape. */
+  .legend{display:flex;flex-wrap:wrap;gap:.45rem;margin:1rem 0 0}
+  .legend span{display:inline-flex;align-items:center;gap:.5rem;font-size:.95rem;
+    color:var(--ink2);background:var(--card);border:1px solid var(--line);
+    border-radius:999px;padding:.38rem .85rem}
+  .legend b{color:var(--ink);font-variant-numeric:tabular-nums}
+  .sw{width:.8rem;height:.8rem;border-radius:.2rem;flex:none}
+  .note{margin:1.5rem 0 0;font-size:.95rem;color:var(--mut);max-width:62ch}
+  table{border-collapse:collapse;width:100%;margin:1.1rem 0 0;font-size:1rem}
+  caption{text-align:left;color:var(--mut);font-size:.9rem;padding:0 0 .5rem}
+  th,td{padding:.55rem .7rem;border-bottom:1px solid var(--line);text-align:left}
+  td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+  th{font-size:.82rem;letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
+  .pad{display:inline-block}
+  .scroll{overflow-x:auto}
+</style>
+
+<div class="wrap">
+
+  <h1>Your Pyramid</h1>
+  <p class="sub">Whoever opens it is the point at the top. You see everything beneath you, and nothing above.</p>
+
+  <div class="who"><em>Viewing as</em><span id="asbtns"></span></div>
+
+  <div class="trail" id="trail"></div>
+
+  <div class="stage" id="stage">
+    <div class="head"><b id="grand">—</b><span id="grandsub">your total, with everyone beneath you</span></div>
+    <div class="hint">Drag to rotate</div>
+  </div>
+
+  <div class="legend" id="legend"></div>
+
+  <div class="row">
+    <button id="spin" aria-pressed="true">Pause</button>
+    <button id="tbl" aria-pressed="false">Show the numbers</button>
+  </div>
+  <div id="tblwrap" class="scroll" hidden></div>
+
+  <p class="note">Tap anyone to stand where they stand. The way back only reaches as far as the person you signed in as &mdash; you can walk down your own tree and no further up than where you started.</p>
+
+</div>
+
+<script>
+const ROWS = [
+  { id:"us",  name:"You",             own:0 },
+  { id:"dan", name:"Algotech",        own:18400, parent:"us" },
+  { id:"mei", name:"Meili Store",     own:9100,  parent:"us" },
+  { id:"kwo", name:"Kwong Trading",   own:5600,  parent:"us" },
+  { id:"a1", name:"Lin · Shanghai",   own:6200, parent:"dan" },
+  { id:"a2", name:"Zhao · Shenzhen",  own:4900, parent:"dan" },
+  { id:"a3", name:"Wu · Chengdu",     own:3100, parent:"dan" },
+  { id:"a4", name:"Tan · Hangzhou",   own:2600, parent:"dan" },
+  { id:"b1", name:"Chen · Guangzhou", own:3800, parent:"mei" },
+  { id:"b2", name:"Xu · Xiamen",      own:2400, parent:"mei" },
+  { id:"c1", name:"Ho · Hong Kong",   own:3300, parent:"kwo" },
+  { id:"s1", name:"Feng",   own:1500, parent:"a1" },
+  { id:"s2", name:"Guo",    own:1200, parent:"a1" },
+  { id:"s3", name:"Han",    own:900,  parent:"a1" },
+  { id:"s4", name:"Jiang",  own:1100, parent:"a2" },
+  { id:"s5", name:"Kang",   own:800,  parent:"a2" },
+  { id:"s6", name:"Liang",  own:700,  parent:"a3" },
+  { id:"s7", name:"Mo",     own:600,  parent:"a3" },
+  { id:"s8", name:"Ni",     own:950,  parent:"b1" },
+  { id:"s9", name:"Ouyang", own:500,  parent:"b1" },
+  { id:"s10",name:"Peng",   own:1300, parent:"c1" },
+  { id:"s11",name:"Qin",    own:450,  parent:"c1" },
+  { id:"s12",name:"Ruan",   own:380,  parent:"a4" },
+  { id:"t1", name:"Shen",   own:260,  parent:"s1" },
+  { id:"t2", name:"Tang",   own:190,  parent:"s1" },
+  { id:"t3", name:"Wei",    own:220,  parent:"s4" },
+  { id:"t4", name:"Yao",    own:140,  parent:"s10" },
+];
+/* Three or four each, which is what a referral network actually looks like.
+   Deterministic so the picture is the same every time somebody opens it. */
+(function grow() {
+  const NAMES2 = ["Feng","Guo","Han","Jiang","Kang","Liang","Mo","Ni","Ouyang",
+    "Peng","Qin","Ruan","Shen","Tang","Wei","Yao","Zhu","Cao","Deng","Fu","Gao",
+    "Hou","Jin","Lu","Meng","Nie","Pan","Qiu","Ren","Song","Wan","Xue","Yan",
+    "Zeng","Bai","Cui","Du","Fan","Geng","Hu","Ji","Kong","Lei","Miao","Niu"];
+  let seq = 0, rnd = 7;
+  const next = () => (rnd = (rnd * 1103515245 + 12345) % 2147483648) / 2147483648;
+  const third = ROWS.filter((r) => r.parent && r.parent !== "us");
+  for (const parent of third) {
+    const n = 2 + Math.floor(next() * 3);
+    for (let k = 0; k < n; k++) {
+      ROWS.push({ id: "g" + (++seq), name: NAMES2[seq % NAMES2.length],
+        own: Math.round((250 + next() * 1400) / 10) * 10, parent: parent.id });
+    }
+  }
+})();
+
+const byId = new Map(ROWS.map((r) => [r.id, r]));
+const kids = (id) => ROWS.filter((r) => r.parent === id);
+
+function totalFor(id, seen) {
+  seen = seen || new Set();
+  if (seen.has(id)) return 0;
+  seen.add(id);
+  let sum = byId.get(id) ? byId.get(id).own : 0;
+  for (const k of kids(id)) sum += totalFor(k.id, seen);
+  return sum;
+}
+const money = (n) => "$" + n.toLocaleString("en-US");
+
+/* WHO IS LOOKING. Re-rooting is the whole idea: the same page, the same code,
+   the apex swapped. Depth is measured FROM the viewer, never from the real
+   top — an affiliate three levels down is tier 0 to themselves. Everything
+   above and beside them is simply not in the list, which is also how the
+   server has to answer it: scoped in the query, not hidden in the page. */
+let ROOT = "us";
+/* WHO YOU ARE, as distinct from what you are looking at. HOME is the person
+   signed in; TRAIL is how far down their own tree they have walked. The two
+   are separate because the way back must stop at HOME — a rep drilling into
+   their people must never be one click from standing above themselves. */
+let HOME = "us";
+let TRAIL = ["us"];
+const NAMES = ["You", "Your partners", "Their affiliates", "Their people"];
+
+function subtree(rootId) {
+  const out = [];
+  (function walk(id, depth) {
+    if (depth > 3) return;
+    out.push({ row: byId.get(id), depth });
+    for (const k of kids(id)) walk(k.id, depth + 1);
+  })(rootId, 0);
+  return out;
+}
+
+const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const tierColour = () => [css("--l0"), css("--l1"), css("--l2"), css("--l3")];
+
+/* ---- projection, same as the other one ---------------------------------- */
+const stage = document.getElementById("stage");
+const cv = document.createElement("canvas");
+stage.insertBefore(cv, stage.firstChild);
+const ctx = cv.getContext("2d");
+const tip = document.createElement("div");
+tip.id = "tip"; tip.hidden = true; stage.append(tip);
+
+/* A STRONGER TAPER THAN BEFORE. At 1.38 the layers widened but the outline
+   read as a ziggurat; the eye needs a good deal more spread per level before
+   it calls the thing a pyramid. Tile heights came down with it — a tall tower
+   on a narrow layer pokes through the silhouette and breaks it. */
+const CELL = 0.92, GAP = 0.11, LIFT = 1.05, CAMZ = 11, FOCAL = 8.4;
+let boxes = [], levels = [], W = 0, H = 0, DPR = 1, rotY = 0.62, rotX = 0.34;
+let SPAN = 7.6;
+
+function project(p) {
+  const cy = Math.cos(rotY), sy = Math.sin(rotY);
+  let x = p[0] * cy - p[2] * sy;
+  let z = p[0] * sy + p[2] * cy;
+  const cx = Math.cos(rotX), sx = Math.sin(rotX);
+  let y = p[1] * cx - z * sx;
+  z = p[1] * sx + z * cx;
+  const k = FOCAL / (CAMZ - z);
+  /* Scaled to whatever the widest plane turned out to be, since that is now
+     a property of the data rather than a constant. A network twice this size
+     drew straight off the edge of the stage before. */
+  return { x: W / 2 + x * k * (W / SPAN), y: H * 0.42 - y * k * (H / (SPAN * 0.71)), z };
+}
+const FACES = [
+  { i:[4,5,6,7], n:[0,0,1] },  { i:[1,0,3,2], n:[0,0,-1] },
+  { i:[5,1,2,6], n:[1,0,0] },  { i:[0,4,7,3], n:[-1,0,0] },
+  { i:[7,6,2,3], n:[0,1,0] },  { i:[0,1,5,4], n:[0,-1,0] },
+];
+const LIGHT = (() => { const v=[0.38,0.86,0.34], m=Math.hypot(v[0],v[1],v[2]);
+  return v.map((n)=>n/m); })();
+function corners(b) {
+  const x0=b.x-b.sx/2, x1=b.x+b.sx/2, z0=b.z-b.sz/2, z1=b.z+b.sz/2,
+        y0=b.y-b.sy, y1=b.y;
+  return [[x0,y0,z0],[x1,y0,z0],[x1,y1,z0],[x0,y1,z0],
+          [x0,y0,z1],[x1,y0,z1],[x1,y1,z1],[x0,y1,z1]];
+}
+function rotNormal(n) {
+  const cy=Math.cos(rotY), sy=Math.sin(rotY);
+  let x=n[0]*cy-n[2]*sy, z=n[0]*sy+n[2]*cy;
+  const cx=Math.cos(rotX), sx=Math.sin(rotX);
+  return [x, n[1]*cx-z*sx, n[1]*sx+z*cx];
+}
+function hex(c){const h=c.replace("#","");
+  const v=h.length===3?h.split("").map(x=>x+x).join(""):h;
+  return [parseInt(v.slice(0,2),16),parseInt(v.slice(2,4),16),parseInt(v.slice(4,6),16)];}
+function shade(c,k){const [r,g,b]=hex(c);
+  const f=(n)=>Math.max(0,Math.min(255,Math.round(n*k)));
+  return "rgb("+f(r)+","+f(g)+","+f(b)+")";}
+
+function build() {
+  boxes = []; levels = [];
+  const cols = tierColour();
+  const nodes = subtree(ROOT);
+  const maxOwn = Math.max.apply(null, nodes.map((n) => n.row.own).concat([1]));
+  for (let d = 0; d <= 3; d++) {
+    const at = nodes.filter((n) => n.depth === d);
+    if (!at.length) continue;
+    /* ONE CELL SIZE FOR THE WHOLE PYRAMID, NOT ONE PER PLANE.
+     *
+     * The plane used to be a fixed width that its cells divided up, so a
+     * child square was 1.12 across on one level and 0.76 on another — which
+     * meant two of them at the SAME height, meaning the same money, had
+     * different volumes. In three dimensions the eye reads volume, so the
+     * picture was quietly wrong about the one thing it is for.
+     *
+     * Now the cell is a constant and the PLANE is whatever size its people
+     * need. Volume becomes an honest read: same height, same box, same
+     * revenue, wherever it sits. It still widens going down — because there
+     * are more of them down there, which is the real reason rather than a
+     * chosen one. */
+    const perRow = Math.ceil(Math.sqrt(at.length));
+    const nRows = Math.ceil(at.length / perRow);
+    const cell = CELL;
+    let sum = 0;
+    at.forEach((o, i) => {
+      const roll = totalFor(o.row.id);
+      const value = d === 0 ? roll : o.row.own;
+      sum += d === 0 ? roll : o.row.own;
+      const h = d === 0 ? 0.30 : 0.14 + 0.95 * (o.row.own / maxOwn);
+      const rowI = Math.floor(i / perRow);
+      const inRow = Math.min(perRow, at.length - rowI * perRow);
+      const side = Math.max(cell - GAP, 0.03);
+      boxes.push({
+        x: ((i - rowI * perRow) - (inRow - 1) / 2) * cell,
+        z: (rowI - (nRows - 1) / 2) * cell,
+        y: 1.45 - d * LIFT,
+        sx: side, sz: side, sy: h,
+        col: cols[d], depth: d,
+        name: o.row.name, own: o.row.own, roll, value,
+      });
+    });
+    levels.push({ d, sum, n: at.length });
+  }
+  const widest = Math.max.apply(null, boxes.map((b) => Math.abs(b.x) + b.sx).concat([2]));
+  SPAN = Math.max(6.4, widest * 1.7);
+  document.getElementById("grand").textContent = money(totalFor(ROOT));
+  document.getElementById("grandsub").textContent =
+    ROOT === "us" ? "your total, with everyone beneath you"
+                  : byId.get(ROOT).name + " — total with everyone beneath";
+}
+
+function draw() {
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+
+  const quads = [];
+  for (const b of boxes) {
+    const c = corners(b).map(project);
+    for (const f of FACES) {
+      const p = f.i.map((k) => c[k]);
+      const rn = rotNormal(f.n);
+      const lit = 0.58 + 0.42 * Math.max(0, rn[0]*LIGHT[0]+rn[1]*LIGHT[1]+rn[2]*LIGHT[2]);
+      quads.push({ p, zz: (p[0].z+p[1].z+p[2].z+p[3].z)/4, fill: shade(b.col, lit) });
+    }
+  }
+  quads.sort((a, b) => a.zz - b.zz);
+  for (const q of quads) {
+    ctx.beginPath();
+    ctx.moveTo(q.p[0].x, q.p[0].y);
+    for (let i = 1; i < q.p.length; i++) ctx.lineTo(q.p[i].x, q.p[i].y);
+    ctx.closePath();
+    ctx.fillStyle = q.fill; ctx.fill();
+  }
+  /* NO LINE FROM THE FIGURE TO THE APEX, AND NO NUMBERS ALONGSIDE THE
+     LAYERS. Both were drawn, looked at, and cut: the line is an explanation
+     of a thing the reader already understands — the big number is obviously
+     the whole shape — and it cost a dashed rule straight across the picture.
+     The per-layer totals were four more things to read inside a frame whose
+     job is to be read in one glance. They live in the row under the stage
+     now, which is a tap away and out of the way. */
+
+}
+
+function drawLegend() {
+  const el = document.getElementById("legend");
+  const cols = tierColour();
+  el.innerHTML = "";
+  for (const lv of levels) {
+    if (lv.d === 0) continue;          // the apex is the headline figure
+    const sp = document.createElement("span");
+    const sw = document.createElement("i");
+    sw.className = "sw"; sw.style.background = cols[lv.d];
+    sp.append(sw, document.createTextNode(NAMES[lv.d] + " · " + lv.n + " · "));
+    const b = document.createElement("b");
+    b.textContent = money(lv.sum);
+    sp.append(b);
+    el.append(sp);
+  }
+}
+
+function size() {
+  const w = stage.clientWidth;
+  const h = Math.max(360, Math.round(w * 0.66));
+  DPR = Math.min(devicePixelRatio || 1, 2);
+  W = w; H = h;
+  cv.width = Math.round(w*DPR); cv.height = Math.round(h*DPR);
+  cv.style.width = w+"px"; cv.style.height = h+"px";
+}
+
+/* ---- who is looking ------------------------------------------------------ */
+const asbtns = document.getElementById("asbtns");
+[["us","You"],["dan","Algotech"],["a1","Lin · Shanghai"],["s1","Feng"]]
+  .forEach(([id, label]) => {
+    const b = document.createElement("button");
+    b.textContent = label; b.style.marginRight = ".4rem";
+    b.setAttribute("aria-pressed", String(id === ROOT));
+    b.addEventListener("click", () => {
+      HOME = ROOT = id; TRAIL = [id];
+      [...asbtns.querySelectorAll("button")].forEach((x) =>
+        x.setAttribute("aria-pressed", String(x === b)));
+      build(); drawLegend(); drawTrail(); draw();
+      if (!tblwrap.hidden) drawTable();
+    });
+    asbtns.append(b);
+  });
+
+size(); build(); drawLegend(); drawTrail(); draw();
+addEventListener("resize", () => { size(); draw(); });
+
+let spin = true, down = false, lx = 0, ly = 0;
+stage.addEventListener("pointerdown", (e) => {
+  down = true; spin = false; sync(); stage.classList.add("drag");
+  lx = e.clientX; ly = e.clientY;
+  if (stage.setPointerCapture) stage.setPointerCapture(e.pointerId);
+});
+stage.addEventListener("pointermove", (e) => {
+  if (!down) return hover(e);
+  rotY += (e.clientX - lx) * 0.009;
+  rotX = Math.max(-0.12, Math.min(1.05, rotX + (e.clientY - ly) * 0.006));
+  lx = e.clientX; ly = e.clientY; draw();
+});
+/* A TILE IS A DOOR. Picking somebody and seeing their whole pyramid from
+   where they stand is the same view rooted one level down, so it is the view
+   it already draws — nothing new, just a new root. Guarded on drag distance,
+   because a rotate that ends over a tile is not a click on it. */
+let downAt = null;
+stage.addEventListener("pointerdown", (e) => { downAt = [e.clientX, e.clientY]; });
+stage.addEventListener("pointerup", (e) => {
+  if (!downAt) return;
+  const moved = Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]);
+  downAt = null;
+  if (moved > 6) return;
+  const hit = pick(e);
+  if (!hit || hit.name === byId.get(ROOT).name) return;
+  const row = ROWS.find((r) => r.name === hit.name);
+  if (!row || row.id === ROOT) return;
+  TRAIL.push(row.id);
+  ROOT = row.id;
+  build(); drawLegend(); drawTrail(); draw();
+  if (!tblwrap.hidden) drawTable();
+});
+
+function drawTrail() {
+  const el = document.getElementById("trail");
+  el.innerHTML = "";
+  TRAIL.forEach((id, i) => {
+    if (i) { const sep = document.createElement("span"); sep.textContent = "›"; el.append(sep); }
+    const b = document.createElement("button");
+    b.textContent = byId.get(id).name;
+    b.setAttribute("aria-pressed", String(i === TRAIL.length - 1));
+    b.addEventListener("click", () => {
+      TRAIL = TRAIL.slice(0, i + 1);
+      ROOT = id; build(); drawLegend(); drawTrail(); draw();
+      if (!tblwrap.hidden) drawTable();
+    });
+    el.append(b);
+  });
+  const tip2 = document.createElement("span");
+  tip2.textContent = TRAIL.length > 1 ? "" : "— tap anyone to stand where they stand";
+  el.append(tip2);
+}
+
+const lift = () => { down = false; stage.classList.remove("drag"); };
+stage.addEventListener("pointerup", lift);
+stage.addEventListener("pointercancel", lift);
+stage.addEventListener("pointerleave", () => { lift(); tip.hidden = true; });
+
+function inPoly(px, py, p) {
+  let hit = false;
+  for (let i = 0, j = 3; i < 4; j = i++) {
+    if ((p[i].y > py) !== (p[j].y > py)
+      && px < (p[j].x-p[i].x)*(py-p[i].y)/(p[j].y-p[i].y)+p[i].x) hit = !hit;
+  }
+  return hit;
+}
+function pick(e) {
+  const r = cv.getBoundingClientRect();
+  const px = e.clientX - r.left, py = e.clientY - r.top;
+  const hits = boxes.map((b) => {
+    const c = corners(b).map(project);
+    const top = [7,6,2,3].map((k) => c[k]);
+    return { b, top, zz: (top[0].z+top[1].z+top[2].z+top[3].z)/4 };
+  }).filter((o) => inPoly(px, py, o.top)).sort((a, b) => b.zz - a.zz);
+  return hits.length ? hits[0].b : null;
+}
+function hover(e) {
+  const d = pick(e);
+  if (!d) { tip.hidden = true; return; }
+  const r = cv.getBoundingClientRect();
+  tip.innerHTML = "<b>" + d.name + "</b>" + money(d.value)
+    + (d.depth > 0 && d.roll !== d.own ? "<i> · " + money(d.roll) + " with downline</i>" : "")
+    + (d.depth > 0 ? "<i> · tap to stand here</i>" : "");
+  tip.style.left = (e.clientX - r.left) + "px";
+  tip.style.top = (e.clientY - r.top) + "px";
+  tip.hidden = false;
+}
+
+const spinBtn = document.getElementById("spin");
+function sync() {
+  spinBtn.setAttribute("aria-pressed", String(spin));
+  spinBtn.textContent = spin ? "Pause" : "Spin";
+}
+spinBtn.addEventListener("click", () => { spin = !spin; sync(); });
+sync();
+
+const tblwrap = document.getElementById("tblwrap");
+function drawTable() {
+  const nodes = subtree(ROOT).filter((n) => n.depth > 0)
+    .sort((a, b) => a.depth - b.depth || totalFor(b.row.id) - totalFor(a.row.id));
+  let h = '<table><caption>The same numbers, from where you are standing.</caption>'
+        + '<thead><tr><th>Who</th><th>Level</th><th class="n">Own</th>'
+        + '<th class="n">With downline</th></tr></thead><tbody>';
+  for (const o of nodes) {
+    h += '<tr><td><span class="pad" style="width:' + (o.depth-1)*18 + 'px"></span>'
+       + o.row.name + '</td><td>' + NAMES[o.depth] + '</td><td class="n">'
+       + money(o.row.own) + '</td><td class="n">' + money(totalFor(o.row.id))
+       + '</td></tr>';
+  }
+  tblwrap.innerHTML = h + '</tbody></table>';
+}
+const tblBtn = document.getElementById("tbl");
+tblBtn.addEventListener("click", () => {
+  const on = tblwrap.hidden;
+  if (on) drawTable();
+  tblwrap.hidden = !on;
+  tblBtn.setAttribute("aria-pressed", String(on));
+  tblBtn.textContent = on ? "Hide the numbers" : "Show the numbers";
+});
+
+if (matchMedia("(prefers-reduced-motion: reduce)").matches) { spin = false; sync(); }
+
+(function loop(){ requestAnimationFrame(loop);
+  if (spin && !down) { rotY += 0.0026; draw(); } })();
+
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+  build(); drawLegend(); draw();
+});
+</script>

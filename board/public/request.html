@@ -238,6 +238,37 @@
     border-radius:.7rem;background:#fff;padding:.5rem}
   .qrbox b{display:block;margin:.7rem 0 .2rem;font-size:1rem}
   .qrbox span{display:block;font-size:.85rem;color:var(--t3,#6E7789)}
+  /* 开票信息 — ONE ROW, AND IT OPENS. The payer's tax details are the
+     deepest thing on this page and the least urgent: somebody who came here
+     to pay ¥2,000 is not reading about invoices first. So it is one quiet
+     line under the amount and everything else is a tap away. */
+  .invrow{display:flex;align-items:center;gap:.5rem;width:100%;margin:1rem 0 0;
+    border:1px solid var(--line);background:transparent;color:var(--ink-2);
+    font:inherit;font-size:.9rem;text-align:left;padding:.7rem .9rem;
+    border-radius:.8rem}
+  .invrow b{font-weight:650;color:var(--ink)}
+  .invrow .tick{margin-left:auto;color:var(--t3,#6E7789);font-size:.85rem}
+  .invrow.on{border-style:solid;border-color:var(--accent)}
+  /* THE BOX IS THE SCREEN. Not a field among fields — a paste target, sized
+     so the block they paste fits without scrolling, because a clerk checking
+     their own details against a three-line window will not check them. */
+  .invbox{width:100%;min-height:8.5rem;border:1px solid var(--line);
+    border-radius:.8rem;background:var(--paper);color:var(--ink);font:inherit;
+    font-size:.95rem;line-height:1.65;padding:.8rem .9rem;resize:vertical}
+  .invbox::placeholder{color:var(--t5,#98A0B0)}
+  .invsub{margin:.5rem 0 .9rem;font-size:.82rem;line-height:1.55;color:var(--t3,#6E7789)}
+  .invopt{display:flex;align-items:flex-start;gap:.55rem;margin:.9rem 0 0;
+    font-size:.88rem;line-height:1.5;color:var(--ink-2)}
+  .invopt input{margin:.25rem 0 0;flex:0 0 auto}
+  .invbad{margin:.7rem 0 0;font-size:.9rem;font-weight:650;color:var(--t5)}
+  /* WHAT WE READ, READ BACK. The whole trust of a paste box is that it shows
+     its work — a clerk pastes, sees their own company name and their own tax
+     number, and stops worrying. */
+  .invgot{margin:.9rem 0 0;padding:.8rem .9rem;border-radius:.8rem;
+    background:var(--paper);border:1px solid var(--line)}
+  .invgot b{display:block;font-size:1rem;margin:0 0 .15rem}
+  .invgot span{display:block;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:.86rem;letter-spacing:.02em;color:var(--ink-2)}
   .racts{display:grid;gap:.5rem;margin:.9rem 0 0}
   .racts button{border:1px solid var(--line);background:var(--paper);
     color:var(--ink-2);font:inherit;padding:.75rem 1rem;border-radius:99px}
@@ -264,7 +295,7 @@
  * this page and swaps the URLs.
  */
 import { T, when, setLang, pickLang, langButton } from "/i18n.js";
-import { mountCheckout } from "/pay.js";
+import { mountCheckout, sayWhy } from "/pay.js";
 
 /* THE SIGN, PUT BACK ON. The amount field takes bare digits since the
    currency picker landed — nobody hunts for ¥ on a phone keyboard — so the
@@ -521,6 +552,12 @@ function draw() {
     sheet.append(dl);
   }
 
+  /* 开票信息 — ONLY WHERE AN INVOICE IS A THING THAT HAPPENS.
+     Money coming in, from a company that will want one. On a row going out
+     the reader is the one being paid and does their own invoicing; on a
+     withdrawn row there is nothing to invoice. */
+  if (q.way !== "out" && !q.off) sheet.append(invRow(q));
+
   const foot = el("div", "sfoot");
   /* WHO THE MONEY GOES TO DEPENDS WHICH WAY IT IS GOING, and this said "the
      money goes straight to Claire" on a page telling somebody Claire wants
@@ -548,6 +585,136 @@ function draw() {
 
   root.append(sheet);
   slot.replaceWith(langButton(() => repaint()));
+}
+
+/* ===========================================================================
+ * 开票信息 — THE PAYER'S OWN TAX DETAILS, FOR THE INVOICE THEY ARE OWED
+ * ===========================================================================
+ *
+ * THIS IS A PASTE BOX AND NOT A FORM, AND THAT IS THE WHOLE DESIGN.
+ *
+ * Every Chinese company keeps its 开票信息 as a block of text — in a WeChat
+ * 收藏, in the finance group's pinned message, in a note on somebody's phone.
+ * Handing it over happens several times a week and the gesture is always the
+ * same: long-press, copy, paste. Six labelled fields asks a finance clerk to
+ * retype, on a phone, something already on their clipboard — including an
+ * eighteen character tax number, which is how a wrong one gets onto an
+ * invoice that then has to be voided and reissued weeks later.
+ *
+ * So: one box, they paste, and lib/fapiao.js reads it. What it read comes
+ * straight back on the same screen, because the entire trust of a paste box
+ * is that it shows its work.
+ *
+ * AND IT IS ONE QUIET ROW UNTIL TAPPED. Somebody who opened this page to pay
+ * ¥2,000 is not reading about invoices first, and most payers — anybody
+ * paying as a person rather than a company — never need one at all.
+ */
+function invRow(q) {
+  const inv = q.inv;
+  const b = el("button", "invrow" + (inv ? " on" : ""));
+  b.type = "button";
+  if (inv?.done) {
+    b.append(el("b", null, T("rq.invDone")), el("span", "tick", inv.title));
+    b.disabled = true;
+    return b;
+  }
+  if (inv) b.append(el("b", null, inv.title), el("span", "tick", T("rq.invChange")));
+  else b.append(el("b", null, T("rq.invAsk")), el("span", "tick", "›"));
+  b.addEventListener("click", () => invSheet(q));
+  return b;
+}
+
+function invSheet(q) {
+  const back = el("div", "rsheet");
+  const card = el("div", "rcard");
+  card.append(el("p", "lab", T("rq.invPaste")));
+
+  const box = el("textarea", "invbox");
+  box.id = "invbox";
+  /* THE PLACEHOLDER IS AN EXAMPLE, NOT AN INSTRUCTION. A clerk recognises
+     the shape of their own 开票信息 in one glance and knows exactly what to
+     do; a sentence telling them to paste it would be explaining their own
+     job back to them. */
+  box.placeholder = T("rq.invEg");
+  box.setAttribute("autocapitalize", "off");
+  box.setAttribute("spellcheck", "false");
+  card.append(box);
+  card.append(el("p", "invsub", T("rq.invHint")));
+
+  /* 专用发票 IS A CHECKBOX AND NOT A SCREEN. Most companies want a 普通发票
+     and it needs two fields; a 专用发票 needs six, and the four extra ones
+     are already in the block they pasted. So it changes what we require of
+     the paste, not what we ask them to do. */
+  const opt = el("label", "invopt");
+  const cb = el("input");
+  cb.type = "checkbox";
+  cb.id = "invspecial";
+  opt.append(cb, el("span", null, T("rq.invSpecial")));
+  card.append(opt);
+
+  const bad = el("p", "invbad");
+  bad.hidden = true;
+  card.append(bad);
+
+  const go = el("button", "go", T("rq.invSave"));
+  go.type = "button";
+  go.addEventListener("click", async () => {
+    const text = box.value.trim();
+    if (!text) { box.focus(); return; }
+    go.disabled = true;
+    go.textContent = T("rq.invSaving");
+    bad.hidden = true;
+    try {
+      const r = await fetch("/api/request/" + ID + "/invoice", {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ text, kind: cb.checked ? "special" : "plain" }),
+      });
+      const j = await r.json().catch(() => null);
+      if (r.ok && j?.ok) {
+        /* SHOW IT BACK, ON THIS SCREEN, BEFORE THE SHEET CLOSES. The one
+           thing a paste box owes the person using it. */
+        card.textContent = "";
+        card.append(el("p", "lab", T("rq.invGot")));
+        const got = el("div", "invgot");
+        got.append(el("b", null, j.inv.title), el("span", null, j.inv.taxId));
+        card.append(got);
+        /* A 专用发票 with pieces missing is one the bureau will not let us
+           issue, and finding that out after the money has settled means
+           chasing somebody who has already been paid. Said now, named. */
+        if ((j.missing || []).length) {
+          card.append(el("p", "invsub", T("rq.invStill", {
+            what: j.missing.map((k) => T("rq.invF." + k)).join("、"),
+          })));
+        }
+        const done = el("button", "go", T("rq.invClose"));
+        done.type = "button";
+        done.addEventListener("click", () => { back.remove(); load(); });
+        card.append(done);
+        return;
+      }
+      /* WHICH OF THE TWO IS WRONG. "That did not work" on a paste box is a
+         dead end, and a tax number that fails its own checksum is a typo
+         while a missing one is a different block entirely. */
+      bad.textContent = T(j?.error === "issued" ? "rq.invShut"
+        : j?.why === "bad" ? "rq.invBadTax"
+        : j?.why === "title" ? "rq.invNoName" : "rq.invNoRead");
+      bad.hidden = false;
+    } catch { bad.textContent = T("ask.failed"); bad.hidden = false; }
+    go.disabled = false;
+    go.textContent = T("rq.invSave");
+  });
+  card.append(go);
+
+  const shut = el("button", "hlink", T("rq.invLater"));
+  shut.type = "button";
+  shut.style.cssText = "display:block;margin:.8rem auto 0;border:0;background:none;color:var(--ink-2);font:inherit;font-size:.9rem";
+  shut.addEventListener("click", () => back.remove());
+  card.append(shut);
+
+  back.append(card);
+  back.addEventListener("click", (e) => { if (e.target === back) back.remove(); });
+  document.body.append(back);
+  box.focus();
 }
 
 function payHow(q) {
@@ -768,11 +935,22 @@ async function payFrame({ secret, pk, q, how, demo, qr, amount, orig }) {
   try {
     mounted = await mountCheckout(slot, { secret, pk });
     wait.remove();
-  } catch {
+  } catch (err) {
+    /* THE WORDS, INTO THE BOX'S LOG — see /api/pay/why. Nobody can open a
+       console on a payer's phone, and this sentence has covered three
+       unrelated faults in one evening. */
+    sayWhy({ how, at: err?.at, err });
     slot.textContent = "";
     const box = el("div", "pwait");
     box.append(el("b", null, T("pay.frameBlocked")));
-    box.append(el("span", null, T("memo.blockedWhy", { who: q.from })));
+    /* TWO FAULTS, TWO SENTENCES. Failing to fetch Stripe.js is the payer's
+       network and worth telling them about. Stripe refusing the session is
+       not: they were told to blame their own connection and go and ask the
+       seller, for something only the seller can fix, on a connection that
+       was working perfectly. */
+    box.append(el("span", null, err?.at === "mount"
+      ? T("pay.frameRefused", { who: q.from })
+      : T("memo.blockedWhy", { who: q.from })));
     slot.append(box);
   }
 }

@@ -202,7 +202,20 @@ test("the rules that say no", async () => {
     await w.ready(newbie, "HK");
     await assert.rejects(w.svc.quote(aus, { toMemberId: aus.id, amount: "10" }), (e) => e.code === "self");
     await assert.rejects(w.svc.quote(aus, { toMemberId: newbie.id, amount: "10", sourceId: "wallet" }).then((q) => w.svc.send(aus, { quoteId: q.quoteId })), (e) => e.code === "balance");
-    await assert.rejects(w.svc.setPayout(aus, { mode: "bank", details: { accountName: "Mia", bsb: "12", accountNumber: "123" } }), (e) => e.code === "bank_bsb");
+    /* A FULL AUSTRALIAN WIRE WITH ONE BAD FIELD. It used to send a name, a
+       BSB and an account number, which was the whole Australian form back
+       when a payout to Australia was treated as a domestic payment. It is a
+       wire out of China now, so the bank and the SWIFT are needed too — and
+       without them this failed on the missing bank name and never reached
+       the assertion it was written for. */
+    const auWire = { accountName: "Mia", bankName: "CBA", swift: "CTBAAU2S", bsb: "063000", accountNumber: "12345678", address: "12 Smith St, Melbourne" };
+    await assert.rejects(w.svc.setPayout(aus, { mode: "bank", details: { ...auWire, bsb: "12" } }), (e) => e.code === "bank_bsb");
+    /* THE SWIFT IS THE ONE THIS WHOLE BRANCH EXISTS FOR. An Australian
+       account was once offered no SWIFT field at all, on a payment that
+       cannot be sent without one. A test so it cannot quietly come back. */
+    await assert.rejects(w.svc.setPayout(aus, { mode: "bank", details: { ...auWire, swift: "" } }), (e) => e.code === "bank_swift");
+    /* And the address, which is what a correspondent bank screens on. */
+    await assert.rejects(w.svc.setPayout(aus, { mode: "bank", details: { ...auWire, address: "" } }), (e) => e.code === "bank_address");
     await assert.rejects(w.svc.setPayout(cn, { mode: "wallet" }), (e) => e.code === "no_wallet");
     await w.ready(cn, "CN");
     await assert.rejects(w.svc.setPayout(cn, { mode: "wallet" }), (e) => e.code === "no_balance_here");
@@ -222,5 +235,64 @@ test("a quote cannot be used twice or after it expires", async () => {
     const q2 = await w.svc.quote(aus, { toMemberId: newbie.id, amount: "10", sourceId: card.id });
     w.tick(11 * 60 * 1000);
     await assert.rejects(w.svc.send(aus, { quoteId: q2.quoteId }), (e) => e.code === "quote_expired");
+  } finally { await w.done(); }
+});
+
+/* A CONNECTED STRIPE ACCOUNT IS THE THIRD ANSWER TO "WHERE DOES IT GO".
+ *
+ * It was the third answer with nowhere to go: the OAuth handshake finished,
+ * we learned the acct_, and it went into a cookie. Somebody could authorise
+ * us on Stripe's own page and come back to a screen that still said nothing
+ * was chosen. These are the rules that make the answer stick.
+ *
+ * None of this touches the provider. That is the point of it — a connected
+ * account needs no beneficiary and no wire, because the charge is raised on
+ * the account and the money is already there.
+ */
+test("a connected Stripe account is remembered, and labelled by its tail", async () => {
+  const w = await world();
+  try {
+    await w.ready(aus, "AU");
+    const out = await w.svc.setPayout(aus, { mode: "stripe", details: { account: "acct_1PartnerXYZ" } });
+    assert.equal(out.label, "Stripe ···· rXYZ");
+    const st = await w.svc.state(aus);
+    assert.equal(st.wallet.payout, "stripe");
+    assert.equal(st.wallet.payoutLabel, "Stripe ···· rXYZ");
+  } finally { await w.done(); }
+});
+
+test("anything that is not an account id is refused before it is written", async () => {
+  const w = await world();
+  try {
+    await w.ready(aus, "AU");
+    for (const bad of ["", "acct_", "sk_live_nope", "acct_1;DROP", "1PartnerXYZ"]) {
+      await assert.rejects(
+        () => w.svc.setPayout(aus, { mode: "stripe", details: { account: bad } }),
+        (e) => e instanceof WalletError && e.code === "bad_account",
+        `should have refused ${JSON.stringify(bad)}`,
+      );
+    }
+    const st = await w.svc.state(aus);
+    assert.notEqual(st.wallet.payout, "stripe");
+  } finally { await w.done(); }
+});
+
+test("connecting Stripe does not throw away a bank account already saved", async () => {
+  const w = await world();
+  try {
+    await w.ready(aus, "AU", { bank: {
+      accountName: "Mia Example", bankName: "Big Bank", swift: "BIGBAU2S",
+      bsb: "062000", accountNumber: "12345678", address: "1 Test St, Sydney",
+    } });
+    const before = (await w.svc.state(aus)).wallet.payoutLabel;
+    assert.ok(before, "the bank should have a label to begin with");
+    await w.svc.setPayout(aus, { mode: "stripe", details: { account: "acct_1PartnerXYZ" } });
+    // Switching back must not mean typing the whole wire out again.
+    const back = await w.svc.setPayout(aus, { mode: "bank", details: {
+      accountName: "Mia Example", bankName: "Big Bank", swift: "BIGBAU2S",
+      bsb: "062000", accountNumber: "12345678", address: "1 Test St, Sydney",
+    } });
+    assert.ok(back.label);
+    assert.equal((await w.svc.state(aus)).wallet.payout, "bank");
   } finally { await w.done(); }
 });

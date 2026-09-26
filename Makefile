@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: book-teacher book-list book-off book-on book-cancel book-demo try try-china china wallets mo-code visits app-state claire-episodes deal claire-key claire-count claire-seed claire-video listing invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who bells twice admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check post post-status post-run post-login post-code post-logins weidian-pull weidian-json weidian-reviews shop-chapter review-tidy product-names review-move
+.PHONY: book-teacher book-list book-off book-on book-cancel book-demo try try-china china wallets mo-code visits app-state claire-episodes deal claire-key claire-count claire-seed claire-video listing invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who bells twice admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions whitelabel blocked partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check post post-status post-run post-login post-code post-logins weidian-pull weidian-json weidian-reviews shop-chapter review-tidy product-names review-move
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -131,6 +131,46 @@ up: ## Build if needed and start everything (does NOT fetch — see 'deploy')
 	@# against two synthetic presets; the file that can be wrong tonight is this
 	@# one.
 	@python3 scripts/check-sites.py .env
+	@# AND CADDY'S OWN OPINION OF ITS OWN FILE, which check-sites.py does not
+	@# have: that one resolves addresses and finds collisions, both of which
+	@# it does well, and it parses none of the syntax around them.
+	@#
+	@# A CADDYFILE CADDY REFUSES IS NOT ONE BAD SITE. It will not start, and
+	@# every name on this box goes with it — the board, the shop, the seats,
+	@# the app's counter. The near-miss was a comment: these files take `#`
+	@# and a block was written with /* */, which reads fine to anybody who
+	@# writes code all day and is not Caddy syntax.
+	@#
+	@# The site files are bind-mounted, so the running container can read a
+	@# file that has just been pulled without reloading onto it. That is what
+	@# makes this possible before the reload rather than after.
+	@#
+	@# Quiet when it passes. Skipped, not failed, when caddy is not running —
+	@# a first install has no container yet and must still be able to deploy.
+	@$(COMPOSE) exec -T caddy caddy validate --config /etc/caddy/Caddyfile >/dev/null 2>&1 \
+	  && echo "caddy config ok" \
+	  || { $(COMPOSE) exec -T caddy true >/dev/null 2>&1 \
+	       && { echo "CADDY REFUSES THIS CONFIG — not deploying."; \
+	            echo "Its own words:"; \
+	            $(COMPOSE) exec -T caddy caddy validate --config /etc/caddy/Caddyfile 2>&1 | sed 's/^/    /'; \
+	            echo "Fix docker/Caddyfile or docker/sites/*.caddy. Nothing was changed."; \
+	            exit 1; } \
+	       || echo "note: caddy is not running, so its config was not checked"; }
+	@# THE SAME TRAP, ONE HOSTNAME OVER. A partner's name pointed at a
+	@# container that is not running is a certificate, a public address and a
+	@# 502 — and the person who finds it is his client, mid-payment.
+	@grep -qE '^TOMSCODING_WHITELABEL_DOMAIN=.+' .env && ! grep -q '^COMPOSE_PROFILES=.*board-wl' .env \
+	  && { echo "TOMSCODING_WHITELABEL_DOMAIN is set but 'board-wl' is not in COMPOSE_PROFILES."; \
+	       echo "That hostname would answer with a 502: a certificate, a public address,"; \
+	       echo "and nothing behind it."; \
+	       echo ""; \
+	       echo "  make whitelabel DOMAIN=\"$$(sed -n 's/^TOMSCODING_WHITELABEL_DOMAIN=//p' .env | tail -1 | tr -d '\"')\""; \
+	       echo ""; \
+	       echo "That turns the service on and builds. This refusal used to end in"; \
+	       echo "\"add board-wl to COMPOSE_PROFILES\" — a line in a file to edit by hand,"; \
+	       echo "met at the end of a build, at one in the morning, with a deploy blocked"; \
+	       echo "behind it. A refusal that cannot be acted on is half a refusal."; \
+	       exit 1; } || true
 	@grep -qE '^TOMSCODING_BOARD_DOMAIN=.+' .env && ! grep -q '^COMPOSE_PROFILES=.*board' .env \
 	  && { echo "TOMSCODING_BOARD_DOMAIN is set but 'board' is not in COMPOSE_PROFILES."; \
 	       echo "Caddy would answer that hostname with a 502: a certificate, a public"; \
@@ -729,6 +769,7 @@ ask: ## A payment request, and its link: make ask WHO="Claire" AMOUNT="¥1" [FOR
 	$(COMPOSE) run --rm --no-deps -T \
 	  -e BOARD_PUBLIC_URL="https://$$(grep -E '^TOMSCODING_BOARD_DOMAIN=' .env | tail -1 | cut -d= -f2- | tr -d '\"')" \
 	  -e BOARD_DEALIO_URL="$$(grep -E '^TOMSCODING_DEALIO_DOMAIN=' .env | tail -1 | cut -d= -f2- | tr -d '\"')" \
+	  -e BOARD_DEALIO_DEMO="$$(grep -E '^TOMSCODING_DEALIO_DEMO=' .env | tail -1 | cut -d= -f2- | tr -d '\"')" \
 	  -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/ask.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  --who "$(WHO)" --amount "$(AMOUNT)" --to "$(TO)" --for "$(FOR)" --when "$(WHEN)" --cur "$(CUR)" \
@@ -1274,7 +1315,7 @@ pay-try: ## Why a payment was refused, in Stripe's words: make pay-try ID=... [M
 	  /seed/pay-try.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  --id "$(ID)" --method "$(METHOD)"
 
-wallets: ## Will Stripe let this platform offer WeChat Pay and Alipay: make wallets
+wallets: ## Who can pay you, and whether Stripe will pay it out: make wallets
 	@# THE QUESTION THE WHOLE PRODUCT RESTS ON, AND IT WAS A SCREEN.
 	@#
 	@# The dashboard answers it on an Account status page, in an "Active" list
@@ -1305,6 +1346,74 @@ wallets: ## Will Stripe let this platform offer WeChat Pay and Alipay: make wall
 	  $(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	    /seed/stripe-methods.mjs)
 
+rate: ## What a yuan is worth in dollars at the till: make rate RATE=0.21 (or make rate to read it)
+	@# WHY THE SHOP NEEDS ONE AT ALL. Stripe's Alipay takes the presentment
+	@# currency your business location allows, and for an Australian account
+	@# that is AUD — CNY belongs to accounts in China and Hong Kong. Every
+	@# yuan charge came back invalid_request_error from inside Stripe's own
+	@# payment sheet. The shelf stays in yuan; this is what the till converts
+	@# at, and the payer sees RMB again inside Alipay because Alipay converts
+	@# on its own side.
+	@#
+	@# NOT A SECRET, so it is an argument rather than a prompt — unlike the
+	@# keys, which is why those are a script.
+	@#
+	@# NOTHING SET MEANS NOTHING CHANGES: the shop charges yuan exactly as it
+	@# did, and fails exactly as it did. A default here would be inventing
+	@# what somebody is charged.
+	@if [ -n "$(RATE)" ]; then \
+	  case "$(RATE)" in \
+	    0.[0-9]*|[0-9].[0-9]*|[0-9]) ;; \
+	    *) echo ""; echo "  RATE looks wrong: $(RATE)"; \
+	       echo "  It is dollars per yuan, so about 0.21 — not 4.7."; echo ""; exit 1 ;; \
+	  esac; \
+	  cp .env .env.before-rate; \
+	  sed -i "/^TOMSCODING_BOARD_AUD_PER_CNY=/d" .env; \
+	  printf 'TOMSCODING_BOARD_AUD_PER_CNY=%s\n' "$(RATE)" >> .env; \
+	  echo ""; echo "  Set. Now: make up"; \
+	fi
+	@#
+	@# NO DOLLAR SIGN IN THIS OUTPUT, ON PURPOSE. `A$$$$r` in a recipe becomes
+	@# `$$r` in the shell, which is the PID — it printed "A yuan is worth
+	@# A2903720r". And an awk program in double quotes inside a recipe ran
+	@# into the shell looking for a closing quote and killed the target with
+	@# it, so `make up` never ran after it. Plain words and a single-quoted
+	@# awk program, and neither can happen again.
+	@echo ""
+	@r=$$(grep -E '^TOMSCODING_BOARD_AUD_PER_CNY=' .env | tail -1 | cut -d= -f2-); \
+	if [ -n "$$r" ]; then \
+	  echo "  Rate in .env      $$r  Australian dollars per yuan"; \
+	  echo "  So 31 yuan        $$(awk -v r="$$r" 'BEGIN{printf "%.2f", 31*r}') AUD at the till"; \
+	  c=$$($(COMPOSE) exec -T board printenv BOARD_AUD_PER_CNY 2>/dev/null); \
+	  if [ -n "$$c" ]; then \
+	    echo "  In the container  $$c"; \
+	  else \
+	    echo "  In the container  NOTHING YET  --  run: make up"; \
+	  fi; \
+	else \
+	  echo "  No rate set, so the shop still charges yuan, which Alipay"; \
+	  echo "  refuses on an Australian account. Set one:"; \
+	  echo ""; \
+	  echo "    make rate RATE=0.21 && make up"; \
+	fi
+	@echo ""
+
+pay-last: ## Why Stripe turned the last few payments down: make pay-last [N=5]
+	@# THE FOUR WORDS INSIDE STRIPE'S OWN FRAME, ANSWERED.
+	@#
+	@# On 24 Sep a payment got all the way to Stripe's form on a phone — live
+	@# keys, CN¥31.00, Alipay chosen — and came back "The payment attempt
+	@# failed." and nothing else. Not on the page, not in the container log,
+	@# not in `make pay-why`: nothing of ours was involved. Stripe asked
+	@# Alipay and Alipay said no, and the reason sat on a dashboard page
+	@# behind a payment id somebody had to find and click.
+	@#
+	@# So it is asked for. Read-only: one GET, nothing written, and the key
+	@# goes through the environment rather than argv, which is visible in `ps`
+	@# for as long as the call lasts.
+	@$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/pay-last.mjs "$(N)"
+
 hook-make: ## Make the Stripe webhook and print its secret: used by make go-live
 	@# NOT FOR TYPING. `make go-live` calls it and catches the secret in a
 	@# variable; run by hand it prints a live signing secret onto a screen and
@@ -1323,6 +1432,27 @@ payee-names: ## Who has a payout account, one per line: make payee-names
 	  /seed/pay-check.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  --names
 
+blocked: ## Why Stripe refused ONE payment, in its own words: make blocked ID="pi_..."
+	@# NOT pay-why, WHICH ALREADY EXISTS further down and answers a different
+	@# question: that one reads this box's own logs for what Stripe said when
+	@# the box asked. This asks Stripe about one payment that a payer already
+	@# started. Defining it twice made make print "overriding recipe" and
+	@# quietly keep the other one.
+	@# THE DASHBOARD SAYS "Stripe blocked this payment." AND STOPS THERE. The
+	@# reason is one click further in, on a screen that cannot be described
+	@# over a terminal to somebody who cannot see it. The charge underneath
+	@# carries it as data, so this asks for it and prints the predicate.
+	@#
+	@# RISK LEVEL NORMAL AND BLOCKED IS THE CASE THIS WAS WRITTEN FOR. Radar's
+	@# own score blocks at the top of the range, so Normal plus blocked means
+	@# a RULE did it — and "a rule blocked it" is not an answer anybody can
+	@# act on. The predicate is.
+	@#
+	@# Read-only, one GET, safe against the live key — which is the only key
+	@# whose behaviour is worth knowing.
+	@$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/pay-why.mjs "$(ID)"
+
 pay-check: ## Can this board take a payment, and if not why: make pay-check
 	@# "Can the app do payments" is a question about the running box, and the
 	@# answer turns on five variables in .env and one setting inside Stripe.
@@ -1333,6 +1463,54 @@ pay-check: ## Can this board take a payment, and if not why: make pay-check
 	@# account id.
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/pay-check.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)"
+
+whitelabel: ## The money screen in somebody else's name and colour: make whitelabel AT="/europay" NAME="Europay" INK="#16233D"
+	@# THE ARRANGEMENT: my server, my code, his name on it, his Stripe.
+	@#
+	@# TWO DOORS TO THE SAME SCREEN, and the cheap one first. AT is a path
+	@# on a name we already own — paydealio.com/europay — which resolves
+	@# and has a certificate already, so the screen exists the moment the
+	@# box is up and can be put in a message this afternoon. DOMAIN is a
+	@# hostname of his own, which is better in the end and waits on a DNS
+	@# record somebody else has to make. Set either, or both.
+	@#
+	@# NOT "PATH". make would hand every recipe below a $$PATH of
+	@# "/europay" and the next line of a deploy would not find sh.
+	@#
+	@# HE SENDS NO KEY, AND THAT IS STRUCTURAL RATHER THAN POLITE. One
+	@# BOARD_STRIPE_KEY serves this whole container — the board, both its
+	@# names and Dealio — so a partner's key written here would take every
+	@# payment on the box, his and ours together. The OAuth half of
+	@# lib/stripe.js connects the account he ALREADY has instead: his
+	@# balance, his bank, our fee off the top, and no secret in a chat.
+	@#
+	@# AND HIS FACE ON THE SCREEN, which is the half that was the mockup:
+	@# NAME is the word over the figure and in the tab, INK is his deep
+	@# colour and is the whole skin — the top block and the one solid
+	@# button — and PAPER is the ground under it if he named one. One
+	@# colour rather than ten because the mockup's own second colour was
+	@# used twice, both times on his site's chrome and never on this
+	@# screen. A partner asked for ten hex codes is a partner who does not
+	@# reply.
+	@#
+	@# Run it with nothing and it says what is missing and where to get it.
+	@#
+	@# ONLY FROM THE COMMAND LINE, the same as airwallex-keys: make imports
+	@# the environment as its own variables, and a box with ID already in
+	@# its environment would otherwise have that written into .env by a
+	@# command that named no id at all.
+	@bash scripts/whitelabel.sh \
+	  $(if $(filter command line,$(origin ID)),--id "$(ID)",) \
+	  $(if $(filter command line,$(origin AT)),--at "$(AT)",) \
+	  $(if $(filter command line,$(origin ACCT)),--acct "$(ACCT)",) \
+	  $(if $(filter command line,$(origin PCT)),--pct "$(PCT)",) \
+	  $(if $(filter command line,$(origin KEY)),--key "$(KEY)",) \
+	  $(if $(filter command line,$(origin PK)),--pk "$(PK)",) \
+	  $(if $(filter command line,$(origin DOMAIN)),--domain "$(DOMAIN)",) \
+	  $(if $(filter command line,$(origin NAME)),--name "$(NAME)",) \
+	  $(if $(filter command line,$(origin INK)),--ink "$(INK)",) \
+	  $(if $(filter command line,$(origin PAPER)),--paper "$(PAPER)",) \
+	  $(if $(filter command line,$(origin WHO)),--who "$(WHO)",)
 
 dealsheet: ## An example deal in a real room: make dealsheet WHO="Tom" WITH="Christopher" [OFF=1]
 	@# TO SEE ONE ON A PHONE. `make try` shows every screen on a laptop, except
@@ -1999,6 +2177,21 @@ who: ## Who has a page, and who is actually in Browse
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/who.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)"
 
+books: ## Both invoices of every deal, and what is left between them: make books [WHO="Tom"]
+	@# THE TWO-INVOICE LEDGER, IN A TERMINAL. A deal through the WFOE is two
+	@# invoices — the payer is invoiced by the company they paid, the supplier
+	@# invoices that same company — and the margin is what is left between
+	@# them. The app has the same screen; this is here because a column of
+	@# figures is the hardest thing on a phone held close, and a ledger is read
+	@# down rather than glanced at.
+	@#
+	@# THE MARGIN IS NOT WORKED OUT TWICE. It comes off the same lib/books.js
+	@# the screen uses, through the admin route, so this cannot quietly
+	@# disagree with what the app says. Two places that each compute money is
+	@# the bug this is written to avoid.
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/books.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" "$(WHO)"
+
 standing: ## Who can bring somebody in, and who cannot yet
 	@# The companion to `who`. A rule nobody can see the effect of is a rule
 	@# that gets argued about instead of read — this says, per member, whether
@@ -2215,6 +2408,57 @@ visits: ## Who has opened aozhoubaba.com, and from where: make visits [DAYS=7]
 	@echo ""
 	@rm -f /tmp/az.log
 
+pay-why: ## What a payer's phone actually saw when a pay button failed: make pay-why
+	@# THE SENTENCE A PAYER CANNOT GIVE YOU.
+	@#
+	@# Everything that fails on the payer's side comes back as one report —
+	@# "it didn't work" — and on 24 Sep three unrelated faults wore that
+	@# sentence in one evening: a dead Airwallex rail, a Connect destination
+	@# that was never onboarded, and the form itself refusing to mount. Each
+	@# was found by getting the real words out of the thing that failed, and
+	@# the browser was the one place with nothing to say.
+	@#
+	@# The page reports its own failure now — see /api/pay/why in server.js.
+	@# This reads them back. Nothing about the payer is in them: which wallet,
+	@# which half failed, and the error's own message.
+	@#
+	@# "at load"  — Stripe.js never arrived. The payer's network, or ours.
+	@# "at mount" — it arrived and Stripe refused the session. Ours, always.
+	@#
+	@# BOTH SIDES OF THE LINE, because it only read one and that cost another
+	@# round. A payment can fail before the form is ever asked for — the
+	@# server asks Stripe for a session and Stripe says no — and that failure
+	@# leaves nothing on the phone to report. So "no payment form has failed"
+	@# was printed at somebody whose payment had just failed, and it read as
+	@# "nothing happened". The server's own refusals are here too now.
+	@echo ""
+	@srv=$$($(COMPOSE) logs --tail=4000 board 2>/dev/null \
+	  | grep -E "checkout:|order stripe:|order qr:|dealio qr:" | tail -10); \
+	if [ -n "$$srv" ]; then \
+	  echo "  WHAT STRIPE TOLD THE BOX, when it asked for a payment:"; \
+	  echo ""; \
+	  echo "$$srv" | sed -E "s/^.*(checkout:|order stripe:|order qr:|dealio qr:)/   /"; \
+	  echo ""; \
+	fi
+	@out=$$($(COMPOSE) logs --tail=4000 board 2>/dev/null | grep "pay form failed:" | tail -10); \
+	if [ -n "$$out" ]; then \
+	  echo "  WHAT THE PHONE SAW, once the form was on its way:"; \
+	  echo ""; \
+	  echo "$$out" | sed "s/^.*pay form failed:/   /"; \
+	  echo ""; \
+	  echo "  at load   Stripe.js never arrived — the network, theirs or ours."; \
+	  echo "  at mount  Stripe refused the session — ours, and nothing the payer can do."; \
+	  echo ""; \
+	fi
+	@out=$$($(COMPOSE) logs --tail=4000 board 2>/dev/null \
+	  | grep -cE "pay form failed:|checkout:|order stripe:|order qr:|dealio qr:"); \
+	if [ "$$out" = "0" ]; then \
+	  echo "  Nothing has been refused since the board last started — neither by"; \
+	  echo "  Stripe when the box asked, nor on the phone afterwards."; \
+	  echo "  A failure from before that went with the old container."; \
+	  echo ""; \
+	fi
+
 logs: ## Tail logs from all services
 	$(COMPOSE) logs -f --tail=100
 
@@ -2233,7 +2477,7 @@ claude: ## Run the Claude Code CLI in the workspace
 password: ## Generate a strong password for TOMSCODING_PASSWORD
 	openssl rand -base64 24
 
-save: ## Copy the board and the ledger out to ./backups — the two that cannot be rebuilt
+save: ## Copy the board, the ledger and any partner board out to ./backups
 	@# WHAT IS ACTUALLY IRREPLACEABLE ON THIS BOX. Everything else here is in
 	@# git or can be rebuilt from it. These two are not: board.json holds the
 	@# waiting list — names and the one way each of those people gave to reach
@@ -2252,10 +2496,18 @@ save: ## Copy the board and the ledger out to ./backups — the two that cannot 
 	@# file, not from the directory this is checked out into, so they are the
 	@# same whether the clone is called tc or sage.
 	mkdir -p backups
+	@# AND THE PARTNER'S BOARD, which this did not carry and had to.
+	@# board_wl_data is a partner's own members, rooms and payment records,
+	@# on a volume of its own because his box is meant to know nothing about
+	@# ours. It was created the night board-wl first came up and nothing
+	@# saved it — so the one volume belonging to somebody who is not Tom was
+	@# the one volume with no copy. Added the moment it stopped being
+	@# hypothetical that a partner's business would sit on this box.
 	@stamp=$$(date +%Y%m%d-%H%M%S); \
 	  docker run --rm -v tomscoding_board_data:/board:ro -v tomscoding_cfm_data:/cfm:ro \
+	    -v tomscoding_board_wl_data:/wl:ro \
 	    -v "$$PWD/backups:/out" alpine:3 \
-	    sh -c 'tar czf /out/data-'"$$stamp"'.tar.gz -C / board cfm' \
+	    sh -c 'tar czf /out/data-'"$$stamp"'.tar.gz -C / board cfm wl' \
 	  && echo "wrote backups/data-$$stamp.tar.gz"
 	@# And what went into it. Counted off the live volume, which is what was
 	@# just copied — see data-count.mjs for why this is printed at all.
@@ -2282,11 +2534,17 @@ restore: ## Put a saved copy back: make restore FILE=backups/data-....tar.gz YES
 	@# The live copy first, always. Restoring the wrong file is a mistake
 	@# somebody makes once, and it should not be the last thing that happens.
 	$(MAKE) save
-	$(COMPOSE) stop board cfm
+	$(COMPOSE) stop board cfm board-wl 2>/dev/null || $(COMPOSE) stop board cfm
+	@# THE PARTNER'S VOLUME IS ONLY TOUCHED BY AN ARCHIVE THAT HOLDS IT.
+	@# Archives written before `make save` learned about board_wl_data have no
+	@# wl/ in them, and wiping it on the way to restoring one of those would
+	@# delete a partner's board to fix ours, with nothing to put back.
 	docker run --rm -v tomscoding_board_data:/board -v tomscoding_cfm_data:/cfm \
+	  -v tomscoding_board_wl_data:/wl \
 	  -v "$(CURDIR)/$(FILE):/in.tar.gz:ro" alpine:3 \
-	  sh -c 'rm -rf /board/* /cfm/* && tar xzf /in.tar.gz -C /'
-	$(COMPOSE) start board cfm
+	  sh -c 'tar tzf /in.tar.gz | grep -q "^wl/" && rm -rf /wl/*; \
+	         rm -rf /board/* /cfm/*; tar xzf /in.tar.gz -C /'
+	$(COMPOSE) start board cfm board-wl 2>/dev/null || $(COMPOSE) start board cfm
 	@rm -rf backups/.peek
 	@echo "Back. Look at the queue on the site before you do anything else."
 

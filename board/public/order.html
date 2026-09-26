@@ -77,6 +77,21 @@
   .ways button{flex:1 1 0;max-width:10rem;border:0;border-radius:999px;font:inherit;
     font-size:1rem;font-weight:600;padding:.85rem 1rem;background:var(--acc);color:#fff}
   .ways button.alt{background:#1677FF}
+  /* One wallet is the usual case now — see orderWays() in server.js. A lone
+     button capped at 10rem sits marooned in the middle of the card looking
+     like one of a pair with its partner missing; full width it reads as the
+     one thing to do on the screen, which is what it is. */
+  .ways.one button{max-width:none}
+  /* THE CARD IS UNDER THE ROW, NOT IN IT. Three buttons abreast on a phone
+     is three things to read where the screen should carry one, and a card
+     is not a third wallet — it is what somebody reaches for after the
+     wallet did not work. So it is full width, a line down, and quiet:
+     outlined rather than filled, which says "the other way" without
+     competing with the thing she came to press. */
+  .later{display:block;width:100%;margin:.6rem 0 0;border:1px solid var(--line);
+    border-radius:999px;font:inherit;font-size:.95rem;font-weight:600;
+    padding:.8rem 1rem;background:transparent;color:var(--ink)}
+  .later:disabled{color:var(--mut)}
   .track{font-size:1.05rem;letter-spacing:.04em}
   .foot{padding:1rem .4rem 0;font-size:.75rem;line-height:1.7;color:var(--mut)}
 </style>
@@ -85,6 +100,7 @@
 
 <script type="module">
 import { T, setLang, pickLang, langButton } from "/i18n.js";
+import { mountCheckout, sayWhy } from "/pay.js";
 
 /* Chinese unless the reader has said otherwise — see pickLang. */
 setLang(pickLang("zh"));
@@ -110,6 +126,8 @@ function device() {
 }
 
 let O = null;
+let WAYS = [];
+let PAYCUR = "";
 
 function draw() {
   const root = $("root");
@@ -168,34 +186,161 @@ function draw() {
   root.append(el("p", "foot", T("od.foot", { who: O.shop })));
 }
 
+/* THE PAYMENT SCREEN, AND ONLY BUTTONS THAT WORK.
+ *
+ * This drew 微信支付 and 支付宝 side by side no matter what, and the WeChat
+ * one has never been able to take money — no bank behind the native rail,
+ * and Stripe marks WeChat Pay ineligible on this account. Every press
+ * answered "off" and the page said "try again" to somebody whose second try
+ * would fail identically. The server now says which buttons can mint
+ * something; see orderWays() in server.js.
+ *
+ * ONE BUTTON SAYS WHAT IT DOES, two say which. A lone button reading 支付宝
+ * is a logo where a verb belongs, so the single case gets its own string.
+ */
+const WAY = { wechat: "od.wechat", alipay: "od.alipay" };
+const ONLY = { wechat: "od.payWechat", alipay: "od.payAlipay" };
+/* AND THE CARD, WHICH IS NEVER IN THAT ROW. It has no logo to stand next to
+   the other two and no code rail behind it — it is Stripe's form, the one
+   thing this account has actually taken money on — so it always says the
+   verb and always sits below. See orderWays() in server.js. */
+const CARD = "od.payCard";
+
 function payBox() {
   const box = el("div", "box pay");
   box.append(el("p", "lab", T("od.pay")));
   box.append(el("div", "amt", yuan(O.total)));
   box.append(el("p", "to", T("od.to", { who: O.shop })));
-  const ways = el("div", "ways");
-  const wx = el("button", null, T("od.wechat"));
-  const ali = el("button", "alt", T("od.alipay"));
-  wx.type = ali.type = "button";
-  wx.addEventListener("click", () => code("wechat", box, wx, ali));
-  ali.addEventListener("click", () => code("alipay", box, wx, ali));
-  ways.append(wx, ali);
+
+  /* NOTHING CAN TAKE IT TODAY — said once, plainly, instead of a button that
+     fails. She has already given her address; the order is real and waiting,
+     and that is the part worth telling her. */
+  if (!WAYS.length) {
+    box.append(el("p", "else", T("od.noWay")));
+    return box;
+  }
+
+  /* WHAT SHE WILL BE CHARGED IN, when it is not what the shelf said. The
+     server decides it — see audRate() in server.js — because the rate lives
+     in .env and a page cannot see it. Above the button rather than below:
+     it is a thing to know before pressing, not a footnote afterwards. */
+  /* Alipay by name only while it is the one thing on the screen. Under a
+     card button that sentence is about the wrong button, and the charge is
+     in Australian dollars whichever gets pressed. */
+  if (PAYCUR === "aud") {
+    box.append(el("p", "else", T(WAYS.length === 1 && WAYS[0] === "alipay"
+      ? "od.audNote" : "od.audAll")));
+  }
+
+  const wallets = WAYS.filter((how) => how !== "card");
+  const ways = el("div", "ways" + (wallets.length === 1 ? " one" : ""));
+  const buttons = wallets.map((how) => {
+    const b = el("button", how === "alipay" ? "alt" : null,
+      T(wallets.length === 1 ? ONLY[how] : WAY[how]));
+    b.type = "button";
+    b.dataset.how = how;
+    b.addEventListener("click", () => code(how, box, buttons));
+    return b;
+  });
+  ways.append(...buttons);
   box.append(ways);
+  if (WAYS.includes("card")) {
+    const b = el("button", "later", T(CARD));
+    b.type = "button";
+    b.dataset.how = "card";
+    b.addEventListener("click", () => code("card", box, buttons));
+    /* In the same list as the wallet buttons so one press disables all of
+       them and back() puts every one of them right — it is a button on the
+       same screen doing the same job, and only the row it sits in differs. */
+    buttons.push(b);
+    box.append(b);
+  }
   return box;
 }
 
-async function code(how, box, wx, ali) {
-  wx.disabled = ali.disabled = true;
-  wx.textContent = how === "wechat" ? T("od.making") : wx.textContent;
-  ali.textContent = how === "alipay" ? T("od.making") : ali.textContent;
+/** What a button says when it is not busy. The row's two read as a pair of
+ *  wallets or as one verb depending on how many there are; the card always
+ *  reads as the verb. Kept in one place because the press has to put it back
+ *  exactly as payBox drew it. */
+/** EVERY BUTTON THAT STARTS A PAYMENT, OFF THE SCREEN AND IN ORDER — the
+ *  wallet row and the card under it, which are two nodes and were one until
+ *  the card was added. Returned rather than dropped so the mount-that-threw
+ *  path can put them back exactly where they were. */
+function takeWays(box) {
+  const out = [box.querySelector(".ways"), box.querySelector(".later")].filter(Boolean);
+  for (const n of out) n.remove();
+  return out;
+}
+
+function sayOn(b, buttons) {
+  const how = b.dataset.how;
+  if (how === "card") return T(CARD);
+  const wallets = buttons.filter((x) => x.dataset.how !== "card");
+  return T(wallets.length === 1 ? ONLY[how] : WAY[how]);
+}
+
+async function code(how, box, buttons) {
+  for (const b of buttons) b.disabled = true;
+  const pressed = buttons.find((b) => b.dataset.how === how);
+  if (pressed) pressed.textContent = T("od.making");
+  /* Buttons back the way they were, and ONE sentence however many times she
+     presses. Appending it meant a third press left three identical lines
+     stacked under the button, which reads as three separate things going
+     wrong rather than one thing going wrong three times. */
+  const back = (key) => {
+    for (const b of buttons) {
+      b.disabled = false;
+      b.textContent = sayOn(b, buttons);
+    }
+    if (!key) return;
+    const said = box.querySelector(".said") || el("p", "else said");
+    said.textContent = T(key);
+    box.append(said);
+  };
   try {
     const r = await fetch("/api/order/" + ID + "/pay", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ method: how }),
     });
     const j = await r.json().catch(() => null);
+    /* STRIPE INSTEAD OF A WALLET CODE. The route hands back one or the other
+       and never both — a real 收款码 where the WFOE's bank is connected, and
+       Stripe's own form where it is not; see the note over the fallback in
+       /api/order/:id/pay. The form is mounted in the page rather than
+       redirected to, so the address bar still says this shop: the same reason
+       the deal rooms mount it, written up over `ui_mode` in lib/stripe.js. */
+    if (r.ok && j?.secret) {
+      /* HELD, NOT LOOKED UP AGAIN. Once it is detached box.querySelector
+         answers null, and appending null puts the word "null" on the screen
+         — which is how a message box became the literal string `null` on a
+         phone on 23 Sep. The nodes go in a variable before they leave.
+
+         BOTH OF THEM, because the card button is not inside .ways — it sits
+         under the row, and removing only the row left "Pay with card" under
+         Stripe's own form, which is an invitation to start a second payment
+         for the same order. */
+      const ways = takeWays(box);
+      const slot = el("div", "frame");
+      box.append(slot);
+      /* A MOUNT THAT THROWS IS NOT A PRESS THAT DID NOTHING. This was
+         unguarded: Stripe refusing the session left the buttons gone, an
+         empty box where the form should be, and nothing said. The words go
+         into the box's log — see /api/pay/why — and the screen says what the
+         order page says for every other refusal. */
+      try {
+        await mountCheckout(slot, { secret: j.secret, pk: j.pk });
+      } catch (err) {
+        sayWhy({ how, at: err?.at, err });
+        slot.remove();
+        box.append(...ways);
+        back("od.payNo");
+        return;
+      }
+      watch();
+      return;
+    }
     if (r.ok && j?.qr) {
-      box.querySelector(".ways").remove();
+      takeWays(box);
       const img = el("img", "qr");
       img.src = j.qr.png;
       img.alt = "";
@@ -205,12 +350,15 @@ async function code(how, box, wx, ali) {
       watch();
       return;
     }
-    wx.textContent = T("od.wechat"); ali.textContent = T("od.alipay");
-    wx.disabled = ali.disabled = false;
-    box.append(el("p", "else", T(j?.error === "already" ? "od.already" : "od.noQr")));
+    /* THE SERVER'S OWN WORD PICKS THE SENTENCE. It said "没生成出来" — no code
+       came back — to every refusal, including the ones where no code was ever
+       going to be drawn: the Stripe rail opens a form, not a 收款码, so that
+       line described a thing that does not happen on the screen she is
+       looking at. See the refusals in /api/order/:id/pay. */
+    back(j?.error === "already" ? "od.already"
+      : j?.error === "qr" ? "od.noQr" : "od.payNo");
   } catch {
-    wx.textContent = T("od.wechat"); ali.textContent = T("od.alipay");
-    wx.disabled = ali.disabled = false;
+    back("od.noNet");
   }
 }
 
@@ -342,7 +490,17 @@ async function load() {
   try {
     const r = await fetch("/api/order/" + ID, { cache: "no-store" });
     const j = await r.json().catch(() => null);
-    if (r.ok && j?.ok) { O = j.order; draw(); return; }
+    /* The server decides which wallets can take this money — see orderWays()
+       in server.js. An older server sends no list; two buttons was the old
+       behaviour and one of them was dead, so the safe reading of silence is
+       the one that can actually mint a code today. */
+    if (r.ok && j?.ok) {
+      O = j.order;
+      WAYS = Array.isArray(j.ways) ? j.ways : ["alipay"];
+      PAYCUR = String(j.payCur || "");
+      draw();
+      return;
+    }
   } catch { }
   $("root").append(el("p", "foot", T("od.gone")));
 }

@@ -34,6 +34,16 @@ cd ~/tc && git fetch origin && git reset --hard origin/<branch> && make deploy
 `git reset --hard`, not `git pull` — a pull once left a merge commit on the box
 and `make deploy` refused with "Diverging branches".
 
+**When `make deploy` says "Not possible to fast-forward", use `make up`.**
+`make deploy` does its own `git pull --ff-only` on whatever branch the box is
+checked out on. If the box has been reset to a commit from a *different*
+branch — which is what happens when somebody deploys another session's work —
+the local branch name and the commit disagree, and that pull can never
+succeed. `git fetch && git reset --hard origin/<branch> && make up` puts the
+right code on disk and builds it without a second pull. This cost most of an
+afternoon: the deploy failed, nobody read the error, and the screen it was
+meant to ship was reported missing three times.
+
 `make rebuild` rebuilds only the workspace. `make up` and `make deploy` build
 everything. Reaching for `rebuild` after a change to `board/` is the mistake.
 
@@ -45,6 +55,15 @@ old file and nothing says so. Only `scripts/` is bind-mounted, which is why a
 page does not. This cost several rounds in one afternoon, three separate
 times: a Chromium path in an image, a new field in `server.js`, and a colour
 in `shop.html`. If a change is under `board/`, it needs `make deploy`.
+
+**The names in `.env` are `TOMSCODING_*`; the container sees `BOARD_*`.**
+`docker-compose.yml` maps one to the other. So grepping `.env` for a `BOARD_`
+name always finds nothing, and a `grep -c` that answers 0 means "not under
+that name", not "off". This cost an evening: the demo payment flow was
+switched off by deleting a line that did not exist, the check agreed, and the
+next payment was still a demo. Ask the container instead —
+`docker compose exec -T board printenv BOARD_DEALIO_DEMO` — which cannot
+answer for a name nobody set.
 
 ## Offers and invites
 

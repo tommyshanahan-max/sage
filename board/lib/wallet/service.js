@@ -22,6 +22,10 @@
 //              does not use this twice.
 
 import { REGIONS, CURRENCIES, toMinor, format, bps, isRegion } from "./money.js";
+/* The same table the payout screen reads, so the fields it collects and the
+   fields this accepts cannot drift apart. It lives in public/ for exactly
+   that reason — the arrangement public/off.js already uses. */
+import { bankFields } from "../../public/territory.js";
 import { newId } from "./ledger.js";
 
 export const FEES = { wallet: 0, bank: 0, card: 290, paypal: 340, wechat: 0 };
@@ -91,13 +95,42 @@ export function createWalletService({ ledger, provider, people, now = () => Date
       const ben = w.beneficiaryId ? data.beneficiaries[w.beneficiaryId] : null;
       const incoming = Object.values(data.transfers).filter((t) => t.to === me.by && t.state === "waiting").map((t) => lineFor(data, me, t));
       const requests = Object.values(data.requests).filter((q) => q.state === "open" && (q.to === me.by || q.from === me.by)).map((q) => requestLine(me, q));
+
+      /* EARNED AND STILL TO COME — the only two numbers that are true about a
+         wallet that holds nothing.
+         A balance was the headline until 24 Sep, and on a board that cannot
+         legally hold money it was both a zero and a claim about what this is.
+         These two are honest: what has reached you, and what is on its way.
+         The same pair the deals card on Profile has used all along, whose own
+         note reads "Never a balance, and the card says so in the same breath
+         as the number."
+         IN ONLY. The other side of a transfer is money spent, and an Earned
+         figure that quietly includes it is wrong in the direction that
+         flatters. `buy` is what ARRIVES — `sell` is what the payer was
+         charged, and the two differ by the fee and the rate, so counting the
+         wrong one overstates what somebody actually got. */
+      const toMe = Object.values(data.transfers).filter((t) => t.to === me.by && t.buy?.currency === w.currency);
+      const sum = (rows) => rows.reduce((n, t) => n + (t.buy?.minor || 0), 0);
+      const earnedMinor = sum(toMe.filter((t) => ["accepted", "completed", "paid"].includes(t.state)));
+      const pendingMinor = sum(toMe.filter((t) => ["waiting", "charging", "charged", "processing", "sent"].includes(t.state)));
       return {
         ...base,
         wallet: {
           region: w.region, regionName: r.name, currency: w.currency, verified: w.verified, status: w.status,
           holdsBalance: r.balance, reasonRequired: r.reasonRequired,
           balance: { minor: w.balance, text: format(w.balance, w.currency) },
-          payout: w.payout, payoutLabel: ben ? ben.label : "",
+          earned: { minor: earnedMinor, text: format(earnedMinor, w.currency) },
+          pending: { minor: pendingMinor, text: format(pendingMinor, w.currency) },
+          /* A CONNECTED ACCOUNT HAS NO BENEFICIARY, so a label read only off
+             one came back empty and the screen said nothing was saved when
+             something was. */
+          payout: w.payout,
+          payoutLabel: w.payout === "stripe" && w.stripeAccount
+            ? stripeLabel(w.stripeAccount)
+            : (ben ? ben.label : ""),
+          /* Which country the saved account is in, so the screen opens on it
+             rather than guessing the clock again. */
+          payoutRegion: ben ? (ben.region || w.region) : "",
           limits: { sendDay: { minor: r.send, text: format(r.send, w.currency) }, sentToday: { minor: sentToday(data, me.by), text: format(sentToday(data, me.by), w.currency) }, receiveMonth: { text: format(r.recv, w.currency) } },
           passkeys: (data.credentials[me.by] || []).length,
           sources, incoming, requests,
@@ -177,19 +210,82 @@ export function createWalletService({ ledger, provider, people, now = () => Date
   /* WHERE MONEY SENT TO YOU GOES. Details are handed to the provider, which
      returns an id; the Exchange keeps the id and a label ending in four
      digits, never the account number. */
-  async function setPayout(me, { mode, details }) {
+  /* WHERE THE ACCOUNT IS, NOT WHERE THE PERSON IS.
+   *
+   * This used w.region — guessed from the phone's clock at setup and never
+   * changeable, because no screen and no route existed to change it. So
+   * somebody in Shanghai being paid into an Australian account was shown a
+   * Chinese bank form and could not enter a SWIFT at all, and there was no
+   * way out of it. The two differ constantly: a Chinese member with an
+   * account abroad, an Australian living in Beijing.
+   *
+   * So the account carries its own country, the person says which, and the
+   * fields and the checks both follow that. Falls back to the wallet's
+   * region, which is what every account saved before this had. */
+/* WHAT A CONNECTED ACCOUNT IS CALLED ON A SCREEN. Stripe hands back an id
+   and nothing else — no bank name, no last four, because the account is
+   theirs and we never see inside it. So the tail of the id, which is enough
+   to tell two apart and is not a secret: it travels in the header of every
+   charge raised on that account. */
+  const stripeLabel = (account) => "Stripe \u00b7\u00b7\u00b7\u00b7 " + String(account).slice(-4);
+
+  async function setPayout(me, { mode, details, region }) {
     const w = await ledger.read((d) => needWallet(d, me));
     const r = REGIONS[w.region];
+    const where = isRegion(region) ? region : w.region;
     if (mode === "wallet") {
       if (!r.balance) fail("no_balance_here", "In mainland China, money you receive goes straight to your bank.");
       return ledger.change((data, log) => { data.wallets[me.by].payout = "wallet"; log("payout.mode", { by: me.by, mode }); return true; });
     }
+    /* THEIR OWN STRIPE ACCOUNT, CONNECTED RATHER THAN TYPED.
+     *
+     * The third answer, and the one that had nowhere to go: the OAuth
+     * handshake in /china/linked completed, we learned their acct_, and it
+     * went into a cookie and nothing else. So somebody could authorise us on
+     * Stripe's own page, come back, and find "where do we send your money"
+     * still unanswered.
+     *
+     * NO BENEFICIARY AND NO PROVIDER CALL. A bank payout is a wire, so the
+     * provider has to be told who to wire to. This is not a wire: the money
+     * is already in their account the moment the charge clears, because the
+     * charge was raised on it. There is nothing to create and nothing to
+     * pay out — which is the whole reason this answer is worth having.
+     *
+     * THE ID IS CHECKED HERE TOO. server.js filters the direct list and
+     * whitelabel.sh refuses a bad one at the keyboard; this is the layer
+     * that actually writes it down, so it does not take somebody else's
+     * word for the shape. */
+    if (mode === "stripe") {
+      const account = String(details?.account || "").trim();
+      if (!/^acct_[A-Za-z0-9]{4,}$/.test(account)) {
+        fail("bad_account", "That is not a Stripe account id.");
+      }
+      return ledger.change((data, log) => {
+        data.wallets[me.by].payout = "stripe";
+        data.wallets[me.by].stripeAccount = account;
+        /* The beneficiary stays where it was. Somebody who had a bank
+           account and connects Stripe has not asked us to forget the bank,
+           and switching back should not mean typing it all again. */
+        log("payout.stripe", { by: me.by, account });
+        return { label: stripeLabel(account) };
+      });
+    }
     if (mode !== "bank") fail("bad_mode", "Choose where your money goes.");
-    const clean = checkBankDetails(w.region, details || {});
-    const ben = await provider.createBeneficiary({ accountId: w.accountId, currency: w.currency, country: w.region, details: clean });
+    /* THE ACCOUNT'S OWN CURRENCY, NOT THE WALLET'S.
+     *
+     * This sent w.currency, so an Australian account added by a member whose
+     * wallet is CNY was stored as CNY — a wire to a Melbourne bank
+     * denominated in yuan, which is not a thing any bank will do. It followed
+     * the same wrong assumption the fields did: that where somebody is and
+     * where their money lands are one fact. */
+    const money = (REGIONS[where] || REGIONS[w.region]).currency;
+    const clean = checkBankDetails(where, details || {});
+    const ben = await provider.createBeneficiary({ accountId: w.accountId, currency: money, country: where, details: clean });
     return ledger.change((data, log) => {
       const id = newId("ben");
-      data.beneficiaries[id] = { id, by: me.by, providerRef: ben.beneficiaryId, label: ben.label, currency: w.currency, createdAt: iso() };
+      /* The country is kept on the beneficiary so the screen can open on the
+         one that was chosen rather than guessing the clock all over again. */
+      data.beneficiaries[id] = { id, by: me.by, providerRef: ben.beneficiaryId, label: ben.label, currency: money, region: where, createdAt: iso() };
       data.wallets[me.by].beneficiaryId = id;
       data.wallets[me.by].payout = "bank";
       log("payout.bank", { by: me.by, ref: id, label: ben.label });
@@ -197,26 +293,106 @@ export function createWalletService({ ledger, provider, people, now = () => Date
     });
   }
 
+  /** An IBAN's own checksum: first four characters to the end, letters to
+   *  numbers (A=10 … Z=35), and the whole thing mod 97 is 1. Done in chunks
+   *  because the number is far too large for a float. */
+  function validIban(v) {
+    const moved = v.slice(4) + v.slice(0, 4);
+    let rest = 0;
+    for (const ch of moved) {
+      const n = /[A-Z]/.test(ch) ? String(ch.charCodeAt(0) - 55) : ch;
+      for (const digit of n) rest = (rest * 10 + Number(digit)) % 97;
+    }
+    return rest === 1;
+  }
+
+  /* WHAT A WIRE TO THIS TERRITORY NEEDS, AND NOTHING ABOUT ANYBODY'S TAX.
+   *
+   * This required a valid ABN from every Australian and stored a GST flag
+   * beside it. Both are gone. The reasoning was "without an ABN the payer
+   * must withhold 47% and send it to the ATO" — true of an AUSTRALIAN payer,
+   * and we are a Chinese company. A WFOE wiring money to an Australian
+   * supplier has no ATO withholding obligation, so we never had a reason to
+   * hold their ABN. What a supplier owes their own revenue office is between
+   * them and it. See public/territory.js.
+   *
+   * THE FIELDS COME FROM THE TERRITORY so the screen and this cannot drift:
+   * a form that collects a routing number the server then drops is worse than
+   * one that never asked.
+   *
+   * EVERY CHECK HERE IS OFFLINE AND SELF-CONTAINED. A BSB is six digits, a
+   * SWIFT is eight or eleven in a fixed shape, an IBAN carries its own mod-97
+   * checksum. All of them catch a typo on the screen it was made on, rather
+   * than by a bank three days later — with no key, no network and no third
+   * party.
+   */
   function checkBankDetails(region, d) {
     const t = (v, n = 80) => String(v ?? "").trim().slice(0, n);
     const digits = (v) => String(v ?? "").replace(/[\s-]/g, "");
-    const name = t(d.accountName);
-    if (name.length < 2) fail("bank_name", "Enter the name on the account.");
-    if (region === "AU") {
-      const bsb = digits(d.bsb), acc = digits(d.accountNumber);
-      if (!/^\d{6}$/.test(bsb)) fail("bank_bsb", "A BSB is six digits.");
-      if (!/^\d{5,10}$/.test(acc)) fail("bank_account", "Enter the account number.");
-      return { accountName: name, bsb, accountNumber: acc, bankName: t(d.bankName) || "Bank account" };
+    const out = {};
+    for (const key of bankFields(region)) {
+      const raw = key === "swift" || key === "iban"
+        ? digits(d[key]).toUpperCase() : key === "accountName" || key === "bankName"
+        || key === "country" || key === "address" ? t(d[key], key === "address" ? 160 : 80)
+        : digits(d[key]);
+      switch (key) {
+        case "accountName":
+          if (raw.length < 2) fail("bank_name", "Enter the name on the account.");
+          break;
+        case "bankName":
+          if (raw.length < 2) fail("bank_bank", "Enter the bank's name.");
+          break;
+        case "bsb":
+          if (!/^\d{6}$/.test(raw)) fail("bank_bsb", "A BSB is six digits.");
+          break;
+        /* Nine digits, and the last one is a checksum — but it is a weighted
+           sum nobody can quote and a wrong ninth digit is caught by the bank
+           anyway. The length is what catches the common mistake, which is
+           pasting an account number into it. */
+        case "routing":
+          if (!/^\d{9}$/.test(raw)) fail("bank_routing", "A routing number is nine digits.");
+          break;
+        case "accountNumber":
+          if (region === "CN") {
+            if (!/^\d{12,19}$/.test(raw)) fail("bank_account", "Enter the bank account or UnionPay card number.");
+          } else if (!/^[A-Za-z0-9]{4,20}$/.test(raw)) {
+            fail("bank_account", "Enter the account number.");
+          }
+          break;
+        /* THE ONE THAT CANNOT BE MISSED where it is asked for. Without it a
+           wire is returned days later, minus the fees, and the person who did
+           the work is the one who waits. */
+        case "swift":
+          if (!/^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$/.test(raw)) {
+            fail("bank_swift", "A SWIFT/BIC is 8 or 11 characters, like CTBAAU2S.");
+          }
+          break;
+        /* CHECKED ONLY IF IT LOOKS LIKE AN IBAN. Half the world has none —
+           the US, Canada, Australia, China, most of south-east Asia — so
+           anything that is not IBAN-shaped is taken as a plain account
+           number rather than refused. */
+        case "iban":
+          if (!raw) fail("bank_account", "Enter the IBAN or account number.");
+          if (/^[A-Z]{2}\d{2}[A-Z0-9]{10,30}$/.test(raw) && !validIban(raw)) {
+            fail("bank_account", "That IBAN does not look right. Check it against your statement.");
+          }
+          if (!/^[A-Z0-9]{5,34}$/.test(raw)) fail("bank_account", "Enter the IBAN or account number.");
+          break;
+        case "country":
+          if (raw.length < 2) fail("bank_country", "Which country is the account in?");
+          break;
+        /* NOT BUREAUCRACY. Correspondent banks screen payments, and a
+           beneficiary with no address is the commonest reason one is held. */
+        case "address":
+          if (raw.length < 6) fail("bank_address", "Enter your address. Banks hold payments without one.");
+          break;
+        default:
+          break;
+      }
+      out[key] = raw;
     }
-    if (region === "CN") {
-      const acc = digits(d.accountNumber);
-      if (!/^\d{12,19}$/.test(acc)) fail("bank_account", "Enter the bank account or UnionPay card number.");
-      if (!t(d.bankName)) fail("bank_bank", "Enter the bank's name.");
-      return { accountName: name, accountNumber: acc, bankName: t(d.bankName) };
-    }
-    const iban = digits(d.iban || d.accountNumber).toUpperCase();
-    if (!/^[A-Z0-9]{8,34}$/.test(iban)) fail("bank_account", "Enter the IBAN or account number.");
-    return { accountName: name, iban, bankName: t(d.bankName) || "Bank account" };
+    if (!out.bankName) out.bankName = "Bank account";
+    return out;
   }
 
   /* ---- quote ------------------------------------------------------------ */

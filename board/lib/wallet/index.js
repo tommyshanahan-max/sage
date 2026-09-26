@@ -63,6 +63,19 @@ export function createWallet({ dir, env = process.env, loadPeople, hashOf }) {
     await refresh();
     return cache.byHash.get(by) || null;
   }
+  /* THE SAME LOOKUP, BY HASH RATHER THAN BY REQUEST.
+   *
+   * identify() reads the x-board-device header, which the app's own fetch
+   * calls carry. A browser coming back from Stripe carries no such header —
+   * it is an ordinary navigation — so /china/linked has the board_in cookie
+   * and nothing else to go on. This lets it resolve the same person the same
+   * way without reaching into the cache from outside. */
+  identify.byHash = async (by) => {
+    if (!by) return null;
+    await refresh();
+    return cache.byHash.get(by) || null;
+  };
+
   /** Members you could pay, and whether each can be paid yet. */
   identify.people = async (me) => {
     const wallets = await ledger.read((d) => d.wallets);
@@ -81,5 +94,5 @@ export function createWallet({ dir, env = process.env, loadPeople, hashOf }) {
   setInterval(() => { service.expireDue().catch((e) => console.error("wallet expiry", e.message)); }, 60 * 1000).unref();
 
   console.log(`wallet: on, provider ${provider.name}${testConfirm ? ", test confirm allowed" : ""}`);
-  return { on: true, mode, routes, webhooks, service, ledger, provider };
+  return { on: true, mode, routes, webhooks, service, ledger, provider, identify };
 }

@@ -4826,6 +4826,10 @@ export const STRINGS = {
     "人就这些了。把你自己的照片放上来，你也就在名单上了。",
   ],
   "brw.next":          ["Next", "下一个"],
+  /* THE PEEK OVER THE PHOTOGRAPH. "Their page" and not "profile": a profile
+     is what a form calls it, and a page is what somebody has. */
+  "brw.theirPage":     ["Their page", "他的主页"],
+  "brw.shutPeek":      ["Close", "关闭"],
   "brw.none":          ["Nobody on the list yet", "名单上还没有人"],
   // Named the study-buddy list, which is not in V1 — and said "nobody", which
   // is wrong for the commonest case: somebody whose own page exists and is
@@ -5154,6 +5158,13 @@ export const STRINGS = {
      form — everything the payer reads that is ours, not theirs. */
   "pay.frameWait":     ["Bringing up the payment…", "正在调出付款…"],
   "pay.frameBlocked":  ["The payment form did not load.", "付款页面没打开。"],
+  /* THE OTHER HALF, WHICH IS NOT THE PAYER'S NETWORK. Stripe.js loaded and
+     Stripe then refused the session — a configuration fault on this side.
+     The payer was being told to blame their own connection for it, on a
+     connection that was working; and "ask them how else to pay" is the
+     wrong instruction when the fix is ours and takes a minute. */
+  "pay.frameRefused":  ["Nothing to do with your phone. Ask {who}.",
+                        "不是你手机的问题，找 {who} 说一声。"],
   "pay.frameWhy":      ["Your network may be blocking it. You can still pay {who} directly.",
                         "可能是网络挡住了。也可以直接付给 {who}。"],
   "pay.frameGo":       ["Pay them directly instead", "改成直接付"],
@@ -5559,6 +5570,133 @@ export const STRINGS = {
   "rq.goneWhy":        ["It may have been taken back, or the address is wrong. Ask whoever sent it.",
                         "可能已经撤回，或者地址不对。找发给你的人问一下。"],
 
+/* 开票信息 — THE PAYER'S TAX DETAILS, ON THE PAGE THEY PAY FROM.
+ *
+ * WRITTEN FOR SOMEBODY WHO DOES THIS EVERY WEEK. A Chinese finance clerk has
+ * handed over 开票信息 a thousand times and keeps it as a block of text they
+ * paste. So the Chinese here names the gesture — 粘贴 — and stops. A sentence
+ * explaining what a fapiao is, or why we need one, is a sentence explaining
+ * their own job back to them, which is the fault this file has been caught on
+ * before with the long-press line under the QR code.
+ *
+ * AND 发票 IS THE RIGHT WORD HERE, unlike on a request row. `rq.no` is 单号
+ * and never 发票 because a request number is not a tax document. This is the
+ * tax document. */
+  "rq.invAsk":         ["Need an invoice?", "需要开发票？"],
+  "rq.invChange":      ["Change", "修改"],
+  "rq.invDone":        ["Invoice issued", "发票已开"],
+  "rq.invPaste":       ["Paste your invoice details", "粘贴开票信息"],
+  /* Labels with nothing after them. A clerk recognises the shape of their own
+     block instantly; a made-up company and a made-up tax number in the box
+     is one more thing to read past, and a plausible fake tax number is one
+     somebody will eventually send us. */
+  "rq.invEg":          ["Company name:\nTax number:", "公司名称：\n纳税人识别号："],
+  "rq.invHint":        ["Name and tax number is enough. The rest is only for a special VAT invoice.",
+                        "公司名称和税号就够了，其余的开专票才用得上。"],
+  "rq.invSpecial":     ["Special VAT invoice — the bank line is needed too",
+                        "开增值税专用发票（还要开户行和账号）"],
+  "rq.invSave":        ["Save", "保存"],
+  "rq.invSaving":      ["Saving…", "保存中…"],
+  "rq.invLater":       ["Later", "以后再说"],
+  "rq.invGot":         ["Got it", "已收到"],
+  "rq.invClose":       ["Done", "好"],
+  "rq.invStill":       ["Still missing: {what}", "还差：{what}"],
+  "rq.invF.title":     ["company name", "公司名称"],
+  "rq.invF.taxId":     ["tax number", "税号"],
+  "rq.invF.addr":      ["address", "地址"],
+  "rq.invF.tel":       ["phone", "电话"],
+  "rq.invF.bank":      ["bank", "开户行"],
+  "rq.invF.acct":      ["account number", "账号"],
+  /* THE TAX NUMBER HAS ITS OWN CHECKSUM, so a wrong one is a typo and can be
+     said to be one. Told apart from a missing one because they are different
+     problems and only one of them is fixed by looking again. */
+  "rq.invBadTax":      ["That tax number does not check out. Have another look at it.",
+                        "税号对不上，再看一眼。"],
+  "rq.invNoName":      ["No company name in that.", "没找到公司名称。"],
+  "rq.invNoRead":      ["Could not read that. Paste the whole block.",
+                        "没读出来，整段贴进来。"],
+  "rq.invShut":        ["That invoice has gone out already. Ask them to reissue it.",
+                        "发票已经开出去了，要改的话联系对方重开。"],
+
+/* THE BOOKS — both invoices of a deal on one line.
+ *
+ * WRITTEN FOR SOMEBODY DOING THEIR OWN ACCOUNTS AT NINE AT NIGHT, which is
+ * who actually opens this. Every line is a label on a figure, so every line
+ * is as short as a label can be. Nothing here explains what a margin is.
+ *
+ * 对账 RATHER THAN 记账. 记账 is bookkeeping, which this is not and must not
+ * claim to be — it holds no journals and posts nothing. 对账 is checking two
+ * sides against each other, which is exactly what the screen does. */
+  "bk.head":           ["Deals", "对账"],
+  "bk.sub":            ["Both invoices of every deal.", "每一单的两张票。"],
+  "bk.loading":        ["…", "…"],
+  "bk.none":           ["Nothing to reconcile yet.", "还没有可对的账。"],
+  "bk.margin":         ["Margin", "毛利"],
+  "bk.onWhat":         ["of {n}", "占 {n}"],
+  /* NOT "through the WFOE". It is the right word and nobody reading a money
+     screen at speed parses it. What the sentence is for is having the yuan
+     figure to hand, so the yuan figure is the sentence. */
+  "bk.cny":            ["{n} banked in yuan", "人民币实收 {n}"],
+  /* NOT "unpaired" OR "unmatched", WHICH ARE WORDS ABOUT THE DATABASE. The
+     fact is that nobody has been paid for the job yet, so that is the
+     sentence. It sits under the margin and its whole purpose is that nobody
+     reads it as part of one. */
+  "bk.open":           ["{n} in with no supplier yet",
+                        "{n} 进账还没有供应商"],
+  "bk.needInv":        ["{n} to invoice", "{n} 张票要开"],
+  "bk.needBill":       ["{n} invoice not in", "{n} 张票没收到"],
+  "bk.noOne":          ["no supplier", "没供应商"],
+  /* WHY A MARGIN IS MISSING, where it is. A blank in the one column this
+     screen exists for reads as a bug every time. */
+  "bk.why.noSupplier": ["no supplier yet", "还没加供应商"],
+  "bk.why.noPayer":    ["no money in", "没有进账"],
+  "bk.why.noCur":      ["currency unknown", "币种不明"],
+  "bk.why.twoCurs":    ["two currencies", "两种币，算不了"],
+  "bk.cIssue":         ["To invoice", "待开票"],
+  "bk.cIssued":        ["Invoiced", "已开票"],
+  "bk.cBill":          ["No invoice", "待收票"],
+  "bk.cBilled":        ["Invoice in", "已收票"],
+  "bk.payer":          ["Payer", "付款方"],
+  "bk.invoiced":       ["Invoiced", "开票金额"],
+  "bk.inCny":          ["Banked in yuan", "人民币实收"],
+  "bk.invTo":          ["Invoice to", "发票抬头"],
+  "bk.invTax":         ["Tax number", "税号"],
+  "bk.supplier":       ["Supplier", "供应商"],
+  "bk.paidOut":        ["Paid out", "付出"],
+  "bk.addSupplier":    ["Add the supplier", "加供应商"],
+  /* THE NUMBER IS NOT TYPED AND THE SENTENCE SAYS SO. Typing 1,900 beside
+     2,000 is how a deal quietly ends up at 4.7% and nobody notices for a
+     quarter — so the rate is stated and the arithmetic is ours. */
+  "bk.willPay":        ["{n} in, less {pct}%", "进 {n}，扣 {pct}%"],
+  "bk.supplierName":   ["Who you are paying", "付给谁"],
+  "bk.supplierEg":     ["Their name", "对方名字"],
+  "bk.makeIt":         ["Make it", "生成"],
+  /* A BUTTON SAYS WHAT PRESSING IT DOES. Two ticks sit side by side on the
+     same sheet, so neither of them may read simply "Undo". */
+  "bk.tIssue":         ["Invoice issued", "已开票"],
+  "bk.tIssued":        ["Undo issued", "撤销开票"],
+  "bk.tBill":          ["Invoice received", "已收到票"],
+  "bk.tBilled":        ["Undo received", "撤销收票"],
+  "bk.eAlready":       ["That deal already has a supplier.", "这单已经有供应商了。"],
+  "bk.eAmount":        ["Nothing to work the amount out from.", "算不出金额。"],
+  /* THE PERSON WHO NEEDS THIS MOST DOES NOT USE THIS APP. */
+  /* THE DEEPER SCREEN, now that the deals themselves are on the home screen.
+     The column there is for reading; this is for reconciling and exporting,
+     which is a different job and deserves its own word. */
+  /* THE FOLD ON THE MONEY SCREEN. One word, because it sits on a line with a
+     figure and a caret and has to be read in the same glance as both. */
+  /* NOT "payout settings". The two things a person actually wants from that
+     screen are being able to invoice and being able to be wired money, so
+     the line names those and not the screen. */
+  /* THE QUESTION AS SOMEBODY WOULD ASK IT. Not "payout settings", which is
+     the name of a screen, and not "where your money lands", which was a
+     footnote about a Stripe account. */
+  "dl.whereSend":      ["Where do we send your money", "钱打到哪里给你"],
+  "dl.bankDetails":    ["Your bank and invoice details", "你的银行和开票资料"],
+  "dl.pending":        ["Pending", "待结"],
+  "bk.totals":         ["Totals", "汇总"],
+  "bk.csv":            ["Send it to the accountant", "导出给会计"],
+
   "memo.brand":        ["The Exchange", "交换"],
   "memo.untitled":     ["The terms", "这单的条件"],
   "memo.between":      ["{a} hired {b}", "{a} 找 {b} 办的事"],
@@ -5949,6 +6087,16 @@ export const STRINGS = {
     "群里的每个人都能看到群里的所有消息，也能看到都有谁在群里。任何人都可以退群，但没有人能把别人踢出去。",
   ],
   "grp.inIt":          ["{n} people in it", "群里有 {n} 个人"],
+  // "1 people in it" was on the screen. One person is a person.
+  "grp.inIt1":         ["1 person in it", "群里有 1 个人"],
+  /* WHAT A LINE WITH NO WORDS SAYS IN A LIST. A voice note, a bill and a
+     payment code all carry no text, so the preview under the name came out
+     as "You:" and nothing — a row that looks like a message that failed to
+     send. The Chinese is what WeChat's own list says, in brackets, because
+     that is the shape a Chinese reader already reads there. */
+  "note.wasVoice":     ["Voice message", "[语音]"],
+  "note.wasBill":      ["Asked for money", "[收款]"],
+  "note.wasCode":      ["A payment code", "[二维码]"],
   "grp.quiet":         ["Nothing said yet.", "还没有人说话。"],
   /* One word on the small line under a message, not a call to action beside
      every sentence: a room that asks you about every message is not a room
@@ -6756,10 +6904,122 @@ export const STRINGS = {
   "od.total":          ["Total", "合计"],
   "od.foot":           ["Straight from Australia · ordered from {who}'s shop",
                         "澳洲直邮 · 由 {who} 的小店下单"],
+  /* ---- THE WHITE LABEL'S FRONT DOOR -----------------------------------
+     europay.html. Written for somebody who has been sent a link by a partner
+     and has not agreed to anything: what it does for them, in one line, and
+     a button. The Chinese is written rather than translated — a reader here
+     is a merchant, not a payer, so it is plainer than the pay screens. */
+  /* WHAT THIS IS, IN ONE LINE, ABOVE THE HEADLINE. A cold visitor needs the
+     category before the promise — "Your clients in China can pay you" is the
+     benefit and says nothing about what the thing IS. Tom's own words, kept
+     because they are plainer than anything written for them. */
+  "ep.kicker":         ["China payment software for multi-level agent networks",
+                        "\u9762\u5411\u591a\u5c42\u7ea7\u4ee3\u7406\u7f51\u7edc\u7684\u4e2d\u56fd\u6536\u6b3e\u7cfb\u7edf"],
+  "ep.head":           ["Your clients in China can pay you.",
+                        "中国客户直接给你付款。"],
+  /* THE MARKS, WHICH ARE THE PROOF. A Chinese merchant scans a payments page
+     for two words before reading anything, and a paragraph saying "in the
+     wallet they already use" is the slow way to say what two logos say at a
+     glance. English keeps both scripts — a reader who cannot read the
+     characters still needs to see them, because seeing them IS the message. */
+  /* The same in both languages, on purpose. The mark IS the message — a
+     reader who cannot read the characters still has to see them — so the
+     character set is the large line in English too, and the latin name is
+     the small one under it rather than trailing it on the same line. */
+  "ep.mAli":           ["支付宝", "支付宝"],
+  "ep.mAliSub":        ["Alipay", "Alipay"],
+  "ep.mWx":            ["微信支付", "微信支付"],
+  "ep.mWxSub":         ["WeChat Pay", "WeChat Pay"],
+  "ep.mCard":          ["银行卡", "银行卡"],
+  "ep.mCardSub":       ["Visa \u00b7 Mastercard", "Visa \u00b7 Mastercard"],
+  /* WHAT THE BLOCKS ARE, because a stranger meets a rotating 3D shape with
+     no idea what it is showing them. "Multi-level hierarchical affiliate
+     revenue tracking" is the thing itself and is five nouns deep; a person
+     who has to parse a label has already stopped looking at the picture.
+     Two short lines instead: what it is, then how to read it. */
+  "ep.pyrLab":         ["Your network", "\u4f60\u7684\u56e2\u961f"],
+  "ep.pyrWhat":        ["Each block is one person under you. The taller it is, the more they brought in.",
+                        "\u6bcf\u4e2a\u65b9\u5757\u662f\u4f60\u4e0b\u9762\u7684\u4e00\u4e2a\u4eba\uff0c\u8d8a\u9ad8\u8d5a\u5f97\u8d8a\u591a\u3002"],
+  "ep.beneath":        ["Through everyone beneath you", "你下面所有人的总额"],
+  "ep.tapBack":        ["Tap the same square for the total", "\u518d\u70b9\u4e00\u6b21\u770b\u603b\u989d"],
+  "ep.theirOwnLine":   ["Their own, this month", "\u4ed6\u672c\u6708\u81ea\u5df1\u7684"],
+  "ep.turn":           ["Drag to turn", "拖动可旋转"],
+  "ep.go":             ["Get started", "开始使用"],
+  "ep.under":          ["Nothing to install. Connect the Stripe account you already have.",
+                        "不用装任何东西，用你现有的 Stripe 账户即可。"],
+  "ep.foot":           ["Your money never passes through us.",
+                        "款项不经过我们的账户。"],
+
+  "ep.lookLab":        ["What it looks like", "\u957f\u4ec0\u4e48\u6837"],
+
+  /* The three screens under the button. Labels, not sentences — they sit
+     inside a phone the size of a postcard. */
+  "ep.sBalance":       ["Balance", "余额"],
+  "ep.sAvailable":     ["Available now", "可提现"],
+  "ep.sRequest":       ["Request", "收款"],
+  "ep.sSend":          ["Send", "转账"],
+  "ep.sActivity":      ["Activity", "交易记录"],
+  "ep.sToday":         ["Today", "今天"],
+  "ep.sYesterday":     ["Yesterday", "昨天"],
+  "ep.sCut":           ["Your share", "你的分成"],
+  "ep.sPeople":        ["Your people", "你的人"],
+  "ep.sBetween":       ["Between them, this month", "他们本月合计"],
+  "ep.sPaid":          ["Getting paid", "收款方式"],
+  "ep.sWhere":         ["When someone sends you money, where should it go?",
+                        "别人给你转钱，到哪里？"],
+  "ep.sBank":          ["A bank account", "银行账户"],
+  "ep.sBankSub":       ["A day or two", "一两天到账"],
+  "ep.sStripe":        ["My Stripe account", "我的 Stripe 账户"],
+  "ep.sStripeSub":     ["The one you already have", "用你现有的账户"],
+  /* The fourth screen: a row opened. Labels for a person's own card. */
+  "ep.sTheirOwn":      ["Their own", "\u4ed6\u81ea\u5df1\u7684"],
+  "ep.sTheirPeople":   ["Their people", "\u4ed6\u4e0b\u9762\u7684\u4eba"],
+  "ep.sEarnedYou":     ["Earned you", "\u7ed9\u4f60\u8d5a\u7684"],
+  "ep.sJoined":        ["Joined", "\u52a0\u5165\u65f6\u95f4"],
+  "ep.sWithBelow":     ["With everyone beneath them", "\u542b\u4ed6\u4e0b\u9762\u6240\u6709\u4eba"],
+  "ep.cPerson":        ["Any of them, opened. Their tree, and what it brings you.",
+                        "\u70b9\u5f00\u5176\u4e2d\u4e00\u4e2a\uff1a\u4ed6\u7684\u56e2\u961f\uff0c\u548c\u4ed6\u7ed9\u4f60\u5e26\u6765\u7684\u3002"],
+  "ep.cWallet":        ["What you have, and what moved.", "余额和流水。"],
+  "ep.cPeople":        ["Everyone under you, and what they took.",
+                        "你下面的人，和他们的流水。"],
+  "ep.cPaid":          ["Asked once. No form — Stripe takes the details on its own page.",
+                        "只问一次。不用填表，账户资料由 Stripe 自己收。"],
+
   "od.pay":            ["To pay", "需支付"],
   "od.to":             ["Straight from Australia · {who}", "澳洲直邮 · {who}"],
   "od.wechat":         ["WeChat Pay", "微信支付"],
   "od.alipay":         ["Alipay", "支付宝"],
+  /* THE LONE BUTTON SAYS WHAT IT DOES. With two wallets side by side the
+     brand IS the choice, so 微信支付 / 支付宝 is right. With one, a button
+     reading 支付宝 is a logo standing where a verb belongs — see payBox in
+     order.html, and orderWays() in server.js for why there is usually one. */
+  "od.payAlipay":      ["Pay with Alipay", "支付宝支付"],
+  /* SAID BEFORE SHE PRESSES, NOT AFTER. The shelf is in yuan and Stripe's
+     sheet will be in Australian dollars, because that is the only currency
+     Alipay takes from an Australian account. Meeting that with no warning is
+     a reason to close the tab.
+     Written for somebody who already knows how their wallet works: 扣款 and
+     当日汇率 are the words Alipay itself uses on a cross-border payment, so
+     this reads as the ordinary thing it is rather than as an explanation. */
+  "od.audNote":        ["Alipay charges in Australian dollars, at its rate on the day.",
+                        "支付宝按澳元扣款，汇率以支付宝当日为准。"],
+  "od.payWechat":      ["Pay with WeChat Pay", "微信支付"],
+  /* THE CARD, WHICH SITS UNDER THE WALLET ROW AND ALWAYS SAYS THE VERB. It
+     is never one of a pair of logos — it is the other way to pay when the
+     wallet did not work — so it does not get the two-wallet treatment above.
+     银行卡 rather than 信用卡: a debit card is the commoner one and this
+     takes both. */
+  "od.payCard":        ["Pay with card", "银行卡支付"],
+  /* THE SAME WARNING AS od.audNote, FOR THE SCREEN THAT OFFERS MORE THAN
+     ALIPAY. Naming Alipay under a card button is a line about the wrong
+     button, and the charge is in Australian dollars either way. */
+  "od.audAll":         ["Charged in Australian dollars, at the day's rate.",
+                        "按澳元扣款，汇率以当日为准。"],
+  /* Said instead of a button that cannot work. The order is real and she has
+     already typed her address into it, which is the half worth telling her. */
+  "od.noWay":          ["Payment is off right now. Your order is saved.",
+                        "暂时收不了款，订单已保存。"],
+  "od.noNet":          ["No connection. Try again.", "网络没通，再试一次。"],
   "od.making":         ["One moment…", "正在生成…"],
   /* Press and hold is how anybody opens a code sent to them in a chat. It
      leads, because a line that opens with a problem they do not have is a
@@ -6769,6 +7029,10 @@ export const STRINGS = {
                         "或者截屏，再长按那张图"],
   "od.already":        ["This one is already paid.", "这笔已经付过了。"],
   "od.noQr":           ["No code came back. Try again.", "没生成出来，再试一次。"],
+  /* The other refusal, and it is a different screen: the Stripe rail opens a
+     form rather than drawing a 收款码, so "no code came back" describes
+     something that was never going to appear. */
+  "od.payNo":          ["That would not open. Try again.", "支付打不开，再试一次。"],
   "od.track":          ["Tracking", "快递单号"],
   "od.gone":           ["That order would not open.", "这个订单打不开了。"],
   /* 确认收货 — the state nothing could reach until now, and the one click
@@ -7042,11 +7306,16 @@ export const STRINGS = {
   "wl.add":            ["Add", "充值"],
   "wl.withdraw":       ["Withdraw", "提现"],
   "wl.balance":        ["Balance", "余额"],
-  "wl.straightToBank": ["Money you receive goes straight to your bank", "收到的钱直接到账你的银行卡"],
+  /* Under the Earned figure, where it is followed by the account itself —
+     so it is a label for what comes next, not a sentence that collides with
+     it. It read "…goes straight to your bank No bank account yet". */
+  "wl.straightToBank": ["Straight to", "直接到账"],
   "wl.noBankYet":      ["No bank account yet", "还没绑定银行卡"],
   "wl.verified":       ["verified", "已实名"],
   "wl.notVerifiedYet": ["identity not confirmed yet", "未实名"],
-  "wl.confirmToMove":  ["Confirm your identity to send, add or withdraw money. ", "实名后才能转账、充值和提现。"],
+  /* Add and withdraw are gone — there is no balance to put money into or
+     take it out of. Two verbs, and they are the two on the screen. */
+  "wl.confirmToMove":  ["Confirm your identity to send or receive money. ", "实名后才能转账、收款。"],
   "wl.confirmNow":     ["Confirm now", "去实名"],
   "wl.needsYou":       ["Needs you", "待处理"],
   "wl.recent":         ["Recent", "最近"],
@@ -7135,24 +7404,157 @@ export const STRINGS = {
   /* payout */
   "wl.gettingPaid":    ["Getting paid", "收款方式"],
   "wl.whereShouldGo":  ["When someone sends you money, where should it go?", "别人给你转钱，到哪里？"],
+  /* A STATEMENT, NOT A QUESTION, because there is only one answer left — the
+     other was "keep it in your wallet" and this board holds no money. */
+  "wl.weSendTo":       ["We send your money straight to your bank.",
+                        "我们直接把钱打到你的银行账户。"],
   "wl.keepInWallet":   ["Keep it in my wallet", "留在钱包里"],
   "wl.withdrawWhenever":["Withdraw whenever you like", "随时可以提现"],
   "wl.myBankIs":       ["My bank account ({label})", "我的银行卡（{label}）"],
   "wl.straightToMine": ["Straight to my bank account", "直接到账我的银行卡"],
+  /* UNUSED SINCE THE PAYER BECAME THE WFOE. Kept rather than deleted because
+     it is true and will be wanted again the day anything outside China pays a
+     Chinese member directly — money arriving from abroad really is checked
+     first. It is a domestic transfer that is same-or-next-day, and that is
+     the only case the product has today. */
   "wl.cnChecked":      ["Payments into China are checked first, usually 1–2 days", "入境资金需先审核，一般 1–2 个工作日"],
   "wl.usuallyNextDay": ["Usually the same or next working day", "一般当天或次个工作日到账"],
   "wl.useDifferent":   ["Use a different account", "换一张卡"],
+
+  /* THE TWO ANSWERS TO "WHERE DOES THE MONEY GO", as rows on the screen that
+     asks it. Four words each and one line under, because this is the screen
+     somebody opens to get paid and not the screen to explain Stripe on.
+
+     The Chinese is written rather than translated. "打到我的银行卡" is what
+     somebody in China says about being paid — 打钱 is the everyday verb and
+     银行卡 is the card, not the account; "直接到账我的银行账户" is a form
+     asking a question, which is how the English would arrive if it were
+     carried across word by word. And Stripe keeps its own name: it has no
+     Chinese one, and inventing one would leave somebody looking for a word
+     that is not on their own dashboard. */
+  "wl.pickBank":       ["My bank account", "打到我的银行卡"],
+  "wl.pickBankSub":    ["Same or next working day", "当天或次个工作日"],
+  "wl.pickStripe":     ["My Stripe account", "我的 Stripe 账户"],
+  "wl.pickStripeSub":  ["The one you already have", "用你现有的账户"],
+  /* WHEN IT CANNOT YET. Not "error", not "unavailable" — it is a thing that
+     is coming and the person has done nothing wrong. Chinese written rather
+     than carried across: 还没开通 is what a Chinese product says about a
+     feature that is not switched on yet. */
+  "wl.pickStripeOff":  ["Not switched on yet", "还没开通"],
+  /* WHAT A CONNECTED ACCOUNT DOES, WHICH IS NOTHING. There is no wire and
+     no waiting: the charge was raised on their own account, so the money is
+     theirs the moment it clears. Saying "same or next working day" over it
+     would be describing a transfer that never happens.
+     结算 is the word a Chinese merchant reads on their own statement. */
+  "wl.stripeLands":    ["It is already there when it clears", "结算后直接进你的账户"],
+
+  /* WHAT THIS BECOMES IF HE RESELLS IT — the second conversation, on a row.
+     Every string here says "example" or implies it, because figures on a
+     money screen are read as yours and these are nobody's.
+     下级商户 is the ordinary Chinese word for merchants under you in a
+     distribution chain; "附属商户" is a translation of "affiliate" and not
+     a thing anybody says. */
+  "dl.affLabel":       ["What your merchants earn", "你下面的商户赚了多少"],
+  "dl.affSub":         ["An example — none yet", "示例 — 还没有商户"],
+  "dl.affExample":     ["Example figures", "示例数字"],
+  "dl.affHead":        ["Merchants under you", "你的下级商户"],
+  /* THE RATE IS IN THE SENTENCE, because a column of figures nobody can
+     check is a column nobody believes — and this is the sentence the whole
+     idea is being sold on. */
+  "dl.affWhat":        ["They take money from China. You take {pct}% of every payment, without touching it.",
+                        "他们收中国客户的钱，每一笔你抽 {pct}%，钱不经你的手。"],
+  "dl.affYours":       ["Your share", "你的分成"],
   "wl.accountName":    ["Name on the account", "开户人姓名"],
   "wl.asOnYourId":     ["As on your ID", "与身份证一致"],
+  /* THE ABN, AND WHY IT IS NOT OPTIONAL. Without one the payer must withhold
+     47% and send it to the ATO — so a blank field is not a blank field, it is
+     half the money gone. Said as the consequence rather than as a rule. */
+  "wl.abn":            ["ABN", "ABN（澳洲商号）"],
+  "wl.abnHint":        ["Eleven digits, from your invoice. Without one we have to withhold 47%.",
+                        "11 位数字，发票上有。没有的话必须先扣 47%。"],
+  "wl.asOnAbn":        ["As registered against the ABN, not your trading name.",
+                        "与 ABN 登记的名称一致，不是店招名。"],
+  "wl.gstReg":         ["I'm registered for GST", "我已注册 GST"],
+  "wl.gstWhy":         ["Under $75,000 a year you usually aren't, and that's fine — just don't charge it.",
+                        "年营业额 7.5 万以下通常不用注册，不注册就别收这 10%。"],
+  "wl.invNeeds":       ["What your invoice needs", "发票上要写什么"],
+  "wl.invNeedsSub":    ["The words \"Tax invoice\", your ABN, the date, what it was for, and the GST — or \"Total price includes GST\".",
+                        "写上 Tax invoice、你的 ABN、日期、服务内容，以及 GST 金额（或注明含 GST）。"],
+  /* SWIFT IS THE ONE THAT CANNOT BE MISSED — it is how the money finds the
+     bank, and without it a wire comes back days later minus the fees, with
+     the person who did the work waiting. The example is a real bank's, so
+     the shape is obvious without explaining it. */
+  "wl.swift":          ["SWIFT / BIC", "SWIFT / BIC"],
+  "wl.swiftHint":      ["8 or 11 characters, like CTBAAU2S. On your statement, or ask your bank.",
+                        "8 位或 11 位，例如 CTBAAU2S。账单上有，或问银行。"],
+  "wl.ibanHint":       ["IBAN where your country uses one. Otherwise the plain account number.",
+                        "有 IBAN 的国家填 IBAN，没有的就填账号。"],
+  /* NOT "country the account is in" — the picker above it already says that
+     and two fields with the same label three inches apart is a form asking
+     the same question twice. This one is only reached by choosing "Somewhere
+     else", so it asks the question that choice leaves open. */
+  "wl.bankCountry":    ["Which country, exactly?", "具体是哪个国家？"],
+  "wl.yourAddress":    ["Your address", "你的地址"],
+  "wl.addressWhy":     ["Banks hold international payments without one.",
+                        "没有地址，国际汇款会被银行卡住。"],
+/* THE DEALS COLUMN ON THE WALLET HOME. Labels on figures, so each one is as
+   short as a label can be. Nothing here explains what a margin is. */
+  /* Seen for an instant while the money screen opens, and by anybody whose
+     browser refuses the redirect. Not "redirecting" — that is a word about
+     the machinery. */
+  /* THE FIRST SCREEN OF BEING PAID. Written for somebody who pressed a
+     button asking where their money goes — so it answers that, and says
+     nothing about providers, reversals or card fees. */
+  "wl.whereHero":      ["Where do we send your money",
+                        "钱打到哪里给你"],
+  "wl.whereLead":      ["Straight to your bank. Tell us the account and we will not ask again.",
+                        "直接打到你的银行账户。填一次，以后不用再填。"],
+  "wl.whereGo":        ["Add your account", "填收款账户"],
+  "wl.moved":          ["Opening your money screen…", "正在打开收款页…"],
+  "wl.deals":          ["Deals", "对账"],
+  "wl.someone":        ["Somebody", "某人"],
+  "wl.noSupplier":     ["no supplier", "没供应商"],
+  "wl.dIn":            ["Invoiced", "开票金额"],
+  "wl.dCny":           ["Banked in yuan", "人民币实收"],
+  "wl.dOut":           ["Paid out", "付出"],
+  "wl.dGap":           ["Margin", "毛利"],
+  "wl.dInvTo":         ["Invoice to", "发票抬头"],
+  /* THE UNITED STATES. Nine digits; the common mistake is pasting an account
+     number in, and the length catches that. */
+  "wl.routing":        ["Routing number", "路由号"],
+  "wl.routingHint":    ["Nine digits, on your cheque or in your banking app.",
+                        "9 位数字，支票上或网银里能找到。"],
+  /* NOT "as registered against the ABN" — the ABN is gone, and the only name
+     that matters is the one the bank will bounce it against. */
+  "wl.asAtBank":       ["Exactly as the bank has it", "与银行登记的完全一致"],
   "wl.bsb":            ["BSB", "BSB"],
   "wl.sixDigits":      ["Six digits", "六位数字"],
   "wl.accountNumber":  ["Account number", "银行账号"],
   "wl.bankLabel":      ["Bank", "开户银行"],
-  "wl.bankEg":         ["e.g. China Merchants Bank", "例如：招商银行"],
+  "wl.cnBank":         ["Bank and branch", "开户行"],
+  /* WHERE THE ACCOUNT IS, not where you are. The two differ constantly — a
+     Chinese member paid into an Australian account, an Australian living in
+     Beijing — and this screen only needs the second fact. */
+  "wl.accountCountry": ["Country the account is in", "账户在哪个国家"],
+  /* The way out for the people the clock guessed wrong about. A line, not a
+     dropdown: most members are being paid where they are. */
+  "wl.elsewhere":      ["The account is in another country", "账户在别的国家"],
+  /* THE BRANCH, NOT JUST THE BANK — this said "e.g. China Merchants Bank",
+     which is the bank and not the 开户行. A domestic CNY transfer is routed
+     on the branch: "招商银行" alone is where an interbank payment stalls and
+     comes back. The example is written the way a Chinese payee writes it on
+     a form, branch and all, so the shape is obvious without a sentence
+     explaining it. */
+  "wl.bankEg":         ["The branch, as written on your card or in the app",
+                        "例如：招商银行上海分行徐汇支行"],
   "wl.cnAccount":      ["Bank account or UnionPay card number", "银行账号或银联卡号"],
   "wl.ibanOr":         ["Account number or IBAN", "银行账号或 IBAN"],
-  "wl.detailsToProv":  ["Your account details go to the provider. The Exchange keeps only the last four digits.",
-                        "账户信息只发给持牌机构，The Exchange 只保留后四位。"],
+  /* NOT "your account details go to the provider". That is the wallet's own
+     plumbing and it is the wrong subject on a screen about being wired money
+     — the fact somebody wants here is what WE keep, which is true whoever
+     moves it. */
+  "wl.detailsToProv":  ["We keep only the last four digits.",
+                        "我们只保留后四位。"],
   "wl.finish":         ["Finish", "完成"],
   "wl.save":           ["Save", "保存"],
   "wl.saved":          ["Saved.", "已保存。"],

@@ -33,6 +33,8 @@ import path from "node:path";
 import * as store from "./lib/store.js";
 import * as memo from "./lib/memo.js";
 import * as request from "./lib/request.js";
+import * as fapiao from "./lib/fapiao.js";
+import * as books from "./lib/books.js";
 import * as shop from "./lib/shop.js";
 import * as sealed from "./lib/sealed.js";
 import * as terms from "./lib/terms.js";
@@ -383,6 +385,120 @@ const isDealioHost = (req) =>
   DEALIO_HOSTS.size > 0
   && DEALIO_HOSTS.has(String(req.get("host") || "").toLowerCase().split(":")[0]);
 
+/* A PARTNER'S OWN NAME, WEARING A PARTNER'S OWN FACE.
+ *
+ * Daniel is a broker in Luxembourg. He wanted the money screen as a page on
+ * his own site, and the mockup that got agreed was not a new screen — it was
+ * this screen, in his navy, with his name on it, sitting in his site's
+ * chrome. So this is a skin and a hostname, not a fork: one more value of
+ * the same switch that already tells this container which product a reader
+ * asked for.
+ *
+ * THE SAME SHAPE AS DEALIO_HOSTS ABOVE, deliberately, including the www.
+ * Somebody will type it and Caddy's redirect only catches the apex-bound
+ * ones.
+ *
+ * WHAT A PARTNER ACTUALLY SUPPLIES IS ONE COLOUR. The mockup declared a navy
+ * and a gold and used the gold twice — on his logo and on his nav underline,
+ * both of which live on HIS site, not on this screen. The screen itself was
+ * navy, white and the neutrals it already had. So the skin takes his deep
+ * colour, optionally his paper, and derives the rest. A partner asked for
+ * ten hex codes is a partner who does not reply. */
+const WHITELABEL_HOSTS = (() => {
+  const d = String(process.env.BOARD_WHITELABEL_DOMAIN || "").trim().toLowerCase();
+  return d ? new Set([d, "www." + d]) : new Set();
+})();
+const isWhitelabelHost = (req) =>
+  WHITELABEL_HOSTS.size > 0
+  && WHITELABEL_HOSTS.has(String(req.get("host") || "").toLowerCase().split(":")[0]);
+
+/* OR A PATH ON A NAME WE ALREADY OWN, which is the cheap half and the one
+ * that shipped first.
+ *
+ * A hostname of his own is the better answer in the end and it costs a DNS
+ * record, a certificate and a wait on somebody else's afternoon.
+ * paydealio.com/europay costs nothing: the name resolves, the certificate
+ * exists, and it can be looked at today. So both work and neither is
+ * required — set the path, or the domain, or both.
+ *
+ * VALIDATED, BECAUSE IT BECOMES A ROUTE. One slash, then lower-case letters,
+ * digits and dashes, and nothing else — a path out of the environment with a
+ * colon or a star in it is an express pattern rather than a page. Anything
+ * that does not match is ignored entirely and there is no such page, which
+ * is the safe failure: a route nobody asked for is worse than a 404. */
+/* Whether the white label's hostname opens on a front page or on the money.
+   On for the demo, and one env var away from off the day a partner is live
+   and his own site is the front page. */
+const WL_FRONT = String(process.env.BOARD_WHITELABEL_FRONT || "").trim().toLowerCase() !== "off";
+
+const WHITELABEL_PATH = (() => {
+  const t = String(process.env.BOARD_WHITELABEL_PATH || "").trim().toLowerCase();
+  return /^\/[a-z0-9][a-z0-9-]{0,30}$/.test(t) ? t : "";
+})();
+const isWhitelabelPath = (req) =>
+  WHITELABEL_PATH !== ""
+  && String(req.path || "").toLowerCase().replace(/\/+$/, "") === WHITELABEL_PATH;
+
+/* Either door. Everything below asks this rather than the two above, so a
+   screen does not have to know which way somebody arrived. */
+const isWhitelabel = (req) => isWhitelabelHost(req) || isWhitelabelPath(req);
+
+/* A COLOUR OUT OF THE ENVIRONMENT GOES INTO A <style> BLOCK, which makes it
+   the one value on this page that could close the block and open a script.
+   So nothing but a hex colour is ever let through: three or six hex digits
+   after a hash, and anything else — including an empty string, a CSS
+   function, a named colour — comes back null and the skin falls back to the
+   board's own palette rather than to a half-written rule. */
+const hexColour = (v) => {
+  const t = String(v || "").trim();
+  return /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(t) ? t : null;
+};
+
+const LABEL_NAME = String(process.env.BOARD_WHITELABEL_NAME || "").trim().slice(0, 40);
+const LABEL_INK = hexColour(process.env.BOARD_WHITELABEL_INK);
+const LABEL_PAPER = hexColour(process.env.BOARD_WHITELABEL_PAPER);
+
+/* THE SKIN, BUILT ONCE. Every value in it is either a validated hex colour
+ * or a literal written here, so there is nothing in the string a hostname or
+ * an env var could have put there.
+ *
+ * THE WHOLE PALETTE, NOT THE DIFFERENCE. It set only the handful of values
+ * that change, on the reasoning that the board's own light block already ran
+ * underneath — true while the white label was a hostname of its own, because
+ * such a host is not Dealio's host. It stopped being true the moment the
+ * same screen appeared at paydealio.com/europay: that IS Dealio's host, so
+ * `:root` is the DARK palette, and every variable left unset stayed dark on
+ * a light page. The language button came out pale grey on near-white and was
+ * all but invisible; the folds would have been dark boxes.
+ *
+ * So all seventeen, from the board's light block, with his colour in the
+ * places that are his. A skin that depends on which other skin happens to be
+ * underneath it is a skin that breaks the next time it is mounted somewhere
+ * new, and it did.
+ *
+ * WHAT IS HIS: the deep colour (the top block, the one solid button, the
+ * pill text on the block) and the paper, if he named one. The neutrals are
+ * ours because they were chosen by somebody looking at the screen, and a
+ * partner asked for ten hex codes is a partner who does not reply. */
+const LABEL_CSS = LABEL_INK
+  ? `html[data-skin="whitelabel"]{`
+    + `--bg:${LABEL_PAPER || "#EEF0F4"};--card:#F7F8FB;`
+    + `--ink:#151B28;--ink2:#4E5968;--mut:#8A939F;`
+    + `--line:#E3E6EC;--hair:#EAECF1;--ok:#2A9D63;`
+    + `--acc:${LABEL_INK};--accink:#FFFFFF;`
+    + `--top:${LABEL_INK};--topBtnInk:${LABEL_INK};`
+    + `--topInk:#EEF1F7;--topDim:#93A0B8;--topBtn:#FFFFFF;`
+    + `--topLine:rgba(255,255,255,.26);--topAcc:#EEF1F7;`
+    + `}`
+  : "";
+
+/* His name, for the tab and the line above the figure. Escaped because it is
+   an operator-set string printed into HTML, and the cost of being wrong once
+   is not worth the two lines saved. */
+const LABEL_TAG = LABEL_NAME
+  .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+  .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
 async function page(file, req, res, next, extra = null) {
   try {
     if (!PAGES.has(file)) PAGES.set(file, await readFile("public/" + file, "utf8"));
@@ -411,6 +527,19 @@ async function page(file, req, res, next, extra = null) {
          where somebody is going, which is before any fetch could answer — so
          it is substituted here rather than asked for. */
       .split("{{DEALIO}}").join(isDealioHost(req) ? "1" : "")
+      /* WHOSE FACE THIS SCREEN WEARS, for the same reason as {{DEALIO}}: the
+         palette has to be settled before the first paint, and a fetch cannot
+         answer before the first paint. Empty on every name but a partner's,
+         which is every name today. */
+      .split("{{SKIN}}").join(isWhitelabel(req) ? "whitelabel" : "")
+      .split("{{SKINCSS}}").join(isWhitelabel(req) ? LABEL_CSS : "")
+      .split("{{LABEL}}").join(isWhitelabel(req) ? LABEL_TAG : "")
+      /* WHETHER THE STRIPE ROW CAN DO ANYTHING, decided here because the
+         screen has to draw it before any fetch could answer — and because a
+         row that is tappable and goes nowhere is worse than a row that says
+         why. Tapping it bounced through /china/api/link and straight back to
+         the screen it was tapped on: a loop with nothing said. */
+      .split("{{CANLINK}}").join(stripe.canLink() ? "1" : "")
       /* WHETHER THIS IS THE APP, for the pages that have to draw a nav bar
          before any fetch could answer. Same reasoning as {{DEALIO}} above,
          and the same detection as inApp() further down — see the long note
@@ -697,6 +826,41 @@ app.post("/api/hook/fee", express.raw({ type: "application/json", limit: "64kb" 
        is the board's own fee, paid on its own link. `group:row` is a payment
        between the two of them, made through Connect — the money went to the
        payee's account and the board's cut was taken by Stripe on the way. */
+    /* AN ORDER IN THE SHOP — the third shape, `order:<id>`. Checked before
+       the split below, because that one reads the part after the colon as a
+       row number and "order" is not one. Stripe is the witness here exactly
+       as it is for a deal: the buyer's own browser coming back proves
+       nothing, and this cannot be forged by editing a query string. */
+    if (ref.startsWith("order:")) {
+      const oid = shop.cleanId(ref.slice(6));
+      if (!oid) return res.json({ ok: true });
+      const out = await change((board) => {
+        const o = board.orders.find((x) => x.id === oid);
+        if (!o || o.off || o.paid) return { ok: true };   // Stripe retries; once only.
+        o.paid = true;
+        o.pay = { ref: String(session.id || ""), how: "alipay",
+                  at: new Date().toISOString() };
+        /* THE SELLER, NOT THE BUYER. This returned `o.by`, which is the
+           BUYER's hashed device — so the one person who did not need telling
+           got the notification and the one with a parcel to pack got
+           nothing. The same line in /api/order/:id/check has always looked
+           the seller up by handle; the two ways of paying have to end the
+           same way or a sale is silent depending on which button she
+           pressed. */
+        const seller = board.people.find((x) => x.handle === o.shop);
+        return { ok: true, tell: seller?.by || "" };
+      });
+      if (out?.tell) tellThem(out.tell).catch(() => {});
+      /* AND NO payCut HERE, deliberately. The sibling in /check pays the
+         storefront its share out of the Airwallex balance the sale landed
+         in. A Stripe sale does not land there — it lands in this platform's
+         Stripe account — so calling it would send a cut out of a balance
+         that never received the money. When the shop sells its own goods
+         there is no cut to pay; the day it settles for somebody else, this
+         is a licence question before it is a code one. See NOW.md. */
+      return res.json({ ok: true });
+    }
+
     const [id, rowPart] = ref.split(":");
     if (!/^[a-f0-9]{20}$/.test(id)) return res.json({ ok: true });
     const row = rowPart === undefined ? -1 : Number(rowPart);
@@ -752,6 +916,94 @@ app.post("/api/hook/fee", express.raw({ type: "application/json", limit: "64kb" 
     res.json({ ok: true });
     if (out?.tell) tellThem(out.tell).catch(() => {});
   });
+
+/* ON A WHITE LABEL'S OWN NAME, ONLY THE MONEY. NOTHING ELSE AT ALL.
+ *
+ * europay.paydealio.com answered every route this container answers, because
+ * that is what a second hostname on one container means and nobody had said
+ * otherwise. So /enter served The Exchange's invitation door — "This board is
+ * private", the logo, "63 people are waiting to get in" — on a payments
+ * domain, and /board, /groups, /notes and the directory were all one typed
+ * path away. A private board with its front door on somebody else's brand.
+ *
+ * AN ALLOWLIST, NOT A BLOCKLIST. A list of doors to shut is a list somebody
+ * has to remember to add to, and what it misses is a board that is meant to
+ * be invite-only. This names what the money screens actually use — read off
+ * the fetch calls in dealio.html and wallet.html rather than recalled — and
+ * everything else is not here.
+ *
+ * ONLY THE HOSTNAME DOOR. isWhitelabelHost, not isWhitelabel: the path door
+ * is paydealio.com/europay, and that name is Dealio's own, where the rest of
+ * the board legitimately answers. Locking by path would take down the host
+ * it is a guest on.
+ *
+ * A PAGE IS SENT HOME, AN API IS REFUSED. Somebody who types a path gets the
+ * money screen rather than an error, which is both friendlier and says
+ * nothing about what does exist here. A fetch gets a 404, because a redirect
+ * to an HTML page is a JSON parse error three frames later. */
+const WL_PAGES = new Set(["/", "/wallet", "/dealio", "/start"]);
+const WL_PREFIX = [
+  /* BOTH SPELLINGS. wallet.html asks /api/wallet for its state and
+     /api/wallet/<something> for everything else, and a prefix with the
+     slash on it misses the first — which 404s the one call every screen
+     there makes before it draws anything. Caught by curling the list rather
+     than by reading it back. */
+  "/api/wallet",            // every screen in wallet.html
+  "/api/request",           // asking to be paid, and reading one back
+  "/api/books",             // the two sides of a deal, and the CSV
+  "/api/pay/",              // onboarding a payee
+  "/api/signin/",           // how the owner of this name gets in at all
+  /* AND WHERE GOOGLE SENDS THEM BACK. /api/signin/google only hands out the
+     URL; the browser returns to /auth/google/cb, which is not under /api and
+     was not on this list — so the first allowlist let somebody start signing
+     in and redirected the answer to the front page. Found by watching a real
+     sign-in fail rather than by reading the list again.
+     The redirect URI is built from the Host header (see googleBack), so each
+     hostname sends its own and EVERY one has to be registered in the Google
+     console. europay.paydealio.com was the third name and the first that
+     nobody had added; the symptom is Error 400 redirect_uri_mismatch, which
+     is Google's and cannot be fixed from here. */
+  "/auth/",                 // the callback Google returns to
+  /* THE STRIPE HANDSHAKE, AND NOT ONE PAGE MORE.
+     This was "/china/" — the whole directory — because that is where the
+     OAuth pair lives. It also holds China Business Solutions: our own
+     brochure, six screens of it, headed "Get paid from China" and
+     "Cross-border payments for services — mainland China to Australia".
+     Pressing Back out of the Stripe flow on europay.paydealio.com landed on
+     our pitch, our positioning and our other product, wearing his name at
+     the top of the browser. Same mistake as the invite door and made the
+     same way: a prefix chosen for what lives under it rather than for what
+     is needed.
+     These two are the only ones a white label ever touches, and neither is
+     a page — both redirect before anything is drawn. Every /china/... they
+     would have sent somebody to is rewritten by chinaHome below. */
+  "/china/api/link",        // the redirect out to Stripe's authorise page
+  "/china/linked",          // and where Stripe sends the browser back
+  "/pay/",                  // a payment link somebody was sent
+];
+/* A FILE IS A FILE — BUT AN .html IS A DOOR.
+ *
+ * The stylesheet, i18n.js, the icons and the service worker are all under
+ * public/ and none of them is a door; listing them by name would be a list
+ * that rots the first time one is renamed. So: anything with an extension.
+ *
+ * WHICH LET /china/home.html THROUGH, 200, THE WHOLE BROCHURE. Express
+ * serves those pages at both spellings and the extension made one of them a
+ * "file". Every page here is reachable by its own name as well as its clean
+ * one, so an extension rule that admits .html admits every screen in the
+ * building through the back of the list. Named pages go in WL_PAGES; .html
+ * is not an asset. */
+const WL_FILE = /\.(?!html?$)[a-z0-9]{2,5}$/i;
+
+app.use((req, res, next) => {
+  if (!isWhitelabelHost(req)) return next();
+  const path = String(req.path || "/");
+  if (WL_PAGES.has(path)) return next();
+  if (WL_PREFIX.some((p) => path.startsWith(p))) return next();
+  if (WL_FILE.test(path)) return next();
+  if (path.startsWith("/api/")) return res.status(404).json({ error: "not_here" });
+  return res.redirect(302, "/");
+});
 
 app.use(async (req, res, next) => {
   if (INVITE !== "read") return next();
@@ -955,13 +1207,74 @@ app.use(async (req, res, next) => {
   return page("enter.html", req, res, next);
 });
 
+/* WHERE "GET STARTED" GOES, AND WHY IT IS A ROUTE RATHER THAN A LINK.
+ *
+ * It pointed at /dealio, and /dealio is the money screen: with nobody signed
+ * in it draws a name and a Sign in button and nothing else. So the front page
+ * promised a network, a pyramid and three wallets, and the button under it
+ * opened a blank screen. Reported as "it died", which is exactly what it
+ * looks like from the outside.
+ *
+ * The real next step for somebody reading that page is connecting the Stripe
+ * account they already have — and that happens on the PLATFORM's hostname,
+ * never the white label's, because board-wl has no client id and no platform
+ * role (see the note over the message block in scripts/whitelabel.sh). That
+ * is a different origin, so the page cannot know the address; the server
+ * does. A route keeps the hostname out of the markup and in the one place
+ * that is told it.
+ *
+ * With no platform hostname set there is nowhere to send anybody, so it falls
+ * back to the money screen rather than to a 404 — the old behaviour, which
+ * was at least a page. */
+app.get("/start", (req, res) => {
+  const d = String(process.env.BOARD_DEALIO_DOMAIN || "").trim().toLowerCase();
+  if (!d) return res.redirect(302, "/dealio");
+  return res.redirect(302, "https://" + d + "/china/connect");
+});
+
 app.get("/", (req, res, next) => {
   /* Dealio's own name opens on Dealio. Its front page is the one written for
      somebody who has never heard of it — what it is, what it costs, who runs
      it — and the app itself is a tap away at /dealio. */
   if (isDealioHost(req)) return page("pay.html", req, res, next);
+  /* A WHITE LABEL'S NAME OPENS ON THE MONEY, not on the pitch. Dealio's own
+     name gets pay.html because somebody arriving there has never heard of it
+     and needs telling what it is. Daniel's clients arrive from a link on his
+     own page, having already read his: a second front page is a second thing
+     to get past. So "/" here is the screen itself. */
+  /* AND HIS OWN NAME OPENS ON A FRONT PAGE AGAIN — for the demo, which is
+     what this hostname is. The reasoning above holds for a LIVE partner:
+     his clients arrive from a link on his own page and a second front page
+     is a second thing to get past. It does not hold for the name we send to
+     somebody who has agreed to nothing yet, and opening THAT on a payment
+     form tells them nothing about what they are looking at.
+     BOARD_WHITELABEL_FRONT=off puts the money screen back for a partner who
+     has gone live; the screen itself is a button away at /dealio either
+     way. */
+  if (isWhitelabelHost(req)) {
+    return page(WL_FRONT ? "europay.html" : "dealio.html", req, res, next);
+  }
   return page(ROOT_IS_BOARD ? "index.html" : "landing.html", req, res, next);
 });
+
+/* AND THE SAME SCREEN AT A PATH WE ALREADY OWN — paydealio.com/europay.
+ *
+ * THE POINT OF IT IS THAT NOBODY HAS TO DO ANYTHING FIRST. A hostname of his
+ * own needs a DNS record from him and a certificate from Caddy, so the
+ * earliest anybody can look at it is tomorrow. This name already resolves
+ * and already has a certificate: the screen exists the moment the box comes
+ * up, and it can be sent to him in a message.
+ *
+ * REGISTERED ONLY WHEN THERE IS A PATH TO REGISTER. Unset, express is never
+ * told about it and the address is an ordinary 404 — rather than a route
+ * that exists and answers with a blank skin, which is the sort of page that
+ * gets found by somebody it was not meant for.
+ *
+ * page() reads the same request and paints the skin, so there is nothing to
+ * pass here — see isWhitelabel above. */
+if (WHITELABEL_PATH) {
+  app.get(WHITELABEL_PATH, (req, res, next) => page("dealio.html", req, res, next));
+}
 /* THE NUMBERS, ON A PHONE.
  *
  * make doors is the same figures and needs a terminal, which means they get
@@ -9158,6 +9471,55 @@ const DEAL_FEE_TO = store.cleanPayLink(process.env.BOARD_DEAL_FEE_TO || "");
    not baked into the board for everybody to read. Unset, /api/pay/start still
    answers and the room falls back to the payee's link, as it did before. */
 const STRIPE_PK = (process.env.BOARD_STRIPE_PK || "").trim();
+
+/* WHOSE TURNOVER IS THEIRS, NOT OURS — the accounts charged DIRECTLY rather
+ * than through a destination charge. See the long note over checkout() in
+ * lib/stripe.js for what the difference actually is; the short version is
+ * that a direct charge is raised on their account, so their name is on the
+ * payer's statement and a chargeback is theirs.
+ *
+ * A LIST, AND DELIBERATELY NOT A DEFAULT. Every account here is somebody we
+ * did not onboard, running a business we have not audited, and making that
+ * the default would silently change who is liable for every member of this
+ * board. Members stay on destination charges, which is right for them: they
+ * are paid in WeChat and Alipay, which have no chargeback of the kind cards
+ * do, and we know who they are.
+ *
+ * It is acct_ ids rather than names because the id is what the charge
+ * carries and a name would have to be resolved to one anyway — and getting
+ * that resolution wrong would put the wrong company's money at risk.
+ *
+ * BOARD_STRIPE_DIRECT="acct_1AAA,acct_1BBB". Empty — every box today —
+ * means every charge is a destination charge, exactly as before.
+ */
+const DIRECT_ACCTS = new Set(
+  String(process.env.BOARD_STRIPE_DIRECT || "")
+    .split(",").map((x) => x.trim()).filter((x) => /^acct_[A-Za-z0-9]+$/.test(x)),
+);
+const paidDirectly = (acct) => Boolean(acct) && DIRECT_ACCTS.has(String(acct));
+
+/* AND WHAT WE TAKE FROM ONE, WHICH IS NOT WHAT WE TAKE FROM A MEMBER.
+ *
+ * store.FEE_PCT is 2 and is right for the board: a member being paid a few
+ * thousand yuan for a piece of work, on rails that cost us real money.
+ *
+ * A PARTNER'S BUSINESS IS VOLUME AND 2% WOULD NOT SURVIVE CONTACT WITH IT.
+ * Daniel's clients are funding accounts he then trades on; two per cent at
+ * the door is more than the trade is worth, and 5% — which is what the
+ * example on his own screen was drawn at, wrongly — is not a number anybody
+ * would sign. 0.5% is what was agreed, and it is a different business: a
+ * tenth of the rate on ten times the money.
+ *
+ * A NUMBER RATHER THAN A CONSTANT because the next partner will not be on
+ * this one, and a rate welded into the source is a deploy every time
+ * somebody negotiates. Guarded the same way MARGIN_PCT is: anything that is
+ * not a sensible percentage falls back rather than charging zero or
+ * everything.
+ */
+const DIRECT_PCT = (() => {
+  const n = Number(String(process.env.BOARD_STRIPE_DIRECT_PCT || "").trim());
+  return Number.isFinite(n) && n > 0 && n < 50 ? n : 0.5;
+})();
 /* A LOOK, NOT A PAYMENT.
  *
  * `make try` sets this so the payer's screens can be walked on a laptop with
@@ -9170,7 +9532,36 @@ const STRIPE_PK = (process.env.BOARD_STRIPE_PK || "").trim();
  * take money into. It is never set on the box. Every guard on /api/pay/start —
  * who is asking, which side they are on, whether the amount is a number —
  * still runs, so what is skipped is the call to Stripe and nothing else. */
-const PAY_DEMO = process.env.BOARD_PAY_DEMO === "1";
+const PAY_DEMO = process.env.BOARD_PAY_DEMO === "1" && !stripe.live();
+
+/* THE TRADING MARGIN ON A TWO-INVOICE DEAL.
+ *
+ * NOT store.FEE_PCT, WHICH IS 2 AND SITS RIGHT BESIDE IT. That one is the
+ * processing fee on a straight Dealio payment — what Stripe and the wallets
+ * cost, grossed up. This one is the gap between two invoices on a deal that
+ * goes through the WFOE. Different product, different path, different number,
+ * and if these two ever get confused the books will be out by 3% on every
+ * deal and every individual figure will look plausible. Hence the name.
+ *
+ * It is the gap between the two invoices of a deal and nothing else: the
+ * payer is invoiced for the whole, the supplier invoices for this much less,
+ * and the difference is trading margin rather than a cut held on somebody
+ * else's behalf. That distinction is not cosmetic — a platform that holds
+ * other people's money and pays it on is doing 二清, and doing it without a
+ * licence is what gets accounts closed in China.
+ *
+ * SO IT IS NEVER WRITTEN ONTO EITHER INVOICE and it is never stored on a
+ * deal. It decides what the supplier's row is made for, once, and after that
+ * the books subtract. See lib/books.js.
+ *
+ * Five per cent, and an env var only so it can be moved without a deploy —
+ * not so it can vary per deal. A rate that varies per deal is a rate nobody
+ * can quote on a page before somebody commits, and quoting it beforehand is
+ * the thing that makes it fair. */
+const MARGIN_PCT = (() => {
+  const n = Number((process.env.BOARD_MARGIN_PCT || "").trim());
+  return Number.isFinite(n) && n > 0 && n < 50 ? n : 5;
+})();
 
 /* WHAT HE SAYS WHEN THE WIRE TRIPS. Stored like anybody else's line, so it is
  * written once in one language rather than being a key the page resolves —
@@ -9333,11 +9724,31 @@ app.get("/api/groups", notesOff, async (req, res) => {
      list with one word on it. `who` is drawn from members either way, so a
      guest is not in the faces along the top and nobody in there sees a
      stranger who has not said who they are. */
-  /* THE DOORMAN IS IN EVERY ROOM, and he is in `who` rather than in members:
-     he holds no seat, cannot be counted against the cap, cannot leave and
-     cannot be left with. A row in the file would be a member with none of a
-     member's properties, which is the kind of second meaning that goes wrong
-     quietly. He is drawn, not stored. */
+  /* THE DOORMAN IS IN THE ROOMS, AND NOT IN A GROUP CHAT.
+   *
+   * He is in `who` rather than in members: he holds no seat, cannot be
+   * counted against the cap, cannot leave and cannot be left with. A row in
+   * the file would be a member with none of a member's properties, which is
+   * the kind of second meaning that goes wrong quietly. He is drawn, not
+   * stored.
+   *
+   * BUT HE WAS DRAWN INTO EVERY ONE OF THEM, and a two-person chat is not a
+   * room with a doorman in it. The list read "Axel, Mo", "Hugo, Mo", "Chen,
+   * Damon, Mo" — his name on the end of every private conversation somebody
+   * had, and his face in the avatars beside it. Two people talking do not
+   * need a doorman standing in the corner.
+   *
+   * SO: the rooms, and only the rooms. A room kept by hand is a room —
+   * somebody runs it, and he is part of how it is run; the rooms at the door
+   * are his by definition and are served elsewhere. A group somebody made out
+   * of their own matches is a conversation, and he is not in it.
+   *
+   * WHAT THIS DOES NOT TURN OFF. He still reads every line in every room for
+   * contact details — see the tripwire in /api/group/say — and still marks
+   * what it catches. That is the board watching, not a participant talking,
+   * and it is the one thing in here that protects somebody who does not know
+   * they are being worked. Taking his name off a chat must not take that
+   * off with it. */
   const mo = { who: store.MO, handle: MO_NAME, photo: "", bot: true };
   /* The reader's own handle, read once — dealOut needs it per group and
      finding it inside the map would be a scan of `people` per room. */
@@ -9427,7 +9838,7 @@ app.get("/api/groups", notesOff, async (req, res) => {
       who: [...g.members.map((h) => {
         const n = name(h);
         return n && { ...n, self: h === me };
-      }).filter(Boolean), mo],
+      }).filter(Boolean), ...(g.hand ? [mo] : [])],
       says: board.says.filter((m) => m.group === g.id)
         .sort((a, b) => String(a.at).localeCompare(String(b.at)))
         .map((m) => ({ id: m.id, at: m.at, text: m.text,
@@ -9996,11 +10407,20 @@ async function startCheckout({ d, i, method, payeeAcct, ref, done }) {
   /* THE BOARD'S CUT, IN THE SAME UNIT AND ROUNDED DOWN. Up would take a cent
      more than two per cent, every time, from everybody — small, permanent and
      exactly the kind of thing that is noticed once and never forgiven. */
-  const fee = Math.floor(amount * store.FEE_PCT / 100);
+  /* WHOSE RATE, DECIDED BEFORE THE ROUNDING rather than after — a fee worked
+     out at one rate and charged at another is the kind of difference nobody
+     sees until a partner adds up a month. Still floored: up would take a
+     fraction more than the rate, every time, from everybody. */
+  const direct = paidDirectly(payeeAcct);
+  const fee = Math.floor(amount * (direct ? DIRECT_PCT : store.FEE_PCT) / 100);
   try {
+    /* ONE OR THE OTHER, NEVER BOTH — see paidDirectly above, and the note
+       over checkout() for which risk each one moves where. The cut and the
+       rounding are identical either way, which is the point of them being
+       computed here rather than at each caller. */
     const session = await stripe.checkout({
       amount, currency: d.cur, fee,
-      destination: payeeAcct,
+      ...(direct ? { direct: payeeAcct } : { destination: payeeAcct }),
       method, ref, done,
       label: row.label || d.title || "Payment",
     });
@@ -10034,6 +10454,42 @@ async function startCheckout({ d, i, method, payeeAcct, ref, done }) {
     return { error: "stripe", detail: err.message };
   }
 }
+
+/** WHY THE PAYMENT FORM DID NOT LOAD, IN THE WORDS OF THE PHONE THAT FAILED.
+ *
+ *  THE PROBLEM THIS SOLVES. Everything that goes wrong on the payer's side
+ *  arrives here as one sentence from whoever was holding the phone — "the
+ *  payment form did not load" — and on 24 Sep three unrelated faults wore
+ *  that sentence in a single evening. Each one was found by getting the real
+ *  words out of the thing that failed: `make wallet-why` said `login 403`,
+ *  the server said `notready`. The browser was the one place with no way to
+ *  say anything, and nobody can open a console on somebody else's phone.
+ *
+ *  WHAT GOES IN THE LOG AND NOTHING ELSE: which wallet was pressed, which
+ *  half failed — fetching Stripe.js, or Stripe refusing the session, which
+ *  are a blocked network and a broken configuration and want opposite
+ *  answers — and the error's own message, clamped. No id, no device, no
+ *  address. A diagnostic that collects more than the fault is a second
+ *  problem.
+ *
+ *  OPEN, because the page that fails is open: a payer with a link has no
+ *  device row and no session, and a diagnostic that only works for people
+ *  who are signed in cannot see the failure that matters. Anybody can
+ *  therefore write a line into this log, which is why it is clamped, stripped
+ *  and prefixed — it is a line in a log, not a row in the board.
+ */
+app.post("/api/pay/why", express.json({ limit: "1kb" }), (req, res) => {
+  const clamp = (v, n) => String(v ?? "").replace(/[^\P{C}]/gu, " ").trim().slice(0, n);
+  const how = ["wechat", "alipay", "card"].includes(String(req.body?.how)) ? req.body.how : "?";
+  const at = ["load", "mount"].includes(String(req.body?.at)) ? req.body.at : "?";
+  /* LOGGED EVEN WITH NOTHING TO SAY. `if (why)` dropped the line whenever the
+     thrown thing had no message — which is how Stripe rejects — so the one
+     failure this route exists for was the one it stayed quiet about. A line
+     saying "no message" is a fact; silence is read as "it did not happen". */
+  const why = clamp(req.body?.why, 300) || "(nothing thrown said anything)";
+  console.error("pay form failed:", how, "at", at, "-", why);
+  res.json({ ok: true });
+});
 
 app.post("/api/pay/start", notesOff, express.json({ limit: "2kb" }), async (req, res) => {
   if (!stripe.configured() && !PAY_DEMO) return res.status(400).json({ error: "off" });
@@ -10868,6 +11324,24 @@ app.post("/china/api/connect", express.json(), async (req, res) => {
  * gets a URL and sets location.href is two round trips to do one thing. The
  * page is an ordinary link.
  */
+/* WHERE THE STRIPE FLOW PUTS SOMEBODY DOWN, which is not the same place on
+ * every hostname.
+ *
+ * On our own names these routes end on one of the China Business Solutions
+ * screens — /china/connect to say what went wrong, /china/switch to ask
+ * Stripe whether WeChat Pay is really on, /china/stopped for a cancel — and
+ * that is right, because CBS is the product somebody arrived through.
+ *
+ * On a white label it is wrong twice over: those pages are our brand and our
+ * pitch, and the person did not come from them. They pressed one row on the
+ * payout screen. So they go back to that screen, which is the only place
+ * they have been.
+ *
+ * The query is kept. /wallet reads nothing from it today; it costs nothing
+ * and the next person to wire a message onto a failed connect will find the
+ * reason already in the address rather than having to thread it through. */
+const chinaHome = (req, where) => (isWhitelabelHost(req) ? "/wallet#payout" : where);
+
 app.get("/china/api/link", async (req, res) => {
   /* The other button, standing in as well — otherwise the demo can only walk
      the door somebody WITHOUT a Stripe account comes through, and the one
@@ -10877,9 +11351,9 @@ app.get("/china/api/link", async (req, res) => {
     res.cookie(CHINA_COOKIE, token, {
       httpOnly: true, sameSite: "Lax", secure: true, maxAge: 180 * 24 * 3600 * 1000, path: "/china",
     });
-    return res.redirect(302, "/china/stand-in");
+    return res.redirect(302, chinaHome(req, "/china/stand-in"));
   }
-  if (!stripe.canLink()) return res.redirect(302, "/china/connect?e=nolink");
+  if (!stripe.canLink()) return res.redirect(302, chinaHome(req, "/china/connect?e=nolink"));
   try {
     const state = await CHINA.beginLink();
     res.redirect(302, stripe.linkUrl({
@@ -10888,7 +11362,7 @@ app.get("/china/api/link", async (req, res) => {
     }));
   } catch (err) {
     console.error("china link:", err.message);
-    res.redirect(302, "/china/connect?e=stripe");
+    res.redirect(302, chinaHome(req, "/china/connect?e=stripe"));
   }
 });
 
@@ -10898,12 +11372,36 @@ app.get("/china/linked", async (req, res) => {
      without it and acting on one first is how an attacker's code gets
      attached to somebody else's browser. */
   const ok = await CHINA.spendLink(req.query.state);
-  if (!ok) return res.redirect(302, "/china/connect?e=state");
+  if (!ok) return res.redirect(302, chinaHome(req, "/china/connect?e=state"));
   /* They pressed cancel on Stripe's screen, which is not an error and has
      its own page — the same one an abandoned Express onboarding lands on. */
-  if (req.query.error || !req.query.code) return res.redirect(302, "/china/stopped");
+  if (req.query.error || !req.query.code) return res.redirect(302, chinaHome(req, "/china/stopped"));
   try {
     const account = await stripe.linkFinish(String(req.query.code));
+    /* AND WRITE IT DOWN WHERE THE WALLET WILL FIND IT.
+     *
+     * This used to store the account in the cookie below and nowhere else,
+     * because it was built for China Business Solutions, where the cookie IS
+     * the session and there is no wallet. The payout screen then offered
+     * "My Stripe account", sent somebody through a real authorisation on
+     * Stripe's own page, and came back to a screen that still said nothing
+     * was chosen. The handshake worked and the answer was thrown away.
+     *
+     * BY COOKIE, BECAUSE THERE IS NO HEADER. Stripe redirects the browser
+     * here; an ordinary navigation carries no x-board-device, so identify()
+     * cannot be used. board_in is what every other page route reads.
+     *
+     * NEVER FATAL. Somebody may reach this with no board session at all —
+     * the CBS flow is outside the door on purpose — and that is not an
+     * error, it is the older of the two paths. The cookie below still
+     * happens either way. */
+    try {
+      const by = inCookie(req);
+      const who = by && WALLET.on ? await WALLET.identify.byHash(by) : null;
+      if (who) await WALLET.service.setPayout(who, { mode: "stripe", details: { account } });
+    } catch (err) {
+      console.error("china linked -> wallet:", err.message);
+    }
     const token = await CHINA.remember({ account, email: "" });
     res.cookie(CHINA_COOKIE, token, {
       httpOnly: true, sameSite: "Lax", secure: true, maxAge: 180 * 24 * 3600 * 1000, path: "/china",
@@ -10912,10 +11410,10 @@ app.get("/china/linked", async (req, res) => {
        account is linked, and whether it can actually take a WeChat payment
        is the next thing anybody wants to know. That screen asks Stripe and
        moves itself on when the answer is yes. */
-    res.redirect(302, "/china/switch");
+    res.redirect(302, chinaHome(req, "/china/switch"));
   } catch (err) {
     console.error("china linked:", err.message);
-    res.redirect(302, "/china/connect?e=stripe");
+    res.redirect(302, chinaHome(req, "/china/connect?e=stripe"));
   }
 });
 
@@ -11095,7 +11593,8 @@ app.get("/api/request/:id", async (req, res) => {
   const qrWays = dealioWays(board, q);
   const stripeOk = stripe.configured() && ((q.way || "in") === "out"
     ? Boolean(q.acct && q.landed)
-    : Boolean(askerAcct));
+    /* A connected account, OR no need of one — see dealioMine. */
+    : (dealioMine(board, q) || Boolean(askerAcct)));
   /* The stand-in, which draws all three because none of them is real. */
   const ways = (!qrWays.length && !stripeOk && PAY_DEMO)
     ? ["wechat", "alipay", "card"]
@@ -11254,7 +11753,24 @@ const DEALIO_OWNER = String(process.env.BOARD_DEALIO_OWNER || "").trim().toLower
  * somebody about their own money, and the same rule applies here as to the
  * line in CLAUDE.md about not claiming to be encrypted. Never set on a box
  * taking real money. */
-const DEALIO_DEMO = process.env.BOARD_DEALIO_DEMO === "1";
+/* A DEMO MAY NOT RUN ON A BOX THAT CAN TAKE REAL MONEY.
+ *
+ * Both of these draw stand-in codes and stand-in pages. That is exactly what
+ * they are for on a laptop, and it is indefensible on the live box: on
+ * 25 Sep a payer scanned a mock code on the shop, Alipay answered 404 Not
+ * Found, and it was first blamed on a VPN. Nobody had set a demo flag — it
+ * was BOARD_WALLET=test, a third switch — but the lesson is the same either
+ * way, and an env var that can be set once can be set again.
+ *
+ * So the key decides, not the operator. A live secret key means every demo
+ * is off, whatever .env says, and the refusal is printed at boot rather than
+ * discovered by somebody trying to pay. */
+const DEMO_ASKED = process.env.BOARD_PAY_DEMO === "1" || process.env.BOARD_DEALIO_DEMO === "1";
+const DEMO_OK = !stripe.live();
+if (DEMO_ASKED && !DEMO_OK) {
+  console.log("demo: REFUSED — this box has a live Stripe key. BOARD_PAY_DEMO and BOARD_DEALIO_DEMO are ignored.");
+}
+const DEALIO_DEMO = DEMO_OK && process.env.BOARD_DEALIO_DEMO === "1";
 
 /* WHAT POSTAGE COSTS AND WHAT A STOREFRONT EARNS. One flat postage per
    order, because that is how a parcel to China is actually charged and a
@@ -11270,7 +11786,125 @@ const SHOP_CUT_PCT = Math.min(Math.max(Number(process.env.BOARD_SHOP_CUT || 15),
 function dealioQr() {
   const p = WALLET.on ? WALLET.provider : null;
   if (!p || typeof p.qrPay !== "function" || typeof p.intentStatus !== "function") return null;
+  /* THE MOCK MAY NOT DRAW A CODE ON A REAL BOX.
+   *
+   * providers/mock.js answers qrPay with `https://qr.alipay.com/int_<id>`
+   * — a real domain and an invented path. It exists so every screen after
+   * the code can be built and looked at on a laptop with no keys and no
+   * money, and it pays itself after six seconds. It was never meant to face
+   * the Alipay app.
+   *
+   * BOARD_WALLET=test on the box, so it did. Alipay scanned the code, went
+   * to its own server, and answered 404 Not Found — on the shop, over a
+   * ¥91 order, to somebody who had got all the way to paying. Reported as
+   * "no URL found", and before that misread as a VPN problem, which cost
+   * another round.
+   *
+   * A dead code is worse than no code: the payer cannot tell whether the
+   * shop is broken or they are, and the shop is the thing they were
+   * deciding whether to trust. So the mock draws one only where a demo is
+   * deliberately on — `make try` and `make try-china` — and everywhere else
+   * this answers null and Alipay falls through to Stripe, which is live on
+   * this account and works. */
+  if (p.name === "test" && !PAY_DEMO && !DEALIO_DEMO) return null;
   return p;
+}
+
+/** THE BUTTONS THE ORDER PAGE IS ALLOWED TO DRAW.
+ *
+ *  It drew two, always — 微信支付 and 支付宝 — and only one of them has ever
+ *  been able to take a fen. The native rail needs the WFOE's bank, which
+ *  Airwallex refused on 21 Sep, so dealioQr() is empty; Stripe stands in, and
+ *  on this account Stripe has Alipay on and WeChat Pay INELIGIBLE (ask it
+ *  yourself with `make wallets`). So every press of 微信支付 came back "off"
+ *  and the screen said "没生成出来，再试一次" — try again, at somebody whose
+ *  second try will fail the same way.
+ *
+ *  A dead button on a payment screen is worse than one button: she cannot
+ *  tell whether the shop is broken or she is, and the shop is the thing she
+ *  was deciding whether to trust.
+ *
+ *  ASKED OF THE SERVER, NOT GUESSED IN THE PAGE. Neither of these two facts
+ *  is visible to a browser and both move without the page changing — the
+ *  bank connects, or Stripe's category review turns WeChat on — so the page
+ *  that hard-codes two buttons is wrong again the day either happens.
+ *
+ *  AND dealioQr() IS "CONFIGURED", NOT "WORKS". It answers whether BOARD_WALLET
+ *  names a provider that has the two methods on it — nothing more. On 24 Sep
+ *  this box still had BOARD_WALLET=airwallex in .env months after Airwallex
+ *  refused the account, so the object existed, every call to it threw, and
+ *  the pay sheet told the payer *Alipay would not take this one* while
+ *  Stripe — which works — was never asked, because the code rail is tried
+ *  first. A stale env var outranked a live rail and looked like a wallet
+ *  declining. The lever is the env var: unset BOARD_WALLET and everything
+ *  falls through to Stripe. So these two buttons come back when the
+ *  PROVIDER is real, which is not the same day the variable is set.
+ *
+ *  It does not ask Stripe whether Alipay is switched on this minute: that is
+ *  a network call on the way to drawing a button, and the answer changes
+ *  about once a quarter. If Stripe refuses the session anyway the press
+ *  falls back to the same sentence it always did.
+ */
+/* WHAT A YUAN IS WORTH IN AUSTRALIAN DOLLARS, WHEN SOMEBODY HAS SAID.
+ *
+ * WHY THE SHOP CANNOT CHARGE YUAN. Stripe's Alipay takes a presentment
+ * currency that depends on the business location, and for an Australian
+ * account that is AUD — CNY belongs to accounts in China and Hong Kong, and
+ * taking a currency at all means being able to settle it, which needs a bank
+ * account per settlement currency. This one settles AUD. So every CNY charge
+ * came back `payment_intent_payment_attempt_failed · invalid_request_error`
+ * from inside Stripe's own payment sheet, twice, on 24 Sep. An evening went
+ * on guessing at it; it is two lines of Stripe's currency table.
+ *
+ * THE PRICES STAY IN YUAN. That is what the shelf says and what she decided
+ * to spend; the conversion happens at the charge and nowhere else, and she
+ * sees RMB again inside Alipay, which converts on its own side. That is the
+ * ordinary cross-border experience and the reason the shop needs no second
+ * set of prices.
+ *
+ * SET BY HAND, AND UNSET MEANS UNCHANGED. There is no rate source on this box
+ * any more — Airwallex quoted it and Airwallex is gone — so inventing a
+ * default would be inventing what somebody is charged. With nothing set the
+ * shop charges yuan exactly as before and fails exactly as before, which is
+ * a visible wrong rather than a silent one. `make rate` sets it.
+ *
+ * ROUNDED UP. A rate a week old is a rate that is wrong by a little, and the
+ * seller should not be the one who wears it. A fraction of a cent per order.
+ */
+const AUD_PER_CNY = Number(process.env.BOARD_AUD_PER_CNY || "");
+const audRate = () => (Number.isFinite(AUD_PER_CNY) && AUD_PER_CNY > 0 ? AUD_PER_CNY : 0);
+
+/** Fen to Australian cents at that rate, never rounding down. */
+function audCents(fen) {
+  const r = audRate();
+  if (!r) return 0;
+  const c = Math.ceil(fen * r);
+  return c > 0 ? c : 0;
+}
+
+function orderWays() {
+  const ways = dealioQr() ? ["wechat", "alipay"] : [];
+  /* AND A CARD, WHICH IS STRIPE'S AND NOBODY ELSE'S.
+   *
+   * Not a third wallet — it is the rail underneath both of them, and it is
+   * here because the wallets are what this account cannot reliably take:
+   * WeChat Pay is ineligible and every Alipay attempt on 24-25 Sep came back
+   * `not_sent_to_network · invalid_request_error` with Radar showing Normal
+   * and nothing else to point at. A card goes through on this account today,
+   * which is the only thing on this page that is presently true of any
+   * method, and ordinary card history is also what an account under method
+   * review is judged on.
+   *
+   * It is drawn BELOW the wallet row rather than in it — see payBox in
+   * order.html. Three buttons abreast on a phone is three things to read
+   * where the design says one, and a card is what somebody reaches for when
+   * the wallet did not work, which is a second thought and belongs a line
+   * down. */
+  if (stripe.configured()) {
+    if (!ways.length) ways.push("alipay");
+    ways.push("card");
+  }
+  return ways;
 }
 
 /** Whether this request was made by the person whose account the money goes
@@ -11280,6 +11914,24 @@ function dealioOwns(board, q) {
   if (!DEALIO_OWNER) return false;
   const asker = board.people.find((p) => p.by === q.by);
   return Boolean(asker?.handle && String(asker.handle).trim().toLowerCase() === DEALIO_OWNER);
+}
+
+/** THE MONEY IS ALREADY WHERE IT IS GOING.
+ *
+ *  Dealio's own incoming requests are charged straight into the account that
+ *  holds the keys — there is nobody to transfer to, so no destination, no
+ *  application fee and no connected account needed. See the long note at the
+ *  charge in /api/request/:id/pay.
+ *
+ *  ITS OWN FUNCTION BECAUSE TWO ROUTES ASK IT. The charge asks so it can drop
+ *  the destination; the read route asks so it can draw the buttons at all.
+ *  They were written an hour apart and disagreed immediately: the charge
+ *  stopped needing a connected account and the read route went on hiding
+ *  every button until there was one, so a payer would have been shown a page
+ *  with nothing to press for a payment that would have gone through.
+ */
+function dealioMine(board, q) {
+  return Boolean(q) && (q.way || "in") === "in" && dealioOwns(board, q);
 }
 
 /** The wallets that can pay this request with a code, which is either both of
@@ -11303,6 +11955,23 @@ function dealioWays(board, q) {
      against yuan is payable; what it cannot price is not. */
   if (q.cur !== "cny" && (typeof p.quote !== "function" || !CNY_PAIRS.has(q.cur))) return [];
   return ["wechat", "alipay"];
+}
+
+/** Whether this person is the one whose requests land in the account that
+ *  holds the keys. The handle and nothing else — no provider, no Stripe.
+ *
+ *  SEPARATE FROM dealioIsOwner ON PURPOSE. That one answers "do this
+ *  person's requests draw a WeChat or Alipay code", which needs a provider,
+ *  and it was standing in for this question because until 24 Sep the two had
+ *  the same answer. Then Airwallex came out of .env and they stopped agreeing:
+ *  the money screen asked whether codes could be drawn, got no, fell through
+ *  to a payout account that `make go-live` had just cleared, and told Tom
+ *  "Nobody can pay you yet" under a list of his own requests — on a board
+ *  where his card payments work. A warning that is false is worse than none:
+ *  it is the app telling its owner his product is broken. */
+function isDealioOwner(person) {
+  return Boolean(DEALIO_OWNER)
+    && String(person?.handle || "").trim().toLowerCase() === DEALIO_OWNER;
 }
 
 /** Whether this person's own requests draw codes — the list screen's
@@ -11484,7 +12153,7 @@ app.post("/api/request/:id/pay", express.json({ limit: "1kb" }), async (req, res
           sell: "CNY", buy: q.cur.toUpperCase(), buyAmount: minor, validSeconds: 900,
         });
         cny = Number(quote?.sellAmount);
-        if (!Number.isInteger(cny) || cny <= 0) return res.status(502).json({ error: "qr" });
+        if (!Number.isInteger(cny) || cny <= 0) throw new Error("no rate for " + q.cur);
       }
       const r = await qrProvider.qrPay({
         amount: cny, currency: "CNY", method,
@@ -11492,7 +12161,7 @@ app.post("/api/request/:id/pay", express.json({ limit: "1kb" }), async (req, res
            own line about the job, not our name for it. */
         reference: q.what || q.from,
       });
-      if (!r.qr) return res.status(502).json({ error: "qr" });
+      if (!r.qr) throw new Error("provider drew no code");
       const drawn = qrBits(r.qr);
       /* The one a finger can do anything with — see the note in lib/qr.js. */
       const png = await qrPng(r.qr);
@@ -11515,16 +12184,64 @@ app.post("/api/request/:id/pay", express.json({ limit: "1kb" }), async (req, res
         orig: q.cur === "cny" ? "" : store.fromMinor(minor, q.cur),
       });
     } catch (err) {
-      console.error("dealio qr:", err.message);
-      return res.status(502).json({ error: "qr" });
+      /* A DEAD CODE RAIL MUST NOT OUTRANK A LIVE ONE.
+       *
+       * This answered 502 `qr`, the pay sheet said *Alipay would not take
+       * this one*, and the payer pressed the other buttons to find out
+       * whether it was them. On 24 Sep that sentence was shown for an hour
+       * on a box where Alipay was fine: BOARD_WALLET still named Airwallex
+       * months after Airwallex refused the account, so the provider object
+       * existed, every call to it came back `login 403` — an HTML page from
+       * the edge, not even an API error — and Stripe, which had just taken a
+       * real payment, was never asked, because this branch is tried first.
+       *
+       * The configuration was wrong and that is a separate fix. What was
+       * wrong HERE is the shape: a rail that cannot draw a code is a rail
+       * that has no opinion, not a wallet declining. It stands aside now and
+       * the request carries on to Stripe below, which is exactly what would
+       * have happened had the variable never been set.
+       *
+       * The refusal survives where there is nothing to fall through TO: with
+       * no Stripe key the branch below answers `demo` or `payee` on its own,
+       * and the log line is kept either way because "it fell back" is the
+       * thing nobody would otherwise know had happened. */
+      console.error("dealio qr:", err.message, "— falling through to Stripe");
     }
   }
 
-  /* WHOSE ACCOUNT, BY DIRECTION — see the note in the read route above. */
-  const dest = (q.way || "in") === "out"
+  /* NOBODY TO TRANSFER TO WHEN THE MONEY IS ALREADY YOURS.
+   *
+   * Every charge this route made was a DESTINATION charge — created on the
+   * platform, transferred on to a connected account — because the product is
+   * one member paying another. Dealio's own requests are not that. The note
+   * over the code rail above says it already: until Airwallex onboards other
+   * people, every payment these keys confirm lands in ONE account, the
+   * account holder's. And the account holder is the platform.
+   *
+   * So the destination was the asker's `payee` — a connected account minted
+   * at some point by /china/connect and never onboarded — and Stripe refused
+   * the session because its transfers capability is not active. The payer
+   * saw *THEY HAVE NOT FINISHED SETTING UP YET*, which is true of the
+   * connected account and beside the point: the money was never going
+   * through it. Asking Stripe to transfer Tom's money to Tom, via an empty
+   * account Tom does not use.
+   *
+   * A plain charge instead, for the Dealio owner only. Same gate as the code
+   * rail (dealioOwns), and money coming IN — a promise to send still needs
+   * somewhere to send it. No transfer_data and so no application fee, which
+   * is right: there is no cut to take off yourself. lib/stripe.js leaves the
+   * key out entirely rather than sending it empty, which Stripe refuses.
+   *
+   * EVERYBODY ELSE KEEPS THE DESTINATION, and that is the line that matters
+   * rather than a tidiness: collecting your own money is a shop, holding
+   * somebody else's on the way past is 二清 and a licence question. See
+   * NOW.md.
+   */
+  const mine = dealioMine(board, q);
+  const dest = mine ? "" : ((q.way || "in") === "out"
     ? (q.landed ? q.acct : "")
-    : await askerPayee(board, q);
-  if (!dest) return res.status(400).json({ error: "payee" });
+    : await askerPayee(board, q));
+  if (!mine && !dest) return res.status(400).json({ error: "payee" });
   if (!stripe.configured()) return res.json({ ok: true, demo: true, method });
 
   /* startCheckout reads a plan row, so the request is handed to it as one.
@@ -11593,6 +12310,221 @@ app.post("/api/request/:id/off", notesOff, express.json({ limit: "1kb" }), async
   });
   if (out?.error) return res.status(400).json(out);
   res.json({ ok: true });
+});
+
+/* ===========================================================================
+ * THE TWO INVOICES
+ *
+ * A deal is two of them and one of them is ours. The payer is invoiced by the
+ * company they paid; the supplier invoices that same company. Nobody is paid
+ * across a border in either direction, and what is left between the two
+ * numbers is the margin. See lib/books.js for why the margin is never stored.
+ *
+ * These five routes are the paperwork half. The money half already existed
+ * and is untouched.
+ * ======================================================================== */
+
+/** 开票信息, FROM THE PAYER, ON THE PAGE THEY ALREADY HAVE OPEN.
+ *
+ *  NO DEVICE AND NO MEMBERSHIP. The paying company has never heard of this
+ *  board and never will — the same reasoning as every other route on a pay
+ *  link. The address is eighty bits and that is the whole guard.
+ *
+ *  ONE BOX. They paste the block they already keep, the server reads it, and
+ *  what it read comes straight back so they can see it was read right. See
+ *  lib/fapiao.js for why this is not six labelled fields.
+ *
+ *  ONCE IT IS ISSUED IT IS SHUT. An invoice that has gone out cannot be
+ *  quietly re-pointed at a different company by whoever the link was
+ *  forwarded to — that is the shape of every invoice fraud there is, and it
+ *  is worth the one refusal it costs somebody who genuinely changed their
+ *  mind. They ask, and a human reissues.
+ */
+app.post("/api/request/:id/invoice", notesOff, express.json({ limit: "4kb" }), async (req, res) => {
+  const id = request.cleanId(req.params.id);
+  if (!id) return res.status(400).json({ error: "no" });
+  const text = String(req.body?.text || "");
+  /* Typed beats pasted where both came: somebody who corrected a field on the
+     screen meant the correction. */
+  const read = text ? fapiao.readFapiao(text) : {};
+  const want = {
+    kind: req.body?.kind === "special" ? "special" : "plain",
+    title: String(req.body?.title || read.title || ""),
+    taxId: String(req.body?.taxId || read.taxId || ""),
+    addr: String(req.body?.addr || read.addr || ""),
+    tel: String(req.body?.tel || read.tel || ""),
+    bank: String(req.body?.bank || read.bank || ""),
+    acct: String(req.body?.acct || read.acct || ""),
+    to: String(req.body?.to || ""),
+    at: new Date().toISOString(),
+  };
+  const inv = fapiao.cleanFapiao(want);
+  if (!inv) {
+    /* WHICH OF THE TWO IS WRONG, because "that did not work" on a paste box
+       is a dead end. A tax number that fails its own checksum is a different
+       problem from one that is missing, and only one of them is a typo. */
+    return res.status(400).json({
+      error: "read", read: text ? read : null,
+      why: !want.title ? "title" : fapiao.taxIdState(want.taxId),
+    });
+  }
+  const out = await change((board) => {
+    const q = board.requests.find((x) => x.id === id);
+    if (!q || q.off) return { error: "no" };
+    if ((q.way || "in") === "out") return { error: "way" };
+    if (q.inv?.done) return { error: "issued" };
+    q.inv = inv;
+    return { ok: true };
+  });
+  if (out?.error) return res.status(400).json(out);
+  res.json({ ok: true, inv: { kind: inv.kind, title: inv.title, taxId: inv.taxId },
+    missing: fapiao.fapiaoMissing(inv), taxIdState: fapiao.taxIdState(inv.taxId) });
+});
+
+/** THE SUPPLIER'S SIDE OF THE SAME DEAL, MADE FROM THE PAYER'S SIDE.
+ *
+ *  ONE PRESS, AND THE NUMBER IS NOT TYPED. That is the entire point. The
+ *  margin is what the platform takes and it is disclosed before anybody
+ *  commits, so it is a setting, not a thing to work out on a calculator at
+ *  the moment of making a row. Typing 1,900 next to 2,000 is how a deal ends
+ *  up at 4.7% and nobody notices for a quarter.
+ *
+ *  BOTH ROWS IN THE SUPPLIER'S CURRENCY, because a subtraction across two
+ *  currencies means nothing. The yuan the payer actually handed over is
+ *  already on the row from when the code was drawn, and the books carry it
+ *  beside these two rather than folded into them.
+ */
+app.post("/api/request/:id/supplier", notesOff, express.json({ limit: "2kb" }), async (req, res) => {
+  const me = hashDevice(String(req.body?.device || ""), SALT);
+  const id = request.cleanId(req.params.id);
+  if (!me || !id) return res.status(400).json({ error: "no" });
+  const out = await change((board) => {
+    const q = board.requests.find((x) => x.id === id);
+    if (!q || q.by !== me || q.off) return { error: "no" };
+    if ((q.way || "in") === "out") return { error: "way" };
+    if (q.deal && board.requests.some((x) => x.deal === q.deal && (x.way || "in") === "out" && !x.off)) {
+      return { error: "already" };
+    }
+    const mine = board.people.find((p) => p.by === me);
+    if (!mine?.handle) return { error: "profile" };
+    const to = String(req.body?.to || "").trim();
+    if (!to) return { error: "who" };
+    /* THE AMOUNT IS WORKED OUT AND ONLY THEN OVERRIDDEN. A supplier who
+       agreed a different number is a normal thing; a supplier row with no
+       number at all is not. */
+    const cur = request.CURRENCIES.includes(String(req.body?.cur || "")) ? String(req.body.cur) : q.cur;
+    const typed = String(req.body?.amount || "").trim();
+    const inMinor = q.cur ? store.toMinor(q.amount, q.cur) : 0;
+    const amount = typed
+      || (cur === q.cur && inMinor
+        ? store.fromMinor(books.supplierMinor(inMinor, MARGIN_PCT), cur) : "");
+    if (!amount) return { error: "amount" };
+    const deal = q.deal || request.newRequestId();
+    const row = request.cleanRequest({
+      id: request.newRequestId(), no: nextNo(board, me), by: me, from: mine.handle,
+      to, way: "out", amount, cur,
+      /* The same line as the money coming in. Two rows of one deal that
+         describe different jobs are two rows somebody will one day fail to
+         recognise as a pair. */
+      what: q.what || "", when: "", at: new Date().toISOString(), deal,
+    });
+    if (!row) return { error: "bad" };
+    q.deal = deal;
+    board.requests.push(row);
+    return { ok: true, id: row.id, no: row.no, deal };
+  });
+  if (out?.error) return res.status(400).json(out);
+  res.json({ ok: true, id: out.id, no: out.no, deal: out.deal,
+    url: payLink(req, "/pay/" + out.id) });
+});
+
+/** THE TWO TICKS, AND THEY ARE TICKS BECAUSE NOTHING ELSE CAN KNOW.
+ *
+ *  A fapiao is issued in the tax bureau's own system and a supplier's invoice
+ *  arrives as a PDF in somebody's email. Neither event touches this board, so
+ *  neither can be worked out here — and a books screen that guessed would be
+ *  worse than one that asks. Which tick is meant is decided by the row, not
+ *  by the caller: `issued` on the money coming in, `billed` on the money
+ *  going out.
+ */
+app.post("/api/request/:id/paper", notesOff, express.json({ limit: "1kb" }), async (req, res) => {
+  const me = hashDevice(String(req.body?.device || ""), SALT);
+  const id = request.cleanId(req.params.id);
+  if (!me || !id) return res.status(400).json({ error: "no" });
+  const on = req.body?.on !== false;
+  const out = await change((board) => {
+    const q = board.requests.find((x) => x.id === id);
+    if (!q || q.by !== me || q.off) return { error: "no" };
+    if ((q.way || "in") === "out") {
+      if (on) q.billed = true; else delete q.billed;
+      return { ok: true, what: "billed", on };
+    }
+    /* Nothing to issue against. Said rather than silently ticked, because a
+       books screen reading "issued" over an empty company name is the one
+       state that would send somebody looking for a document that was never
+       made. */
+    if (!q.inv) return { error: "noInv" };
+    if (on) q.inv.done = true; else delete q.inv.done;
+    return { ok: true, what: "issued", on };
+  });
+  if (out?.error) return res.status(400).json(out);
+  res.json(out);
+});
+
+/** THE BOOKS. Both invoices of every deal on one line, which is the whole
+ *  point and the thing two separate exports cannot do. */
+async function myBooks(req) {
+  const me = hashDevice(String(req.get("x-board-device") || ""), SALT);
+  if (!me) return null;
+  const board = await store.load(FILE);
+  return books.books(board.requests.filter((q) => q.by === me),
+    { toMinor: store.toMinor, fromMinor: store.fromMinor }, { feePct: MARGIN_PCT });
+}
+
+app.get("/api/books", notesOff, async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const b = await myBooks(req);
+  if (!b) return res.json({ deals: [], totals: [] });
+  res.json(b);
+});
+
+/** THE SAME THING AS A FILE, because the person who needs it most does not
+ *  use this app. An accountant is sent one attachment and opens it in a
+ *  spreadsheet, and every figure in it is a plain number — see booksCsv. */
+app.get("/api/books.csv", notesOff, async (req, res) => {
+  const b = await myBooks(req);
+  res.set("Cache-Control", "no-store");
+  if (!b) return res.status(400).type("text/plain").send("no device\n");
+  res.set("Content-Disposition",
+    'attachment; filename="deals-' + new Date().toISOString().slice(0, 10) + '.csv"');
+  /* THE BYTE ORDER MARK IS NOT DECORATION. Excel on Windows opens a UTF-8 CSV
+     as the system code page unless one is there, and every Chinese company
+     name in the file becomes mojibake — on the one screen whose entire job is
+     to be readable by somebody else's accountant. */
+  res.type("text/csv; charset=utf-8").send("﻿" + books.booksCsv(b));
+});
+
+/** THE BOOKS FROM THE TERMINAL — `make books`.
+ *
+ *  The same figures as the screen, for somebody who would rather read them in
+ *  a terminal than hold a phone up close. That is not a convenience here; it
+ *  is the difference between a number being readable and not.
+ *
+ *  BY HANDLE, because a device hash is not a thing anybody can type. */
+app.get("/api/admin/books", admin, async (req, res) => {
+  const want = String(req.query.who || "").trim().toLowerCase();
+  const board = await store.load(FILE);
+  const people = board.people.filter((p) => p.handle
+    && (!want || p.handle.toLowerCase() === want
+      || p.handle.toLowerCase().split(/\s+/)[0] === want));
+  if (want && !people.length) return res.status(404).json({ error: "who" });
+  res.json({
+    who: people.map((p) => ({
+      handle: p.handle,
+      ...books.books(board.requests.filter((q) => q.by === p.by),
+        { toMinor: store.toMinor, fromMinor: store.fromMinor }, { feePct: MARGIN_PCT }),
+    })).filter((x) => x.deals.length),
+  });
 });
 
 /** THE ONES YOU HAVE SENT. Yours only, newest first. */
@@ -11665,7 +12597,14 @@ app.get("/api/requests", notesOff, async (req, res) => {
        of requests people could have paid. A warning that is false is worse
        than no warning: it is the app telling its owner his own product is
        broken. */
-    ready: dealioIsOwner(me_) || (Boolean(me_?.payee) && (stripe.configured() || PAY_DEMO)
+    /* AND THE THIRD WAY, added 24 Sep: the owner's own requests are charged
+       straight into the account that holds the keys — no destination, no
+       connected account, nothing to onboard. See dealioMine and the note over
+       isDealioOwner. Without this the screen warned about a payout account
+       that the payment no longer goes anywhere near. */
+    ready: dealioIsOwner(me_)
+      || (stripe.configured() && isDealioOwner(me_))
+      || (Boolean(me_?.payee) && (stripe.configured() || PAY_DEMO)
       && (!stripe.configured() || await canBePaid(me_.payee))),
     /* AND WHICH MONEY CAN ACTUALLY BE ASKED FOR. The picker offers seven
        currencies; the codes can price four of them against yuan. Asking in
@@ -11678,6 +12617,36 @@ app.get("/api/requests", notesOff, async (req, res) => {
        somebody else's phone. Off until this process is restarted — see
        sendBroken. */
     canSend: stripe.configured() && !sendBroken,
+    /* EARNED AND STILL TO COME, the two numbers worth a glance on a money
+       screen that holds nothing.
+       ONE TOTAL PER CURRENCY, NEVER ADDED TOGETHER. ¥30,000 and A$2,000 are
+       two numbers, and one of them needs a rate this board would have to
+       invent — the same rule the Earned card on Profile has always followed.
+       IN ONLY. A request going out is money this person owes, and an Earned
+       figure that quietly includes it is wrong in the direction that
+       flatters. */
+    money: (() => {
+      const pots = new Map();
+      for (const q of mine) {
+        if ((q.way || "in") !== "in" || q.off || !q.cur) continue;
+        const minor = store.toMinor(q.amount, q.cur);
+        if (!minor) continue;
+        const st = request.requestState(q);
+        const key = q.cur;
+        const pot = pots.get(key) || { cur: key, earnedMinor: 0, pendingMinor: 0 };
+        /* "waiting" is one side having said they paid and the other not having
+           agreed yet. It is not earned until both have — see requestState. */
+        if (st === "paid") pot.earnedMinor += minor;
+        else if (st === "due" || st === "waiting") pot.pendingMinor += minor;
+        pots.set(key, pot);
+      }
+      return [...pots.values()]
+        .filter((p) => p.earnedMinor || p.pendingMinor)
+        .map((p) => ({ cur: p.cur, earned: store.fromMinor(p.earnedMinor, p.cur),
+          pending: store.fromMinor(p.pendingMinor, p.cur),
+          earnedMinor: p.earnedMinor, pendingMinor: p.pendingMinor }))
+        .sort((a, b) => b.earnedMinor + b.pendingMinor - (a.earnedMinor + a.pendingMinor));
+    })(),
     /* STARTED BUT NOT FINISHED IS ITS OWN STATE, and it is the commonest one:
        Stripe's onboarding is several screens and people leave in the middle
        of it. "You have not said where the money should land" is untrue to
@@ -11705,6 +12674,10 @@ app.get("/api/requests", notesOff, async (req, res) => {
          was taken back, and the address to send again. */
       off: Boolean(q.off),
       url: payLink(req, "/pay/" + q.id),
+      /* WHICH DEAL THIS ROW IS HALF OF, so the list screen knows whether the
+         books are worth offering at all. Never on the payer's view — it is
+         the address of the other side of a deal they are not part of. */
+      deal: q.deal || "",
     })),
   });
 });
@@ -11969,7 +12942,15 @@ app.get("/api/order/:id", async (req, res) => {
   const board = await store.load(FILE);
   const o = board.orders.find((x) => x.id === id);
   if (!o) return res.status(404).json({ error: "gone" });
-  res.json({ ok: true, order: shop.orderView(o) });
+  /* AND WHICH BUTTONS IT MAY DRAW — see orderWays. Sent with the order
+     rather than fetched separately: the page needs both before it can paint
+     the 待付款 screen, and two requests is one more chance to draw a payment
+     screen with nothing on it. */
+  /* AND WHAT SHE WILL ACTUALLY BE CHARGED IN. The page says ¥31 and Stripe's
+     sheet says A$6.51, and a payer who meets that without warning has every
+     reason to close the tab. Said before she presses, not after. */
+  res.json({ ok: true, order: shop.orderView(o), ways: orderWays(),
+    payCur: audCents(shop.orderTotal(o)) ? "aud" : "" });
 });
 
 /** 确认收货 — THE STATE NOBODY COULD REACH.
@@ -12693,9 +13674,8 @@ app.get("/api/orders", async (req, res) => {
 app.post("/api/order/:id/pay", express.json({ limit: "1kb" }), async (req, res) => {
   const id = shop.cleanId(req.params.id);
   const method = String(req.body?.method || "wechat");
-  if (!id || !["wechat", "alipay"].includes(method)) return res.status(400).json({ error: "no" });
+  if (!id || !["wechat", "alipay", "card"].includes(method)) return res.status(400).json({ error: "no" });
   const p = dealioQr();
-  if (!p) return res.status(400).json({ error: "off" });
 
   const board = await store.load(FILE);
   const o = board.orders.find((x) => x.id === id);
@@ -12704,6 +13684,73 @@ app.post("/api/order/:id/pay", express.json({ limit: "1kb" }), async (req, res) 
 
   const total = shop.orderTotal(o);
   if (!total) return res.status(400).json({ error: "amount" });
+
+  /* NO NATIVE WALLET PROVIDER? STRIPE, WHICH IS THE ONE THAT WORKS TODAY.
+   *
+   * This route was written for a provider that mints a real wallet code — a
+   * `wxp://` or an Alipay 收款码 that a scanner pays without opening
+   * anything. That is the WFOE's bank, and it is not connected: Airwallex
+   * refused the account on 21 Sep, so `dealioQr()` is empty and every press
+   * of the shop's own Alipay button has come back "off". The button has been
+   * on that page the whole time with nothing behind it.
+   *
+   * AND "EMPTY" IS NOT THE ONLY WAY IT FAILS. A provider that is configured
+   * and dead is worse than none: the object exists, dealioQr() hands it
+   * back, and the branch below is taken instead of this one — see the note
+   * in the catch. So this is reached both when there is no provider and when
+   * the provider could not draw, which is the same thing from the payer's
+   * side and was two different screens until today.
+   *
+   * Stripe's Alipay is on and took a real payment on 24 Sep, so it stands in.
+   * It is not the same thing and the difference is worth writing down: a
+   * native code goes straight to the payment sheet, and this opens a page
+   * first — which is why Alipay shows 您即将离开支付宝 on the way in until
+   * the domain is whitelisted. Slightly worse, and available now.
+   *
+   * THE MONEY IS THE SELLER'S FROM THE START. No destination and no fee: the
+   * shop sells its own goods, so there is nobody to pass it on to. That is
+   * also what keeps this the right side of 二清 — see NOW.md. If this shop
+   * ever settles for somebody else, this branch is wrong and it is a licence
+   * question before it is a code question.
+   *
+   * AND THE CARD COMES THROUGH HERE TOO. It has no code rail and never
+   * will — there is no wallet to draw for it — so it is Stripe or nothing,
+   * and it is the one method this account has taken money on. Same session,
+   * same currency, same reference; the only thing that changes is which
+   * payment_method_type Stripe is asked for. See orderWays().
+   */
+  const viaStripe = async () => {
+    if (!["alipay", "card"].includes(method) || !stripe.configured()) {
+      return res.status(400).json({ error: "off" });
+    }
+    /* THE CURRENCY STRIPE IS ASKED FOR — see audRate above. The order stays
+       priced in yuan everywhere else; this is the only place it changes. */
+    const cents = audCents(total);
+    try {
+      const session = await stripe.checkout({
+        amount: cents || total, currency: cents ? "aud" : "cny", fee: 0, destination: "",
+        method,
+        /* A THIRD SHAPE OF REFERENCE — see the webhook. `order:` because a
+           bare id there already means a room's own fee, and two things
+           answering to one id is how the wrong row gets marked paid. */
+        ref: "order:" + o.id,
+        done: backHere(req, "/order/" + o.id),
+        label: o.lines[0]?.name || "Order",
+      });
+      if (!session?.client_secret) return res.status(502).json({ error: "stripe" });
+      return res.json({ ok: true, how: method,
+        amount: store.fromMinor(total, "cny"),
+        secret: session.client_secret, pk: STRIPE_PK });
+    } catch (err) {
+      console.error("order stripe:", err.message);
+      return res.status(502).json({ error: "stripe" });
+    }
+  };
+  /* A CARD HAS NO CODE TO DRAW. The native rail mints wallet codes and
+     nothing else, so a card press goes to Stripe whether or not a provider
+     is connected — asking qrPay for one would be asking a wallet for a thing
+     wallets do not have. */
+  if (!p || method === "card") return viaStripe();
   try {
     const r = await p.qrPay({
       amount: total, currency: "CNY", method,
@@ -12722,8 +13769,14 @@ app.post("/api/order/:id/pay", express.json({ limit: "1kb" }), async (req, res) 
     res.json({ ok: true, how: method, amount: store.fromMinor(total, "cny"),
       qr: { size: drawn.size, bits: drawn.bits, png } });
   } catch (err) {
-    console.error("order qr:", err.message);
-    res.status(502).json({ error: "qr" });
+    /* THE SAME FALL-THROUGH AS THE REQUEST ROUTE, for the same reason. A
+       code rail that cannot draw has no opinion about this payment; it is
+       not the wallet declining. Answering 502 here put *支付打不开* on the
+       screen of somebody whose Alipay was working perfectly, on a box where
+       BOARD_WALLET named a provider that had been refusing every call since
+       21 Sep. Stand aside and let Stripe take it. */
+    console.error("order qr:", err.message, "— falling through to Stripe");
+    return viaStripe();
   }
 });
 
@@ -13446,7 +14499,14 @@ app.post("/api/admin/request", admin, express.json({ limit: "2kb" }), async (req
        WeChat or Alipay code needs nowhere for the money to land, and this
        said "cannot be paid" about one that could. */
     const ways = dealioWays(board, q);
-    return { ok: true, id: q.id, ready: ways.length > 0 || Boolean(mine.payee),
+    /* AND THE THIRD WAY TO BE PAYABLE, which this did not know about: the
+       owner's own request is charged straight into the account that holds
+       the keys and needs no payout account at all — see dealioMine. Without
+       it `make ask` printed "Tom has no payout set up, so this opens but
+       cannot be paid" beside a link that could be paid, which is the same
+       sentence as a broken board and reads like one. */
+    return { ok: true, id: q.id,
+      ready: ways.length > 0 || Boolean(mine.payee) || dealioMine(board, q),
       code: ways.length > 0 };
   });
   if (out?.error) return res.status(400).json(out);
@@ -13497,9 +14557,19 @@ app.post("/api/admin/pay-try", admin, express.json({ limit: "1kb" }), async (req
   if (!q) return res.status(404).json({ error: "gone" });
   if (!q.cur) return res.status(400).json({ error: "currency" });
 
+  /* THE PATH THE PAYER TAKES, AND NOT A DIFFERENT ONE.
+   *
+   * This forced asker.payee as the destination while /api/request/:id/pay had
+   * stopped using one for the owner's own requests — so on 24 Sep it answered
+   * "your destination account needs the transfers capability" about a
+   * destination the page does not send, and an hour went on the wrong
+   * account. A command whose whole job is "why was this refused" must ask the
+   * same question the page asks, or its answer is worse than no answer:
+   * it is a true sentence about code nobody runs. */
   const asker = board.people.find((p) => p.by === q.by);
-  const dest = (q.way || "in") === "out" ? (q.landed ? q.acct : "") : asker?.payee;
-  if (!dest) return res.status(400).json({ error: "payee" });
+  const mine = dealioMine(board, q);
+  const dest = mine ? "" : ((q.way || "in") === "out" ? (q.landed ? q.acct : "") : asker?.payee);
+  if (!mine && !dest) return res.status(400).json({ error: "payee" });
 
   const want = String(req.body?.method || "");
   const methods = ["wechat", "alipay", "card"].includes(want)

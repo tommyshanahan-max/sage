@@ -25,7 +25,13 @@
     --paper:#EEF0F4; --raise:#F7F8FB; --card:#FCFCFD; --ink:#151B28; --ink-2:#4E5968;
     --muted:#6E7789; --line:#E3E6EC; --hair:#EAECF1;
     --accent:#3F68D8; --accent-ink:#FFFFFF; --accent-soft:#E8ECF7;
-    --money:#B8661A; --money-ink:#FFFFFF; --money-soft:#FBEBD9;
+    /* MONEY IS INK, NOT A COLOUR. It was a burnt orange, and on a screen
+       whose whole job is one number a coloured slab competes with the number
+       for the only glance anybody gives it. Black on white reads as serious
+       where a colour reads as promotional, and nothing here needs selling.
+       Kept as its own token rather than folded into --ink so the day
+       something does need a colour, it changes in one place. */
+    --money:#14161A; --money-ink:#FFFFFF; --money-soft:#EFF0F2;
     --good:#1F8A57; --good-soft:#E3F4EA; --bad:#C7394E; --bad-soft:#FBE7EA; --warn-soft:#FFF4DB;
     --serif:Georgia,"Songti SC","Noto Serif CJK SC","Times New Roman",serif;
     --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
@@ -35,7 +41,7 @@
       --paper:#0B0E15; --raise:#141924; --card:#1B212D; --ink:#E9EDF5; --ink-2:#A3B0C4;
       --muted:#8592A6; --line:#232B39; --hair:#1E2531;
       --accent:#5C8DFF; --accent-ink:#0B0E15; --accent-soft:#18233D;
-      --money:#E89A4A; --money-ink:#1A1206; --money-soft:#2B2014;
+      --money:#F3F5F7; --money-ink:#0B0C0E; --money-soft:rgba(255,255,255,.10);
       --good:#4EBE88; --good-soft:#12261C; --bad:#F0687C; --bad-soft:#2C1519; --warn-soft:#2A2414;
     }
   }
@@ -45,7 +51,14 @@
   :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   [hidden]{display:none!important}
   .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-  main{max-width:34rem;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column}
+  /* PADDED BY WHATEVER THE KEYBOARD IS COVERING — see the visualViewport
+     block at the foot of this file. iOS does not shrink the layout viewport
+     when the keyboard opens, it draws over it, so `min-height:100dvh` with a
+     button pinned to the bottom puts that button underneath the keyboard's
+     own toolbar. That is exactly where Save was: the up/down arrows and Done
+     sat on top of it, with the word showing through. */
+  main{max-width:34rem;margin:0 auto;min-height:100dvh;display:flex;
+    flex-direction:column;padding-bottom:var(--kb,0px)}
   .top{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:.3rem;padding:calc(.6rem + env(safe-area-inset-top)) .6rem .55rem;
     background:var(--paper);border-bottom:1px solid var(--hair)}
   .top h1{flex:1;margin:0;font-family:var(--serif);font-weight:400;font-size:1.2rem;text-align:center;line-height:1.25}
@@ -91,7 +104,6 @@
   .push{margin-top:auto;display:grid;gap:.55rem}
   .note{border-radius:12px;padding:.7rem .8rem;font-size:.94rem;border:1px solid var(--line)}
   .note.info{background:var(--accent-soft)} .note.warn{background:var(--money-soft)} .note.bad{background:var(--bad-soft)} .note.good{background:var(--good-soft)}
-  .steps{display:flex;gap:.3rem} .steps i{flex:1;height:4px;border-radius:99px;background:var(--line)} .steps i.on{background:var(--accent)}
   .field{display:grid;gap:.3rem}
   .field label{font-size:.94rem;font-weight:600}
   .field input,.field select{font:inherit;font-size:1rem;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.7rem .75rem;width:100%}
@@ -104,11 +116,72 @@
   .sum div > span:last-child{text-align:right;font-variant-numeric:tabular-nums}
   .sum .tot > span{font-weight:700;color:var(--ink)!important}
   .big{font-size:2.3rem;font-weight:700;text-align:center;font-variant-numeric:tabular-nums;line-height:1.15;margin:0}
-  .balance{border-radius:18px;padding:1.1rem;background:var(--money);color:var(--money-ink)}
-  .balance .v{font-size:2.2rem;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.15}
-  .acts{display:grid;grid-template-columns:repeat(4,1fr);gap:.4rem}
-  .act{border:1px solid var(--line);background:var(--card);border-radius:14px;padding:.6rem .2rem;display:flex;flex-direction:column;align-items:center;gap:.3rem;cursor:pointer;font-size:.86rem;font-weight:600}
-  .act svg{width:1.35rem;height:1.35rem;stroke:var(--money);fill:none;stroke-width:2}
+  /* NO SLAB. The number sat on a coloured panel, which drew the eye to the
+     panel. It sits on the page now, left-aligned, with nothing beside it —
+     the loudest thing on the screen by size rather than by colour. */
+  .balance{padding:.6rem .15rem 1.4rem}
+  .balance p{margin:0 0 .45rem;font-size:.78rem;letter-spacing:.11em;text-transform:uppercase;color:var(--muted)}
+  .balance .v{font-size:3.3rem;font-weight:700;font-variant-numeric:tabular-nums;line-height:1;letter-spacing:-.035em;color:var(--ink)}
+  .balance p+p{margin-top:.75rem;font-size:.9rem;letter-spacing:0;text-transform:none;color:var(--muted)}
+  /* ---- THE DEALS COLUMN -------------------------------------------------
+     A COLUMN OF SUMMARIES THAT DROP DOWN. Every deal is one line until it is
+     asked about, and then it opens where it stands rather than pushing the
+     reader onto another screen. It is the same shape as the rest of the
+     product — a list of rows, a row opens — with the difference that the
+     reader never loses their place in the column.
+
+     NATIVE <details>, NOT A DIV AND A CLICK HANDLER. It is open and closed to
+     a screen reader without being told, it works from the keyboard, the
+     browser draws the marker, and it survives a repaint with the right rows
+     still open. Hand-rolling it costs all four. */
+  .deal{border-bottom:1px solid var(--line)}
+  .deal>summary{list-style:none;cursor:pointer;display:grid;
+    grid-template-columns:1fr auto;gap:.1rem .8rem;align-items:baseline;
+    padding:.85rem .1rem}
+  .deal>summary::-webkit-details-marker{display:none}
+  .deal>summary:focus-visible{outline:2px solid var(--money);outline-offset:2px;border-radius:.5rem}
+  /* ONE LINE PER DEAL. "Beijing producer → Melbourne post house" wrapped onto
+     two and shoved the figure down with it, so a column of deals stopped
+     being a column you can run your eye down — which is the only thing this
+     shape is for. min-width:0 is the half people forget: without it a grid
+     track refuses to shrink below its content and the ellipsis never fires. */
+  .deal .who{font-weight:650;min-width:0;overflow:hidden;text-overflow:ellipsis;
+    white-space:nowrap}
+  /* THE FIGURE IS WHAT CAME IN, because that is the number somebody
+     recognises a deal by — it is the one they agreed and the one they
+     remember. The margin is what they came to find out and it is inside. */
+  .deal .fig{font-variant-numeric:tabular-nums;font-weight:650}
+  .deal .meta{grid-column:1/-1;font-size:.8rem;color:var(--muted);
+    display:flex;align-items:center;gap:.4rem}
+  /* THE MARKER TURNS, AND IT IS THE ONLY MOVING THING ON THE SCREEN. A column
+     that opens with no sign of having opened reads as the page having jumped. */
+  .deal .caret{display:inline-block;transition:transform .15s ease;color:var(--muted)}
+  .deal[open] .caret{transform:rotate(90deg)}
+  @media (prefers-reduced-motion:reduce){.deal .caret{transition:none}}
+  .deal .inner{padding:.1rem .1rem 1rem}
+  .dline{display:flex;justify-content:space-between;gap:1rem;
+    padding:.42rem 0;font-size:.92rem}
+  .dline span:first-child{color:var(--muted)}
+  .dline span:last-child{font-variant-numeric:tabular-nums;text-align:right}
+  /* THE MARGIN IS THE ONE LINE WORTH LIFTING, and it is lifted by weight and
+     a rule rather than by a colour — it is a figure, not a status. */
+  .dline.gap{border-top:1px solid var(--line);margin-top:.3rem;padding-top:.6rem;
+    font-weight:700}
+  .dline.gap span:first-child{color:var(--ink)}
+  /* WHAT IS OWED ON PAPER. Two marks, scannable down the column. */
+  .dpaper{display:flex;gap:.4rem;flex-wrap:wrap;margin:.7rem 0 0}
+  .dchip{font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;
+    padding:.16rem .55rem;border-radius:999px;background:var(--line);color:var(--ink-2)}
+  .dchip.ok{background:rgba(63,190,125,.16);color:#2E9E68}
+  .dchip.no{background:rgba(217,83,79,.15);color:#C4635F}
+  .acts{display:grid;grid-template-columns:repeat(2,1fr);gap:.6rem}
+  /* Full-width pills, the two things anybody came to do. The icon went: a
+     word and an arrow in a row this wide is one thing too many. */
+  .act{border:0;background:var(--money);color:var(--money-ink);border-radius:999px;
+    padding:1.05rem .6rem;display:flex;align-items:center;justify-content:center;gap:.4rem;
+    cursor:pointer;font-size:1.02rem;font-weight:700}
+  .act:last-child{background:var(--raise);color:var(--ink)}
+  .act svg{width:1.05rem;height:1.05rem;stroke:currentColor;fill:none;stroke-width:2.2}
   .act[disabled]{opacity:.45;cursor:not-allowed}
   .amountbox{display:flex;align-items:baseline;justify-content:center;gap:.35rem}
   .amountbox label{font-size:1.5rem;font-weight:600;color:var(--ink-2)}
@@ -166,6 +239,33 @@
    silently put somebody back into English. Set before the first paint,
    because every screen below reads T at draw time. */
 import { T, STRINGS, lang, setLang, pickLang, langButton } from "/i18n.js";
+import { territoryOf } from "/territory.js";
+/* HOW MUCH OF THE SCREEN THE KEYBOARD IS COVERING.
+ *
+ * On iOS the keyboard does not resize the page — it is drawn over it — so
+ * 100dvh stays the full height and anything sitting at the bottom of it ends
+ * up behind the keyboard's toolbar. Reported from a phone: the Save button
+ * under the up/down arrows and Done, the word visible through them.
+ *
+ * visualViewport is the only thing that knows. The overlap is what the layout
+ * viewport has that the visual one does not, and main pads itself by it, so a
+ * bottom-pinned button rises to sit just above the keyboard instead of under
+ * it. Zero when no keyboard is up, so nothing changes anywhere else.
+ */
+if (window.visualViewport) {
+  const vv = window.visualViewport;
+  const fit = () => {
+    const over = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
+    /* A couple of pixels of jitter as the keyboard animates is not worth a
+       reflow, and setting it on every scroll frame is what makes a page feel
+       like it is shivering. */
+    document.documentElement.style.setProperty("--kb", (over > 24 ? over : 0) + "px");
+  };
+  vv.addEventListener("resize", fit);
+  vv.addEventListener("scroll", fit);
+  fit();
+}
+
 setLang(pickLang());
 
 const $ = (id) => document.getElementById(id);
@@ -203,7 +303,6 @@ function row(o) {
   b.append(o.radio !== undefined ? svg("check", "tick") : svg("chev", "chev"));
   return b;
 }
-const steps = (n, of) => h("div", { class: "steps", role: "img", "aria-label": `Step ${n} of ${of}` }, ...Array.from({ length: of }, (_, i) => h("i", { class: i < n ? "on" : "" })));
 const spinner = (label) => frag(h("div", { class: "spin", role: "img", "aria-label": label }), h("p", { class: "center lead", text: label }));
 
 /* ---- talking to the server ---- */
@@ -289,7 +388,19 @@ const route = () => { const raw = location.hash.replace(/^#/, ""); const [path, 
 const go = (path) => { location.hash = path; };
 const replace = (path) => { history.replaceState(null, "", "#" + path); paint(); };
 window.addEventListener("hashchange", () => paint());
-$("back").addEventListener("click", () => history.back());
+/* A SCREEN MAY OWN ITS BACK ARROW, and one of them has to.
+ *
+ * history.back() is right almost everywhere: every screen here was pushed
+ * onto the stack by the one before it. The payout form is the exception —
+ * it is reached with replace(), which overwrites the entry the two choices
+ * were drawn on, so there is no entry to go back to. The arrow either did
+ * nothing or left the wallet altogether, and somebody who tapped "My bank
+ * account" had no way back to pick Stripe instead short of reloading.
+ *
+ * Cleared on every paint, so a screen that does not set one gets the
+ * ordinary behaviour and cannot inherit the last screen's. */
+let BACK_TO = null;
+$("back").addEventListener("click", () => (BACK_TO ? BACK_TO() : history.back()));
 
 /* Coming back from the provider's own page lands on #…&back=ref; drop that
    and pick up where the person left off. */
@@ -309,7 +420,24 @@ async function paint() {
   const back = returning();
   const { parts, q } = route();
   const name = parts[0];
-  const scr = SCREENS[name] || SCREENS.home;
+  let scr = SCREENS[name] || SCREENS.home;
+  /* NO WALLET, NO WALLET SCREENS — CHECKED IN ONE PLACE.
+   *
+   * Every screen here opens with `const w = W.wallet` and reads a field off
+   * it on the next line. That was safe while the only way in was the home
+   * screen, which sent anybody without a wallet to setup. The home screen
+   * now forwards to the money screen, so a hash IS the way in — and
+   * /wallet#settings for somebody who has never set one up threw on
+   * `w.passkeys`, was caught here, and answered "Couldn't reach the
+   * Exchange", which is a lie about the network.
+   *
+   * Three screens are exempt. setup, which is how you get a wallet; help,
+   * which is where you go when something is wrong; and home, which no longer
+   * draws anything at all — it forwards to the money screen, and it must do
+   * that whether or not a wallet exists. Catching home here sent everybody
+   * without one to setup and the forward never ran, which is the same
+   * complaint this whole change is answering. */
+  if (!W?.wallet && !["setup", "help", "home", "payout"].includes(name)) scr = SCREENS.setup;
   $("screen").textContent = "";
   $("screen").append(spinner(T("wl.loading")));
   let out;
@@ -323,6 +451,7 @@ async function paint() {
   }
   $("title").textContent = out.title;
   document.title = `${out.title} · ${T("wl.suffix")}`;
+  BACK_TO = typeof out.back === "function" ? out.back : null;
   $("back").classList.toggle("hide", name === "home" || out.noBack);
   const act = $("act");
   if (out.action) { act.classList.remove("hide"); act.setAttribute("aria-label", out.action.label); $("acticon").innerHTML = ICON[out.action.icon]; act.onclick = out.action.run; }
@@ -391,34 +520,78 @@ function amountEntry(initial, onChange, label) {
 /* ---- screens ---- */
 const SCREENS = {};
 
+/* THE WALLET HAS NO HOME ANY MORE. IT SENDS YOU TO THE MONEY SCREEN.
+ *
+ * There is one money screen and it is /dealio?in=1 — the hero, the two
+ * verbs, and Pending and Deals as folds. This page kept its own home as
+ * well, a near-duplicate a version behind, and every card that says "Open
+ * wallet" pointed at it. So the tab showed the new screen and the card
+ * showed the old one, and which you got depended on which door you used.
+ * That was reported as "I still see the old money page", and it was true.
+ *
+ * WHAT STAYS. Everything behind a hash: #payout (the bank, the ABN and GST,
+ * the SWIFT and IBAN), #setup, #verify, #settings, #limits, #methods, #send,
+ * #request, #activity. Those are real screens with no other address, and the
+ * money screen links to #payout by name. Only the bare home goes.
+ *
+ * replace() AND NOT href, so the back button returns to wherever they came
+ * from rather than to this address, which would send them straight out
+ * again.
+ */
 SCREENS.home = async () => {
-  if (!W.wallet) return SCREENS.setup([]);
-  const w = W.wallet;
-  const acts = h("div", { class: "acts" },
-    h("button", { class: "act", type: "button", onclick: () => go("send") }, svg("send"), T("wl.send")),
-    h("button", { class: "act", type: "button", onclick: () => go("request") }, svg("req"), T("wl.request")),
-    h("button", { class: "act", type: "button", onclick: () => go("add"), disabled: !w.holdsBalance }, svg("add"), T("wl.add")),
-    h("button", { class: "act", type: "button", onclick: () => go("withdraw"), disabled: !w.holdsBalance }, svg("out"), T("wl.withdraw")));
-  const needs = [...w.incoming.map((t) => row({ lead: face(t.with.handle), title: T("wl.sentYou", { who: t.with.handle, amt: t.amount.text }), sub: t.note || T("wl.acceptIn24"), onclick: () => go(`activity/transfer/${t.id}`) })),
-    ...w.requests.filter((r) => r.direction === "in").map((r) => row({ lead: face(r.with.handle), title: T("wl.requestedAmt", { who: r.with.handle, amt: r.amount.text }), sub: r.note, onclick: () => go(`activity/request/${r.id}`) }))];
-  const { rows } = await api("/api/wallet/activity");
-  const recent = rows.slice(0, 5).map((x) => activityRow(x));
-  return { title: T("wl.title"), action: { label: T("wl.settings"), icon: "gear", run: () => go("settings") }, body: frag(
-    h("section", { class: "balance", "aria-label": T("wl.balance") },
-      h("p", { text: w.holdsBalance ? T("wl.balance") : T("wl.straightToBank") }),
-      w.holdsBalance ? h("p", { class: "v", text: w.balance.text }) : h("p", { class: "v", style: "font-size:1.3rem", text: w.payoutLabel || T("wl.noBankYet") }),
-      h("p", { style: "font-size:.9rem;opacity:.9", text: `${regionName(w.region, w.regionName)} · ${w.currency} · ${w.verified === "verified" ? T("wl.verified") : T("wl.notVerifiedYet")}` })),
-    acts,
-    w.verified !== "verified" ? note("warn", T("wl.confirmToMove"), h("button", { type: "button", class: "chip", onclick: () => go("verify"), text: T("wl.confirmNow") })) : null,
-    needs.length ? h("p", { class: "k", text: T("wl.needsYou") }) : null,
-    needs.length ? h("div", { class: "list" }, ...needs) : null,
-    h("div", { style: "display:flex;justify-content:space-between;align-items:baseline" }, h("p", { class: "k", text: T("wl.recent") }), h("button", { type: "button", class: "chip", onclick: () => go("activity"), text: T("wl.seeAll") })),
-    h("div", { class: "list" }, ...(recent.length ? recent : [row({ title: T("wl.nothingYet"), sub: T("wl.nothingYetSub") })])),
-    h("div", { class: "list" },
-      row({ lead: badge("⇄"), title: T("wl.methods"), sub: w.sources.length ? w.sources.map((s) => s.label).join(" · ") : T("wl.nothingConn"), onclick: () => go("methods") }),
-      row({ lead: badge("⚑"), title: T("wl.help"), sub: T("wl.helpSub"), onclick: () => go("help") })),
-  ) };
+  location.replace("/dealio?in=1");
+  /* A body, because paint() will draw whatever comes back before the
+     navigation happens. One line, and never a spinner: a spinner on a screen
+     that is leaving says something is loading here, and nothing is. */
+  return { title: T("wl.title"), noBack: true, body: frag(
+    h("p", { class: "lead center", text: T("wl.moved") })) };
 };
+
+/* ONE DEAL: A SUMMARY LINE THAT DROPS DOWN.
+ *
+ * Coarse first, finer on a tap — but opening in place rather than on another
+ * screen, so a column of them can be read down and two of them compared
+ * without going back and forth. The line carries what a deal is called (the
+ * two names) and what it was for (the figure that came in). Everything that
+ * has to be worked out — what went out, what is left, whose invoice is
+ * missing — is inside.
+ */
+function dealDrop(d, books) {
+  const names = [d.in?.who || T("wl.someone"), d.out?.who || T("wl.noSupplier")].join(" → ");
+  const sum = h("summary", null,
+    h("span", { class: "who", text: names }),
+    h("span", { class: "fig", text: d.in?.amount || d.out?.amount || "" }),
+    h("span", { class: "meta" },
+      h("span", { class: "caret", text: "›" }),
+      h("span", { text: [d.no ? T("rq.no", { n: String(d.no).padStart(4, "0") }) : "",
+        d.in?.what || ""].filter(Boolean).join(" · ") })));
+
+  const inner = h("div", { class: "inner" });
+  const line = (k, v, cls) => { if (v) inner.append(h("div", { class: "dline" + (cls ? " " + cls : "") }, h("span", { text: k }), h("span", { text: v }))); };
+  line(T("wl.dIn"), d.in?.amount || "");
+  /* WHAT ACTUALLY ARRIVED IN YUAN, at the rate on the day the code was drawn.
+     A third number beside the other two rather than folded into them: those
+     are the supplier's currency so the subtraction means something, and this
+     is what was banked. */
+  if (d.in?.cny) line(T("wl.dCny"), "¥" + (d.in.cny / 100).toLocaleString("en-US"));
+  line(T("wl.dOut"), d.out?.amount || "");
+  if (d.gap) line(T("wl.dGap"), d.gap.amount + "  ·  " + d.gap.pct + "%", "gap");
+  /* AND WHY THERE IS NONE, WHERE THERE IS NONE. A missing figure in the one
+     column this screen exists for reads as a bug every time. */
+  else inner.append(h("div", { class: "dline gap" }, h("span", { text: T("wl.dGap") }),
+    h("span", { text: T("bk.why." + (d.why || "noCur")) })));
+  if (d.in?.inv) line(T("wl.dInvTo"), d.in.inv.title);
+
+  /* THE PAPERWORK, ONLY ONCE THE MONEY HAS MOVED. A document that is not owed
+     yet is not outstanding, and a row of red marks on a deal nobody has paid
+     is a screen that cries wolf. */
+  const chips = h("div", { class: "dpaper" });
+  if (d.in && d.in.state === "paid") chips.append(h("span", { class: "dchip " + (d.in.invoice === "issued" ? "ok" : "no"), text: T(d.in.invoice === "issued" ? "bk.cIssued" : "bk.cIssue") }));
+  if (d.out && d.out.state === "paid") chips.append(h("span", { class: "dchip " + (d.out.billed ? "ok" : "no"), text: T(d.out.billed ? "bk.cBilled" : "bk.cBill") }));
+  if (chips.children.length) inner.append(chips);
+
+  return h("details", { class: "deal" }, sum, inner);
+}
 
 function activityRow(x) {
   const [state] = status(x.state);
@@ -430,31 +603,60 @@ function activityRow(x) {
 }
 
 /* SETUP — region, terms, then identity, Face ID, a way to pay, where money goes. */
+/* WHERE SOMEBODY LIVES IS A QUESTION THE PROVIDER ASKS, NOT US.
+ *
+ * This opened with six radio rows — Finland, Australia, Mainland China, Hong
+ * Kong, United States, Somewhere else — as the first thing a stranger saw,
+ * before they knew what the wallet was. It decides real things (the currency,
+ * whether a balance can be held at all, which bank fields, the daily limit)
+ * and not one of them bites until the first payment.
+ *
+ * And under Stripe or Airwallex it is THEIR question. They run the identity
+ * check, they set the limits, they take the bank details on their own page,
+ * they decide what is allowed where. Asking it here was us re-implementing
+ * the regulated party's onboarding in front of the customer — and a product
+ * that collects identity and sets limits looks like the thing holding the
+ * money, which is the one impression this board must not give.
+ *
+ * So it is guessed from the phone and changeable in Settings. A guess that is
+ * wrong costs one tap later; a question on the door costs the person.
+ */
+function guessRegion() {
+  const zone = (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch { return ""; } })();
+  if (/^Australia\//.test(zone)) return "AU";
+  if (/^Asia\/(Shanghai|Chongqing|Urumqi|Harbin)$/.test(zone)) return "CN";
+  if (zone === "Asia/Hong_Kong") return "HK";
+  if (zone === "Europe/Helsinki") return "FI";
+  if (/^America\//.test(zone)) return "US";
+  /* The language's region is a weaker signal than the clock — a phone set to
+     en-AU in Beijing is commoner than a clock set to Melbourne there — so it
+     is only read when the clock said nothing. */
+  const tag = String((navigator.languages && navigator.languages[0]) || navigator.language || "");
+  const m = /-([A-Z]{2})\b/.exec(tag.toUpperCase());
+  if (m && W.regions && W.regions[m[1]]) return m[1];
+  return "OTHER";
+}
+
 SCREENS.setup = async () => {
   if (W.wallet) { replace("home"); return { title: T("wl.title"), body: frag() }; }
   const waiting = W.waitingForYou || [];
-  let region = "";
-  const list = h("div", { class: "list", role: "radiogroup", "aria-label": T("wl.whereYouLive") });
   const terms = h("input", { type: "checkbox", id: "terms" });
   const start = btn(T("wl.setUp"), "", async () => {
     start.disabled = true;
-    try { await api("/api/wallet/setup", { region, acceptedTerms: true }); await load(); say(T("wl.walletCreated")); go("verify"); }
+    /* NOT go("verify"). Finishing setup used to hand somebody straight to
+       "Confirm it's you" — photograph your passport, take a selfie — when
+       all they had done was ask where their money should go. Nothing at this
+       level needs it: setPayout takes no `verified` flag, so the bank
+       details save without it. Identity belongs where money actually moves,
+       and it is still one row down in Settings and still the answer the send
+       flow gives when it needs one. */
+    try { await api("/api/wallet/setup", { region: guessRegion(), acceptedTerms: true }); await load(); say(T("wl.walletCreated")); replace("payout"); }
     catch (err) { start.disabled = false; showError(err); }
   }, { disabled: true });
-  const upd = () => { start.disabled = !(region && terms.checked); };
-  const draw = () => {
-    list.textContent = "";
-    for (const [id, r] of Object.entries(W.regions)) {
-      list.append(row({ radio: region === id, title: regionName(id, r.name), sub: r.balance ? T("wl.walletIn", { cur: r.currency }) : T("wl.paidStraight", { cur: r.currency }), onclick: () => { region = id; draw(); upd(); list.querySelector('[aria-checked="true"]').focus(); } }));
-    }
-  };
-  draw();
-  terms.addEventListener("change", upd);
+  terms.addEventListener("change", () => { start.disabled = !terms.checked; });
   return { title: T("wl.setUp"), body: frag(
-    steps(1, 5),
     h("p", { class: "hero", text: T("wl.setUpHero") }),
     waiting.length ? note("warn", T("wl.setUpWaiting", { who: waiting[0].with.handle, amt: waiting[0].amount.text })) : null,
-    h("p", { class: "k", text: T("wl.whereYouLive") }), list,
     h("div", { class: "list" },
       row({ title: T("wl.provHolds"), sub: T("wl.provHoldsSub") }),
       row({ title: T("wl.noReverse"), sub: T("wl.noReverseSub") }),
@@ -469,19 +671,23 @@ SCREENS.verify = async () => {
   const w = W.wallet;
   if (!w) { replace("setup"); return { title: T("wl.title"), body: frag() }; }
   if (w.verified === "verified") return { title: T("wl.confirmed"), body: frag(h("div", { class: "done" }, svg("check")), h("p", { class: "hero center", text: T("wl.youreVerified") }),
-    h("p", { class: "center lead", text: T("wl.canSendUpTo", { amt: w.limits.sendDay.text }) }), h("div", { class: "push" }, btn(T("wl.continue"), "", () => go("security")))) };
+    h("p", { class: "center lead", text: T("wl.canSendUpTo", { amt: w.limits.sendDay.text }) }), h("div", { class: "push" }, btn(T("wl.continue"), "", () => replace("home")))) };
   const b = btn(T("wl.toProvider"), "", async () => {
     b.disabled = true;
     try { const { url } = await api("/api/wallet/verify", { returnUrl: "/wallet#verify" }); leaveFor(url, "verify"); }
     catch (err) { b.disabled = false; showError(err); }
   });
+  /* NO STEP BAR. There is no longer a numbered march to the end of — the
+     wallet opens after this, and a card, a bank and a passkey are things to
+     add when they are first needed, each on its own screen, reached from the
+     row that wants them. "Step 2 of 5" in front of somebody who is two taps
+     from done is a wall drawn where there is none. */
   return { title: T("wl.confirmIt"), body: frag(
-    steps(2, 5),
     w.verified === "pending" ? note("info", T("wl.checkUnfinished")) : null,
     h("p", { class: "lead", text: T("wl.whyVerify") }),
     h("div", { class: "list" }, row({ lead: badge("1"), title: T("wl.idPhoto") }), row({ lead: badge("2"), title: T("wl.selfie") })),
     h("p", { class: "small", text: T("wl.onlyPassFail") }),
-    h("div", { class: "push" }, b, btn(T("wl.doLater"), "ghost", () => go("security")))) };
+    h("div", { class: "push" }, b, btn(T("wl.doLater"), "ghost", () => replace("home")))) };
 };
 
 SCREENS.security = async () => {
@@ -489,15 +695,14 @@ SCREENS.security = async () => {
   const has = w?.passkeys > 0;
   const add = btn(T("wl.faceOn"), "", async () => {
     add.disabled = true;
-    try { await addPasskey(); await load(); say(T("wl.faceIsOn")); go("sources"); }
+    try { await addPasskey(); await load(); say(T("wl.faceIsOn")); history.back(); }
     catch (err) { add.disabled = false; showError(err instanceof ApiError ? err : new ApiError(400, { message: T("wl.faceFailed") })); }
   });
   return { title: T("wl.keepSafe"), body: frag(
-    steps(3, 5),
     h("p", { class: "lead", text: T("wl.faceWhy") }),
     has ? note("good", T("wl.faceIsOn")) : null,
     !canPasskey() ? note("info", W.testConfirm ? T("wl.noPasskeyTest") : T("wl.noPasskey")) : null,
-    h("div", { class: "push" }, has || !canPasskey() ? btn(T("wl.continue"), "", () => go("sources")) : add, !has && canPasskey() && W.testConfirm ? btn(T("wl.skipTest"), "ghost", () => go("sources")) : null)) };
+    h("div", { class: "push" }, has || !canPasskey() ? btn(T("wl.continue"), "", () => history.back()) : add, !has && canPasskey() && W.testConfirm ? btn(T("wl.skipTest"), "ghost", () => history.back()) : null)) };
 };
 
 SCREENS.sources = async () => {
@@ -505,50 +710,294 @@ SCREENS.sources = async () => {
   const kinds = w.region === "CN" ? [["card", T("wl.unionpay"), T("wl.feePct", { p: "2.9" })], ["wechat", T("wl.wechatPay"), T("wl.noFee")]] : [["card", T("wl.cardKind"), T("wl.feePct", { p: "2.9" })], ["bank", T("wl.bankKind"), T("wl.noFee")], ["paypal", T("wl.paypal"), T("wl.feePct", { p: "3.4" })]];
   const connect = async (kind) => { try { const { url } = await api("/api/wallet/sources/connect", { kind, returnUrl: "/wallet#sources" }); leaveFor(url, "sources"); } catch (err) { showError(err); } };
   return { title: T("wl.howPay"), body: frag(
-    steps(4, 5),
     h("p", { class: "lead", text: T("wl.connectSomething") }),
     w.sources.length ? h("div", { class: "list" }, ...w.sources.map((s) => row({ lead: badge(s.kind === "card" ? "CARD" : s.kind === "bank" ? "BANK" : s.kind === "paypal" ? "PP" : "WX"), title: s.label, sub: T("wl.connected") }))) : null,
     h("div", { class: "list" }, ...kinds.map(([k, t, fee]) => row({ lead: badge(k === "card" ? "CARD" : k === "bank" ? "BANK" : k === "paypal" ? "PP" : "WX"), title: t, sub: fee, onclick: () => connect(k) }))),
-    h("div", { class: "push" }, btn(w.sources.length ? T("wl.continue") : T("wl.skipForNow"), w.sources.length ? "" : "ghost", () => go("payout?setup=1")))) };
+    h("div", { class: "push" }, btn(T("wl.continue"), "", () => history.back()))) };
 };
 
+/* THE FIRST SCREEN OF BEING PAID, and it is three things, not six.
+ *
+ * The wallet's own sign-up is about a product that holds and moves money
+ * between members. This is about one thing: telling us where to send yours.
+ * Same record underneath — the bank details hang off it — but somebody who
+ * pressed "Where do we send your money" is answering that question and
+ * should not have to read about PayPal fees on the way. */
+function payoutFirst() {
+  const terms = h("input", { type: "checkbox", id: "terms" });
+  const start = btn(T("wl.whereGo"), "", async () => {
+    start.disabled = true;
+    try {
+      await api("/api/wallet/setup", { region: guessRegion(), acceptedTerms: true });
+      await load();
+      /* replace, not go: pressing back should return them to the money
+         screen they came from, not to this screen they have finished with. */
+      replace("payout");
+    } catch (err) { start.disabled = false; showError(err); }
+  }, { disabled: true });
+  terms.addEventListener("change", () => { start.disabled = !terms.checked; });
+  return { title: T("dl.whereSend"), body: frag(
+    h("p", { class: "hero", text: T("wl.whereHero") }),
+    h("p", { class: "lead", text: T("wl.whereLead") }),
+    h("label", { class: "check" }, terms, h("span", { text: T("wl.acceptTerms") })),
+    h("div", { class: "push" }, start),
+  ) };
+}
+
+/* A FIELD'S NAME AND ITS ONE LINE OF HELP.
+ *
+ * Kept beside the territory table rather than inside it: the table is facts
+ * about a country and these are words on a screen, and the two are edited by
+ * different people for different reasons. A key with no entry falls back to
+ * its own name, which is ugly on purpose — a missing string should be
+ * obvious on the screen rather than invisible. */
+const FIELD_LABEL = {
+  accountName: "wl.accountName", bsb: "wl.bsb", accountNumber: "wl.accountNumber",
+  bankName: "wl.bankLabel", swift: "wl.swift", iban: "wl.ibanOr",
+  routing: "wl.routing", country: "wl.bankCountry", address: "wl.yourAddress",
+};
+const FIELD_HINT = {
+  bsb: "wl.sixDigits", swift: "wl.swiftHint", iban: "wl.ibanHint",
+  routing: "wl.routingHint", address: "wl.addressWhy",
+};
+function fieldLabel(key, region) {
+  /* Finland's account IS an IBAN, so calling it "IBAN or account number"
+     there is a choice it does not have. */
+  if (key === "iban" && region === "FI") return "IBAN";
+  if (key === "accountNumber" && region === "CN") return T("wl.cnAccount");
+  /* THE LABEL SAID "BANK" WHILE THE LINE UNDER IT ASKED FOR THE BRANCH.
+     Two instructions in three inches, disagreeing. The label asks for what
+     is wanted. */
+  if (key === "bankName" && region === "CN") return T("wl.cnBank");
+  return T(FIELD_LABEL[key] || key);
+}
+function fieldHint(key, region) {
+  /* NOT "as registered against the ABN" any more — see public/territory.js
+     for why the ABN went. Whatever the bank has it as is the only thing that
+     matters, because it is the bank that will bounce it. */
+  if (key === "accountName") return T(region === "CN" ? "wl.asOnYourId" : "wl.asAtBank");
+  if (key === "bankName" && region === "CN") return T("wl.bankEg");
+  const k = FIELD_HINT[key];
+  return k ? T(k) : "";
+}
+
+/* WHICH ACCOUNT, ASKED BEFORE ANY FIELD IS DRAWN.
+ *
+ * The screen opened on a bank form: eight boxes, a country chip and a Save,
+ * with no hint that the other answer existed. Stripe Connect was already
+ * built — lib/stripe.js's linkUrl connects an account somebody ALREADY has —
+ * and the only way to it was the /china/connect deep link, which nothing on
+ * this screen mentioned. A feature reachable only by typing a URL is a
+ * feature nobody has.
+ *
+ * TWO ROWS, FOUR WORDS EACH, NOTHING ELSE. The question is "where does the
+ * money go" and it has exactly two answers. A paragraph explaining the
+ * difference is a paragraph nobody reads on the screen where they are trying
+ * to get paid; each row carries one line and the detail is behind the tap.
+ *
+ * ONLY WHEN NOTHING IS SAVED. Somebody who has already answered gets their
+ * answer and a way to change it, not the question again every time.
+ *
+ * The Stripe row goes straight to /china/api/link, which is the redirect
+ * into Stripe's own authorise page — one tap rather than two. With no client
+ * id on the box that route bounces to /china/connect?e=nolink, which says so
+ * on the screen; a dead end that explains itself beats a button that does
+ * nothing. */
+/* Substituted by page() from stripe.canLink() — see the note beside
+   {{CANLINK}} in server.js. A string, because that is what a token is. */
+const CANLINK = "{{CANLINK}}" === "1";
+
+function payoutPick(onBank) {
+  /* NO LINE ABOVE THE TWO ROWS. It read "We send your money straight to your
+     bank" — which answers the question the rows are asking, and names only
+     one of the two answers while it does it. The title bar already says
+     Getting paid; the rows say the rest. */
+  return frag(
+    h("div", { class: "list" },
+      row({ title: T("wl.pickBank"), sub: T("wl.pickBankSub"), onclick: onBank }),
+      /* OFF UNTIL STRIPE CAN ANSWER. Without BOARD_STRIPE_CLIENT_ID the
+         connect route has nowhere to send anybody, so tapping this went to
+         /china/api/link and came back here — the same screen, no message,
+         a loop. The row stays on the screen because the answer exists and
+         is coming; it says so instead of pretending. */
+      CANLINK
+        ? row({ title: T("wl.pickStripe"), sub: T("wl.pickStripeSub"),
+            onclick: () => { location.href = "/china/api/link"; } })
+        : row({ title: T("wl.pickStripe"), sub: T("wl.pickStripeOff") })),
+  );
+}
+
+/* WHICH OF THE TWO THEY CHOSE, FOR THIS VISIT ONLY. Deliberately not stored:
+   it is not a fact about them, it is where they are on a screen, and a
+   choice that outlives the visit is a screen that opens somewhere different
+   tomorrow for no reason anybody can see. */
+let PAYOUT_HOW = null;
+
 SCREENS.payout = async (_, q) => {
+  /* ARRIVED HERE FROM "WHERE DO WE SEND YOUR MONEY", WITH NO WALLET.
+   *
+   * The bank details are stored on a wallet record, so with none the central
+   * guard sent people to the wallet's own sign-up: a wall about a provider
+   * that holds money, what happens when a payment cannot be reversed, and
+   * card and PayPal fees. Every word of it true of the wallet and none of it
+   * an answer to the question they pressed a button to ask. Reported from a
+   * phone, and it was the button doing exactly what it promised until the
+   * last step.
+   *
+   * So this path gets its own first screen: the question as its heading, one
+   * sentence, the terms on one line, and the bank fields straight after. */
+  if (!W.wallet) return payoutFirst();
   const w = W.wallet;
   const setup = q.get("setup") === "1";
-  const fields = w.region === "AU" ? [["accountName", T("wl.accountName"), "text", ""], ["bsb", T("wl.bsb"), "text", T("wl.sixDigits")], ["accountNumber", T("wl.accountNumber"), "text", ""]]
-    : w.region === "CN" ? [["accountName", T("wl.accountName"), "text", T("wl.asOnYourId")], ["bankName", T("wl.bankLabel"), "text", T("wl.bankEg")], ["accountNumber", T("wl.cnAccount"), "text", ""]]
-    : [["accountName", T("wl.accountName"), "text", ""], ["bankName", T("wl.bankLabel"), "text", ""], ["iban", w.region === "FI" ? "IBAN" : T("wl.ibanOr"), "text", ""]];
-  let mode = w.holdsBalance ? (w.payout || "wallet") : "bank";
-  const form = h("div", { class: "stack" });
-  const inputs = {};
-  for (const [key, label, type, hint] of fields) {
-    const id = "f_" + key;
-    inputs[key] = h("input", { id, type, autocomplete: key === "accountName" ? "name" : "off", inputmode: ["bsb", "accountNumber"].includes(key) ? "numeric" : null });
-    form.append(h("div", { class: "field" }, h("label", { for: id, text: label }), inputs[key], hint ? h("span", { class: "hint", text: hint }) : null));
+  /* THE QUESTION BEFORE THE FORM. Nothing saved and nothing chosen yet, so
+     neither answer has been given and neither form should be on the screen.
+     See payoutPick above. */
+  if ((!w.payoutLabel && !PAYOUT_HOW) || PAYOUT_HOW === "ask") {
+    return { title: T("wl.gettingPaid"), body: payoutPick(() => {
+      PAYOUT_HOW = "bank";
+      replace("payout" + (setup ? "?setup=1" : ""));
+      /* showNew is computed from payoutLabel further down, so somebody who
+         already had an account and came back through the question still gets
+         empty fields rather than the row they were trying to replace. */
+    }) };
   }
-  const list = h("div", { class: "list", role: "radiogroup", "aria-label": T("wl.whereShouldGo") });
+  /* THE FIELDS COME FROM THE TERRITORY, NOT FROM AN `if`.
+   *
+   * This was two branches — Australia, mainland China, everywhere else — with
+   * the GST question welded into the Australian one. An Australian got the
+   * right questions; a Hong Konger got none, which was right by accident; and
+   * a Finn was asked for an IBAN and nothing about VAT, which is simply
+   * wrong, because a VAT number belongs on their invoice and we never
+   * collected it. See lib/wallet/territory.js, including why `salesTax: null`
+   * for Hong Kong and the United States is a deliberate answer and not a gap.
+   */
+  /* WHICH COUNTRY THE ACCOUNT IS IN, ASKED RATHER THAN GUESSED.
+   *
+   * The fields used to follow w.region, which is guessed from the phone's
+   * clock at setup and which nothing could change — so somebody in Shanghai
+   * with an Australian account got the Chinese form and no way to enter a
+   * SWIFT. Where somebody lives and where their account is are different
+   * facts and this screen only needs the second one.
+   *
+   * It opens on the saved account's country, or on the guess for a first
+   * one, so the common case is still no taps. */
+  let where = w.payoutRegion || w.region;
+
+  /* ALWAYS A BANK. It offered "keep it in your wallet" against "pay it out",
+     and the first of those is the float this board cannot hold. */
+  let mode = "bank";
+  const form = h("div", { class: "stack" });
+  let inputs = {};
+
+  /* THE PICKER IS NOT THE FIRST THING ANYBODY SEES.
+   *
+   * The guess is right most of the time — a member in Shanghai being paid
+   * into a Chinese account — and for them the short form is the whole screen
+   * and a country dropdown above it is one more thing to read past. So the
+   * fields open on the guess and the picker sits behind one quiet line for
+   * the people the guess is wrong for. Opened once, it stays open. */
+  let showWhere = false;
+  const pick = h("select", { id: "f_where", "aria-label": T("wl.accountCountry") });
+  for (const [code, r] of Object.entries(W.regions || {})) {
+    pick.append(h("option", { value: code, text: regionName(code, r.name), selected: code === where ? "" : null }));
+  }
+  pick.value = where;
+
+  /* WHAT IS TYPED SURVIVES THE SWITCH. Changing the country rebuilds the
+     fields, and a name typed into the old set would otherwise vanish —
+     which reads as the app having eaten it. Only the keys the new country
+     also asks for come across, which is most of them. */
+  const fields = () => {
+    const kept = Object.fromEntries(Object.entries(inputs).map(([k, i]) => [k, i.value]));
+    form.textContent = "";
+    inputs = {};
+    for (const key of territoryOf(where).bank) {
+      const id = "f_" + key;
+      inputs[key] = h("input", { id, type: "text", value: kept[key] || "",
+        autocomplete: key === "accountName" ? "name" : key === "address" ? "street-address" : key === "country" ? "country-name" : "off",
+        inputmode: ["bsb", "accountNumber", "routing"].includes(key) ? "numeric" : null });
+      const hint = fieldHint(key, where);
+      form.append(h("div", { class: "field" }, h("label", { for: id, text: fieldLabel(key, where) }), inputs[key],
+        hint ? h("span", { class: "hint", text: hint }) : null));
+    }
+  };
+  pick.addEventListener("change", () => { where = pick.value; fields(); });
+  fields();
+  /* ONE OPTION IS NOT A QUESTION. It asked "when someone sends you money,
+     where should it go?" over a single row with a tick beside it — the other
+     answer was "keep it in your wallet", which is the float this board cannot
+     hold and which went months ago. A chooser with one choice is furniture,
+     and a tick beside it implies a decision nobody made.
+     THE TIMING LINE IS THE SAME EVERYWHERE NOW. mainland China used to read
+     "payments into China are checked first, usually 1-2 days", which is true
+     of money arriving from abroad — and the payer is the WFOE, in China, so
+     this is a domestic transfer and same-or-next-day like anywhere else. */
+  const list = h("div", { class: "list" });
   const draw = () => {
     list.textContent = "";
-    if (w.holdsBalance) list.append(row({ radio: mode === "wallet", title: T("wl.keepInWallet"), sub: T("wl.withdrawWhenever"), onclick: () => { mode = "wallet"; draw(); } }));
-    list.append(row({ radio: mode === "bank", title: w.payoutLabel ? T("wl.myBankIs", { label: w.payoutLabel }) : T("wl.straightToMine"), sub: w.region === "CN" ? T("wl.cnChecked") : T("wl.usuallyNextDay"), onclick: () => { mode = "bank"; draw(); } }));
-    form.hidden = mode !== "bank" || (Boolean(w.payoutLabel) && !showNew);
+    /* A CONNECTED ACCOUNT IS NOT A BANK ROW. It said "straight to my bank
+       account · usually the same or next working day" over a Stripe account,
+       which is wrong twice: it is not a bank, and nothing is sent anywhere —
+       the money is already there, because the charge was raised on it. */
+    const onStripe = w.payout === "stripe";
+    list.append(row({
+      title: onStripe ? w.payoutLabel
+        : (w.payoutLabel ? T("wl.myBankIs", { label: w.payoutLabel }) : T("wl.straightToMine")),
+      sub: T(onStripe ? "wl.stripeLands" : "wl.usuallyNextDay"),
+    }));
+    form.hidden = onStripe || mode !== "bank" || (Boolean(w.payoutLabel) && !showNew);
   };
-  let showNew = !w.payoutLabel;
-  const change = w.payoutLabel ? h("button", { type: "button", class: "chip", text: T("wl.useDifferent"), onclick: () => { showNew = true; draw(); } }) : null;
+  let showNew = !w.payoutLabel || PAYOUT_HOW === "bank";
+  /* CHANGING IT REOPENS THE QUESTION, rather than dropping straight into the
+     bank form. Somebody whose money goes to a bank today may be changing it
+     precisely because they now have a Stripe account, and a chip that only
+     ever offers more bank fields answers a question they did not ask. */
+  const change = w.payoutLabel ? h("button", { type: "button", class: "chip", text: T("wl.useDifferent"),
+    onclick: () => { PAYOUT_HOW = "ask"; replace("payout" + (setup ? "?setup=1" : "")); } }) : null;
   draw();
+  /* ABOVE THE FIELDS, because it decides what they are — but as a line until
+     it is needed. */
+  const whereRow = h("div", { class: "field" });
+  const elsewhere = h("button", { type: "button", class: "chip", text: T("wl.elsewhere"),
+    onclick: () => { showWhere = true; paintWhere(); pick.focus(); } });
+  const paintWhere = () => {
+    whereRow.textContent = "";
+    if (showWhere) whereRow.append(h("label", { for: "f_where", text: T("wl.accountCountry") }), pick);
+    else whereRow.append(elsewhere);
+  };
+  paintWhere();
+
   const save = btn(setup ? T("wl.finish") : T("wl.save"), "", async () => {
     save.disabled = true;
     try {
       if (mode === "wallet") await api("/api/wallet/payout", { mode: "wallet" });
-      else if (showNew) await api("/api/wallet/payout", { mode: "bank", details: Object.fromEntries(Object.entries(inputs).map(([k, i]) => [k, i.value])) });
+      else if (showNew) await api("/api/wallet/payout", { mode: "bank", region: where, details: {
+        ...Object.fromEntries(Object.entries(inputs).map(([k, i]) => [k, i.value])),
+      } });
       await load(); say(T("wl.saved"));
       if (setup) go("ready"); else history.back();
     } catch (err) { save.disabled = false; showError(err); }
   });
-  return { title: T("wl.gettingPaid"), body: frag(
-    setup ? steps(5, 5) : null,
-    h("p", { class: "lead", text: T("wl.whereShouldGo") }),
-    list, change, form,
+  return { title: T("wl.gettingPaid"),
+    /* Back to the two choices, not out of the wallet — see BACK_TO. Only
+       when they came through them: somebody who already had an account and
+       opened this screen directly should still leave the way they arrived. */
+    back: PAYOUT_HOW === "bank" ? () => { PAYOUT_HOW = "ask"; replace("payout"); } : null,
+    body: frag(
+    /* BOTH OF THESE ARE ABOUT A WIRE, and there is no wire to a connected
+       account: "we send your money straight to your bank" over a Stripe
+       account is a sentence about something that does not happen, and the
+       country of the account decides which bank fields to draw, which are
+       not drawn. */
+    w.payout === "stripe" ? null : h("p", { class: "lead", text: T("wl.weSendTo") }),
+    list, change,
+    w.payout === "stripe" ? null : whereRow,
+    form,
+    /* WHAT THEIR INVOICE HAS TO SAY, said here rather than after the first
+       one is rejected. Four things, and a supplier who gets them wrong is
+       paid late for a reason nobody explained. */
+    /* NO INVOICE ROW AND NO TAX FIELDS. What a supplier owes their own
+       revenue office is between them and it — see public/territory.js. */
     h("p", { class: "small", text: T("wl.detailsToProv") }),
     h("div", { class: "push" }, save, setup ? btn(T("wl.skipForNow"), "ghost", () => go("ready")) : null)) };
 };
@@ -593,7 +1042,7 @@ SCREENS.amount = async ([to], q, known) => {
   if (!p) return { title: T("wl.send"), body: note("bad", T("wl.memberGone")) };
   if (!p.hasWallet) return { title: T("wl.payWho", { who: p.handle }), body: frag(note("info", T("wl.theyHaveNoWallet", { who: p.handle })), h("div", { class: "push" }, btn(T("wl.back"), "ghost", () => history.back()))) };
   const draft = JSON.parse(sessionStorage.getItem("wallet:draft") || "{}");
-  const d = draft.to === to ? draft : { to, amount: "", note: "", reason: "", source: (w.sources.find((s) => s.default) || {}).id || (w.holdsBalance ? "wallet" : "") };
+  const d = draft.to === to ? draft : { to, amount: "", note: "", reason: "", source: (w.sources.find((s) => s.default) || {}).id || "" };
   const chinese = p.region === "CN";
   const cont = btn(T("wl.continue"), "", async () => {
     cont.disabled = true;
@@ -610,7 +1059,10 @@ SCREENS.amount = async ([to], q, known) => {
   const check = () => { cont.disabled = !(Number(d.amount) > 0) || !d.source || (chinese && d.reason.trim().length < 3); };
   noteIn.addEventListener("input", () => { d.note = noteIn.value; });
   reasonIn.addEventListener("input", () => { d.reason = reasonIn.value; check(); });
-  const sources = [...(w.holdsBalance ? [{ id: "wallet", label: T("wl.walletBalance"), kind: "wallet", sub: T("wl.balNoFee", { amt: w.balance.text }) }] : []), ...w.sources.map((s) => ({ ...s, sub: s.fee ? T("wl.feePct", { p: s.fee / 100 }) : T("wl.noFee") }))];
+  /* A CARD OR A BANK, AND NOTHING ELSE. "Wallet balance" was the first row
+     here; there is no balance now, so it would be an option that can never
+     be chosen. */
+  const sources = w.sources.map((s) => ({ ...s, sub: s.fee ? T("wl.feePct", { p: s.fee / 100 }) : T("wl.noFee") }));
   const srcList = h("div", { class: "list", role: "radiogroup", "aria-label": T("wl.payFrom") });
   const drawSrc = () => { srcList.textContent = ""; for (const s of sources) srcList.append(row({ radio: d.source === s.id, title: s.label, sub: s.sub, onclick: () => { d.source = s.id; drawSrc(); check(); srcList.querySelector('[aria-checked="true"]').focus(); } })); };
   drawSrc();
@@ -724,7 +1176,7 @@ async function detailScreen(kind, id, q) {
       e.target.disabled = true;
       try {
         const w = W.wallet;
-        const source = (w.sources.find((s) => s.default) || {}).id || (w.holdsBalance ? "wallet" : "");
+        const source = (w.sources.find((s) => s.default) || {}).id || "";
         const qt = await api(`/api/wallet/requests/${id}/quote`, { source });
         sessionStorage.setItem("wallet:quote", JSON.stringify({ ...qt, note: x.note, reason: qt.reasonRequired ? x.note : "", room: x.room }));
         go("review");
@@ -760,47 +1212,19 @@ SCREENS.reported = async () => ({ title: T("wl.reported"), noBack: true, body: f
   h("p", { class: "center lead", text: T("wl.replyOneDay") }), h("div", { class: "push" }, btn(T("wl.backToWallet"), "", () => replace("home")))) });
 
 /* ADD AND WITHDRAW */
-SCREENS.add = async () => {
-  const w = W.wallet;
-  const cards = w.sources.filter((s) => s.kind !== "wallet");
-  const d = { amount: "", source: (cards.find((s) => s.default) || cards[0] || {}).id || "" };
-  if (!cards.length) return { title: T("wl.addMoney"), body: frag(note("info", T("wl.connectToAdd")), h("div", { class: "push" }, btn(T("wl.connect"), "", () => go("sources")))) };
-  const list = h("div", { class: "list", role: "radiogroup", "aria-label": T("wl.from") });
-  const drawSrc = () => { list.textContent = ""; for (const s of cards) list.append(row({ radio: d.source === s.id, title: s.label, sub: s.fee ? T("wl.feePct", { p: s.fee / 100 }) : T("wl.noFee"), onclick: () => { d.source = s.id; drawSrc(); } })); };
-  drawSrc();
-  const holder = h("div");
-  const drawConfirm = () => {
-    holder.textContent = "";
-    if (!(Number(d.amount) > 0)) { holder.append(btn(T("wl.enterAmount"), "", null, { disabled: true })); return; }
-    holder.append(confirmButton(T("wl.addAmt", { amt: sym() + d.amount }), "money", "topup", `${d.source}:${d.amount}`, async (confirmation) => {
-      const r = await api("/api/wallet/topup", { amount: d.amount, source: d.source, confirmation, returnUrl: "/wallet#home" });
-      if (r.next) { leaveFor(r.next, `activity/topup/${r.id}`); return; }
-      say(T("wl.moneyAdded")); go(`activity/topup/${r.id}`);
-    }));
-  };
-  return { title: T("wl.addMoney"), body: frag(amountEntry("", (v) => { d.amount = v; drawConfirm(); }, T("wl.amountToAdd", { cur: w.currency })), h("p", { class: "k", text: T("wl.from") }), list, h("div", { class: "push" }, holder)) };
-};
+/* NO SCREENS.add. Putting money into a balance held here is the one thing
+   this board must not offer — see the note over the two verbs on home. A
+   wallet that already has a balance can still take it out (#withdraw, and the
+   button on Close), because stranding somebody's money is worse than any
+   tidiness. */
 
-SCREENS.withdraw = async () => {
-  const w = W.wallet;
-  if (!w.payoutLabel) return { title: T("wl.withdraw"), body: frag(note("info", T("wl.addBankFirst")), h("div", { class: "push" }, btn(T("wl.addBankAccount"), "", () => go("payout")))) };
-  const d = { amount: "" };
-  const holder = h("div");
-  const drawConfirm = () => {
-    holder.textContent = "";
-    const n = Number(d.amount);
-    if (!(n > 0)) { holder.append(btn(T("wl.enterAmount"), "", null, { disabled: true })); return; }
-    if (n * 100 > w.balance.minor) { holder.append(note("bad", T("wl.moreThanBalance"))); return; }
-    holder.append(confirmButton(T("wl.withdrawAmtTo", { amt: sym() + d.amount, label: w.payoutLabel }), "", "withdraw", d.amount, async (confirmation) => {
-      const r = await api("/api/wallet/withdraw", { amount: d.amount, confirmation });
-      say(T("wl.withdrawStarted")); go(`activity/withdrawal/${r.id}`);
-    }));
-  };
-  return { title: T("wl.withdraw"), body: frag(h("p", { class: "center lead", text: T("wl.available", { amt: w.balance.text }) }), amountEntry("", (v) => { d.amount = v; drawConfirm(); }, T("wl.amountToWithdraw", { cur: w.currency })),
-    h("div", { class: "list" }, row({ lead: badge("BANK"), title: T("wl.toLabel", { label: w.payoutLabel }), sub: T("wl.noFeeNextDay") })), h("div", { class: "push" }, holder)) };
-};
+/* NO SCREENS.withdraw EITHER. It was kept for a moment on the grounds that
+   an existing balance must never be stranded — but no balance has ever held
+   real money on this board: the only provider it has run against is the
+   stand-in, and Airwallex was never activated. A screen for taking money out
+   of a pot that cannot legally exist and never did is a screen that only
+   teaches people the pot is there. */
 
-/* PAYMENT METHODS AND SETTINGS */
 SCREENS.methods = async ([id]) => {
   const w = W.wallet;
   if (id) {
@@ -825,7 +1249,13 @@ SCREENS.settings = async () => {
       row({ title: T("wl.identity"), sub: w.verified === "verified" ? T("wl.confirmed") : T("wl.notConfirmed"), onclick: () => go("verify") }),
       row({ title: T("wl.limits"), sub: T("wl.limitsSub", { day: w.limits.sendDay.text, today: w.limits.sentToday.text }), onclick: () => go("limits") }),
       row({ title: T("wl.moneyReceive"), sub: w.payout === "bank" ? (w.payoutLabel || T("wl.yourBank")) : T("wl.staysInWallet"), onclick: () => go("payout") }),
-      row({ title: T("wl.methods"), sub: T("wl.nConnected", { n: w.sources.length }), onclick: () => go("methods") })),
+      row({ title: T("wl.methods"), sub: T("wl.nConnected", { n: w.sources.length }), onclick: () => go("methods") }),
+      /* EVERY PAYMENT, WHICH THE HOME SCREEN NO LONGER LISTS.
+         Home is the deals column now, and a deal is not the same thing as a
+         transfer between two members — so the full history had to land
+         somewhere rather than simply stop existing. It is looked for once,
+         which is what this list is for. */
+      row({ title: T("wl.recent"), sub: T("wl.nothingYetSub"), onclick: () => go("activity") })),
     h("div", { class: "list" },
       row({ title: T("wl.help"), sub: T("wl.helpSub"), onclick: () => go("help") }),
       row({ title: T("wl.closeWallet"), sub: T("wl.withdrawFirst"), onclick: () => go("close") }))) };
@@ -850,7 +1280,7 @@ SCREENS.close = async () => {
   return { title: T("wl.closeWallet"), body: frag(
     h("p", { class: "lead", text: T("wl.closeWhat") }),
     has ? note("warn", T("wl.stillHave", { amt: w.balance.text })) : null,
-    h("div", { class: "push" }, has ? btn(T("wl.withdrawBalance"), "", () => go("withdraw")) : null,
+    h("div", { class: "push" },
       confirmButton(T("wl.closeWallet"), "danger", "close", "wallet", async (confirmation) => { await api("/api/wallet/close", { confirmation }); await load(); say(T("wl.walletClosed")); replace("home"); }))) };
 };
 

@@ -1,0 +1,85 @@
+# A PARTNER'S OWN NAME, SERVING THIS BOARD.
+#
+# Daniel is the first: a broker in Luxembourg who wants the money screen on a
+# name of his own, taking payments into the Stripe account he already has,
+# with the code running here. This is the hostname half of that. The Stripe
+# half is lib/stripe.js's OAuth pair — see `make whitelabel`.
+#
+# WHY A HOSTNAME AND NOT AN IFRAME ON HIS SITE. He asked for a subpage, and a
+# subdomain is the cheap way to give him one: pay.his-name.lu is a DNS record
+# he sets once and a certificate this box takes out by itself. An iframe means
+# his server proxying ours, a third-party cookie on a payments page, and two
+# origins fighting over the same session — for a screen whose whole job is to
+# look trustworthy while somebody types a card number. His main site does not
+# move; one name beside it points here.
+#
+# THE SAME CONTAINER. Nothing is duplicated, exactly as board-also.caddy and
+# dealio.caddy already do — the board builds every absolute address it prints
+# from the Host header, so a link made on his name stays on his name.
+#
+# ONE PARTNER, AND A SECOND ONE IS A COPY OF THIS FILE. Caddy substitutes one
+# variable per address, so this cannot grow a list. Copy it, rename the
+# variable, and keep the localhost fallback distinct — see below.
+#
+# INERT UNTIL TOMSCODING_WHITELABEL_DOMAIN IS SET. Unset it binds an
+# internal .localhost name and asks for no certificate. That fallback has to
+# stay distinct from every other one on this box: two site blocks sharing an
+# address is not a warning, it is a startup failure that takes every other
+# site down with it. `make check` (scripts/check-sites.py) catches that before
+# a reload can, and runs on every deploy.
+# NOT partner.localhost — that is the partner seat in partner.caddy, which is
+# a different product entirely and was nearly the name used here.
+#
+# WHAT IS NOT DONE YET: "/" on this name is the board's front door, the same
+# as every other name here. BOARD_DEALIO_DOMAIN exists so that one hostname
+# can mean the money screen instead, and it holds one value. Giving a partner
+# the same treatment is a server.js change, not a Caddy one, and is the next
+# thing if Daniel wants his name to open on payments rather than the board.
+#
+# A copy of board-also.caddy's shape on purpose. The note there says the two
+# stay in step by hand; this is a third. Change one, look at the others.
+{$TOMSCODING_WHITELABEL_DOMAIN:whitelabel.localhost} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		# A payment link is meant to be forwarded — into a chat, into an
+		# email. Same reasoning as dealio.caddy's block.
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	# The admin panel is not a partner's to reach, the same as on the board's
+	# other name. It is one redirect rather than a 404 because somebody
+	# following an old link should land somewhere, not nowhere.
+	@admin path /admin /admin/
+	redir @admin https://{$TOMSCODING_FEED_DOMAIN}/
+
+	# The counter's two public paths, same arrangement as every other site
+	# here: same origin as the page, so reporting a visit needs no preflight.
+	@count path /a/e /a/lx.js
+	handle @count {
+		uri strip_prefix /a
+		reverse_proxy analytics:3000
+	}
+
+	# HIS OWN CONTAINER, NOT THE SHARED BOARD. It was board:8080 while this
+	# was a skin — his name and colour over our Stripe key. Our Stripe cannot
+	# do WeChat Pay and his probably can, and a charge uses the payment
+	# methods of the account it is raised on, so the only way to use his
+	# account today is to give him a container with his key in it. See the
+	# note over board-wl in docker-compose.yml.
+	#
+	# THE PROFILE HAS TO BE ON OR THIS IS A 502 WITH A CERTIFICATE IN FRONT
+	# OF IT. `make check` refuses a deploy where this hostname is set and
+	# board-wl is not in COMPOSE_PROFILES — the same guard the board itself
+	# has, for the same reason.
+	#
+	# A COMMENT HERE IS `#` AND NOTHING ELSE. This block was written with
+	# /* */ for ten minutes; Caddy does not accept it, and a Caddyfile it
+	# refuses is not one bad site, it is every site on this box down at once.
+	handle {
+		reverse_proxy board-wl:8080
+	}
+}

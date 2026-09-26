@@ -50,6 +50,12 @@ const KEY = (process.env.BOARD_STRIPE_KEY || "").trim();
 
 export const configured = () => Boolean(KEY);
 
+/* WHETHER THIS IS REAL MONEY. Stripe's own prefix and nothing cleverer: a
+   live secret key is sk_live_, a test one sk_test_. Exported so the server
+   can refuse to run a demo rail on a box that can take a payment — see the
+   demo guard in server.js. */
+export const live = () => /^sk_live_/.test(KEY);
+
 /* Stripe takes application/x-www-form-urlencoded with bracket notation for
    anything nested — payment_intent_data[transfer_data][destination]. Written
    out rather than guessed at, because a key one bracket wrong is not an error,
@@ -225,7 +231,44 @@ export async function payeeReady(account) {
  *  way they wanted to pay before they ever left, and a checkout that then
  *  offers all three again has thrown away the answer and the reason for
  *  asking. */
-export async function checkout({ amount, currency, fee, destination, method, ref, done, label }) {
+/* TWO WAYS TO CHARGE, AND WHICH ONE DECIDES WHO CARRIES THE LOSS.
+ *
+ * `destination` is a destination charge: the charge is raised on THIS
+ * account, the money is transferred on to the payee, and this platform is
+ * the merchant of record. A refund or a chargeback comes out of here. That
+ * is right for members paying members — see the note at the top of this
+ * file, and the part about WeChat and Alipay having no chargeback of the
+ * kind cards do.
+ *
+ * `direct` is a direct charge: the charge is raised ON THE PAYEE'S OWN
+ * ACCOUNT, by sending their acct_… in the Stripe-Account header. They are
+ * the merchant of record. Their name is on the payer's statement, the money
+ * is theirs from the first moment, and a dispute is theirs. The fee still
+ * comes off the top — application_fee_amount works either way, which is the
+ * thing that makes this a real choice rather than a trade.
+ *
+ * WHY IT MATTERS HERE. A white-label partner is a business we did not
+ * onboard, in a country we do not trade in, whose clients pay by card — the
+ * one path that does have chargebacks. Putting their turnover through a
+ * destination charge makes this platform liable for a company it has never
+ * audited. Direct charges put the risk where the business is, and put the
+ * partner's own name on his client's statement, which is the point of a
+ * white label in the first place.
+ *
+ * NOT BOTH. They are two answers to one question and sending both would
+ * silently pick one; Stripe refuses the combination anyway, later and less
+ * clearly than this does.
+ *
+ * WHAT DOES NOT CHANGE ON THIS SIDE: the webhook. A direct charge's events
+ * belong to the connected account, so the endpoint has to be listening to
+ * connected accounts in the Stripe dashboard — a setting, not code. The
+ * event arrives at the same URL, with the same signature, carrying the same
+ * client_reference_id, plus an `account` field naming whose it was.
+ */
+export async function checkout({ amount, currency, fee, destination, direct, method, ref, done, label }) {
+  if (destination && direct) {
+    throw new Error("checkout: destination and direct are two answers to one question");
+  }
   const kinds = { wechat: "wechat_pay", alipay: "alipay", card: "card" };
   const kind = kinds[method] || "card";
   const body = {
@@ -262,10 +305,25 @@ export async function checkout({ amount, currency, fee, destination, method, ref
         product_data: { name: label || "Payment" },
       },
     }],
-    payment_intent_data: {
-      application_fee_amount: fee > 0 ? fee : undefined,
-      transfer_data: { destination },
-    },
+    /* NO DESTINATION IS A PLAIN CHARGE INTO THIS ACCOUNT, and it has to be
+       left out rather than sent empty. Every charge this file made until now
+       was a destination charge — money passing through to somebody else's
+       account — because every one of them was between two members. A shop
+       selling its own goods is not that: the money is the seller's from the
+       start and there is nobody to transfer it to. Sent as
+       `transfer_data: {}` Stripe refuses the whole session, so the key is
+       absent entirely. */
+    ...(destination ? {
+      payment_intent_data: {
+        application_fee_amount: fee > 0 ? fee : undefined,
+        transfer_data: { destination },
+      },
+    } : {}),
+    /* A direct charge takes the fee and nothing else: there is no transfer,
+       because the money never leaves the account it was raised on. */
+    ...(direct && fee > 0 ? {
+      payment_intent_data: { application_fee_amount: fee },
+    } : {}),
   };
   /* WeChat Pay wants to know where the payer is standing — its flow differs
      between a phone browser and a desktop showing a QR code. "web" is the one
@@ -274,7 +332,10 @@ export async function checkout({ amount, currency, fee, destination, method, ref
   if (kind === "wechat_pay") {
     body.payment_method_options = { wechat_pay: { client: "web" } };
   }
-  return call("/checkout/sessions", body);
+  /* THE HEADER IS THE WHOLE MECHANISM. Everything else about a direct charge
+     is identical; this one line is what moves the charge, the statement
+     descriptor and the liability onto their account. */
+  return call("/checkout/sessions", body, direct ? { "Stripe-Account": direct } : {});
 }
 
 /* ---------------------------------------------------------------------------
