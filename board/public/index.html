@@ -3612,21 +3612,30 @@ function fitDeck() {
 window.addEventListener("resize", fitDeck);
 window.addEventListener("orientationchange", fitDeck);
 
-/* AND AGAIN WHEN THE ROWS ABOVE HAVE FINISHED ARRIVING. Measuring at the end
-   of the card's own draw measured a page that was not built yet: the sentence
-   filter is drawn after it, so the first answer was 188px too generous and the
-   buttons stayed under the bar. The observer asks again whenever anything
-   changes height. It cannot loop — a second run on an unchanged page computes
-   the same number and writes the same string. */
-if (window.ResizeObserver) {
-  const ro = new ResizeObserver(() => fitDeck());
-  const watch = () => {
-    const box = document.getElementById("vbrowse");
-    if (box) ro.observe(box);
-  };
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", watch);
-  else watch();
-}
+/* THE OBSERVER IS GONE, AND THIS IS WHY.
+ *
+ * It watched #vbrowse and re-ran fitDeck on any height change in it. The
+ * reason it existed is in the note it replaced: measuring at the end of the
+ * card's own draw measured a page that was not built yet, so the first answer
+ * was 188px too generous and the buttons stayed under the tab bar.
+ *
+ * What it also did: fitDeck sets the PHOTOGRAPH's height — min(4:5, what is
+ * left after the words) — so every tick could resize the picture. And the
+ * things above the deck arrive on their own separate fetches, long after the
+ * page has been shown: the bell tray, the Professor's fold, the matches, the
+ * followers. Each one changes the deck's top offset, which changes what is
+ * left, which resizes the face somebody is already looking at. Reported from
+ * a phone as "the photos in browse seem to move at the last moment", which is
+ * exactly what it is.
+ *
+ * The reason for it no longer holds. #vbrowse is not shown until settled(),
+ * which is the moment the page knows what it is — so a measurement taken then
+ * is taken on a page that IS built. That is where it is taken, once, and
+ * after that only a real change to the window moves it.
+ *
+ * One frame later than settled(), because settled() only removes a class and
+ * the layout it uncovers has not been done yet. */
+const fitSoon = () => requestAnimationFrame(() => requestAnimationFrame(fitDeck));
 
 /** The line icons on each post. Drawn here rather than pulled from anywhere:
  *  four paths are cheaper than a request that would not answer in the mainland. */
@@ -3862,7 +3871,10 @@ let ME = null;
  * used on and short enough that nobody reads it as broken. */
 function settled() {
   const box = document.getElementById("vbrowse");
-  if (box) box.classList.remove("settling");
+  if (!box || !box.classList.contains("settling")) return;
+  box.classList.remove("settling");
+  // The one measurement, on a page that is finally built — see fitSoon.
+  if (typeof fitSoon === "function") fitSoon();
 }
 setTimeout(settled, 2000);
 /* WHETHER /api/me HAS ANSWERED. Until it has, "no handle" means "not asked
