@@ -1938,6 +1938,32 @@ for it, and the authorise screen settles it.
 sheets are separate files and unskinned. One tap deep and it is the board
 again.
 
+## Book — lessons widget and video room, live 26 Sep, watched working
+
+A shelf of teachers, their free hours, bookings, and a video room per lesson,
+as a widget any app drops in (`book/`, `<div data-book="studypal">` plus
+`thexchange.app/book/widget.js`). **Watched working 26 Sep: a video call
+between Tom's phone and his Mac**, through `make book-test`'s two links.
+
+- Video is browser to browser; the relay (`tomscoding-turn`, coturn, host
+  networking, 3478 + UDP 49160–49200) carries it when a network will not.
+  ufw was opened for those ports. Its password is minted by the book
+  container — nothing in `.env`.
+- Teachers only from the terminal: `make book-teacher`, `book-list` (prints
+  both room links per booking — send the teacher theirs), `book-off`,
+  `book-cancel`, `book-demo SHELF=…`, `book-test`.
+- The "studypal" shelf holds the four made-up demo teachers — replace them
+  with real ones before anybody is sent there.
+- **Study Pal's `/teachers` page is built and NOT deployed** (study-pal repo,
+  branch `claude/messenger-device-improvement-azbdmn`). Where Study Pal runs
+  on the box was not found in `~/study-pal`.
+- **The box is checked out on `claude/messenger-device-improvement-azbdmn`**
+  since 26 Sep, which merged `claude/coding-platform-vpn-alternative-i06xoc`
+  up to a7a44b4. So the "never deployed" sections below that were on that
+  branch by then are on the box and built — not watched working. A session
+  deploying the other branch without merging this one takes Book down.
+- Nobody is told when a lesson is booked, and payment is only a link.
+
 ## Voice messages — live 24 Sep, watched working on Tom's phone
 
 Hold the round button beside Send, speak, let go. No calls: Tom asked for
