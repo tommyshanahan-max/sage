@@ -1969,8 +1969,8 @@ between Tom's phone and his Mac**, through `make book-test`'s two links.
   (`KEY=SCT...`): its WeChat login opened a blank page on Tom's phone.
 - Payment is only a link.
 - **Teams (Julia), built 26 Sep, not deployed.** A tutor is paid their fee
-  (¥100); the team lead gets 20% of the fee on top, Tom 10% of the fee on
-  top, so a student pays ¥130 (¥110 on Julia's own lessons). Julia's portal
+  (¥100); the team lead gets 20% of the fee on top, Tom 40% of the fee on
+  top, so a student pays ¥160 (¥140 on Julia's own lessons). Julia's portal
   is `/book/team#<key>` — `make book-lead NAME=Julia CUT=20 [FEE=100 …]`
   prints it. Tutors join with `make book-teacher … FEE=100 LEAD=Julia`.
   Payouts are BY HAND: `make book-owed` says who is owed what and prints her

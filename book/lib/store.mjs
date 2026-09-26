@@ -124,14 +124,18 @@ export function cleanTeam(r) {
  *
  * Tom's rule: the tutor is paid their fee (¥100 a class) and the shares go on
  * top of it, not out of it. So the lead's share is her cut OF THE FEE (20% of
- * ¥100 = ¥20), Tom's is his cut of the fee (BOOK_HOUSE_CUT, 10% → ¥10), and
- * the student pays the three added up (¥130). On the lead's own lessons there
- * is no lead share: ¥100 to her, ¥10 to Tom, ¥110 from the student.
+ * ¥100 = ¥20), Tom's is his cut of the fee (BOOK_HOUSE_CUT, 40% → ¥40), and
+ * the student pays the three added up (¥160). On the lead's own lessons there
+ * is no lead share: ¥100 to her, ¥40 to Tom, ¥140 from the student.
+ *
+ * The house cut was 10% at first — a placeholder nobody chose — and Tom put it
+ * at 40%: the platform is meant to make the most of any one party, and
+ * Stripe's fee comes out of the platform's share, so 10% left about ¥5.
  *
  * It was first built the other way round — shares taken out of the price —
  * and changed within the hour, which is why `fee` and `price` are separate:
  * a teacher added with only PRICE= still works, as a price with no split. */
-export const HOUSE_CUT = Math.min(50, Math.max(0, Number(process.env.BOOK_HOUSE_CUT ?? 10)));
+export const HOUSE_CUT = Math.min(50, Math.max(0, Number(process.env.BOOK_HOUSE_CUT ?? 40)));
 export function split(fee, leadCut, own) {
   const lead = own || !leadCut ? 0 : Math.round(fee * leadCut / 100);
   const house = Math.round(fee * HOUSE_CUT / 100);
