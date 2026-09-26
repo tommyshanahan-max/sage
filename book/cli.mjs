@@ -15,7 +15,7 @@
  * Changing somebody's hours is the same command as adding them, with the new
  * hours, which is one thing to remember instead of two.
  */
-import { load, save, newId, cleanTeacher, DAYS, slotsFor } from "./lib/store.mjs";
+import { load, save, newId, cleanTeacher, cleanBooking, DAYS, slotsFor } from "./lib/store.mjs";
 
 const E = process.env;
 // Where the booking service is reached from outside, for printing room links.
@@ -83,6 +83,25 @@ if (cmd === "teacher") {
   b.off = true;
   save(db);
   console.log(`Cancelled — ${when(b.start)} is free again.`);
+} else if (cmd === "test") {
+  /* A REAL BOOKING TO TRY THE VIDEO ON: the first free slot of the first
+     teacher on SHELF (default studypal), booked for "Test", and both links
+     printed — one for a phone, one for a laptop. The room opens straight
+     away, so the call can be tried now rather than at the lesson's time. */
+  const shelf = (E.SHELF || "studypal").toLowerCase();
+  const db = load();
+  const t = db.teachers.find((x) => x.shelf === shelf && x.on);
+  if (!t) { console.error(`Nobody on "${shelf}". Try: make book-demo SHELF=${shelf}`); process.exit(1); }
+  const slot = slotsFor(db, t, { days: 14 }).flatMap((d) => d.slots).find((x) => x.free);
+  if (!slot) { console.error(`${t.name} has no free time in the next two weeks.`); process.exit(1); }
+  const b = cleanBooking({ id: newId(), teacher: t.id, start: slot.start, name: "Test", contact: "test",
+    note: "made by make book-test", at: new Date().toISOString(), off: false });
+  db.bookings.push(b);
+  save(db);
+  console.log(`Test lesson with ${t.name}. Open one link on your phone and one on the laptop:\n`);
+  console.log(`  student:  ${PUBLIC}/room/${b.id}#${b.sKey}`);
+  console.log(`  teacher:  ${PUBLIC}/room/${b.id}#${b.tKey}\n`);
+  console.log(`Done with it: make book-cancel ID=${b.id}`);
 } else if (cmd === "demo") {
   // The "demo" shelf unless told otherwise — SHELF=studypal puts the same four
   // made-up teachers where Study Pal will find them, to test it end to end.
