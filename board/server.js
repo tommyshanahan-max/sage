@@ -9537,6 +9537,27 @@ const CARD_ON = String(process.env.BOARD_CARD || "").trim().toLowerCase() === "o
  * device hash, because those are not things anybody can type into .env. */
 const BOSS = String(process.env.BOARD_BOSS || "").trim().toLowerCase();
 
+/* HOW FAR APART TWO SPELLINGS OF A NAME ARE. Plain Levenshtein, two rows,
+   because the alternative is asking the operator to type a name exactly as
+   somebody else chose to spell it — and Lisa/Liza, Mei/May and Christopher/
+   Kristofer are the ordinary case here, not the edge one. Bounded: names on
+   this board are forty characters at most (cleanPerson), so the quadratic
+   does not matter. */
+function edits(a, b) {
+  if (a === b) return 0;
+  if (!a.length || !b.length) return Math.max(a.length, b.length);
+  let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i++) {
+    const row = [i];
+    for (let j = 1; j <= b.length; j++) {
+      row[j] = Math.min(prev[j] + 1, row[j - 1] + 1,
+        prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    }
+    prev = row;
+  }
+  return prev[b.length];
+}
+
 /* THE WHOLE BOARD IN THE LAST DAY, for whoever runs it.
  *
  * A ROLLING DAY AND NOT A CALENDAR ONE, for the same reason /api/snap gives:
@@ -19273,7 +19294,25 @@ app.post("/api/admin/face-fix", admin, express.json({ limit: "1kb" }), async (re
     // Only when nothing matched outright, so an exact "Ray" is never dragged
     // off by a "Ray Chen" standing next to him.
     if (!same.length) same = board.people.filter((x) => x.handle && first(x) === want);
-    if (!same.length) return { error: "nobody" };
+    /* A NAME SPELLED THE WAY IT SOUNDS, which is how the operator has it.
+     *
+     * He asked for "Lisa"; the handle she chose is "Liza". One letter, and
+     * without this the answer is "nobody here is called that" — which is the
+     * failure CLAUDE.md names: a wrong handle reads as the person being
+     * missing when they are standing right there. He then has to go and run
+     * make who, read a list, and come back, which is three commands for a
+     * typo.
+     *
+     * SUGGESTED, NEVER ACTED ON. Close is not the same as right, and the
+     * thing on the other end of this is publishing somebody's face. So the
+     * near ones are printed as commands to run and nothing is changed. */
+    if (!same.length) {
+      const near = board.people.filter((x) => x.handle).filter((x) => {
+        const f = first(x);
+        return f.startsWith(want) || want.startsWith(f) || edits(f, want) <= 2;
+      }).map((x) => x.handle).slice(0, 5);
+      return { error: "nobody", near };
+    }
     if (same.length > 1) {
       return { error: "two", n: same.length, who: same.map((x) => x.handle).slice(0, 6) };
     }

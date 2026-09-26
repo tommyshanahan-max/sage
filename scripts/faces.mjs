@@ -42,8 +42,19 @@ if (WHO) {
        always the name they were introduced by — and "Not on this board" reads
        as the person being missing when they are not. */
     say("  Nobody here is called “" + WHO + "”, by that name or by a first name.");
-    say("  The name on a profile is the handle they chose, which is not always");
-    say("  the name you know them by.  make who lists them.");
+    if (d.near && d.near.length) {
+      /* THE NEAR ONES, AS COMMANDS. The name on a profile is the handle they
+         chose and it is often spelled differently from the way it is said —
+         Lisa is Liza here. Printing the list is the answer; making him go and
+         run make who and come back is three commands for one letter. */
+      say("");
+      say("  Did you mean one of these?");
+      say("");
+      for (const h of d.near) say("    make faces WHO=\"" + h + "\"");
+    } else {
+      say("  The name on a profile is the handle they chose, which is not always");
+      say("  the name you know them by.  make who lists them.");
+    }
   } else if (d.error === "two") {
     say("  “" + WHO + "” matches " + d.n + " people here:");
     say("");
