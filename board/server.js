@@ -1579,8 +1579,34 @@ async function wroteTo(req) {
   } catch { return false; }
 }
 
+/* THE PUBLIC DOOR, AND IT IS OFF UNTIL SOMEBODY TURNS IT ON.
+ *
+ * With this on, anybody can make a profile and browse — they arrive through
+ * the link rather than through a member's code, and their row is stamped
+ * via:"door". What they cannot do is write to an invited member first; see
+ * pairState.
+ *
+ * Behind a variable because the board already has members who joined
+ * something that said INVITE ONLY, and opening their board to strangers is
+ * not a change to make by deploying. Same call as the money panel.
+ */
+const PUBLIC_DOOR = String(process.env.BOARD_PUBLIC || "").trim().toLowerCase() === "on";
+
+/** Which side of the boundary a device is on, from the rows rather than from
+ *  the browser: the person row carries the answer, and it was stamped once.
+ *  An old row with no stamp reads as invited — that is what everybody here
+ *  was before the public door existed. */
+function tierOf(board, me) {
+  const q = board.people.find((x) => x.by === me);
+  if (!q) return null;
+  return q.via === "door" ? "door" : "invite";
+}
+
 const gate = async (req, res, next) => {
   if (INVITE !== "post" && INVITE !== "read") return next();
+  // The public door lets anybody past this gate. The boundary it opens is not
+  // enforced here — it is enforced on who may write to whom.
+  if (PUBLIC_DOOR) return next();
   const device = req.body?.device || req.get("x-board-device");
   if (await admitted(device)) return next();
   // 403 and a word the page can act on, rather than a sentence to display: the
@@ -4623,6 +4649,12 @@ app.get("/api/people", async (req, res) => {
    * does not have, and a card that offered a button which the door would
    * refuse is a worse screen than one that does not.
    */
+  /* THE WALL IS ABOUT BROWSING AND IT ONLY EVER APPLIED TO SOMEBODY WITH NO
+     PROFILE. Five faces and "43 more inside" exists to make a form worth
+     filling in. Once the public door is open the form IS a profile, so
+     anybody who has made one browses the board like everybody else and the
+     wall has nothing left to do — the boundary moved to who they may write
+     to first, which lives in pairState. */
   const w = board.waits.find((x) => x.by === me && !x.done);
   if (w && !board.people.some((q) => q.by === me && q.state === "published")) {
     const live = board.people.filter((q) =>
@@ -4663,16 +4695,28 @@ app.get("/api/people", async (req, res) => {
     // Whether this reader already follows them, so the deck's one button can
     // say which of the two things it is about to do. A fact about the reader,
     // which is why this response is never cached.
-    people: live.map((q) => ({
-      ...shownPerson(q, q.by === me),
-      mine: q.by === me,
-      speaksFor: speaksFor(board, q),
-      following: Boolean(me) && board.follows.some((f) => f.by === me && f.who === q.id),
-      // What the two of you have in common, so the deck can say it before
-      // anybody presses anything. Both sides of this are already on both
-      // pages: it tells the reader nothing they could not work out.
-      shared: pairState(board, me, q).shared,
-    })),
+    // One pairState per person, not one per field. It walks follows and
+    // grants, and this runs over the whole board on every load of Browse.
+    people: live.map((q) => {
+      const st = pairState(board, me, q);
+      return {
+        ...shownPerson(q, q.by === me),
+        mine: q.by === me,
+        speaksFor: speaksFor(board, q),
+        following: Boolean(me) && board.follows.some((f) => f.by === me && f.who === q.id),
+        // What the two of you have in common, so the deck can say it before
+        // anybody presses anything. Both sides of this are already on both
+        // pages: it tells the reader nothing they could not work out.
+        shared: st.shared,
+        /* WHETHER THIS IS SOMEBODY THE READER CANNOT OPEN WITH, because they
+           came through the public door and this person was vouched for.
+           THEY STAY ON THE SCREEN. Hiding them would make the two tiers two
+           boards that never meet, and then nobody has a reason to climb — the
+           card names what it is and why the button is not there, which is the
+           only thing that makes an invite worth wanting. */
+        upTier: st.upTier,
+      };
+    }),
   });
 });
 
@@ -7057,9 +7101,33 @@ const myRow = (board, me) => (me ? board.people.find((x) => x.by === me) : null)
  *  whether two people may swap anything. */
 function pairState(board, me, q) {
   const out = { mutual: false, shared: [], can: false, gave: false, given: false,
-                card: null, note: "" };
+                card: null, note: "", upTier: false };
   const mine = myRow(board, me);
   if (!mine || !q || !q.id || q.by === me) return out;
+
+  /* THE BOUNDARY, AND IT IS THE ONLY DIFFERENCE BETWEEN THE TWO TIERS.
+   *
+   * Somebody who came through the public door may not open with somebody a
+   * member brought in. Everything else on this board is identical for both —
+   * same screens, same browse, same matching — so this one line is the whole
+   * of what an invite buys, and the whole of what there is to climb towards.
+   *
+   * IT IS NOT SYMMETRIC, on purpose. An invited member may always reach down;
+   * that is how somebody gets found, vouched for, and moved up. And once they
+   * have reached down, the pair is open in both directions — answering
+   * somebody who wrote to you is not opening with them.
+   *
+   * `upTier` goes out with the row rather than the row being hidden, because
+   * a ladder nobody can see is a ladder nobody climbs: the card says who this
+   * is and why the button is not there. */
+  const iCameThroughTheDoor = mine.via === "door";
+  const theyWereVouchedFor = q.via !== "door";
+  if (iCameThroughTheDoor && theyWereVouchedFor) {
+    // Unless they opened it. Checked on THEIR follow of me, which is the
+    // reaching-down move — not on mine of them, which anybody may make.
+    const theyReachedDown = board.follows.some((f) => f.by === q.by && f.who === mine.id);
+    if (!theyReachedDown) { out.upTier = true; return out; }
+  }
 
   out.mutual = board.follows.some((f) => f.by === me && f.who === q.id)
     && board.follows.some((f) => f.by === q.by && f.who === mine.id);
@@ -16738,7 +16806,21 @@ app.put("/api/me", express.json({ limit: "36mb" }), gate, async (req, res) => {
   const out = await change((board) => {
     let q = board.people.find((x) => x.by === me);
     if (!q) {
-      q = store.cleanPerson({ id: store.newId(), at: new Date().toISOString(), by: me });
+      /* STAMPED HERE, WHICH IS THE ONE LINE ON THE SERVER WHERE A PERSON IS
+         BORN. Anywhere else would be a guess made later from a browser, and
+         a browser is not a person — see the note on `via` in cleanPerson.
+         The invite row holds the minter's DEVICE, so the member's person id
+         is resolved now, while both rows are in front of us, and written
+         down as the thing that will still be true in a year. */
+      const code = board.invites.find((v) => v.usedBy === me && !v.off) || null;
+      const by = code && code.by
+        ? (board.people.find((x) => x.by === code.by) || null)
+        : null;
+      q = store.cleanPerson({
+        id: store.newId(), at: new Date().toISOString(), by: me,
+        via: code ? "invite" : "door",
+        vouchedBy: by ? by.id : "",
+      });
       board.people.push(q);
     }
     // Whether this save is somebody joining the list, rather than editing a

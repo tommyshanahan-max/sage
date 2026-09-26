@@ -1598,6 +1598,31 @@ export function cleanPerson(raw) {
        means not yet stamped; cleanBoard does that, in `at` order. */
     seq: Number.isInteger(raw.seq) && raw.seq > 0 ? raw.seq : 0,
     state: STATES.includes(raw.state) ? raw.state : "held",
+    /* HOW THEY GOT IN, STAMPED ONCE AND NEVER RECOMPUTED.
+     *
+     * Same reasoning as `seq` above: a fact about the arrival that must not
+     * move later. Recomputing it would mean somebody's tier changed because a
+     * row somewhere else was edited, and a boundary that can move is not a
+     * boundary.
+     *
+     * "invite" — they spent a member's code.
+     * "door"   — they came through the public link and made a profile.
+     * ""       — every row written before this field existed. NOT a guess:
+     *            the only evidence for an old member is which BROWSER spent a
+     *            code, and a browser is not a person. Empty means unknown and
+     *            is treated as invited, because that is what everybody on the
+     *            board was before the public door existed.
+     *
+     * It is on the PERSON and not on the invite, which is the opposite call to
+     * `kind` and `grp` over in cleanInvite. Those describe where the door put
+     * somebody down and never mean anything again. This one decides, for the
+     * life of the account, who they may write to first. */
+    via: ["invite", "door"].includes(raw.via) ? raw.via : "",
+    /* WHO VOUCHED, as a PERSON id — deliberately not the device hash the
+     * invite row carries. A member has more than one browser and clears them;
+     * a link that only survives while a browser does is a link that quietly
+     * becomes wrong. Empty for the public door, where nobody vouched. */
+    vouchedBy: /^[a-f0-9]{20}$/.test(String(raw.vouchedBy || "")) ? String(raw.vouchedBy) : "",
     handle: s(raw.handle, 40).replace(/^@+/, ""),
     level: LEVELS.includes(raw.level) ? raw.level : LEVELS[0],
     // Where they study, as an area. Never a pin, never a live position: which
