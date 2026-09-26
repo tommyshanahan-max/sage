@@ -4950,6 +4950,7 @@ app.get("/api/front", async (_req, res) => {
     return { id: o.id, handle: o.handle, campus: o.campus, here: o.here,
              goal: o.goal, goalAlt: o.goalAlt, goalLang: o.goalLang,
              photo: o.photoState === "published" ? o.photo : "",
+             photoAt: Number.isFinite(Number(o.photoAt)) ? Number(o.photoAt) : 50,
              say: Array.isArray(o.say) ? o.say.map((r) => ({ me: r.me, want: r.want })) : [] };
   };
   res.json({

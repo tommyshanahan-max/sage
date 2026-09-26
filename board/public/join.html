@@ -111,7 +111,7 @@
      same box, so the deck does not change height when somebody without a
      photograph comes round — a card that jumps as you page through it reads
      as broken. */
-  .fface{position:relative;height:clamp(180px,42vw,240px);display:grid;
+  .fface{position:relative;aspect-ratio:4/5;max-height:62vh;display:grid;
     place-items:center;font-size:clamp(2.6rem,11vw,3.4rem);font-weight:700;
     color:#fff;letter-spacing:-.03em;overflow:hidden}
   .fface img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
@@ -243,6 +243,13 @@ function drawDeck() {
     img.alt = "";
     img.loading = "eager";
     img.addEventListener("error", () => img.remove());
+    /* Where they put their own face in the frame. Everybody who has never
+       dragged it sits at 50, which is the middle — and the middle of a
+       portrait is a chest, so the frame above is shaped to crop as little as
+       possible rather than this number being second-guessed. */
+    if (Number.isFinite(Number(q.photoAt))) {
+      img.style.objectPosition = "50% " + Number(q.photoAt) + "%";
+    }
     img.src = "/api/front-face?id=" + encodeURIComponent(q.photo);
     face.append(img);
   }
@@ -274,6 +281,9 @@ function drawOpen() {
       img.alt = "";
       img.loading = "lazy";
       img.addEventListener("error", () => img.remove());
+      if (Number.isFinite(Number(q.photoAt))) {
+        img.style.objectPosition = "50% " + Number(q.photoAt) + "%";
+      }
       img.src = "/api/front-face?id=" + encodeURIComponent(q.photo);
       av.append(img);
     }
