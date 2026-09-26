@@ -107,6 +107,9 @@
 
   /* One member at the size of a person. It is the only thing on this page a
      stranger cannot have, which is what makes it worth showing large. */
+  /* THE CARD IS THE PHOTOGRAPH. The name, the line, the arrows and the count
+     all sit on it, so the only furniture under a member is the next thing on
+     the page. */
   .fdeck{position:relative;border:1px solid var(--line);background:var(--card);
     border-radius:1rem;overflow:hidden}
   /* A FACE WHERE THERE IS ONE, A LETTER WHERE THERE IS NOT. Both are the
@@ -118,17 +121,29 @@
     color:#fff;letter-spacing:-.03em;overflow:hidden}
   .fface img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
     display:block}
-  .ffoot{padding:.9rem 1rem 1rem}
-  .fnm{font-size:1.15rem;font-weight:700;letter-spacing:-.015em}
-  .fln{font-size:.93rem;color:var(--ink-2);margin-top:.2rem}
-  .fpill{display:inline-block;font-size:.74rem;font-weight:700;padding:.22rem .6rem;
-    border-radius:999px;background:var(--accent-soft);color:var(--accent);margin-top:.55rem}
-  .fturn{display:flex;justify-content:center;gap:1.1rem;margin:.9rem 0 0}
-  .fturn button{width:2.9rem;height:2.9rem;border-radius:50%;border:1px solid var(--line);
-    background:var(--card);cursor:pointer;font-size:1.1rem;font-weight:700;color:var(--muted)}
-  .fturn button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
-  .fof{text-align:center;font-size:.82rem;color:var(--muted);margin:.7rem 0 0;
-    font-variant-numeric:tabular-nums}
+  /* The gradient is heavy on purpose. A Chinese line is dense and a
+     photograph under it is not a flat colour — a light scrim reads fine
+     against a grey studio wall and disappears against a window. */
+  .ffoot{position:absolute;left:0;right:0;bottom:0;padding:1.8rem .95rem .9rem;
+    background:linear-gradient(transparent,rgba(6,10,18,.55) 35%,rgba(6,10,18,.93));
+    color:#fff;pointer-events:none}
+  .fnm{font-size:1.12rem;font-weight:700;letter-spacing:-.015em;
+    text-shadow:0 1px 3px rgba(0,0,0,.6)}
+  /* Two lines and then it stops. Somebody's own sentence can be any length,
+     and a paragraph creeping up a photograph is worse than a cut one. */
+  .fln{font-size:.9rem;margin-top:.15rem;opacity:.94;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+    overflow:hidden;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+  .farw{position:absolute;top:44%;transform:translateY(-50%);width:2.4rem;height:2.4rem;
+    border-radius:50%;border:0;background:rgba(10,14,22,.55);color:#fff;
+    display:grid;place-items:center;font-size:1.1rem;font-weight:700;cursor:pointer;
+    -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+  .farw.l{left:.5rem} .farw.r{right:.5rem}
+  .farw:focus-visible{outline:2px solid #fff;outline-offset:2px}
+  .fof{position:absolute;right:.6rem;top:.6rem;font-size:.72rem;font-weight:700;
+    color:#fff;background:rgba(10,14,22,.55);border-radius:999px;padding:.18rem .55rem;
+    font-variant-numeric:tabular-nums;pointer-events:none;
+    -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
 
   .frow{display:flex;gap:.8rem;align-items:center;padding:.8rem 0;
     border-bottom:1px solid var(--line)}
@@ -165,11 +180,6 @@
     <div id="memBlock" hidden>
       <p class="flab" id="labMembers"></p>
       <div class="fdeck" id="deck"></div>
-      <div class="fturn">
-        <button type="button" id="prev" aria-label="Back">&#8249;</button>
-        <button type="button" id="next" aria-label="Next">&#8250;</button>
-      </div>
-      <p class="fof" id="ofn"></p>
     </div>
 
     <div id="openBlock" hidden>
@@ -231,8 +241,16 @@ function drawDeck() {
   at = ((at % list.length) + list.length) % list.length;
   const q = list[at];
   const d = $("deck");
-  d.innerHTML = '<div class="fface"></div><div class="ffoot">'
-    + '<div class="fnm"></div><div class="fln"></div></div>';
+  d.innerHTML = '<div class="fface"></div>'
+    + '<div class="ffoot"><div class="fnm"></div><div class="fln"></div></div>'
+    + '<span class="fof"></span>'
+    + '<button class="farw l" type="button" data-go="-1">\u2039</button>'
+    + '<button class="farw r" type="button" data-go="1">\u203A</button>';
+  for (const btn of d.querySelectorAll(".farw")) {
+    const step = Number(btn.getAttribute("data-go"));
+    btn.setAttribute("aria-label", T(step < 0 ? "front.back" : "front.next"));
+    btn.addEventListener("click", () => { at += step; drawDeck(); });
+  }
   const face = d.querySelector(".fface");
   face.style.background = tint(at);
   face.textContent = first(q.handle);
@@ -257,7 +275,12 @@ function drawDeck() {
   }
   d.querySelector(".fnm").textContent = q.handle + (where(q) ? " · " + where(q) : "");
   d.querySelector(".fln").textContent = line(q);
-  $("ofn").textContent = T("front.of", { n: at + 1, all: list.length });
+  /* One of one is not a count, it is a fact nobody needed — and two arrows
+     that only ever come back to the same person are worse than none. */
+  const one = list.length < 2;
+  d.querySelector(".fof").textContent = one
+    ? "" : T("front.of", { n: at + 1, all: list.length });
+  for (const b of d.querySelectorAll(".farw")) b.hidden = one;
 }
 function drawOpen() {
   const list = FRONT.open;
@@ -311,8 +334,6 @@ function drawFront() {
   drawRooms(); drawDeck(); drawOpen();
   $("front").hidden = false;
 }
-$("prev").addEventListener("click", () => { at--; drawDeck(); });
-$("next").addEventListener("click", () => { at++; drawDeck(); });
 
 fetch("/api/front")
   .then((r) => (r.ok ? r.json() : null))

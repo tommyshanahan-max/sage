@@ -4348,8 +4348,8 @@ export const STRINGS = {
     "Put yourself on The Exchange.",
     "把自己放到交换上。"],
   "join.sub": [
-    "Cross-border trade, both directions. Browse everybody, and write to everybody who came in the way you did. Your WeChat or email is shown to nobody.",
-    "跨境生意，两个方向。所有人都能看，跟你一样进来的人都能聊。你的微信或邮箱谁都看不到。"],
+    "Cross-border trade, both directions.",
+    "跨境生意，两个方向。"],
   /* THE BOARD DRAWN ABOVE THE FORM, for somebody off a link who has never
      heard of this and will not fill anything in to find out what is behind
      it. Three labels and two lines, and they carry the whole difference
@@ -4367,6 +4367,9 @@ export const STRINGS = {
   /* On the room card, under its name. "in" rather than "waiting" — nobody is
      waiting at a door any more, they are standing in the room. */
   "front.inRoom":      ["{n} in", "{n} 人在"],
+  /* On the two arrows over a member's photograph. Read out, never shown. */
+  "front.back":        ["Back", "上一个"],
+  "front.next":        ["Next", "下一个"],
   /* Said when nobody has come through the public door yet, which is true on
      the first day and stops being true quickly. Not "no results" — this is
      a board with nobody on one side of it, and saying so is better than an
