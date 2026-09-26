@@ -31,7 +31,10 @@ import http from "node:http";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { load, save, newId, slotsFor, shown } from "./lib/store.mjs";
+import { load, save, newId, slotsFor, shown, cleanBooking } from "./lib/store.mjs";
+import * as room from "./lib/room.mjs";
+
+room.turnSetup();
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT || 8080);
@@ -127,14 +130,61 @@ const server = http.createServer(async (req, res) => {
     const slot = slotsFor(db, t, { days: 14 }).flatMap((d) => d.slots).find((x) => x.start === b.start);
     if (!slot) return send(res, 400, { error: "slot" });
     if (!slot.free) return send(res, 409, { error: "taken" });
-    const row = {
+    const row = cleanBooking({
       id: newId(), teacher: t.id, start: slot.start, name, contact,
       note: String(b.note || "").trim().slice(0, 200), at: new Date().toISOString(), off: false,
-    };
+    });
     db.bookings.push(row);
     save(db);
     console.log(`booked ${t.name} ${slot.start} for ${name}`);
-    return send(res, 200, { ok: true, id: row.id, start: row.start, pay: t.pay || "" });
+    return send(res, 200, {
+      ok: true, id: row.id, start: row.start, pay: t.pay || "",
+      // The student's way into the lesson. The teacher's is printed by
+      // `make book-list`, for Tom to send them.
+      room: "/room/" + row.id + "#" + row.sKey,
+    });
+  }
+
+  /* ---- THE LESSON ROOM — see lib/room.mjs ---------------------------------
+     /room/<booking id>#<key> is the page; the key decides who you are. It
+     opens from the moment of booking until an hour after the lesson ends —
+     early, on purpose, so somebody can try their camera the night before. */
+  m = p.match(/^\/room\/([a-f0-9]{16})$/);
+  if (req.method === "GET" && m) {
+    try { return send(res, 200, readFileSync(path.join(HERE, "public/room.html")), "text/html; charset=utf-8"); }
+    catch { return send(res, 404, { error: "missing" }); }
+  }
+  m = p.match(/^\/api\/room\/([a-f0-9]{16})\/(info|join|poll|send|leave)$/);
+  if (m) {
+    const [, id, what] = m;
+    const b = req.method === "POST" ? await readBody(req, 16384) : null;
+    const key = String((b && b.key) || url.searchParams.get("key") || "");
+    const db = load();
+    const bk = db.bookings.find((x) => x.id === id && !x.off);
+    const role = !bk ? "" : key === bk.sKey ? "s" : key === bk.tKey ? "t" : "";
+    if (!role) return send(res, 403, { error: "key" });
+    const t = db.teachers.find((x) => x.id === bk.teacher) || { name: "", minutes: 45 };
+    const ends = Date.parse(bk.start) + (t.minutes + 60) * 60e3;
+    if (Date.now() > ends) return send(res, 410, { error: "over" });
+    // Who and when, for the page before anybody has joined. Counts as nothing.
+    if (what === "info") {
+      return send(res, 200, {
+        role, me: role === "s" ? bk.name : t.name, them: role === "s" ? t.name : bk.name,
+        start: bk.start, minutes: t.minutes,
+      });
+    }
+    if (what === "join") {
+      const j = room.join(id, role);
+      return send(res, 200, {
+        role, since: j.since, here: j.here, ice: room.iceServers(),
+        me: role === "s" ? bk.name : t.name, them: role === "s" ? t.name : bk.name,
+        start: bk.start, minutes: t.minutes,
+      });
+    }
+    if (what === "send") { room.send(id, role, b && b.m); return send(res, 200, { ok: true }); }
+    if (what === "leave") { room.leave(id, role); return send(res, 200, { ok: true }); }
+    const since = Number(url.searchParams.get("since")) || 0;
+    return send(res, 200, await room.poll(id, role, since));
   }
 
   send(res, 404, { error: "no" });

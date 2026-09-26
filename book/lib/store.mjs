@@ -23,10 +23,15 @@ export const DAYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
 export function load() {
   try {
     const raw = JSON.parse(readFileSync(FILE, "utf8"));
-    return {
+    const db = {
       teachers: (Array.isArray(raw.teachers) ? raw.teachers : []).map(cleanTeacher).filter(Boolean),
       bookings: (Array.isArray(raw.bookings) ? raw.bookings : []).map(cleanBooking).filter(Boolean),
     };
+    /* A booking read without room keys was just given some by cleanBooking.
+       Written straight back, or the next read would mint different ones and
+       the link somebody was sent would stop opening its own room. */
+    if ((raw.bookings || []).some((b) => b && (!b.sKey || !b.tKey))) save(db);
+    return db;
   } catch {
     return { teachers: [], bookings: [] };
   }
@@ -84,6 +89,13 @@ export function cleanBooking(r) {
     name: s(r.name, 60), contact: s(r.contact, 80), note: s(r.note, 200),
     at: s(r.at, 40) || new Date().toISOString(),
     off: Boolean(r.off),
+    /* THE TWO KEYS TO THE LESSON'S ROOM — one for the student, one for the
+       teacher. The room's address is the booking id, and the key rides in the
+       link's #fragment, which a browser never sends in a request or a
+       referrer. Holding the key is being in the lesson; there is no other
+       login. A booking made before rooms existed gets its keys on first read. */
+    sKey: /^[a-f0-9]{24}$/.test(r.sKey) ? r.sKey : randomBytes(12).toString("hex"),
+    tKey: /^[a-f0-9]{24}$/.test(r.tKey) ? r.tKey : randomBytes(12).toString("hex"),
   };
 }
 

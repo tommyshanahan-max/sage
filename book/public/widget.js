@@ -30,7 +30,8 @@
       book: "Book {when} · {price}", pick: "Pick a time",
       you: "Who's coming?", name: "Your name", contact: "WeChat ID", note: "Anything they should know (optional)",
       confirm: "Book it", back: "Back",
-      done: "Booked", doneSub: "{name} will add you on WeChat before the class.",
+      done: "Booked", doneSub: "Video class, right here — no other app.",
+      joinClass: "Join class", keepLink: "Save this link — it's your way in",
       pay: "Pay now", again: "Book another",
       taken: "Somebody just took that time. Pick another.", slow: "Too many tries — wait a few minutes.",
       fail: "That did not go through. Try again.", needName: "Your name, so they know who you are.",
@@ -43,7 +44,8 @@
       book: "预约 {when} · {price}", pick: "选个时间",
       you: "谁来上课？", name: "你的名字", contact: "微信号", note: "想让老师知道的（可不填）",
       confirm: "确认预约", back: "返回",
-      done: "约好了", doneSub: "{name}老师会在上课前加你微信。",
+      done: "约好了", doneSub: "就在这里视频上课，不用装别的软件。",
+      joinClass: "进入课堂", keepLink: "存好这个链接，上课从这里进",
       pay: "去付款", again: "再约一节",
       taken: "这个时间刚被别人约走了，换一个吧。", slow: "试得太多了，过几分钟再来。",
       fail: "没成功，再试一次。", needName: "写个名字，老师好认你。",
@@ -253,7 +255,7 @@
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ teacher: t.id, start, name: name.value, contact: contact.value, note: note.value }),
         }).catch(() => null);
-        if (r && r.ok) { TEACHERS = []; return done(t, start, r.j.pay); }
+        if (r && r.ok) { TEACHERS = []; return done(t, start, r.j.pay, r.j.room); }
         go.disabled = false;
         if (r && r.status === 409) { err.textContent = W.taken; setTimeout(() => teacher(t, i), 1600); return; }
         err.textContent = r && r.status === 429 ? W.slow : W.fail;
@@ -267,14 +269,19 @@
       name.focus();
     }
 
-    function done(t, start, pay) {
+    function done(t, start, pay, room) {
       clear();
       box.append(h("div", { class: "ok" },
         h("div", { class: "tick" }, "✓"),
         h("h3", {}, W.done),
         h("p", {}, `${t.name} · ${whenWord(start)}`),
         h("p", {}, fill(W.doneSub, { name: t.name }))));
-      if (pay) box.append(h("a", { class: "go", href: pay, target: "_blank", rel: "noopener" }, W.pay));
+      /* THE WAY INTO THE LESSON — its own page on the booking server, where
+         the video call happens. Opens in a new tab so the app underneath is
+         still there afterwards. The link is the key: keep it. */
+      if (room) box.append(h("a", { class: "go", href: BASE + room, target: "_blank", rel: "noopener" }, W.joinClass,
+        h("small", {}, W.keepLink)));
+      if (pay) box.append(h("a", { class: "go ghost", href: pay, target: "_blank", rel: "noopener" }, W.pay));
       box.append(h("button", { class: "go ghost", type: "button", on: { click: list } }, W.again));
     }
 

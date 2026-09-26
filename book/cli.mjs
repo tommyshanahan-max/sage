@@ -18,6 +18,8 @@
 import { load, save, newId, cleanTeacher, DAYS, slotsFor } from "./lib/store.mjs";
 
 const E = process.env;
+// Where the booking service is reached from outside, for printing room links.
+const PUBLIC = (E.BOOK_PUBLIC || "https://thexchange.app/book").replace(/\/$/, "");
 const cmd = process.argv[2] || "list";
 
 /** "mon-fri 19:00 20:00; sat 10:00" → { mon: [...], ..., sat: [...] } */
@@ -117,5 +119,9 @@ if (cmd === "teacher") {
   for (const b of soon) {
     const t = db.teachers.find((x) => x.id === b.teacher);
     console.log(`  ${when(b.start)} · ${t ? t.name : "?"} ← ${b.name} (${b.contact})${b.note ? " — " + b.note : ""}  [${b.id}]`);
+    // The two ways into the lesson's video room. The teacher's is the one to
+    // send them; the student's was on their screen when they booked.
+    console.log(`      teacher: ${PUBLIC}/room/${b.id}#${b.tKey}`);
+    console.log(`      student: ${PUBLIC}/room/${b.id}#${b.sKey}`);
   }
 }

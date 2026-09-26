@@ -1358,12 +1358,36 @@ services:
     environment:
       BOOK_DIR: /data
       TZ: Asia/Shanghai
+      # The box's public address, for the video relay below. Not a secret —
+      # it is the address every site here already answers on.
+      BOOK_TURN_IP: ${TOMSCODING_TURN_IP:-45.77.8.166}
     volumes:
       - book_data:/data
     expose:
       - "8080"
     networks:
       - tomscoding
+
+  # THE VIDEO RELAY for Book's lesson rooms (TURN). Most calls go phone to
+  # phone and never touch it; it carries the ones where a network — Chinese
+  # mobile networks especially — will not let two phones reach each other.
+  #
+  # HOST NETWORKING, because a relay has to answer on the box's own address,
+  # on 3478 and on a range of UDP ports (49160–49200) for the media itself.
+  # Its settings, password included, are written by the book container on
+  # start (see book/lib/room.mjs) into the volume mounted here read-only, so
+  # there is nothing to put in .env. It never relays into private addresses.
+  turn:
+    profiles: ["board"]
+    image: coturn/coturn:4.6
+    container_name: tomscoding-turn
+    restart: unless-stopped
+    network_mode: host
+    depends_on:
+      - book
+    volumes:
+      - book_data:/book:ro
+    command: ["-c", "/book/turnserver.conf"]
 
   #
   # Off unless asked for, like every other optional service here — add `claire`
