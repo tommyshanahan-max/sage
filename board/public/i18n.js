@@ -4350,6 +4350,27 @@ export const STRINGS = {
   "join.sub": [
     "Cross-border trade, both directions. Browse everybody, and write to everybody who came in the way you did. Your WeChat or email is shown to nobody.",
     "跨境生意，两个方向。所有人都能看，跟你一样进来的人都能聊。你的微信或邮箱谁都看不到。"],
+  /* THE BOARD DRAWN ABOVE THE FORM, for somebody off a link who has never
+     heard of this and will not fill anything in to find out what is behind
+     it. Three labels and two lines, and they carry the whole difference
+     between the tiers by saying what each group is rather than explaining a
+     tier system to a stranger. */
+  "front.rooms":       ["Rooms", "房间"],
+  "front.roomsSub":    ["· walk into any of these", "· 随便进"],
+  /* "Members" and not "Tier one". Nobody outside knows what a tier is, and a
+     word invented for the database is a word the reader has to be taught. */
+  "front.members":     ["Members", "成员"],
+  "front.membersSub":  ["· brought in by somebody", "· 有人带进来的"],
+  "front.open":        ["Open to anyone", "所有人都能聊"],
+  "front.openSub":     ["· you can write to these", "· 这些人你能直接联系"],
+  "front.of":          ["{n} of {all}", "第 {n} 个，共 {all} 个"],
+  /* Said when nobody has come through the public door yet, which is true on
+     the first day and stops being true quickly. Not "no results" — this is
+     a board with nobody on one side of it, and saying so is better than an
+     empty space somebody reads as broken. */
+  "front.noneOpen":    ["Nobody yet. You would be the first.",
+                        "还没有人，你会是第一个。"],
+
   "join.has":          ["Already have a password?", "已经有口令了？"],
 
   /* /agents — one page for one WeChat group of film agents. Its own keys

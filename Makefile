@@ -278,9 +278,10 @@ tier-two: ## Turn everybody standing at the door into tier two, once
 	@# reason somebody arriving from a link does not land on an empty screen.
 	@# Safe to run twice: a browser that already has a profile is skipped, not
 	@# overwritten.
-	$(COMPOSE) exec -T board node -e "fetch('http://127.0.0.1:8080/api/tier-two',\
+	$(COMPOSE) exec -T board node -e "const go=(n)=>fetch('http://127.0.0.1:8080/api/tier-two',\
 	  {method:'POST',headers:{'x-admin-secret':process.env.BOARD_ADMIN_KEY}})\
-	  .then(r=>r.json()).then(d=>console.log(JSON.stringify(d)))"
+	  .then(r=>r.json()).then(d=>console.log(JSON.stringify(d)))\
+	  .catch(e=>{if(n<=0)throw e;setTimeout(()=>go(n-1),1000)});go(10)"
 
 post-door: ## Tell the feed the board is private now, as The Professor
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \

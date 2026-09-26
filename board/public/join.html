@@ -61,6 +61,63 @@
   .jhas{display:block;margin:1.6rem 0 0;text-align:center;font-size:.82rem;
     color:var(--muted);text-decoration:none}
   .jhas b{color:var(--accent);font-weight:650}
+
+  /* THE BOARD, BEFORE THE FORM.
+   *
+   * The note above said one screen with one thing on it, and that was right
+   * while the only question was whether to put your name down. It is wrong
+   * for somebody off an Instagram link who has never heard of this: they will
+   * not fill a form to find out what is behind it. So the board goes first —
+   * the rooms, then the people — and the form is underneath, where somebody
+   * who has just seen a reason to fill it in can reach it.
+   *
+   * ROOMS RUN ACROSS AND PEOPLE RUN DOWN. A room is a place you walk past and
+   * step into; a person is a row. Putting either in the other's shape is what
+   * makes them read as the same thing.
+   */
+  .flab{font-size:.68rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;
+    color:var(--muted);margin:1.8rem 0 .55rem}
+  .flab em{font-style:normal;letter-spacing:.06em;text-transform:none;font-weight:400}
+  .fstrip{display:flex;gap:.5rem;overflow-x:auto;margin:0 -1.15rem;
+    padding:0 1.15rem .4rem;scrollbar-width:none}
+  .fstrip::-webkit-scrollbar{display:none}
+  .frm{flex:none;display:flex;align-items:center;gap:.5rem;border:1px solid var(--line);
+    background:var(--card);border-radius:999px;padding:.42rem .85rem .42rem .45rem;
+    font:inherit;color:var(--ink);cursor:pointer;text-decoration:none}
+  .frm i{width:1.75rem;height:1.75rem;border-radius:50%;display:grid;place-items:center;
+    font-style:normal;font-size:.8rem;font-weight:700;flex:none;
+    background:var(--accent-soft);color:var(--accent)}
+  .frm b{font-weight:600;font-size:.9rem;white-space:nowrap}
+  .frm span{font-size:.78rem;color:var(--muted);white-space:nowrap}
+
+  /* One member at the size of a person. It is the only thing on this page a
+     stranger cannot have, which is what makes it worth showing large. */
+  .fdeck{position:relative;border:1px solid var(--line);background:var(--card);
+    border-radius:1rem;overflow:hidden}
+  .fface{height:clamp(150px,34vw,190px);display:grid;place-items:center;
+    font-size:clamp(2.6rem,11vw,3.4rem);font-weight:700;color:#fff;letter-spacing:-.03em}
+  .ffoot{padding:.9rem 1rem 1rem}
+  .fnm{font-size:1.15rem;font-weight:700;letter-spacing:-.015em}
+  .fln{font-size:.93rem;color:var(--ink-2);margin-top:.2rem}
+  .fpill{display:inline-block;font-size:.74rem;font-weight:700;padding:.22rem .6rem;
+    border-radius:999px;background:var(--accent-soft);color:var(--accent);margin-top:.55rem}
+  .fturn{display:flex;justify-content:center;gap:1.1rem;margin:.9rem 0 0}
+  .fturn button{width:2.9rem;height:2.9rem;border-radius:50%;border:1px solid var(--line);
+    background:var(--card);cursor:pointer;font-size:1.1rem;font-weight:700;color:var(--muted)}
+  .fturn button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+  .fof{text-align:center;font-size:.82rem;color:var(--muted);margin:.7rem 0 0;
+    font-variant-numeric:tabular-nums}
+
+  .frow{display:flex;gap:.8rem;align-items:center;padding:.8rem 0;
+    border-bottom:1px solid var(--line)}
+  .frow:last-child{border-bottom:0}
+  .fav{width:2.4rem;height:2.4rem;border-radius:50%;display:grid;place-items:center;
+    font-weight:700;font-size:.88rem;color:#fff;flex:none}
+  .fw{flex:1;min-width:0}
+  .fw b{display:block;font-weight:600;font-size:.96rem}
+  .fw span{display:block;font-size:.85rem;color:var(--muted);margin-top:.05rem;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .fnone{font-size:.9rem;color:var(--muted);padding:.9rem 0}
 </style>
 </head>
 <body>
@@ -75,16 +132,136 @@
   <h1 class="jlede" id="lede"></h1>
   <p class="jsub" id="sub"></p>
 
+  <div id="front" hidden>
+    <p class="flab" id="labRooms"></p>
+    <div class="fstrip" id="rooms"></div>
+
+    <div id="memBlock" hidden>
+      <p class="flab" id="labMembers"></p>
+      <div class="fdeck" id="deck"></div>
+      <div class="fturn">
+        <button type="button" id="prev" aria-label="Back">&#8249;</button>
+        <button type="button" id="next" aria-label="Next">&#8250;</button>
+      </div>
+      <p class="fof" id="ofn"></p>
+    </div>
+
+    <div id="openBlock" hidden>
+      <p class="flab" id="labOpen"></p>
+      <div id="openRows"></div>
+    </div>
+  </div>
+
   <div id="waitslot"></div>
 
   <a class="jhas" id="has" href="/enter"></a>
 </div>
 
 <script type="module">
-import { T, setLang, pickLang, langButton } from "/i18n.js";
+import { T, setLang, pickLang, langButton, lang } from "/i18n.js";
 import { waitBox, tally } from "/wait.js";
 
 const $ = (id) => document.getElementById(id);
+
+/* THE BOARD ITSELF, FETCHED RATHER THAN DESCRIBED.
+ *
+ * Everything below is drawn from /api/front, which is open and takes no
+ * device: this page is read by people who are nobody yet. If the fetch fails
+ * the page is exactly what it was before — a sentence and a form — because
+ * the block starts hidden and is only shown once there is something in it. A
+ * front door that breaks into an error is worse than one that is plain. */
+const COL = ["--t1", "--t2", "--t3", "--t4", "--t5", "--t6"];
+const tint = (i) => "var(" + COL[i % COL.length] + ")";
+const first = (s) => String(s || "?").trim().charAt(0).toUpperCase();
+let FRONT = null, at = 0;
+
+/* Their own line, in the reader's language when it has been rendered into it.
+   Same rule the cards keep: written once when it was said, swapped here. */
+function line(q) {
+  const want = lang() === "zh" ? "zh" : "en";
+  if (q.goalAlt && q.goalLang && q.goalLang !== want) return q.goalAlt;
+  return q.goal || "";
+}
+function where(q) { return q.campus || q.here || ""; }
+
+function drawRooms() {
+  const box = $("rooms");
+  box.innerHTML = "";
+  for (const r of FRONT.rooms) {
+    const a = document.createElement("a");
+    a.className = "frm";
+    a.href = "/r/" + r.key;
+    const nm = T("waitroom." + r.key);
+    a.innerHTML = '<i>' + first(nm) + '</i><b></b><span></span>';
+    a.querySelector("b").textContent = nm;
+    a.querySelector("span").textContent = r.n ? String(r.n) : "";
+    box.append(a);
+  }
+}
+function drawDeck() {
+  const list = FRONT.members;
+  if (!list.length) { $("memBlock").hidden = true; return; }
+  $("memBlock").hidden = false;
+  at = ((at % list.length) + list.length) % list.length;
+  const q = list[at];
+  const d = $("deck");
+  d.innerHTML = '<div class="fface"></div><div class="ffoot">'
+    + '<div class="fnm"></div><div class="fln"></div></div>';
+  const face = d.querySelector(".fface");
+  face.style.background = tint(at);
+  face.textContent = first(q.handle);
+  d.querySelector(".fnm").textContent = q.handle + (where(q) ? " · " + where(q) : "");
+  d.querySelector(".fln").textContent = line(q);
+  $("ofn").textContent = T("front.of", { n: at + 1, all: list.length });
+}
+function drawOpen() {
+  const list = FRONT.open;
+  $("openBlock").hidden = false;
+  const box = $("openRows");
+  box.innerHTML = "";
+  if (!list.length) {
+    const p = document.createElement("p");
+    p.className = "fnone";
+    p.textContent = T("front.noneOpen");
+    box.append(p);
+    return;
+  }
+  list.slice(0, 8).forEach((q, i) => {
+    const row = document.createElement("div");
+    row.className = "frow";
+    row.innerHTML = '<span class="fav"></span><span class="fw"><b></b><span></span></span>';
+    const av = row.querySelector(".fav");
+    av.style.background = tint(i);
+    av.textContent = first(q.handle);
+    row.querySelector("b").textContent = q.handle + (where(q) ? " · " + where(q) : "");
+    row.querySelector(".fw span").textContent = line(q);
+    box.append(row);
+  });
+}
+function drawFront() {
+  if (!FRONT) return;
+  $("labRooms").innerHTML = "";
+  $("labRooms").append(document.createTextNode(T("front.rooms") + " "));
+  const e1 = document.createElement("em"); e1.textContent = T("front.roomsSub");
+  $("labRooms").append(e1);
+  $("labMembers").innerHTML = "";
+  $("labMembers").append(document.createTextNode(T("front.members") + " "));
+  const e2 = document.createElement("em"); e2.textContent = T("front.membersSub");
+  $("labMembers").append(e2);
+  $("labOpen").innerHTML = "";
+  $("labOpen").append(document.createTextNode(T("front.open") + " "));
+  const e3 = document.createElement("em"); e3.textContent = T("front.openSub");
+  $("labOpen").append(e3);
+  drawRooms(); drawDeck(); drawOpen();
+  $("front").hidden = false;
+}
+$("prev").addEventListener("click", () => { at--; drawDeck(); });
+$("next").addEventListener("click", () => { at++; drawDeck(); });
+
+fetch("/api/front")
+  .then((r) => (r.ok ? r.json() : null))
+  .then((d) => { if (!d) return; FRONT = d; drawFront(); })
+  .catch(() => {});
 
 function paint() {
   document.title = T("join.tab");
@@ -107,6 +284,9 @@ $("langslot").append(langButton(() => {
      place — half of it in one language is worse than either. */
   $("waitslot").textContent = "";
   $("waitslot").append(waitBox());
+  // The board is drawn from strings too, and half of it in one language is
+  // worse than either.
+  drawFront();
 }));
 
 $("waitslot").append(waitBox());

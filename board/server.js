@@ -639,7 +639,7 @@ const ROOT_IS_BOARD = process.env.BOARD_AT_ROOT === "1";
    the button was never on the screen. The POST to /china/api/connect came
    back as door.html too, and an HTML page from a JSON fetch fails silently.
    `china` and not `china\/`: /china itself is the fork. */
-const OPEN_PATHS = /^\/(china|enter|auth\/google|i\/|w\/|r\/|s\/|d\/|pay\/|demo(?:\.png)?$|api\/demo\/ask$|sell$|api\/sell$|dealio|europay-[a-z]+\.html|api\/pay\/onboard$|api\/dealio\/try\/qr$|shop\/|order\/|orders$|api\/shop\/|api\/shop-media$|api\/order\/|api\/orders$|api\/product\/|api\/memo\/|api\/request(?:s|\/|$)|api\/say\/|api\/snap|api\/door$|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.(?:html|pdf)|g\/|share-exchange\.png|share-square\.png|about|rules|terms|privacy|rewards|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/offer|api\/wait|api\/butler$|api\/ep\/ask$|api\/butler-voice$|api\/butler-hear$|api\/write\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
+const OPEN_PATHS = /^\/(china|enter|auth\/google|i\/|w\/|r\/|s\/|d\/|pay\/|demo(?:\.png)?$|api\/demo\/ask$|sell$|api\/sell$|dealio|europay-[a-z]+\.html|api\/pay\/onboard$|api\/dealio\/try\/qr$|shop\/|order\/|orders$|api\/shop\/|api\/shop-media$|api\/order\/|api\/orders$|api\/product\/|api\/memo\/|api\/request(?:s|\/|$)|api\/say\/|api\/snap|api\/door$|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.(?:html|pdf)|g\/|share-exchange\.png|share-square\.png|about|rules|terms|privacy|rewards|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/front|api\/offer|api\/wait|api\/butler$|api\/ep\/ask$|api\/butler-voice$|api\/butler-hear$|api\/write\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
 
 /* ---- BEING SOMEBODY YOU SPEAK FOR ----------------------------------------
  *
@@ -4841,6 +4841,49 @@ app.get("/api/counts", admin, async (_req, res) => {
   const board = await store.load(FILE);
   res.set("Cache-Control", "no-store");
   res.json({ counts: board.counts || {} });
+});
+
+/* WHAT THE FRONT DOOR SHOWS SOMEBODY WHO HAS NEVER BEEN HERE.
+ *
+ * /api/people is for a reader: it knows who they are, what they follow, who
+ * they have blocked, and which people they may write to. None of that exists
+ * for a stranger off an Instagram link, and a route that tried to serve both
+ * would sooner or later answer one of those questions to somebody outside the
+ * door. So this is its own endpoint and it takes no device at all.
+ *
+ * It sends three things, because the page is three things: the rooms with a
+ * number on each, the members (who a new arrival can look at and not write
+ * to), and the people who came in the way they are about to (who they can).
+ * The split IS the product, and it is done here rather than on the page so
+ * that a page cannot get it wrong.
+ *
+ * NO `reach`, NO `mail`, NO relationship. shownPerson(q, false) is the same
+ * shape the peek wall already used, and it drops those.
+ */
+app.get("/api/front", async (_req, res) => {
+  const board = await store.load(FILE);
+  res.set("Cache-Control", "no-store");
+  const live = board.people.filter((q) =>
+    q.state === "published" && q.looking && q.handle);
+  /* Tier from the stamp, and an unstamped row reads as a member — that is what
+     everybody here was before the public door existed. Same rule as tierOf. */
+  const shown = (q) => {
+    const o = shownPerson(q, false);
+    return { id: o.id, handle: o.handle, campus: o.campus, here: o.here,
+             goal: o.goal, goalAlt: o.goalAlt, goalLang: o.goalLang,
+             photo: o.photoState === "published" ? o.photo : "",
+             say: Array.isArray(o.say) ? o.say.map((r) => ({ me: r.me, want: r.want })) : [] };
+  };
+  res.json({
+    /* The count on a door is the people standing at it, which is what the
+       doors panel counts and what the room itself shows. */
+    rooms: store.WAITROOMS_CHAT.map((key) => ({
+      key, n: board.waits.filter((w) => w.room === key && !w.done).length,
+    })),
+    members: live.filter((q) => q.via !== "door").map(shown),
+    open: live.filter((q) => q.via === "door").map(shown),
+    total: live.length,
+  });
 });
 
 app.get("/api/hello", async (req, res) => {
