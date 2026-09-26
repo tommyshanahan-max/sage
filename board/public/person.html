@@ -1838,8 +1838,15 @@ function sheet(q) {
       if (!r.ok) {
         // The server's word for what stopped it, said in the reader's own
         // language rather than passed through as a code.
+        /* EVERY CODE THE ROUTE CAN RETURN, because the ones missing from
+           here fell through to "It did not send. Try again." — advice that is
+           wrong about all of them, since not one is a thing retrying fixes.
+           `off` is the 404 from notesOff, which is a board with messages
+           switched off answering every write identically for ever. */
         const known = { profile: "note.needProfile", enough: "note.enough",
-                        gone: "note.gone", closed: "note.closed", waiting: "note.waiting" };
+                        gone: "note.gone", closed: "note.closed", waiting: "note.waiting",
+                        shut: "note.shut", self: "note.self", contact: "note.noContact",
+                        "not in this version": "note.off" };
         said.classList.add("bad");
         said.textContent = T(known[d.error] || "note.failed", { who: q.handle });
         go.disabled = false; shut.disabled = false;

@@ -110,7 +110,33 @@ const WORDS = {
   behind: "still on the waiting row",
   gone:   "no photograph anywhere",
 };
-const missing = d.people.filter((q) => !q.showing);
+/* NOT ON THE BOARD AT ALL, FIRST AND SEPARATELY.
+ *
+ * "Her photo is missing" and "she is not there" are the same absence from
+ * outside, and this command used to answer only the first — so a face could
+ * be released, reported as fixed, and the screen go on showing nothing
+ * because the person was never in Browse to begin with. That is a different
+ * afternoon's work and it goes above, not mixed in. */
+const away = d.people.filter((q) => q.notThere);
+if (away.length) {
+  console.log("  NOT IN BROWSE AT ALL  (" + away.length + ")");
+  console.log("");
+  for (const q of away) {
+    /* A NAME WIDER THAN ITS COLUMN RAN STRAIGHT INTO THE REASON — "Liza
+       Landazuri KovalenkoShow me in Browse is off". padEnd does nothing when
+       the string is already longer, so a fixed column is only a column for
+       the names that happen to fit, and full-name handles are half of this
+       board. Two spaces at minimum, always. */
+    const nm = String(q.handle || "(no name)");
+    console.log("  " + nm + " ".repeat(Math.max(2, 26 - nm.length)) + q.notThere);
+  }
+  console.log("");
+  console.log("  A photograph on one of these shows nowhere until that is fixed.");
+  console.log("  make who says the same thing with the rest of the detail.");
+  console.log("");
+}
+
+const missing = d.people.filter((q) => !q.showing && q.inBrowse);
 const showing = d.people.length - missing.length;
 console.log("");
 if (!missing.length) {
@@ -122,7 +148,9 @@ if (!missing.length) {
 console.log("  NOT SHOWING  (" + missing.length + " of " + d.people.length + ")");
 console.log("");
 for (const q of missing) {
-  console.log("  " + String(q.handle).padEnd(18) + String(WORDS[q.why] || q.why).padEnd(32)
+  const nm = String(q.handle);
+  console.log("  " + nm + " ".repeat(Math.max(2, 26 - nm.length))
+    + String(WORDS[q.why] || q.why).padEnd(32)
     + (q.alsoAdmits ? "profile held too" : ""));
 }
 console.log("");

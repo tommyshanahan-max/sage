@@ -19255,9 +19255,20 @@ app.get("/api/admin/faces-why", admin, async (_req, res) => {
         : q.photo ? "held"
         : (w && w.photo) ? "behind"
         : "gone";
+      /* WHETHER THEY ARE IN BROWSE AT ALL, which is the question underneath
+         the question. "Her photo is missing" and "she is not on the board"
+         look identical from the outside — both are an absence — and this
+         command answered only the first, so releasing a face would have been
+         reported as fixed while the screen went on showing nothing.
+         The three tests, in the order they bite, same as make who. */
+      const out2 = !q.handle ? "no name yet"
+        : q.state !== "published" ? "profile is " + (q.state || "not published")
+        : !q.looking ? "Show me in Browse is off"
+        : "";
       return {
         handle: q.handle, id: q.id,
         showing, why,
+        inBrowse: !out2, notThere: out2,
         /* Whether letting the face out would also let the PERSON out. The
            release route publishes both — a face on a held profile shows
            nowhere, so publishing one without the other fixes nothing — and

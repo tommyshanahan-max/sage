@@ -3443,8 +3443,13 @@ $("tsend").addEventListener("click", async () => {
     // Newest line at the bottom, which is where a conversation is read from.
     window.scrollTo(0, document.body.scrollHeight);
   } catch (err) {
+    /* The same list as person.html, and it has to stay the same list: a
+       refusal that has words on one screen and "try again" on the other is
+       the same bug twice. See the note there. */
     const known = { profile: "note.needProfile", enough: "note.enough",
                     gone: "note.gone", closed: "note.closed",
+                    waiting: "note.waiting", shut: "note.shut", self: "note.self",
+                    "not in this version": "note.off",
                     spent: "note.linesSpent",
                     // See the note in /api/group/say: the one refusal that
                     // points at a way of doing the thing rather than at a rule.

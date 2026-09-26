@@ -5063,6 +5063,29 @@ export const STRINGS = {
     "这里能聊的已经聊完了。直接联系对方吧——名片已经给你了。"],
   "note.enough":       ["That is enough messages for one day.", "今天发得够多了。"],
   "note.gone":         ["That person is not on the list any more.", "这个人已经不在名单上了。"],
+  /* THE REFUSALS THAT HAD NO WORDS, and so wore "It did not send. Try again."
+   *
+   * Every one of these is PERMANENT. Telling somebody to try again about a
+   * thing that will refuse identically for ever is the worst sentence a
+   * screen can say: they press it twice more, decide the app is broken, and
+   * the real reason — which two of these three could act on — is never shown
+   * to anybody. Seen on a live phone: "Hi how are you?" to a member, three
+   * red lines, no idea which rule it was.
+   *
+   * `shut` says nothing about WHICH of the two closed it. Whether somebody
+   * blocked you is theirs to know and not yours, and a message that let the
+   * blocked person work it out would make blocking useless. So it says the
+   * conversation is closed, which is the true part and the part that is
+   * anybody's business. */
+  /* note.shut is NOT redeclared here — it already exists above, and a second
+     copy of a key is the thing the duplicate check in CLAUDE.md is for. It
+     says "This conversation is closed", which is right for this too: whether
+     somebody blocked you is theirs to know, not yours, and a message that let
+     the blocked person work it out would make blocking useless. */
+  "note.self":         ["That is your own page.", "这是你自己的主页。"],
+  /* Notes are not built on this board at all. Nothing the reader can do, so
+     it does not pretend there is — and it does not say "try again". */
+  "note.off":          ["Messages are not switched on here.", "这里没有开启私信功能。"],
   "note.failed":       ["It did not send. Try again.", "没有发出去，再试一次。"],
 
   /* MO WRITES THE FIRST ONE. The blank box in front of a stranger's card is
