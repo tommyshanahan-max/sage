@@ -639,7 +639,7 @@ const ROOT_IS_BOARD = process.env.BOARD_AT_ROOT === "1";
    the button was never on the screen. The POST to /china/api/connect came
    back as door.html too, and an HTML page from a JSON fetch fails silently.
    `china` and not `china\/`: /china itself is the fork. */
-const OPEN_PATHS = /^\/(china|enter|auth\/google|i\/|w\/|r\/|s\/|d\/|pay\/|demo(?:\.png)?$|api\/demo\/ask$|sell$|api\/sell$|dealio|europay-[a-z]+\.html|api\/pay\/onboard$|api\/dealio\/try\/qr$|shop\/|order\/|orders$|api\/shop\/|api\/shop-media$|api\/order\/|api\/orders$|api\/product\/|api\/memo\/|api\/request(?:s|\/|$)|api\/say\/|api\/snap|api\/door$|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.(?:html|pdf)|g\/|share-exchange\.png|share-square\.png|about|rules|terms|privacy|rewards|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/front(?:-face)?|api\/offer|api\/wait|api\/butler$|api\/ep\/ask$|api\/butler-voice$|api\/butler-hear$|api\/write\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
+const OPEN_PATHS = /^\/(china|enter|auth\/google|i\/|w\/|r\/|s\/|d\/|pay\/|demo(?:\.png)?$|api\/demo\/ask$|sell$|api\/sell$|dealio|europay-[a-z]+\.html|api\/pay\/onboard$|api\/dealio\/try\/qr$|shop\/|order\/|orders$|api\/shop\/|api\/shop-media$|api\/order\/|api\/orders$|api\/product\/|api\/memo\/|api\/request(?:s|\/|$)|api\/say\/|api\/snap|api\/door$|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.(?:html|pdf)|g\/|share-exchange\.png|share-square\.png|about|rules|terms|privacy|rewards|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/wake|api\/front(?:-face)?|api\/offer|api\/wait|api\/butler$|api\/ep\/ask$|api\/butler-voice$|api\/butler-hear$|api\/write\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
 
 /* ---- BEING SOMEBODY YOU SPEAK FOR ----------------------------------------
  *
@@ -9467,12 +9467,17 @@ async function mailThem(to, from, link) {
 
 /** Buzz every device a member has turned this on for, and drop the ones the
  *  browser has thrown away. Never throws. */
-async function tellThem(to) {
-  if (!push.configured() || !to) return;
+async function tellThem(to, words) {
+  /* THE GATE WAS THE WRONG ONE. push.configured() is the VAPID pair and
+     nothing else, so a board holding an APNs key and no VAPID pair told
+     nobody anything and said nothing about why — which is the exact bug
+     push.tell already guards against per row (see the note there) and this
+     defeated by refusing before it was ever called. */
+  if (!to || (!push.configured() && !push.apnsOn())) return;
   const board = await store.load(FILE);
   const subs = (board.pushes || []).filter((x) => x.by === to);
   if (!subs.length) return;
-  const dead = await push.tell(subs);
+  const dead = await push.tell(subs, words);
   if (!dead.length) return;
   /* A SEPARATE WRITE, AND ONLY WHEN THERE IS SOMETHING TO FORGET. An
      uninstalled app or a cleared site leaves an endpoint that will 410 for
@@ -9483,6 +9488,275 @@ async function tellThem(to) {
     return { ok: true };
   });
 }
+
+
+/* ---------------------------------------------------------------------------
+ * THE DAILY REPORT CARD
+ *
+ * WHAT IT IS FOR. Everything this board tells a member is about somebody
+ * ELSE's move: a message arrived, a follow happened, a match opened. Nothing
+ * ever told them the thing they actually want to know, which is whether being
+ * here is working — whether anybody is looking. That number existed already
+ * (views has been counted per day for a month) and lived behind a tap on a
+ * panel, which means it was read by whoever went looking for it.
+ *
+ * WHY IT IS NOT THE GRADE. The grade on the phone is half things only that
+ * phone knows — a card answered, a streak, which matches are new — and the
+ * comment over the vouch tests says why that stays there: a number a client
+ * computes is a number a client can claim. This is the other half, the half
+ * the server already holds and nobody can claim: who opened your page, who
+ * followed you, who answered something you put up. Those are facts about
+ * other people's behaviour, which is exactly why they are worth a buzz and
+ * exactly why they cannot be computed on the reader's own phone.
+ *
+ * WHAT IS DELIBERATELY NOT IN IT. Messages. A note already buzzes the moment
+ * it arrives, and counting it again in the evening is the same event buzzing
+ * twice. The card is about the interest nothing else reports: the people who
+ * looked and said nothing.
+ *
+ * NO NAMES, EVER. It is four numbers. Who looked at your page is a fact about
+ * them as much as about you, and this board does not keep a reading history
+ * to draw one from — see the note over `views` in store.js, which is a date
+ * to a number and holds no identity at all.
+ * ------------------------------------------------------------------------ */
+
+/* The hour it goes out, UTC. Noon UTC is eight in the evening in Beijing and
+   nine in Tokyo — the end of a working day, when somebody has a minute, and
+   not the middle of one. An env var because a board somewhere else wants a
+   different evening. */
+const CARD_HOUR = num("BOARD_CARD_HOUR", 12);
+/* Off by default. A product that starts buzzing everybody nightly because a
+   deploy went out is a product that gets its notifications turned off, once,
+   for ever. Somebody has to mean this. */
+const CARD_ON = String(process.env.BOARD_CARD || "").trim().toLowerCase() === "on";
+
+/** What happened to one person today, in numbers and nothing else. */
+function cardFor(board, q, day) {
+  const on = (x) => String(x || "").slice(0, 10) === day;
+  const mine = String(q.handle || "").toLowerCase();
+  /* Their own posts, so replies can be counted against them. isOwnPost drops
+     replies, likes and reports — a like on your post is not somebody
+     answering you, and a report certainly is not. */
+  const myPosts = new Set(board.posts
+    .filter((p) => store.isOwnPost(p) && String(p.handle || "").toLowerCase() === mine && mine)
+    .map((p) => p.id));
+  return {
+    opened: Number((q.views || {})[day] || 0),
+    followed: board.follows.filter((f) => f.who === q.id && on(f.at)).length,
+    replied: board.posts.filter((p) => p.re && myPosts.has(p.re) && on(p.at)
+      && String(p.handle || "").toLowerCase() !== mine).length,
+    /* Counted for the panel and never for the buzz — see the note above about
+       the same event buzzing twice. */
+    wrote: board.notes.filter((n) => n.to === q.by && on(n.at) && !n.report).length,
+  };
+}
+
+/* THE SENTENCE, AND THERE IS ONLY ONE OF THEM.
+ *
+ * A lock screen gets one glance. Three clauses joined by dots is a paragraph
+ * at the size it is read at, and the second and third are never read — so the
+ * card leads with the one fact that matters most and stops. A follow is worth
+ * more than a look and an answer is worth more than a follow, because each is
+ * further through the thing the board is for; the number of looks is the
+ * fallback and the commonest case.
+ *
+ * WRITTEN HERE AND NOT IN i18n.js. This is built in this process, for a phone
+ * that may never open the app — the alert travels with the push. The same
+ * argument as the notification email above, which is also bilingual inline.
+ * The in-app panel reads its own strings from i18n.js as everything else
+ * does; these two must be kept saying the same thing.
+ *
+ * `lang` is what the browser said when it subscribed, "" for a row stored
+ * before that field existed. Both languages on one line for those, which is
+ * what this board's own name looks like anyway.
+ */
+function cardWords(c, lang) {
+  const en = c.replied ? (c.replied === 1 ? "1 person answered something you put up"
+                                          : c.replied + " people answered something you put up")
+    : c.followed ? (c.followed === 1 ? "1 person followed you today"
+                                     : c.followed + " people followed you today")
+    : (c.opened === 1 ? "1 person opened your page today"
+                      : c.opened + " people opened your page today");
+  const zh = c.replied ? "有 " + c.replied + " 个人回复了你发的内容"
+    : c.followed ? "今天有 " + c.followed + " 个人关注了你"
+    : "今天有 " + c.opened + " 个人打开了你的主页";
+  if (lang === "zh") return { title: "交换", body: zh };
+  if (lang === "en") return { title: "The Exchange", body: en };
+  return { title: "交换 · The Exchange", body: zh + " · " + en };
+}
+
+/* Whether there is anything to say at all.
+ *
+ * A NOTIFICATION THAT SAYS NOBODY LOOKED AT YOU IS A REASON TO DELETE THE
+ * APP. It is also the commonest case on a board this size, which would make
+ * "nothing happened" the thing most members hear from us most evenings. So a
+ * quiet day is silent, and the panel is still there for anybody who wants to
+ * go and check. Messages are excluded here for the reason given above: they
+ * have already buzzed, and a card sent only because of them is the same event
+ * arriving twice. */
+const cardWorth = (c) => c.opened > 0 || c.followed > 0 || c.replied > 0;
+
+/** Today's report card for whoever is asking, for the panel in the app.
+ *
+ *  NOT /api/card. That address was already taken by the OTHER card on this
+ *  board — the WeChat id somebody swaps with a match — and Express answers
+ *  with whichever was registered first, silently. Two routes on one path is a
+ *  bug that looks like an empty feature: this returned {"card":null,"out":0},
+ *  which is the contact card's own shape, and read as "you have no card
+ *  today" rather than as "you are talking to the wrong route". */
+app.get("/api/today", async (req, res) => {
+  const me = hashDevice(String(req.get("x-board-device") || ""), SALT);
+  res.set("Cache-Control", "no-store");
+  if (!me) return res.json({ card: null });
+  const board = await store.load(FILE);
+  const q = board.people.find((x) => x.by === me);
+  if (!q) return res.json({ card: null });
+  const day = new Date().toISOString().slice(0, 10);
+  res.json({ card: { ...cardFor(board, q, day), day } });
+});
+
+/* WHAT TO PUT ON THE LOCK SCREEN, for a browser that has just been woken.
+ *
+ * A web push from this board carries no body — see the note over one() in
+ * lib/push.js, which posts zero bytes so that there is nothing to encrypt.
+ * That was fine while every push meant one thing. It is not fine now: the
+ * service worker wakes for a message and for a report card and cannot tell
+ * them apart, and a card whose text is "somebody wrote to you" is a lie.
+ *
+ * So the worker asks. It has no device header — a service worker cannot read
+ * localStorage, it wakes with no page at all — so this is the one route that
+ * is authenticated by the sign-in cookie alone, which is the only credential
+ * a worker carries. That cookie is already how somebody who cleared their
+ * storage gets back in; see inCookie.
+ *
+ * It answers with the same fixed sentence as before whenever there is no card
+ * to report, so a message push is unchanged in every case, including when
+ * this route fails and the worker falls back.
+ */
+app.get("/api/wake", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const me = inCookie(req);
+  const lang = ["en", "zh"].includes(String(req.query.lang || "")) ? String(req.query.lang) : "";
+  const said = (lang === "zh") ? { title: "交换", body: "有人给你留言了" }
+    : (lang === "en") ? { title: "The Exchange", body: "Somebody wrote to you" }
+    : { title: "交换 · The Exchange", body: "有人给你留言了 · Somebody wrote to you" };
+  if (!me) return res.json({ ...said, to: "/notes" });
+  const board = await store.load(FILE);
+  const q = board.people.find((x) => x.by === me);
+  const day = new Date().toISOString().slice(0, 10);
+  /* ONLY WHEN THE CARD IS WHY THIS PHONE WAS WOKEN. `cardAt` is stamped the
+     moment the card is sent, so a wake in the same day as the stamp is the
+     card and anything else is a message. Without that test every message
+     after eight in the evening would arrive wearing the card's sentence. */
+  if (!q || q.cardAt !== day) return res.json({ ...said, to: "/notes" });
+  const c = cardFor(board, q, day);
+  if (!cardWorth(c)) return res.json({ ...said, to: "/notes" });
+  return res.json({ ...cardWords(c, lang), to: "/#card" });
+});
+
+/* THE SEND, ONCE A DAY, COUNTED THE SAME WAY THE LIFT IS.
+ *
+ * Hourly rather than at the hour, for the reason given over liftSome: a box
+ * that happened to be asleep at the appointed minute would skip a day in
+ * silence. This runs every hour, does nothing for twenty-three of them, and
+ * catches up the moment the box is back.
+ *
+ * ONE WRITE FOR EVERYBODY, not one per person. Fifty members is fifty stamps,
+ * and fifty separate saves of a file this size is how an evening's
+ * notifications become a minute of thrashing. The buzzes go out after the
+ * stamp is written: a push that fails is somebody missing one evening, and a
+ * stamp that fails to write is everybody buzzed twice.
+ */
+async function sendCards(now = false) {
+  if (!CARD_ON) return;
+  // `now` is the hand run from make cards SEND=1. It skips the hour and
+  // nothing else — see the note over the admin route.
+  if (!now && new Date().getUTCHours() !== CARD_HOUR) return;
+  if (!push.configured() && !push.apnsOn()) return;
+  try {
+    const day = new Date().toISOString().slice(0, 10);
+    const board = await store.load(FILE);
+    const subbed = new Set((board.pushes || []).map((x) => x.by).filter(Boolean));
+    const send = [];
+    for (const q of board.people) {
+      if (q.cardAt === day) continue;             // already had tonight's
+      if (!q.by || !subbed.has(q.by)) continue;   // nothing to buzz
+      if (q.state !== "published" || !q.handle) continue;
+      const c = cardFor(board, q, day);
+      if (!cardWorth(c)) continue;
+      send.push({ by: q.by, id: q.id, c });
+    }
+    if (!send.length) return;
+    const ids = new Set(send.map((x) => x.id));
+    await change((b) => {
+      for (const q of b.people) if (ids.has(q.id)) q.cardAt = day;
+      return { ok: true };
+    });
+    for (const row of send) {
+      /* Per row, because the language is per row: two people on this board
+         read different languages and the sentence is built for each. */
+      const subs = (board.pushes || []).filter((x) => x.by === row.by);
+      for (const s of subs) {
+        await push.tell([s], cardWords(row.c, s.lang || "")).catch(() => {});
+      }
+    }
+    console.log("cards: sent " + send.length);
+  } catch (err) {
+    // Never worth taking the box down over. It will try again in an hour.
+    console.error("cards:", err.message);
+  }
+}
+setInterval(() => { sendCards(); }, 3600_000).unref?.();
+
+/* WHAT TONIGHT'S CARDS SAY, WITHOUT WAITING FOR TONIGHT.
+ *
+ * The send is hourly and fires in one hour of the day, which makes "is this
+ * thing on, and what will it say" a question you can only answer by waiting
+ * until the evening and asking somebody to look at their phone. That is not a
+ * way to check anything.
+ *
+ * Read-only by default: it prints the sentence every member would get, in
+ * their own row's language, and sends nothing. `send: true` runs the real
+ * thing now, ignoring the hour but NOT the once-a-day stamp — so a hand run
+ * followed by the evening's tick does not buzz anybody twice.
+ */
+app.post("/api/admin/cards", admin, express.json({ limit: "1kb" }), async (req, res) => {
+  const board = await store.load(FILE);
+  const day = new Date().toISOString().slice(0, 10);
+  const subbed = new Map();
+  for (const x of (board.pushes || [])) {
+    if (!x.by) continue;
+    if (!subbed.has(x.by)) subbed.set(x.by, []);
+    subbed.get(x.by).push(x.lang || "");
+  }
+  const rows = board.people
+    .filter((q) => q.state === "published" && q.handle && q.by)
+    .map((q) => {
+      const c = cardFor(board, q, day);
+      const langs = subbed.get(q.by) || [];
+      return {
+        who: q.handle, ...c,
+        worth: cardWorth(c),
+        phones: langs.length,
+        sentToday: q.cardAt === day,
+        /* One sentence per language the person's own devices asked for, so
+           what is printed here is literally what leaves. */
+        says: [...new Set(langs)].map((l) => cardWords(c, l).body),
+      };
+    });
+  const out = { day, hour: CARD_HOUR, on: CARD_ON,
+                push: push.configured() || push.apnsOn(), rows };
+  if (req.body?.send === true) {
+    /* The hour is the only thing skipped. Everything else — the stamp, the
+       quiet-day test, whether they have a phone at all — is the real path,
+       because a preview that takes a different path is a preview of nothing. */
+    const was = new Date().getUTCHours();
+    await sendCards(true);
+    out.sent = true;
+    out.hourWas = was;
+  }
+  res.json(out);
+});
 
 /* Mine, both directions.
  *

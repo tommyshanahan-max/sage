@@ -6300,6 +6300,42 @@ $("profhead").addEventListener("click", () => {
   } catch { /* private window */ }
 });
 
+/* THE WAY IN FROM THE LOCK SCREEN.
+ *
+ * The report card that arrives as a notification is drawn by drawProf, inside
+ * the Professor's fold, inside the tray behind the bell — two closed things
+ * deep. Tapping "4 people opened your page today" and landing on Browse with
+ * both of them shut is the app showing somebody nothing and asking them to go
+ * and find it, which is the exact failure the notification existed to fix.
+ *
+ * So the notification carries /#card (see the sw), and this opens both. A
+ * hash rather than a page because the card is not a page — it is a fold on
+ * this one — and a second address for it would be a second thing to keep in
+ * step with the first.
+ *
+ * The hash is cleared afterwards so that a reload, or somebody pressing back
+ * later in the day, does not re-open a panel they have already shut. */
+function openCard() {
+  const box = $("notif");
+  if (box) {
+    box.hidden = false;
+    $("bell").setAttribute("aria-expanded", "true");
+    TRAYSEEN = true; drawTray();
+  }
+  PROFOPEN = true;
+  const body = $("profbody"), head = $("profhead");
+  if (body) body.hidden = false;
+  if (head) head.setAttribute("aria-expanded", "true");
+  const prof = $("prof");
+  if (prof) prof.scrollIntoView({ block: "center" });
+}
+if (location.hash === "#card") {
+  history.replaceState(null, "", location.pathname + location.search);
+  /* After the first draw, or there is nothing to scroll to and drawProf will
+     overwrite aria-expanded from PROFOPEN a moment later anyway. */
+  setTimeout(openCard, 0);
+}
+
 $("bell").addEventListener("click", () => {
   const box = $("notif");
   box.hidden = !box.hidden;

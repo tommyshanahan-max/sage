@@ -3,7 +3,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: traffic tier-two try try-china china wallets mo-code visits app-state claire-episodes deal claire-key claire-count claire-seed claire-video listing invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who bells twice admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions whitelabel blocked partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check post post-status post-run post-login post-code post-logins weidian-pull weidian-json weidian-reviews shop-chapter review-tidy product-names review-move
+.PHONY: cards traffic tier-two try try-china china wallets mo-code visits app-state claire-episodes deal claire-key claire-count claire-seed claire-video listing invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who bells twice admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions whitelabel blocked partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check post post-status post-run post-login post-code post-logins weidian-pull weidian-json weidian-reviews shop-chapter review-tidy product-names review-move
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -2169,6 +2169,19 @@ traffic: ## Did anybody arrive, and through which door: make traffic [DAYS=14]
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/traffic.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  "$(or $(DAYS),14)"
+
+cards: ## What tonight's report card says to each member: make cards [SEND=1]
+	@# The card goes out once a day, in one hour of the day, to a phone — so
+	@# the only way to check it was to wait until evening and ask somebody to
+	@# look at their lock screen, which is not a way to check anything.
+	@#
+	@# Prints the four numbers and the real sentence per member, in the
+	@# language their own device asked for. SEND=1 sends it now; it skips the
+	@# hour and nothing else, so the once-a-day stamp still stops anybody
+	@# being buzzed twice.
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/cards.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  "$(if $(SEND),true,false)"
 
 who: ## Who has a page, and who is actually in Browse
 	@# For "she added herself but I cannot see her". The public list holds only

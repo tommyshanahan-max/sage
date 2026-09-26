@@ -1806,6 +1806,17 @@ export function cleanPerson(raw) {
      */
     views: dayCounts(raw.views, 30),
     regs: dayCounts(raw.regs, 8),
+    /* THE DAY THE REPORT CARD WAS LAST SENT TO THIS PERSON.
+     *
+     * A marker, which the lift above deliberately does without — and the
+     * reason the two differ is worth saying. The lift asks a question about
+     * the rows themselves ("how many went up today"), so it needs no memory
+     * and a restart costs nothing. There is nothing equivalent to count here:
+     * a notification leaves no trace on the board, so without a stamp a box
+     * that restarts three times in an evening buzzes everybody three times.
+     * Sending twice is a worse failure than skipping a day, so the stamp
+     * stays. */
+    cardAt: /^\d{4}-\d{2}-\d{2}$/.test(String(raw.cardAt || "")) ? String(raw.cardAt) : "",
     /* EVERY LEVEL THEY HAVE HELD, AND WHEN. Eight of them, which is more weeks
      * than anybody will move in.
      *

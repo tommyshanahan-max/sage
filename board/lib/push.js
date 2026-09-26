@@ -95,6 +95,11 @@ if (KEYERR) console.error("push keys rejected:", KEYERR);
 export const configured = () => Boolean(KEY && SUB);
 /** What the browser needs to subscribe. Public by definition. */
 export const publicKey = () => (configured() ? PUB : "");
+/* WHETHER THE OTHER HALF IS ON. configured() above is the VAPID pair, which
+   is the browser half only — a caller deciding whether there is any point
+   sending at all has to ask about both, and one that asked about VAPID alone
+   silently told nobody on a board whose members are all on the app. */
+export const apnsOn = () => apns.configured();
 
 /** A subscription as it is allowed to be stored. Anything else is refused —
  *  the endpoint is a URL this server will later POST to, so it is the one
@@ -176,7 +181,18 @@ async function one(sub) {
 /** Tell every device on `subs`, and hand back the endpoints that are dead so
  *  the caller can drop them. Never throws: a notification that fails is a
  *  notification that did not arrive, and nothing upstream should care. */
-export async function tell(subs) {
+/* `words` IS FOR THE PHONES AND NOT FOR THE BROWSERS, and that asymmetry is
+ * not an oversight.
+ *
+ * A web push from here carries no body at all — see one() below, which posts
+ * zero bytes on purpose so there is nothing to encrypt and no library to do
+ * it. So a browser cannot be handed a sentence; its service worker asks for
+ * one when it wakes (see /api/wake). A phone holding the app is the opposite:
+ * the alert is built here, in this process, so the sentence travels with the
+ * push and arrives even if the app never runs.
+ *
+ * Same call, same rows, two halves that differ in what they can carry. */
+export async function tell(subs, words) {
   /* THE GATE IS PER ROW NOW, NOT FOR THE WHOLE CALL.
    *
    * It was `if (!configured())` — the VAPID pair — and that was right while
@@ -192,7 +208,7 @@ export async function tell(subs) {
     /* THE ROW'S OWN LANGUAGE — see cleanPush. "" is every row stored before
        the field existed, and apns.js has a line for that case. */
     const how = s && s.apns
-      ? (apns.configured() ? await apns.one(s.apns, s.lang) : "fail")
+      ? (apns.configured() ? await apns.one(s.apns, s.lang, words) : "fail")
       : (configured() ? await one(s) : "fail");
     if (how === "gone") dead.push(s.endpoint);
   }));
