@@ -1226,7 +1226,17 @@ export const STRINGS = {
   "land.queue":        ["Waiting", "门外"],
 
   "peek.head":         ["Inside, right now", "里面此刻的样子"],
-  "wait.only":         ["Invite only", "仅限邀请"],
+  /* NOT "INVITE ONLY", WHICH IS A CLOSED DOOR.
+     It was true of the whole board and is not true any more: anybody can put
+     their name down, walk into the open rooms and write to the people who
+     arrived the same way. What an invite buys is narrower than it used to be
+     — the rooms members keep to themselves — so the eyebrow says the narrow
+     thing rather than the wide one.
+     It also turns the line from a refusal into a next step. "Invite only"
+     tells somebody to go away; "you need a vouch" tells them what to get,
+     and there is somebody inside who can give it to them. */
+  "wait.only":         ["Invite-only rooms need a vouch",
+                        "邀请制房间需要引荐"],
   "wait.waiting":      ["waiting to get in", "个人在等着进来"],
   /* Said only when the server sent a number that really is about that room —
      below the floor it sends the whole board's figure instead. */
