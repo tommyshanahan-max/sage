@@ -942,13 +942,24 @@ app.post("/api/hook/fee", express.raw({ type: "application/json", limit: "64kb" 
  * money screen rather than an error, which is both friendlier and says
  * nothing about what does exist here. A fetch gets a 404, because a redirect
  * to an HTML page is a JSON parse error three frames later. */
-const WL_PAGES = new Set(["/", "/wallet", "/dealio", "/start"]);
+const WL_PAGES = new Set([
+  "/", "/wallet", "/dealio", "/start",
+  /* The four europay pages. This list is the gate on a partner hostname and
+     it is not the sign-in one: a path that is not here is sent to the front
+     page whether or not anybody is signed in, which is why the set-up
+     instructions bounced home while /start, already on the list, worked.
+     Get started opens the first of these, so leaving it off meant the one
+     button on the page led back to the page. */
+  "/europay-setup.html", "/europay-sell.html",
+  "/europay-home.html", "/europay-desk.html",
+]);
 const WL_PREFIX = [
   /* BOTH SPELLINGS. wallet.html asks /api/wallet for its state and
      /api/wallet/<something> for everything else, and a prefix with the
      slash on it misses the first — which 404s the one call every screen
      there makes before it draws anything. Caught by curling the list rather
      than by reading it back. */
+  "/api/ep/ask",            // the assistant on the set-up page
   "/api/wallet",            // every screen in wallet.html
   "/api/request",           // asking to be paid, and reading one back
   "/api/books",             // the two sides of a deal, and the CSV
