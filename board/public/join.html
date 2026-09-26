@@ -114,8 +114,27 @@
   /* THE CARD IS THE PHOTOGRAPH. The name, the line, the arrows and the count
      all sit on it, so the only furniture under a member is the next thing on
      the page. */
+  /* CAPPED ON THE WIDTH, WHICH IS THE ONLY SAFE WAY TO CAP IT.
+   *
+   * The frame was height:clamp(180px,42vw,240px) and became aspect-ratio:4/5
+   * with nothing holding it, when heads were being cropped off. Portrait was
+   * the right shape — but the actual cause of the cropping was photoAt not
+   * being sent, which is fixed, and the ratio on its own turned a 240px
+   * picture into a 500px one on a phone. Said plainly: the old size was
+   * better.
+   *
+   * IT CANNOT BE PUT BACK WITH max-height. A max-height on an aspect-ratio
+   * box shrinks the WIDTH to keep the ratio, which leaves the card wider than
+   * the photograph and a dark strip down the side of it — that was the bug in
+   * a9b3735 and it only showed on short windows, which is why it survived a
+   * check. Capping the width makes the width the driver and the height
+   * follows, so there is nothing for the ratio to fight.
+   *
+   * 320px, which is 400px tall: between the 240 it was and the 500 it became,
+   * and still the largest thing on the page. */
   .fdeck{position:relative;border:1px solid var(--line);background:var(--card);
-    border-radius:1rem;overflow:hidden}
+    border-radius:1rem;overflow:hidden;
+    width:100%;max-width:320px;margin-inline:auto}
   /* A FACE WHERE THERE IS ONE, A LETTER WHERE THERE IS NOT. Both are the
      same box, so the deck does not change height when somebody without a
      photograph comes round — a card that jumps as you page through it reads
