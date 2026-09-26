@@ -18360,7 +18360,27 @@ app.get("/api/public", admin, async (req, res) => {
          which six were worth the command. A boolean answers it and carries
          nothing out of here that the panel does not already show. */
       hasCard: Boolean(q.goal || (Array.isArray(q.say) && q.say.length)),
+      /* WHICH DOOR. Admin-only, and the only place the tier stamp leaves the
+         box at all — shownPerson takes it off every public row (see the note
+         there). Without it there is no way to answer "did the link bring
+         anybody", which is the whole question behind putting a link on
+         Instagram: the queue and the members are one undifferentiated list of
+         names and dates. Blank means they were here before the door existed,
+         which counts as vouched — same rule as tierOf. */
+      via: q.via,
     })),
+    /* EVERYBODY WHO JOINED THE LIST AND STOPPED THERE. They are not people
+       rows — no page, so nothing above counts them — and they are half of
+       what arriving looks like: somebody who tapped the link, typed a name
+       and did not finish. A traffic report that leaves them out says the link
+       brought fewer people than it did. Dates only, and the name, which is
+       all `make traffic` prints. */
+    waits: board.waits.map((w) => ({ at: w.at, name: w.name })),
+    /* WHETHER THE PUBLIC DOOR IS EVEN OPEN. With it shut, "nobody came
+       through the link" is not a fact about the link — it is a fact about
+       this flag, and a report that cannot tell those apart is the same trap
+       as grepping .env for a name nobody set. */
+    publicDoor: PUBLIC_DOOR,
   });
 });
 
