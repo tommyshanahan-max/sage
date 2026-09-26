@@ -1237,10 +1237,10 @@ export const STRINGS = {
      and there is somebody inside who can give it to them. */
   "wait.only":         ["Invite-only rooms need a vouch",
                         "邀请制房间需要引荐"],
-  "wait.waiting":      ["waiting to get in", "个人在等着进来"],
+  "wait.waiting":      ["already on it", "个人已经在上面了"],
   /* Said only when the server sent a number that really is about that room —
      below the floor it sends the whole board's figure instead. */
-  "wait.waitingIn":    ["in {room}\nare waiting", "个 {room} 的人在等"],
+  "wait.waitingIn":    ["in {room}\nalready on it", "个 {room} 的人已经在上面了"],
   /* WHICH ROOM, in four words a stranger can read. Not the board's thirteen —
      those are the vocabulary of somebody already inside. See WAITROOMS. */
   /* The one line worth adding back to a box everything else came off. */
@@ -5376,7 +5376,7 @@ export const STRINGS = {
      which is everything somebody had to read four hundred words to learn. */
   "dl.spec1":          ["3.5% when you get paid, all in", "收到钱时收 3.5%，就这一项"],
   "dl.spec2":          ["Lands in your bank abroad", "直接进国外的银行卡"],
-  "dl.spec3":          ["Invitation only, for now", "现在要有人邀请"],
+  "dl.spec3":          ["Free to join, rooms need a vouch", "免费加入，房间需要引荐"],
   /* The paragraph each one replaced, one tap behind it. */
   /* ONE NUMBER, AND NOTHING UNDER IT. It said 2% and named Stripe, and both
      have changed: the money comes in through a wallet now, and 2% was the
@@ -5388,8 +5388,8 @@ export const STRINGS = {
                         "从款里扣 3.5%，就这一项——收款、换汇、加上我们的，都在里面。不收入会费，不收月费，没人付你就一分不收。"],
   "dl.spec2.p":        ["They pay in yuan from WeChat or Alipay; it arrives in your own bank account abroad. This board never holds it, never moves it, and has no balance of anybody's money.",
                         "对方用微信或支付宝付人民币，钱到你在国外的银行账户。这个板子不代收、不代转，也没有任何人的资金池。"],
-  "dl.spec3.p":        ["Somebody already here has to let you in. Paying is different — if somebody sent you a link, open it and pay. You need no account for that, ever.",
-                        "要进来得有人邀请你。付钱是另一回事：别人发了链接给你，打开付就行，永远不需要账号。"],
+  "dl.spec3.p":        ["Put yourself on it and you can browse everybody and write to everybody who arrived the same way. The invite-only rooms need somebody already here to vouch for you. Paying is different — if somebody sent you a link, open it and pay. You need no account for that, ever.",
+                        "把自己放上去，就能看所有人，也能跟同样进来的人聊。邀请制的房间要有人引荐。付钱是另一回事：别人发了链接给你，打开付就行，永远不需要账号。"],
   "dl.demoWho":        ["{who} is asking for", "{who} 请你付"],
   "dl.demoWhat":       ["12 lessons", "12 节课"],
   "dl.demoPay":        ["Pay {amount}", "付 {amount}"],
