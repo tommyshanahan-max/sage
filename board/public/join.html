@@ -94,8 +94,15 @@
      stranger cannot have, which is what makes it worth showing large. */
   .fdeck{position:relative;border:1px solid var(--line);background:var(--card);
     border-radius:1rem;overflow:hidden}
-  .fface{height:clamp(150px,34vw,190px);display:grid;place-items:center;
-    font-size:clamp(2.6rem,11vw,3.4rem);font-weight:700;color:#fff;letter-spacing:-.03em}
+  /* A FACE WHERE THERE IS ONE, A LETTER WHERE THERE IS NOT. Both are the
+     same box, so the deck does not change height when somebody without a
+     photograph comes round — a card that jumps as you page through it reads
+     as broken. */
+  .fface{position:relative;height:clamp(180px,42vw,240px);display:grid;
+    place-items:center;font-size:clamp(2.6rem,11vw,3.4rem);font-weight:700;
+    color:#fff;letter-spacing:-.03em;overflow:hidden}
+  .fface img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+    display:block}
   .ffoot{padding:.9rem 1rem 1rem}
   .fnm{font-size:1.15rem;font-weight:700;letter-spacing:-.015em}
   .fln{font-size:.93rem;color:var(--ink-2);margin-top:.2rem}
@@ -111,8 +118,11 @@
   .frow{display:flex;gap:.8rem;align-items:center;padding:.8rem 0;
     border-bottom:1px solid var(--line)}
   .frow:last-child{border-bottom:0}
-  .fav{width:2.4rem;height:2.4rem;border-radius:50%;display:grid;place-items:center;
-    font-weight:700;font-size:.88rem;color:#fff;flex:none}
+  .fav{position:relative;width:2.4rem;height:2.4rem;border-radius:50%;display:grid;
+    place-items:center;font-weight:700;font-size:.88rem;color:#fff;flex:none;
+    overflow:hidden}
+  .fav img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+    display:block}
   .fw{flex:1;min-width:0}
   .fw b{display:block;font-weight:600;font-size:.96rem}
   .fw span{display:block;font-size:.85rem;color:var(--muted);margin-top:.05rem;
@@ -210,6 +220,18 @@ function drawDeck() {
   const face = d.querySelector(".fface");
   face.style.background = tint(at);
   face.textContent = first(q.handle);
+  /* The letter is written first and the photograph is laid over it, so a file
+     that 404s or is slow leaves the initial showing rather than a grey box.
+     onerror removes the image rather than hiding it — a broken <img> with
+     alt text on top of a letter is two things in one square. */
+  if (q.photo) {
+    const img = document.createElement("img");
+    img.alt = "";
+    img.loading = "eager";
+    img.addEventListener("error", () => img.remove());
+    img.src = "/api/front-face?id=" + encodeURIComponent(q.photo);
+    face.append(img);
+  }
   d.querySelector(".fnm").textContent = q.handle + (where(q) ? " · " + where(q) : "");
   d.querySelector(".fln").textContent = line(q);
   $("ofn").textContent = T("front.of", { n: at + 1, all: list.length });
@@ -233,6 +255,14 @@ function drawOpen() {
     const av = row.querySelector(".fav");
     av.style.background = tint(i);
     av.textContent = first(q.handle);
+    if (q.photo) {
+      const img = document.createElement("img");
+      img.alt = "";
+      img.loading = "lazy";
+      img.addEventListener("error", () => img.remove());
+      img.src = "/api/front-face?id=" + encodeURIComponent(q.photo);
+      av.append(img);
+    }
     row.querySelector("b").textContent = q.handle + (where(q) ? " · " + where(q) : "");
     row.querySelector(".fw span").textContent = line(q);
     box.append(row);

@@ -639,7 +639,7 @@ const ROOT_IS_BOARD = process.env.BOARD_AT_ROOT === "1";
    the button was never on the screen. The POST to /china/api/connect came
    back as door.html too, and an HTML page from a JSON fetch fails silently.
    `china` and not `china\/`: /china itself is the fork. */
-const OPEN_PATHS = /^\/(china|enter|auth\/google|i\/|w\/|r\/|s\/|d\/|pay\/|demo(?:\.png)?$|api\/demo\/ask$|sell$|api\/sell$|dealio|europay-[a-z]+\.html|api\/pay\/onboard$|api\/dealio\/try\/qr$|shop\/|order\/|orders$|api\/shop\/|api\/shop-media$|api\/order\/|api\/orders$|api\/product\/|api\/memo\/|api\/request(?:s|\/|$)|api\/say\/|api\/snap|api\/door$|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.(?:html|pdf)|g\/|share-exchange\.png|share-square\.png|about|rules|terms|privacy|rewards|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/front|api\/offer|api\/wait|api\/butler$|api\/ep\/ask$|api\/butler-voice$|api\/butler-hear$|api\/write\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
+const OPEN_PATHS = /^\/(china|enter|auth\/google|i\/|w\/|r\/|s\/|d\/|pay\/|demo(?:\.png)?$|api\/demo\/ask$|sell$|api\/sell$|dealio|europay-[a-z]+\.html|api\/pay\/onboard$|api\/dealio\/try\/qr$|shop\/|order\/|orders$|api\/shop\/|api\/shop-media$|api\/order\/|api\/orders$|api\/product\/|api\/memo\/|api\/request(?:s|\/|$)|api\/say\/|api\/snap|api\/door$|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.(?:html|pdf)|g\/|share-exchange\.png|share-square\.png|about|rules|terms|privacy|rewards|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/front(?:-face)?|api\/offer|api\/wait|api\/butler$|api\/ep\/ask$|api\/butler-voice$|api\/butler-hear$|api\/write\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
 
 /* ---- BEING SOMEBODY YOU SPEAK FOR ----------------------------------------
  *
@@ -2979,6 +2979,22 @@ app.post("/api/tier-two", admin, async (_req, res) => {
         // Their own words where they are safe to show, and nothing where they
         // are not — same rule as the door itself.
         goal: why && !store.contactShaped(why) ? why : "",
+        /* THEIR FACE AND THEIR SENTENCE, WHICH THE ROW ALREADY HAD.
+         *
+         * A wait row holds a photograph, the state somebody reviewed it in,
+         * and the two halves of "I am a ___ looking for a ___" — because the
+         * door asked for all of it. Dropping them would have turned fifty
+         * people into fifty grey initials with a name under each, on the one
+         * screen whose whole job is to look like somewhere worth joining.
+         *
+         * photoState comes across UNCHANGED and is not promoted: a picture
+         * nobody has looked at yet stays held here exactly as it was there,
+         * and /api/front only ever publishes a "published" one. Carrying the
+         * state rather than the permission is the difference between moving
+         * a row and approving it. */
+        photo: w.photo || "", photoState: w.photoState || "",
+        ...(w.me && w.want ? { say: [{ me: w.me, want: w.want }] } : {}),
+        levelBand: w.levelBand || "", type: w.type || "",
         state: "published", looking: true, via: "door",
       }));
       has.add(w.by);
@@ -4860,6 +4876,32 @@ app.get("/api/counts", admin, async (_req, res) => {
  * NO `reach`, NO `mail`, NO relationship. shownPerson(q, false) is the same
  * shape the peek wall already used, and it drops those.
  */
+/* THE FACES ON THE FRONT DOOR, AND NOTHING ELSE.
+ *
+ * /api/public-media is behind the door on purpose — the note over OPEN_PATHS
+ * says why and it is right — so the front page cannot use it, and a card with
+ * a broken square where a face should be is worse than a letter.
+ *
+ * So: its own route, open, and it will serve an id ONLY if that id is the
+ * published photograph of somebody /api/front already puts on the page. It
+ * cannot be used to fish for anything else on this box, because an id that is
+ * not on a live person's row is a 404 whether the file exists or not.
+ */
+app.get("/api/front-face", async (req, res) => {
+  const id = String(req.query.id || "");
+  if (!/^[a-f0-9]{20}$/.test(id)) return res.status(404).end();
+  const board = await store.load(FILE);
+  const ok = board.people.some((q) => q.state === "published" && q.looking
+    && q.handle && q.photoState === "published" && q.photo === id);
+  if (!ok) return res.status(404).end();
+  const found = await findMedia(id);
+  if (!found) return res.status(404).end();
+  res.set("Content-Type", found.type);
+  res.set("X-Content-Type-Options", "nosniff");
+  res.set("Cache-Control", "public, max-age=86400, immutable");
+  res.sendFile(found.file);
+});
+
 app.get("/api/front", async (_req, res) => {
   const board = await store.load(FILE);
   res.set("Cache-Control", "no-store");
@@ -5190,10 +5232,17 @@ app.post("/api/wait", express.json({ limit: "4kb" }), async (req, res) => {
          refused arrival is not. */
       const why = String(req.body?.why || "").trim();
       const clean = why && !store.contactShaped(why) ? why : "";
+      /* The row this form just wrote, which may already carry a face and a
+         sentence from a door they filled in earlier. Same reasoning as the
+         migration: the board should show what somebody gave it. */
+      const w = board.waits.find((x) => x.by === me && !x.done) || {};
       board.people.push(store.cleanPerson({
         id: store.newId(), at: new Date().toISOString(), by: me,
         handle: name.slice(0, 40),
         goal: clean,
+        photo: w.photo || "", photoState: w.photoState || "",
+        ...(w.me && w.want ? { say: [{ me: w.me, want: w.want }] } : {}),
+        levelBand: w.levelBand || "", type: w.type || "",
         state: "published",
         looking: true,
         via: "door",
