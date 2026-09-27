@@ -1401,7 +1401,11 @@ export const STRINGS = {
   /* The last row under the name box on Messages, and the one that admits what
      an invite-only board is: the person you want is often not in it yet. */
   "wn.notHere":        ["Not on here yet?", "还不在这儿？"],
-  "wn.notHereSub":     ["Send them an invite", "发个邀请给他们"],
+  /* WHAT THE ROW DOES NOW, said plainly. It used to send somebody to the
+     board's own invite on another tab; it keeps the name typed above and puts
+     the cursor in the message box, so the next press invites them into this
+     conversation. See inviteRow in notes.html. */
+  "wn.notHereSub":     ["Invite them into this chat", "邀请他进这个对话"],
   "g.byMail":          ["Send me six digits by email", "用邮箱收六位数字"],
   "g.or":              ["or", "或者"],
   "g.ok":              ["Signed in. Everything is back.", "好了，都回来了。"],
@@ -3714,6 +3718,43 @@ export const STRINGS = {
     "{who} —\n\n{line}\n\nIt is invite only. Answer here and I will vouch for you:\n{url}",
     "{who}——\n\n{line}\n\n那边是邀请制。在这里回我一句，我帮你担保：\n{url}",
   ],
+
+  /* ---------------------------------------------------------------------
+     THE DOOR OF ONE CONVERSATION.
+     /join/chat/<room> opens the chat page with the room at the top of it and
+     six characters where the first message will be — see drawChatDoor in
+     notes.html. Named cd.* and not door.*, which is the board's own front
+     door: that one is about whether to join a board, this one about whether
+     to come into a conversation, and they are different questions.
+     THE VOICE IS A PERSON'S. "You have been invited" is a system talking.
+     Somebody wanted them in a chat, and that is what the line says.
+     --------------------------------------------------------------------- */
+  "cd.title":          ["A room", "一个群"],
+  "cd.lede":           ["Somebody here wants you in this chat.",
+                        "这边有人想拉你进这个对话。"],
+  "cd.ledeName":       ["{name} — somebody here wants you in this chat.",
+                        "{name}——这边有人想拉你进这个对话。"],
+  "cd.ledeFrom":       ["{who} wants you in this chat.",
+                        "{who} 想拉你进这个对话。"],
+  "cd.ledeBoth":       ["{name} — {who} wants you in this chat.",
+                        "{name}——{who} 想拉你进这个对话。"],
+  "cd.ask":            ["The six characters that came with the link",
+                        "跟链接一起发来的那六位口令"],
+  "cd.ph":             ["Code", "口令"],
+  "cd.go":             ["Come in", "进来"],
+  /* ONE FACT, NOT THREE. It said the code came with the link, that it is for
+     one person, and that it works once — two of which are reassurance, which
+     is the thing to leave out of a screen somebody is reading in a taxi. What
+     is left is the only one they need in order to act. */
+  "cd.note":           ["The code came with the link.",
+                        "口令跟链接一起发的。"],
+  "cd.trying":         ["Opening…", "正在打开…"],
+  /* DEAD IS DEAD AND IT SAYS SO ONCE. A room that never existed, one whose
+     last code is spent, and a mistyped address are the same answer on
+     purpose — telling them apart would be the page saying which rooms exist. */
+  "cd.goneHead":       ["This link is closed", "这个链接已经失效"],
+  "cd.goneBody":       ["Ask whoever sent it for a new one — it takes them a second.",
+                        "找发给你的人再要一个，他那边一秒钟的事。"],
 
 
   /* ---------------------------------------------------------------------

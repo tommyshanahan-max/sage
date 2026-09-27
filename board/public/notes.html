@@ -255,9 +255,14 @@
   .talk{flex:1;display:flex;flex-direction:column;justify-content:flex-end;
     gap:.55rem;padding:.2rem 0 .6rem}
   /* For what is a screen rather than a conversation — the people at this door,
-     behind ⋯. Bottom-aligned, a short list opened with half a screen of
-     nothing over it. */
-  .talk.top{justify-content:flex-start}
+     behind ⋯, and the door of a room. Bottom-aligned, a short list opened with
+     half a screen of nothing over it.
+     NOT .top, WHICH IS THE PAGE HEADER. It is a sticky three-column grid with
+     negative margins and a rule under it — so "talk top" turned the thread
+     pane into a header: display:grid laid the lines out side by side and every
+     screen using it came out in three columns. .talk.top only ever overrode
+     justify-content, which is why it read as correct. */
+  .talk.attop{justify-content:flex-start}
   .bub{max-width:82%;padding:.6rem .8rem;border-radius:1.05rem;font-size:.95rem;
     line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
   /* Theirs on the left in the raised surface, yours on the right in the accent.
@@ -267,6 +272,42 @@
   .bub.mine{align-self:flex-end;background:var(--accent);color:var(--accent-ink);
     border-bottom-right-radius:.35rem}
   .when{align-self:center;font-size:.7rem;color:var(--muted);margin:.4rem 0 .1rem}
+  /* THE DOOR OF A CONVERSATION — see drawChatDoor. A row of who is in it, one
+     field, one button. It sits where the first bubble would, which is the
+     whole idea of the screen, so it is centred in the thread rather than
+     docked anywhere. */
+  /* THE LINE THAT IS THE SCREEN. It was a .when — grey, small, centred, the
+     class this page uses for a timestamp — under a room name and above three
+     faces, which made the one sentence somebody is here to read the quietest
+     thing on the page. */
+  .cdlede{align-self:center;max-width:20rem;margin:1.1rem 0 .2rem;text-align:center;
+    font:400 1.28rem/1.3 var(--serif);color:var(--ink);text-wrap:balance}
+  .cdwho{align-self:center;display:flex;flex-wrap:wrap;justify-content:center;
+    gap:.55rem .9rem;margin:.5rem 0 .2rem;max-width:22rem}
+  .cdone{display:flex;align-items:center;gap:.4rem}
+  .cdone i{font-style:normal;font-size:.82rem;color:var(--ink)}
+  .cdoor{align-self:center;display:flex;gap:.5rem;width:100%;max-width:19rem;
+    margin:.9rem 0 .2rem}
+  /* SIX CHARACTERS AND THEY ARE THE POINT OF THE SCREEN, so they are set big,
+     spaced, and in the face the rest of the board uses for a code. A phone
+     keyboard has no caps lock and the field uppercases as it goes — see the
+     input handler. */
+  .cdoor input{flex:1;min-width:0;padding:.7rem .8rem;border:1px solid var(--line);
+    border-radius:.7rem;background:var(--paper);color:var(--ink);
+    font:600 1.15rem/1 var(--mono,ui-monospace,monospace);letter-spacing:.18em;
+    text-align:center;text-transform:uppercase}
+  .cdoor input:focus{outline:2px solid var(--accent);outline-offset:1px}
+  /* THE SPACING IS FOR SIX CHARACTERS BEING TYPED, NOT FOR THE WORD IN THE
+     BOX. "口令" came out as two characters with a gap between them, which in
+     Chinese reads as a typesetting accident rather than as a hint. */
+  .cdoor input::placeholder{letter-spacing:normal;font-weight:400}
+  .cdoor button{flex:0 0 auto;padding:.7rem 1rem;border:1px solid var(--accent);
+    border-radius:.7rem;background:var(--accent);color:var(--accent-ink);
+    font-size:.92rem;font-weight:600}
+  .cdoor button:disabled{opacity:.45}
+  .cdsaid{align-self:center;max-width:22rem;text-align:center;font-size:.78rem;
+    color:var(--muted);margin:.1rem 0 0}
+  .cdsaid.bad{color:var(--warn,#c0392b)}
   /* A ROOM IS NOT A THREAD, AND WAS DRAWN LIKE ONE.
    *
    * In a two-person thread the left-hand bubble can only be one person, so a
@@ -1247,6 +1288,18 @@ async function load() {
     paint();
     return;
   }
+  /* AND SOMEBODY STANDING OUTSIDE A ROOM, for the same reason: they are
+     nobody to this server until they spend the code, so /api/notes would be a
+     403 before the screen had drawn. /api/chat-door answers about the room and
+     about nothing else — see the note over it in server.js. */
+  if (CHATROOM) {
+    try {
+      CHATDOOR = await fetch("/api/chat-door/" + encodeURIComponent(CHATROOM),
+        { cache: "no-store" }).then((r) => (r.ok ? r.json() : { gone: true }));
+    } catch { CHATDOOR = { gone: true }; }
+    paint();
+    return;
+  }
   try {
     const d = await fetch("/api/notes", { cache: "no-store",
       headers: device ? { "x-board-device": device } : {} }).then((r) => r.json());
@@ -1328,10 +1381,34 @@ const openWho = () => (location.hash || "").replace(/^#/, "");
  * no form, and the name is the one the member wrote on the note — they knew
  * who they were writing to.
  */
+/* ---- AND THE ADDRESS THAT SAYS WHAT IT IS ---------------------------------
+ *
+ * /join/chat/<key> is the one shape a conversation invite goes out as, and
+ * there are two things a conversation can be. What follows decides which:
+ *
+ *   six characters   a note written to one person. Identical to /w/<code>
+ *                    above, which keeps working — a link pasted into WeChat
+ *                    last week is somebody deciding to come in.
+ *   twenty hex       a room. The code travels beside the link, as it does for
+ *                    every invite on this board, and drawChatDoor asks for it.
+ *
+ * "its shared as join. i dont want it to be join", and then the shape he
+ * wanted, written out: thexchange.app/join/chat/<room>. An address is the
+ * first thing anybody reads of an invitation and this one says the two things
+ * worth saying — you are being let in, and it is a chat.
+ */
+const CHATKEY = /^\/join\/chat\//.test(location.pathname)
+  ? decodeURIComponent(location.pathname.split("/").filter(Boolean)[2] || "")
+  : "";
 const INVITED = /^\/w\//.test(location.pathname)
   ? decodeURIComponent(location.pathname.split("/").filter(Boolean)[1] || "").toUpperCase()
-  : "";
+  : (CHATKEY.length === 6 ? CHATKEY.toUpperCase() : "");
+/* A ROOM'S ID, and only if it looks like one. Twenty hex characters, so a
+   typed-over address is a 404 on this page rather than a request. */
+const CHATROOM = /^[a-f0-9]{20}$/.test(CHATKEY) ? CHATKEY : "";
 let NOTE = null;
+/* NOT `DOOR`, which is already the waiting room on this page — see above. */
+let CHATDOOR = null;
 
 /** The flat list of messages, grouped into one entry per person. The server
  *  sends messages because that is what they are; a messenger shows people. */
@@ -1408,6 +1485,7 @@ function paint() {
   $("tunvet").hidden = true;
   homeLang();
   if (INVITED) return drawInvited();
+  if (CHATROOM) return drawChatDoor();
   const T0 = threads();
   /* A CONVERSATION THAT HAS NOT HAPPENED YET IS STILL A CONVERSATION.
      Tapping a face in the strip opens this screen with nothing in it and the
@@ -1887,6 +1965,197 @@ function drawInvited() {
 /** The bar, for somebody who has not answered yet. All four, because the
  *  point of arriving here is seeing what this is — and three of them lead to
  *  the door, which is what there is for them until somebody vouches. */
+/* THE DOOR OF ONE CONVERSATION, DRAWN ON THE CHAT PAGE ITSELF.
+ *
+ * "i want the links to open on the chat page. the invite links from the chat."
+ * So this is not a page about the board with a form on it — it is the
+ * messenger, with the room they are being let into at the top of it, and six
+ * characters where the first message will be. The same decision as /w/<code>
+ * one screen up, and for the same reason: what somebody should get when a
+ * friend invites them into a conversation is the conversation.
+ *
+ * WHAT IS ON IT, in the order it is read: whose chat, who is in it, one line
+ * saying who let them in, the box, the clock. Nothing else — see the note in
+ * CLAUDE.md about a screen getting four seconds and one glance.
+ *
+ * THE CODE IS NOT IN THE LINK and this screen is the whole of why that rule
+ * survives the new address. A link forwarded by accident lands here and stops.
+ */
+function drawChatDoor() {
+  $("listview").hidden = true;
+  $("listtop").hidden = true;
+  $("threadview").hidden = false;
+  $("tnew").hidden = true;
+  $("tmore").hidden = true;
+  $("tmenu").hidden = true;
+  $("tpin").hidden = true;
+  $("tleft").hidden = true;
+  $("back").hidden = true;          // there is nothing behind this
+  $("twho").hidden = false;
+  $("twho").href = "#";
+  $("twrite").hidden = true;
+  micShow();
+  $("tshut").hidden = true;
+
+  const talk = $("talk");
+  fill(talk);
+  /* TOP OF THE SCREEN. .talk is a conversation and a conversation grows from
+     the bottom — which put the whole door in the bottom third with a screen of
+     nothing over it. This is a screen, not a thread, and .talk.top is the
+     class this page already has for that. */
+  talk.className = "talk attop";
+
+  if (!CHATDOOR || CHATDOOR.gone) {
+    /* DEAD IS DEAD, AND IT SAYS SO ONCE. There is nothing here to tell apart —
+       a room that never existed, one whose last code has been spent, and a
+       mistyped address are the same 404 on purpose, because answering them
+       differently would be this page telling a stranger which rooms exist. */
+    /* BOTH LINES IN THE THREAD, IN THE ORDER THEY ARE READ. The headline was
+       in #tshut, which is the strip where the composer would be — so the one
+       sentence that says what happened sat at the bottom of the screen under
+       a screen of nothing, with its own small print above it. */
+    $("twhoname").textContent = T("cd.title");
+    $("twhosub").textContent = "";
+    talk.append(el("p", "cdlede", T("cd.goneHead")));
+    talk.append(el("p", "when", T("cd.goneBody")));
+    drawInvitedTabs();
+    return;
+  }
+
+  const who = Array.isArray(CHATDOOR.who) ? CHATDOOR.who : [];
+  $("twhoname").textContent = CHATDOOR.name || T("cd.title");
+  $("twhosub").textContent = who.length === 1 ? T("grp.inIt1")
+    : T("grp.inIt", { n: who.length });
+
+  /* WHO LET THEM IN, AND WHAT THEY WERE CALLED. Both are plain text in the
+     address, typed by whoever made the link, and neither is a claim about
+     anybody — the six characters remain the only thing that opens anything.
+     Same shape and same reasoning as nameFrom in enter.html. */
+  const nameFrom = (k) => {
+    try {
+      return (new URLSearchParams(location.search).get(k) || "")
+        .replace(/[<>&"'\\]/g, "").trim().slice(0, 24);
+    } catch { return ""; }
+  };
+  const FOR = nameFrom("for");
+  const FROM = nameFrom("from");
+  talk.append(el("p", "cdlede", FROM
+    ? T(FOR ? "cd.ledeBoth" : "cd.ledeFrom", { name: FOR, who: FROM })
+    : T(FOR ? "cd.ledeName" : "cd.lede", { name: FOR })));
+
+  /* THE FACES, AS INITIALS. The door is outside /api/public-media on purpose —
+     see the note over /api/chat-door — so there is no photograph to draw here,
+     and a coloured initial is what this app already shows whenever there is
+     none. */
+  if (who.length) {
+    const row = el("div", "cdwho");
+    for (const h of who.slice(0, 6)) {
+      const one = el("span", "cdone");
+      const av = el("span", "av small", initial(h));
+      av.style.background = wash(h);
+      one.append(av, el("i", null, h));
+      row.append(one);
+    }
+    talk.append(row);
+  }
+
+  const box = el("div", "cdoor");
+  const fld = document.createElement("input");
+  fld.id = "cdcode";
+  fld.maxLength = 6;
+  fld.autocomplete = "off";
+  fld.autocapitalize = "characters";
+  fld.spellcheck = false;
+  fld.setAttribute("aria-label", T("cd.ask"));
+  fld.placeholder = T("cd.ph");
+  const go = el("button", "primary", T("cd.go"));
+  go.type = "button";
+  go.disabled = true;
+  const said = el("p", "cdsaid");
+  said.hidden = true;
+  /* UPPERCASE AS IT IS TYPED, because the codes are and a phone's keyboard is
+     not. Six characters is the whole of the form, so the button turns on at
+     six rather than making anybody guess whether it is ready. */
+  fld.addEventListener("input", () => {
+    fld.value = fld.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
+    go.disabled = fld.value.length !== 6;
+    said.hidden = true;
+  });
+  fld.addEventListener("keydown", (e) => { if (e.key === "Enter" && !go.disabled) go.click(); });
+  go.addEventListener("click", () => { chatDoorGo(fld, go, said); });
+  box.append(fld, go);
+  talk.append(box, said);
+  talk.append(el("p", "when", T("cd.note")));
+
+  /* THE CLOCK, off the deadline in the link — see the long note in enter.html
+     on why it is in the address and why it is not authority. It counts down so
+     "good for 48 hours" is true without anybody remembering to make it true. */
+  const clock = el("p", "when cdclock");
+  talk.append(clock);
+  const until = (() => {
+    const n = Number(new URLSearchParams(location.search).get("t"));
+    return Number.isFinite(n) && n > 0 ? n * 1000 : 0;
+  })();
+  const tick = () => {
+    if (!until) { clock.hidden = true; return; }
+    const left = until - Date.now();
+    if (left <= 0) { clock.textContent = T("door.clockGone"); return; }
+    const sec = Math.floor(left / 1000);
+    const two = (n) => String(n).padStart(2, "0");
+    clock.textContent = T("door.clockLab") + " "
+      + two(Math.floor(sec / 3600)) + ":" + two(Math.floor(sec / 60) % 60)
+      + ":" + two(sec % 60);
+  };
+  tick();
+  if (until) {
+    clearInterval(drawChatDoor.timer);
+    drawChatDoor.timer = setInterval(tick, 1000);
+  }
+
+  drawInvitedTabs();
+  fld.focus();
+}
+
+/** Spending it. The same /api/enter every code on this board goes through —
+ *  there is no second door and there must not be one, because a ceiling with
+ *  two doors is not a ceiling. What is new is only where it puts somebody
+ *  down: the server answers with `where`, which for a room invite is that
+ *  room. */
+async function chatDoorGo(fld, go, said) {
+  const code = fld.value.trim().toUpperCase();
+  if (code.length !== 6) return;
+  go.disabled = true;
+  said.hidden = false;
+  said.className = "cdsaid";
+  said.textContent = T("cd.trying");
+  let d = null;
+  let status = 0;
+  try {
+    const r = await fetch("/api/enter", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ device, code }),
+    });
+    status = r.status;
+    d = await r.json().catch(() => null);
+  } catch { d = null; }
+  if (d && d.ok) {
+    /* STRAIGHT IN, and nothing is said first. A "you are in" screen with a
+       button on it is a screen between somebody and the conversation they were
+       invited to, which is the one thing this whole path exists to remove. */
+    location.assign(d.where || ("/groups?g=" + encodeURIComponent(CHATROOM)));
+    return;
+  }
+  go.disabled = fld.value.length !== 6;
+  said.className = "cdsaid bad";
+  const n = Number(d && d.left) || 0;
+  said.textContent = !d ? T("door.offline")
+    : d.error === "used" ? T("door.used")
+    : d.error === "over" ? T("door.over")
+    : d.error === "slow-down" || status === 429 ? T("door.slow")
+    : T("door.wrong", { n });
+  fld.select();
+}
+
 function drawInvitedTabs() {
   $("tabnotes").textContent = T("note.inbox");
   $("tabcards").textContent = T("nav.cards");
@@ -2074,11 +2343,26 @@ function inviteRow() {
   const imid = el("div", "fm");
   imid.append(el("b", null, T("wn.notHere")), el("span", null, T("wn.notHereSub")));
   inv.append(iav, imid);
-  /* /browse AND NOT "/", which is the sales page for a cold address — the
-     board itself is served at /feed, /browse and /cards, and Browse is the one
-     the tab bar points at. Sending a member to the landing page to fetch an
-     invite is sending them out of the product. */
-  inv.addEventListener("click", () => { location.assign("/browse?invite=1"); });
+  /* AND IT STAYS ON THIS SCREEN NOW.
+   *
+   * It used to go to /browse?invite=1 — the board's own invite, on another tab
+   * — and that was the right answer while the only invite was a way on to the
+   * board. "i wanted it to add somoene drectlty into the chat messenger with
+   * me": the thing being asked for here is a conversation with the person
+   * typing, not a seat on the board, and the composer that makes exactly that
+   * is already open behind this row. The name typed above is kept; all this
+   * does is close the list and put the cursor in the message box, so the next
+   * press sends it.
+   */
+  inv.addEventListener("click", () => {
+    $("tfind").hidden = true;
+    fill($("tfind"));
+    /* WHICHEVER BOX IS STILL EMPTY. The row is on screen from the moment ＋ is
+       pressed — see findPeople — so it is tapped with no name typed as often as
+       with one, and focusing the message box then is a press that leads to a
+       send that refuses. */
+    ($("tnewname").value.trim() ? $("tbox") : $("tnewname")).focus();
+  });
   return inv;
 }
 
@@ -2173,7 +2457,10 @@ async function sendNew() {
     return say(T(known[d && d.error] || "act.again", { what: (d && d.what) || "" }), true);
   }
   MADE = { words: T("wn.mkBlock", { who: d.to, line,
-    url: location.origin + "/w/" + d.code }) };
+    /* THE ADDRESS SAYS WHAT IS ON THE END OF IT — see the note over CHATKEY.
+       /w/<code> still opens this same screen and always will; what goes out
+       from today says chat in it. */
+    url: location.origin + "/join/chat/" + d.code }) };
   $("tbox").value = "";
   $("tbox").style.height = "auto";
   $("tsaid").hidden = true;
@@ -2793,10 +3080,10 @@ async function drawDoor(key) {
   act.onclick = () => { DOORINFO = DOORINFO === key ? "" : key; drawDoor(key); };
 
   fill(talk);
-  talk.classList.remove("top");
+  talk.classList.remove("attop");
   if (DOORINFO === key) {
     act.hidden = true;                 // back is the way out, as in groups.html
-    talk.classList.add("top");
+    talk.classList.add("attop");
     // Not the room, so not the room's pin. See hideLedgerPin.
     pin().then((m) => m && m.hideLedgerPin($("tpin")));
     talk.append(doorPeople(key));

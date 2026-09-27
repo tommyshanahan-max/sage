@@ -2875,12 +2875,28 @@ function addScreen(g) {
 /* THE LINK NEVER CARRIES THE CODE. Same rule as the header's invite and the
    same reason: a forwarded link would otherwise be a way in.
    THE NAME IN IT IS OPTIONAL, and `nm` is "" when nobody typed one. */
+/* AND THE ADDRESS NOW SAYS WHICH CHAT.
+ *
+ * It was /enter?for=... — the board's front door, which is where this used to
+ * put people down and is not where this invite goes. "i want the links to open
+ * on the chat page", and the shape he wrote out: /join/chat/<room>. The room's
+ * id is a label on an invitation and not a way in — /api/chat-door answers for
+ * it only while a live code exists, and the six characters beside the link
+ * remain the only thing that opens anything. See the notes over CHATKEY in
+ * notes.html and over /api/chat-door in server.js.
+ *
+ * A room id is required for the new shape and the fallback is deliberate
+ * rather than defensive: a code minted against a room that this page somehow
+ * has no id for still has to be sendable, and /enter takes it.
+ */
 function enterUrl(nm, d) {
   const q = [];
   if (nm) q.push("for=" + encodeURIComponent(nm));
   q.push("from=" + encodeURIComponent(d.from || ""));
   if (d.until) q.push("t=" + Math.round(Date.parse(d.until) / 1000));
-  return location.origin + "/enter?" + q.join("&");
+  const room = /^[a-f0-9]{20}$/.test(String(d.group || "")) ? d.group : "";
+  return location.origin + (room ? "/join/chat/" + room : "/enter")
+    + "?" + q.join("&");
 }
 
 /** The message that travels beside the link. The same words either way; the

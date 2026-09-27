@@ -686,7 +686,7 @@ const ROOT_IS_BOARD = process.env.BOARD_AT_ROOT === "1";
    the button was never on the screen. The POST to /china/api/connect came
    back as door.html too, and an HTML page from a JSON fetch fails silently.
    `china` and not `china\/`: /china itself is the fork. */
-const OPEN_PATHS = /^\/(china|enter|auth\/google|i\/|w\/|r\/|s\/|d\/|pay\/|demo(?:\.png)?$|api\/demo\/ask$|sell$|api\/sell$|dealio|europay-[a-z]+\.html|api\/pay\/onboard$|api\/dealio\/try\/qr$|shop\/|order\/|orders$|api\/shop\/|api\/shop-media$|api\/order\/|api\/orders$|api\/product\/|api\/memo\/|api\/request(?:s|\/|$)|api\/say\/|api\/snap|api\/door$|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.(?:html|pdf)|g\/|share-exchange\.png|share-square\.png|about|rules|terms|privacy|rewards|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/wake|api\/front(?:-face)?|api\/offer|api\/wait|api\/butler$|api\/ep\/ask$|api\/butler-voice$|api\/butler-hear$|api\/write\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
+const OPEN_PATHS = /^\/(china|enter|auth\/google|i\/|w\/|r\/|s\/|d\/|pay\/|demo(?:\.png)?$|api\/demo\/ask$|sell$|api\/sell$|dealio|europay-[a-z]+\.html|api\/pay\/onboard$|api\/dealio\/try\/qr$|shop\/|order\/|orders$|api\/shop\/|api\/shop-media$|api\/order\/|api\/orders$|api\/product\/|api\/memo\/|api\/request(?:s|\/|$)|api\/say\/|api\/snap|api\/door$|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.(?:html|pdf)|g\/|share-exchange\.png|share-square\.png|about|rules|terms|privacy|rewards|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/wake|api\/front(?:-face)?|api\/offer|api\/wait|api\/butler$|api\/ep\/ask$|api\/butler-voice$|api\/butler-hear$|api\/write\/|api\/chat-door\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
 
 /* ---- BEING SOMEBODY YOU SPEAK FOR ----------------------------------------
  *
@@ -1943,6 +1943,72 @@ app.get(["/o", "/o/", "/o/:code"], (req, res, next) => page("offer.html", req, r
  * for an inbox until they have answered and have one. */
 app.get(["/w/:code"], (req, res, next) => page("notes.html", req, res, next));
 
+/* AN INVITE TO A CONVERSATION, AND THE ADDRESS SAYS WHICH.
+ *
+ * The link a member shares out of Chat was /w/<code> for one person and
+ * /enter?for=... for a room — two shapes, neither of which says what is on the
+ * other end of it. "its shared as join. i dont want it to be join", and then
+ * the shape he wanted, written out: thexchange.app/join/chat/<room>. An
+ * address is the first thing anybody reads of an invitation, and this one now
+ * says the two things worth saying — you are being let in, and it is a chat.
+ *
+ * ONE SHAPE, TWO TARGETS, because there is no third thing a conversation can
+ * be. What follows /join/chat/ decides which:
+ *
+ *   six characters   a note written to one person — the same code /w/ takes,
+ *                    and the line they were written is the first bubble.
+ *   twenty hex       a room. The code travels beside the link, as it does for
+ *                    every invite on this board, and the page asks for it.
+ *
+ * /w/<code> and /enter?for=... both keep working and always will: a link
+ * pasted into WeChat last week is somebody deciding to come in, and breaking
+ * it to tidy up an address would be the most expensive kind of tidying.
+ *
+ * Outside the door, like /w/ and /enter — the whole point is that it opens for
+ * a person this board has never heard of. OPEN_PATHS already lets /join past
+ * as a prefix, which is why there is nothing to add there.
+ */
+app.get(["/join/chat/:key"], (req, res, next) => page("notes.html", req, res, next));
+
+/* WHAT ROOM THE LINK IS FOR, TO WHOEVER IS STANDING OUTSIDE IT.
+ *
+ * Read by the door above, before anybody has a code or a name. It answers the
+ * one question that decides whether a person types six characters into a phone
+ * in a taxi: whose conversation is this. So: the room's name and the handles
+ * of the people in it.
+ *
+ * NOT A WORD ANYBODY SAID IN IT. The link is in a chat window and a chat
+ * window is a public place; what is inside the room stays inside until they
+ * are in it. A room's name was written to be read by the people being invited
+ * into it, and a handle is what somebody chose to be called.
+ *
+ * AND NOT THE FACES. /api/public-media is behind the door on purpose — the
+ * long note over OPEN_PATHS says why — so a face on this page would mean a
+ * third open media route, and every one of those is a member's photograph
+ * fetchable by anybody holding an id. The door shows initials, which is what
+ * the rest of this app shows whenever there is no picture.
+ *
+ * A ROOM WITH NO LIVE CODE ANSWERS NOTHING, which is what makes the id in the
+ * address safe to have in a chat window: it is a label on an invitation, not a
+ * way to enumerate the board's rooms. Somebody pasting twenty hex characters
+ * they guessed gets the same 404 as somebody pasting nonsense.
+ */
+app.get("/api/chat-door/:id", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const id = String(req.params.id || "");
+  if (!/^[a-f0-9]{20}$/.test(id)) return res.status(404).json({ error: "no" });
+  const board = await store.load(FILE);
+  const g = board.groups.find((x) => x.id === id);
+  if (!g) return res.status(404).json({ error: "no" });
+  const live = board.invites.some((v) => v.grp === id && !v.off && !v.usedBy
+    && !store.inviteOver(v));
+  if (!live) return res.status(404).json({ error: "no" });
+  const who = (g.members || []).map((h) => board.people.find((q) => q.by === h))
+    .filter((q) => q && q.handle && q.state === "published")
+    .map((q) => q.handle);
+  res.json({ kind: "room", name: g.name || "", who, n: who.length });
+});
+
 app.get(["/enter", "/enter/", "/i/:code"], (req, res, next) =>
   page("enter.html", req, res, next));
 
@@ -1959,6 +2025,32 @@ setInterval(() => {
   for (const [k, v] of tries) if (v.at < hour) tries.delete(k);
 }, 600_000).unref?.();
 
+/** PUTTING SOMEBODY INTO THE ROOM A CODE WAS FOR.
+ *
+ * Its own function because /api/enter reaches this from two directions now —
+ * somebody arriving for the first time, and a member who is already through
+ * the door being invited into a conversation — and a rule written twice is a
+ * rule that will one day disagree with itself.
+ *
+ * THE ROOM MAY HAVE FILLED UP while the code sat in a chat window. The code
+ * still worked and they are still in; being turned away at this point over
+ * somebody else's timing would be the worst version of this. Minting checks
+ * the cap, this is the race, and false here means the room is simply not
+ * mentioned.
+ */
+async function intoRoom(me, grp) {
+  return change((board) => {
+    const g = board.groups.find((x) => x.id === grp);
+    if (!g) return false;
+    // Already in it, which is not a failure: the answer is still that room.
+    if (g.members.includes(me) || (g.guests || []).includes(me)) return true;
+    if (store.groupRoom(g) < 1) return false;
+    g.guests = [...(g.guests || []), me];
+    Object.assign(g, store.cleanGroup(g));
+    return true;
+  });
+}
+
 app.post("/api/enter", express.json({ limit: "8kb" }), async (req, res) => {
   const me = hashDevice(String(req.body?.device || ""), SALT);
   if (!me) return res.status(400).json({ error: "no device" });
@@ -1970,6 +2062,47 @@ app.post("/api/enter", express.json({ limit: "8kb" }), async (req, res) => {
     // somebody who pasted their key. Give it to them now, or "read" mode
     // would keep turning away a person it has already let in.
     setCookie(res, me);
+    /* AND A MEMBER INVITED INTO A CONVERSATION IS STILL BEING INVITED.
+     *
+     * This answered {already:true} and stopped, which was right while every
+     * code was a way on to the board: somebody already on it has nothing left
+     * to spend one for. A chat invite is not that — it is a seat in one room,
+     * and the person most likely to be handed one is somebody already here.
+     * They typed the six characters, watched the door say "you are already in",
+     * and were left exactly where they started, with no way into the room the
+     * link was for.
+     *
+     * So the code is spent and they are put in it, on the same terms as
+     * anybody else. Only a room code does anything here; every other kind is
+     * still nothing to somebody who is in.
+     */
+    const want = store.cleanCode(req.body?.code);
+    if (want) {
+      /* FIVE AN HOUR HERE TOO, and this is the whole reason the counter is
+         read before the code is looked up rather than after the refusal.
+         Everything below this block is behind it; this branch is not, because
+         it returns first — so without these lines a member already through the
+         door could walk the alphabet at a room's code as fast as their phone
+         could ask, and a guessed code is a seat in somebody's conversation.
+         Thirty characters to the power of six against five tries an hour is
+         the same hopeless sum the front door runs on. */
+      const t2 = tries.get(me) || { n: 0, at: Date.now() };
+      if (t2.at < Date.now() - 3600_000) { t2.n = 0; t2.at = Date.now(); }
+      if (t2.n >= 5) return res.status(429).json({ error: "slow-down", left: 0 });
+      const roomFor = await change((board) => {
+        const v = board.invites.find((x) => x.code === want);
+        if (!v || v.off || !v.grp || v.usedBy || store.inviteOver(v)) return null;
+        v.usedBy = me;
+        v.usedAt = new Date().toISOString();
+        return { grp: v.grp, who: v.who || "" };
+      });
+      if (roomFor && await intoRoom(me, roomFor.grp)) {
+        tries.delete(me);
+        return res.json({ ok: true, already: true, by: roomFor.who,
+          where: "/groups?g=" + roomFor.grp });
+      }
+      t2.n += 1; t2.at = Date.now(); tries.set(me, t2);
+    }
     return res.json({ ok: true, already: true });
   }
 
@@ -2157,19 +2290,11 @@ app.post("/api/enter", express.json({ limit: "8kb" }), async (req, res) => {
      * and the composer asks for a name and a sentence. See `guests` on
      * cleanGroup.
      *
-     * THE ROOM MAY HAVE FILLED UP while the code sat in a chat window. The
-     * code still worked and they are still in — being turned away at this
-     * point over somebody else's timing would be the worst version of this —
-     * so they land on Browse like anybody else and the room is simply not
-     * mentioned. Minting checks the cap; this is the race, not the rule. */
+     * The cap, and the race against it, are in intoRoom — read the note there.
+     * False means they land on Browse like anybody else and the room is simply
+     * not mentioned. */
     if (got && got.grp) {
-      const landed = await change((board) => {
-        const g = board.groups.find((x) => x.id === got.grp);
-        if (!g || g.members.includes(me) || store.groupRoom(g) < 1) return false;
-        g.guests = [...(g.guests || []), me];
-        Object.assign(g, store.cleanGroup(g));
-        return true;
-      });
+      const landed = await intoRoom(me, got.grp);
       if (landed) {
         return res.json({ ok: true, by: got.who || "", where: "/groups?g=" + got.grp });
       }
