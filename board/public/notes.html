@@ -3460,13 +3460,25 @@ async function getLink() {
   if (LINK || LINKING) return;
   LINKING = true;
   try {
-    const d = await fetch("/api/write", {
+    /* THE STATUS IS READ BEFORE THE BODY, and that is the point of doing it
+       in two steps. `.then((r) => r.json())` throws on a body that is not
+       JSON, and that throw is indistinguishable from the phone being offline
+       — so a board that answered 500 with an error page said "check the
+       signal" at somebody with four bars. Now the three are three:
+         the fetch threw        nothing answered
+         the body is not JSON   something answered, and here is its number
+         the body is JSON       the board has an opinion, below */
+    const r = await fetch("/api/write", {
       method: "POST", headers: { "Content-Type": "application/json" },
       /* No name and no line. Both are optional now and this path sends
          neither — see the note over /api/write. */
       body: JSON.stringify({ device }),
-    }).then((r) => r.json());
-    if (d && d.ok) {
+    });
+    let d = null;
+    try { d = await r.json(); } catch { d = null; }
+    if (!d) {
+      LINK = { why: T("wn.linkFailed") + " (" + r.status + ")" };
+    } else if (d.ok) {
       LINK = { code: d.code, till: d.till };
     } else if (d && d.error === "standing" && Array.isArray(d.need) && d.need.length) {
       /* WHICH ONE IS MISSING, not "your profile page says what is left" —
@@ -3498,19 +3510,26 @@ async function getLink() {
         contact:  "wn.mkNoContact",
         bad:      "wn.linkFailed",
         again:    "wn.linkFailed",
+        // The board threw — see the error handler at the foot of server.js.
+        broke:    "wn.linkBroke",
       };
       const key = known[d && d.error];
       LINK = { why: key ? T(key)
         : T("wn.linkFailed") + " (" + ((d && d.error) || "?") + ")" };
     }
   } catch (err) {
-    /* A THROW IS NOT A REFUSAL. The board said nothing readable at all —
-       offline, or an error page where JSON was expected — and that is a
-       different thing from being told no. */
+    /* NOTHING ANSWERED. Only a real network failure reaches here now — the
+       body not being JSON is handled above, with its status — so this is the
+       one case where "check the signal" is the true sentence. */
     LINK = { why: T("wn.linkOffline") };
+  } finally {
+    /* IN A finally, because every branch above sets LINK and any one of them
+       could grow a `return` later. Without it the screen keeps the "Making a
+       link…" line for ever and the next open does nothing, because LINKING is
+       still true. */
+    LINKING = false;
+    if (openWho() === "new") drawWriteNew();
   }
-  LINKING = false;
-  if (openWho() === "new") drawWriteNew();
 }
 
 function drawWriteNew() {

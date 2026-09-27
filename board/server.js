@@ -20536,6 +20536,30 @@ await mkdir(DIR, { recursive: true });
   }
 }
 
+/* WHEN A ROUTE THROWS, SAY SO IN JSON AND WRITE IT DOWN.
+ *
+ * Express has no error handler here, so anything a route throws became its
+ * default HTML page — a stack trace in a <pre>, with a 500. Every screen in
+ * this app reads its answers with r.json(), which then throws in its own
+ * turn, and the page says whatever it says for "no answer at all". That is
+ * how a real crash came out as "No answer from the board. Check the signal",
+ * on a phone with four bars, with the stack sitting in a log nobody had a
+ * reason to open.
+ *
+ * Two lines, and the two of them are the whole of it: the stack goes to the
+ * log where it can be read, and the browser gets JSON with a 500 so the
+ * screen can tell a crash from a refusal and from being offline.
+ *
+ * LAST, after every route. An error handler is the four-argument middleware
+ * and it only catches what is registered above it.
+ */
+app.use((err, req, res, next) => {
+  console.error("route threw on " + req.method + " " + req.path + ":",
+    err && err.stack ? err.stack : err);
+  if (res.headersSent) return next(err);
+  res.status(500).json({ error: "broke" });
+});
+
 app.listen(PORT, () => {
   console.log(`board on :${PORT}, data in ${DIR}`);
   /* Made here rather than on the first form, so two people filling one in at

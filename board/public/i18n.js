@@ -3936,6 +3936,12 @@ export const STRINGS = {
                         "\u677f\u5b50\u8ba4\u4e0d\u51fa\u8fd9\u90e8\u624b\u673a\u3002\u5148\u56de\u804a\u5929\u518d\u8fc7\u6765\u3002"],
   "wn.linkFailed":     ["The board could not make a link just now.",
                         "\u73b0\u5728\u751f\u6210\u4e0d\u4e86\u94fe\u63a5\u3002"],
+  /* THE BOARD FELL OVER, which is not the same as the board saying no and
+     not the same as the phone being offline — see the error handler at the
+     foot of server.js. It is worth its own sentence because it is the only
+     one of the three that is nobody's fault but mine. */
+  "wn.linkBroke":      ["Something went wrong on the board. It has been written down.",
+                        "\u677f\u5b50\u90a3\u8fb9\u51fa\u4e86\u70b9\u95ee\u9898\uff0c\u5df2\u7ecf\u8bb0\u4e0b\u6765\u4e86\u3002"],
   "wn.linkOffline":    ["No answer from the board. Check the signal and try again.",
                         "\u677f\u5b50\u6ca1\u6709\u56de\u5e94\u3002\u770b\u770b\u4fe1\u53f7\uff0c\u518d\u8bd5\u4e00\u6b21\u3002"],
   "wn.yourReply":      ["Your answer", "你的回复"],

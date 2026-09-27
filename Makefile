@@ -9,7 +9,7 @@ COMPOSE := docker compose
 # without this line `make board` finds a file by that name, decides it is
 # already up to date, and exits saying so — a deploy command that prints a
 # reassuring sentence and deploys nothing.
-.PHONY: board board-build mailout up-safe can-invite stripe-who call-check can-call
+.PHONY: board board-build mailout up-safe can-invite stripe-who call-check can-call board-log
 .PHONY: version faces cards traffic tier-two try try-china china wallets mo-code visits app-state claire-episodes deal claire-key claire-count claire-seed claire-video listing invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who bells twice admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions whitelabel blocked partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check post post-status post-run post-login post-code post-logins weidian-pull weidian-json weidian-reviews shop-chapter review-tidy product-names review-move
 
 help: ## Show this help
@@ -2711,6 +2711,14 @@ pay-why: ## What a payer's phone actually saw when a pay button failed: make pay
 	  echo "  A failure from before that went with the old container."; \
 	  echo ""; \
 	fi
+
+board-log: ## The last of the board's own log, and it does not follow:  make board-log [N=120]
+	@# `make logs` is `logs -f`, which is right for watching a deploy and wrong
+	@# for answering a question — it hangs the terminal and somebody has to
+	@# know to press Ctrl-C. This prints and stops. One service, because the
+	@# question is always about the board and six services interleaved is a
+	@# wall.
+	$(COMPOSE) logs --no-log-prefix --tail=$(or $(N),120) board
 
 logs: ## Tail logs from all services
 	$(COMPOSE) logs -f --tail=100
