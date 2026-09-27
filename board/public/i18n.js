@@ -2532,9 +2532,14 @@ export const STRINGS = {
      six digits and new phones to somebody who had not agreed to care yet.
      What they need before typing an address into anything is where it goes,
      and the answer is nowhere. */
+  /* "NOT ON YOUR PAGE" COMES FIRST, and that is not belt and braces. In the
+     profile form this box sits three lines under "No phone, no WeChat, no
+     email" — which is about what a profile shows, and is still true — and an
+     email box directly beneath it reads as the app contradicting itself
+     within one screen. Naming the difference is the whole fix. */
   "mail.body": [
-    "Nobody on the board ever sees it.",
-    "板上没有人看得到这个地址。",
+    "Not on your page. Nobody on the board ever sees it.",
+    "不会出现在你的主页上，板上也没有人看得到。",
   ],
   /* AND EVERYTHING ELSE IT IS FOR, QUIETLY, UNDER THE BOX.
      This line exists because of the letter to everybody — see
@@ -2548,6 +2553,10 @@ export const STRINGS = {
     "换手机也靠它回来——六位数字，就这么简单。偶尔我们会写信告诉你板上来了什么人，不想收点一下就行。",
   ],
   "mail.ph":           ["your@email", "你的邮箱"],
+  /* THE LABEL IN THE PROFILE FORM. The reason lives under the box — see
+     mail.body and mail.also, which the form and the sheet both use so there
+     is one account of what an address is for. */
+  "me.mailLab":        ["Email", "邮箱"],
   /* The waiting room's version of the same question. Written for somebody who
      has not been let in yet: what they stand to lose is a place in a queue,
      not a page. See the note beside it in room.html — the box is write-only,

@@ -38,6 +38,10 @@ deploy: ## Fetch the latest commits, then build and start everything
 # `make version`. Computed once here so `up` and `deploy` cannot disagree,
 # and empty outside a checkout rather than failing the build.
 export BUILT := $(shell git rev-parse --short HEAD 2>/dev/null || echo unknown)
+# THE BRANCH THIS BOX FOLLOWS. `make board` fetches and resets to it, so the
+# deploy is one word instead of a line with a branch name in it that has to be
+# typed correctly every time. Override it for one run: make board BRANCH=other
+BRANCH ?= claude/coding-platform-vpn-alternative-i06xoc
 
 up: ## Build if needed and start everything (does NOT fetch — see 'deploy')
 	test -f .env || { echo "no .env — run: cp .env.example .env && \$$EDITOR .env"; exit 1; }
@@ -2550,6 +2554,33 @@ fix-browser: ## Restart the browser after a black screen
 
 reload: ## Reload Caddy config without dropping connections
 	$(COMPOSE) exec caddy caddy reload --config /etc/caddy/Caddyfile
+
+board: ## Deploy the board and nothing else: make board
+	@# SIX DEPLOYS IN ONE DAY AND HALF OF THEM DIED. "Connection closed by
+	@# remote host" twice, "port 22 timed out" three times — every one of them
+	@# during `make up`, which rebuilds ELEVEN images on a box that does not
+	@# have the memory for it. The kernel picks something to kill and
+	@# sometimes it picks sshd.
+	@#
+	@# Almost every deploy here changes board/ and nothing else. Rebuilding
+	@# thefeed, the partner seats, the workspaces, the post box and the
+	@# browser to ship a change to one HTML file is the whole cost for none of
+	@# the benefit, and it is the reason the box falls over.
+	@#
+	@# So: fetch, reset, build the one image, restart the one container, say
+	@# what is running. Seconds instead of minutes, and it cannot run the box
+	@# out of memory.
+	@#
+	@# USE `make up` WHEN docker-compose.yml OR ANOTHER CONTAINER CHANGED —
+	@# a new service, a new env var, a change under agent/ or cfm/. This
+	@# target touches the board alone and will not notice anything else.
+	@printf '\n'
+	git fetch origin
+	git reset --hard origin/$(BRANCH)
+	$(COMPOSE) build board
+	$(COMPOSE) up -d --no-deps board
+	@printf '\n'
+	@$(MAKE) --no-print-directory version
 
 rebuild: ## Rebuild the workspace image (picks up new CLI versions)
 	$(COMPOSE) build --no-cache workspace

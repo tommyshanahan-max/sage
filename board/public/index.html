@@ -203,6 +203,15 @@
 
   .menote{margin:.5rem 0 0;font-size:.82rem;color:var(--muted);text-align:center;
     max-width:24rem;line-height:1.5}
+  /* The rest of what an address is for, quieter, under the first line. Two
+     short lines rather than one long one: the promise is what somebody needs
+     before typing, the rest is what they are owed. */
+  .menote.small{font-size:.76rem;opacity:.85;margin-top:.35rem}
+  /* A RULE BEFORE THE ADDRESS. Everything above it is the page other people
+     read; this is not, and without the break the two run together under one
+     heading — which is how an email box ended up three lines under "no
+     email" looking like a contradiction. */
+  .meline{border:0;border-top:1px solid var(--hair);margin:1.5rem 0 1.1rem}
 
   /* ---- the key ------------------------------------------------------------
      Shut by default. It is the one string here that is worth stealing, and a
@@ -3117,6 +3126,27 @@
       </div>
       <div class="field"><input id="mehere" maxlength="40"></div>
     </div>
+
+    <!-- THE ADDRESS, ASKED WHERE THE PROFILE IS MADE.
+         "They shoudl be asked an email on sprofile set up." It was moved out
+         of this form once, on the grounds that "add a way back in" and "edit
+         your page" are not the same act — which was right about the act and
+         wrong about the consequence: behind a to-do row that nobody taps, it
+         is a box almost nobody fills in, and an address nobody has is the
+         reason the letters have nowhere to go.
+         OUTSIDE THE "more" SECTION AND ABOVE THE BUTTON. A question folded
+         away is a question skipped, and this is the one that decides whether
+         anybody ever hears from this board again. Still optional: the form
+         saves without it, because a profile held hostage to an address is a
+         profile nobody finishes. -->
+    <hr class="meline">
+    <p class="seglabel" id="memaillab"></p>
+    <div class="field">
+      <input id="memail" type="email" inputmode="email" autocomplete="email"
+             spellcheck="false" autocapitalize="off" maxlength="120">
+    </div>
+    <p class="menote" id="memailwhy"></p>
+    <p class="menote small" id="memailalso"></p>
 
     <div class="row">
       <button class="ghost" type="button" id="meshut"></button>
@@ -6210,11 +6240,17 @@ function todoList() {
     ["say", Boolean(ME && ME.handle) && !(ME && Array.isArray(ME.say) && ME.say.length),
       () => { showView("browse"); $("saysay").scrollIntoView({ behavior: "smooth" }); }],
     ["goal", Boolean(ME && ME.handle) && !has(ME && ME.goal), () => openMe()],
-    /* THE WAY BACK, ASKED ONCE AND THEN NEVER AGAIN. It is the only row here
-       that is not about being found: everything else makes somebody easier to
-       match, and this one stops them losing all of it on a new phone. Last,
-       because nothing is worth keeping until there is something to keep. */
-    ["mail", Boolean(ME && ME.handle) && !has(ME && ME.mail), () => openBack()],
+    /* THE ADDRESS IS NOT A ROW HERE ANY MORE.
+     *
+     * "you are givng the user wrok." This asked for it, the tray asked for
+     * it, and a screen of its own asked for it — three standing requests for
+     * one box, sitting on the profile of anybody who had not answered, for
+     * ever. That is not a to-do list, it is nagging.
+     *
+     * It is a field in the profile form now, beside the name and the
+     * sentence, where somebody is already filling things in. Asked once,
+     * while they are there, and never again. The screen that changes it is
+     * still one tap away in the tray for anybody who wants it. */
     ["browse", Boolean(ME && ME.handle) && !(ME && ME.looking), () => openMe()],
   ];
   return all.filter((r) => r[1]).map((r) => ({ key: r[0], go: r[2] }));
@@ -9928,6 +9964,16 @@ function openMe(joining) {
   $("meig").value = ME && ME.ig ? "@" + ME.ig : "";
   $("meli").value = (ME && ME.li) || "";
   $("megoal").value = (ME && ME.goal) || "";
+  /* THE ADDRESS, PREFILLED AND LABELLED HERE. Same three strings the sheet
+     uses, so the two cannot drift into saying different things about what
+     the address is for — including the sentence about the occasional letter,
+     which has to appear wherever it is collected and this is now the place
+     it is collected. */
+  $("memaillab").textContent = T("me.mailLab");
+  $("memail").placeholder = T("mail.ph");
+  $("memail").value = (ME && ME.mail) || "";
+  $("memailwhy").textContent = T("mail.body");
+  $("memailalso").textContent = T("mail.also");
   /* Open if there is already something in it, shut otherwise. Somebody who
    * filled these in once should not have to find them again to change one. */
   showMore(Boolean(joining) ||
@@ -10951,6 +10997,10 @@ $("meform").addEventListener("submit", async (e) => {
     here: $("mehere").value.trim(), goal: $("megoal").value.trim(),
     ig: $("meig").value.trim(),
     li: $("meli").value.trim(),
+    /* TRIMMED AND SENT WHETHER OR NOT IT CHANGED, like every other field
+       here. An empty box means no address, which is the same thing the
+       server already does with one — see cleanPerson. */
+    mail: $("memail").value.trim(),
   });
   if (out.error) {
     said.hidden = false; said.classList.add("bad");
