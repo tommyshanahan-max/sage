@@ -3776,6 +3776,25 @@ export const STRINGS = {
      Everything here is read in one second, by somebody holding a ringing
      phone or watching a black screen. One line each, no explaining.
      --------------------------------------------------------------------- */
+  /* ---------------------------------------------------------------------
+     THE ＋ IN A CONVERSATION.
+     Two words a tile, under a drawing, read at a glance. Verbs, because
+     every one of them is a thing you are about to do — "Payment request" is
+     a noun somebody has to work out; "Request money" is the press. */
+  "pl.add":            ["Add person", "拉人进来"],
+  "pl.call":           ["Video call", "视频通话"],
+  "pl.pay":            ["Send money", "我要付款"],
+  "pl.ask":            ["Request money", "收款"],
+  "pl.terms":          ["Write terms", "写下条件"],
+  /* MONEY HERE ONLY EVER MOVES THROUGH A REQUEST — one person raises it with
+     an amount and what it is for, the other opens a page and pays. That is
+     what stops anybody being asked to send money to a name in a chat window.
+     So "send money" puts this in the box, ready to send, and they raise it. */
+  "pl.payLine":        ["I want to pay you — send me a request.",
+                        "我要付款，你发个收款给我。"],
+  "pl.notYet":         ["Not until they are on the board.",
+                        "等他进了板子再说。"],
+  "pl.closed":         ["This conversation is closed.", "这个对话已经关了。"],
   "cv.call":           ["Video call", "视频通话"],
   "cv.ringing":        ["Ringing {who}…", "正在呼叫 {who}…"],
   "cv.incoming":       ["{who} is calling", "{who} 打来视频"],

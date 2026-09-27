@@ -558,6 +558,44 @@
     overflow:hidden;
     padding:.6rem .8rem;border:1px solid var(--line);border-radius:1.1rem;
     background:var(--raise);color:var(--ink);max-height:8rem}
+  /* THE ＋, LEFT OF THE BOX. Outlined rather than filled: Send is the one
+     coloured thing on this row and two accents beside each other is two
+     buttons arguing about which is the action. */
+  .plusbtn{flex:0 0 auto;width:2.4rem;height:2.4rem;padding:0;border-radius:50%;
+    border:1px solid var(--line);background:var(--raise);color:var(--ink);
+    display:grid;place-items:center;cursor:pointer;transition:transform .15s ease}
+  .plusbtn svg{width:1.15rem;height:1.15rem;fill:none;stroke:currentColor;
+    stroke-width:2;stroke-linecap:round}
+  /* TURNED INTO A ×, so the same button closes what it opened and the screen
+     says which state it is in without a word. */
+  .plusbtn[aria-expanded="true"]{transform:rotate(45deg);
+    background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  @media (prefers-reduced-motion:reduce){ .plusbtn{transition:none} }
+
+  /* WHAT IT OPENS. Four things and a fifth, as icons with two words under
+     them — a grid is read in one glance and a list of sentences is not. It
+     sits under the composer, above the tab bar, so nothing it covers is
+     anything you were reading. */
+  .pgrid{position:sticky;bottom:4.6rem;display:grid;
+    grid-template-columns:repeat(4,1fr);gap:.5rem .25rem;
+    padding:.9rem .25rem 1rem;background:var(--paper);
+    border-top:1px solid var(--hair)}
+  .pgrid button{display:flex;flex-direction:column;align-items:center;gap:.45rem;
+    border:0;background:none;padding:0;cursor:pointer;color:var(--ink);font:inherit}
+  .pgrid button i{width:3.4rem;height:3.4rem;border-radius:1.1rem;
+    background:var(--raise);border:1px solid var(--line);
+    display:grid;place-items:center}
+  .pgrid button svg{width:1.5rem;height:1.5rem;fill:none;stroke:currentColor;
+    stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  /* TWO WORDS, WRAPPING, CENTRED. "Request money" is two words in English and
+     four characters in Chinese and both have to sit under a 3.4rem square. */
+  /* TWO LINES' WORTH OF ROOM WHETHER OR NOT TWO ARE USED, so every tile is
+     the same height and the second row starts level. "Request money" wraps at
+     390px and the four beside it do not, which left the row ragged and the
+     fifth tile sitting at its own height. */
+  .pgrid button b{font-weight:400;font-size:.72rem;line-height:1.25;
+    text-align:center;color:var(--ink-2);max-width:5rem;min-height:2.5em}
+  .pgrid button:disabled{opacity:.4}
   .send{flex:0 0 auto;width:2.4rem;height:2.4rem;border:0;border-radius:50%;
     background:var(--accent);color:var(--accent-ink);display:grid;
     place-items:center;cursor:pointer}
@@ -1185,7 +1223,17 @@
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
       <span id="taddsay"></span>
     </button>
+    <!-- THE ＋, AND EVERYTHING YOU CAN DO WITH SOMEBODY THAT IS NOT TYPING.
+         "there should be a + in chat which brings up an overlay with ADD
+         PERSON / Call / Send Money / Request Money." Same place WeChat puts
+         it and the same gesture, because that is the one every person on this
+         board already makes twenty times a day.
+         In the composer row rather than the header: it belongs beside the
+         box, where the thumb already is. -->
     <div class="write" id="twrite" hidden>
+      <button class="plusbtn" id="tplus" type="button" aria-expanded="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
       <textarea id="tbox" rows="1" maxlength="600"></textarea>
       <!-- HOLD TO TALK. Between the box and Send, the order a room uses, so
            the thumb finds it in the same place on both screens. Shown only
@@ -1196,6 +1244,11 @@
       </button>
     </div>
     <p class="status" id="tsaid" hidden></p>
+    <!-- WHAT THE ＋ OPENS. A grid of things to do, not a menu of words: an
+         icon and two words each, read in one glance. It sits above the
+         composer and pushes nothing, so the conversation stays where it was
+         and closing it puts you back mid-sentence. -->
+    <div class="pgrid" id="tpgrid" hidden></div>
   </div>
 </main>
 
@@ -2025,6 +2078,7 @@ function drawInvited() {
   $("tnew").hidden = true;
   $("tmore").hidden = true;
   $("tvid").hidden = true;
+  $("tpgrid").hidden = true;
   $("tmenu").hidden = true;
   $("tpin").hidden = true;
   $("tleft").hidden = true;
@@ -2091,6 +2145,152 @@ function drawInvited() {
  * THE CODE IS NOT IN THE LINK and this screen is the whole of why that rule
  * survives the new address. A link forwarded by accident lands here and stops.
  */
+/* ---------------------------------------------------------------------------
+ * THE ＋ IN A CONVERSATION
+ *
+ * "there should be a + in chat which brings up an overlay with ADD PERSON
+ * (adding a new person into the 1-1 exsting chat making it a grouo) + Call
+ * *video/phone + Send MOney + REquest MOney."
+ *
+ * Everything you can do with the person you are talking to that is not
+ * typing, in one place, behind the gesture everybody on this board already
+ * makes twenty times a day in WeChat.
+ *
+ * IT TOOK THINGS OFF THE SCREEN RATHER THAN ADDING THEM. "Ask for payment"
+ * and "Write down what we agreed" were two full-width buttons stacked above
+ * the box, on every conversation, whether or not there was anything to ask
+ * for — which is most of why this screen read as cluttered. They are two of
+ * the five tiles now. The video button left the header for the same reason.
+ *
+ * NOTHING NEW IS BUILT HERE. Each tile is a door to something that already
+ * exists and already works; what was missing was one place to find them.
+ * ------------------------------------------------------------------------- */
+
+/** One tile: a square with a drawing in it and two words under. */
+function ptile(label, path, on, off) {
+  const b = el("button");
+  b.type = "button";
+  const box = el("i");
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("aria-hidden", "true");
+  for (const d of path) {
+    const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    p.setAttribute("d", d);
+    svg.append(p);
+  }
+  box.append(svg);
+  b.append(box, el("b", null, label));
+  /* A TILE THAT CANNOT WORK IS SHOWN AND DIMMED RATHER THAN HIDDEN, and the
+     press says why. A grid that changes shape between two conversations is a
+     grid nobody learns the positions of — and "why is it not there" is a
+     worse question than "why is it grey". */
+  if (!on) {
+    b.disabled = true;
+    if (off) b.title = off;
+  }
+  return b;
+}
+
+const PATHS = {
+  person: ["M16 20v-1.5a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4V20", "M9.5 10.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7", "M18 7v6M15 10h6"],
+  video:  ["M3 6.5h11a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z", "M16 11l5-3v8l-5-3"],
+  send:   ["M12 20V5", "M6 11l6-6 6 6", "M4 21h16"],
+  ask:    ["M12 4v15", "M18 13l-6 6-6-6", "M4 21h16"],
+  terms:  ["M6 3h9l4 4v14H6z", "M14 3v5h5", "M9 13h6M9 17h4"],
+};
+
+/** Open or shut it. One function, because the button's own state and the
+ *  grid's have to agree and two places setting them is one place too many. */
+function plusSheet(on) {
+  $("tpgrid").hidden = !on;
+  $("tplus").setAttribute("aria-expanded", on ? "true" : "false");
+}
+
+/** Build the grid for the conversation on screen. Called from drawThread, so
+ *  it is rebuilt whenever the thread's state changes — a closed conversation
+ *  and an open one do not offer the same things. */
+function drawPlus(t, last) {
+  const grid = $("tpgrid");
+  fill(grid);
+  plusSheet(false);
+
+  /* SOMEBODY WHO IS NOT ON THE BOARD YET has a "w:<id>" for a `who`, and
+     every route behind these tiles takes twenty hex characters. They can be
+     written to and nothing else until a member lets them in — see the note
+     over the terms button. */
+  const real = /^[a-f0-9]{20}$/.test(String(t.who || ""));
+  const live = Boolean(last && (last.open || last.canAnswer));
+  const why = !real ? T("pl.notYet") : !live ? T("pl.closed") : "";
+
+  /* ADD SOMEBODY, which is the one that turns this into a room. It opens the
+     picker with them already in it — a room still takes three and the screen
+     that makes one is the screen that makes every other one. */
+  const add = ptile(T("pl.add"), PATHS.person,
+    !OFF.groups && real && Boolean(last && last.open), why || T("pl.closed"));
+  add.addEventListener("click", () => {
+    location.assign("/groups?with=" + encodeURIComponent(t.who || ""));
+  });
+  grid.append(add);
+
+  /* CALL. It was a button in the header; this is where he asked for it and
+     it is the right place — the header is who you are talking to, not what
+     you can do about it. */
+  const call = ptile(T("pl.call"), PATHS.video, real && live, why);
+  call.addEventListener("click", () => {
+    plusSheet(false);
+    callOut(t.who, t.handle || "", t.photo || "");
+  });
+  grid.append(call);
+
+  /* SEND MONEY, AND IT IS HONEST ABOUT WHAT IT DOES.
+   *
+   * Money on this board only ever moves through a request: one person raises
+   * it with an amount and what it is for, the other opens a page and pays.
+   * That is not a limitation to work around — it is what stops anybody being
+   * asked to send money to a name they were given in a chat window, which is
+   * the scam the warning under every conversation is about.
+   *
+   * So this is the only true version of "send money" here: it tells them you
+   * want to pay and asks them to raise it. One tap, in the thread, where they
+   * will see it. */
+  const pay = ptile(T("pl.pay"), PATHS.send, real && live, why);
+  pay.addEventListener("click", () => {
+    plusSheet(false);
+    $("tbox").value = T("pl.payLine");
+    $("tbox").dispatchEvent(new Event("input"));
+    $("tbox").focus();
+  });
+  grid.append(pay);
+
+  /* REQUEST MONEY — the sheet that already exists, unchanged. */
+  const ask = ptile(T("pl.ask"), PATHS.ask, real && live, why);
+  ask.addEventListener("click", () => { plusSheet(false); askSheet(t, last); });
+  grid.append(ask);
+
+  /* AND THE TERMS BUTTON, which used to be a full-width button above the box
+     on every conversation. It is the fifth thing you can do with somebody and
+     it belongs with the other four. */
+  const terms = ptile(T("pl.terms"), PATHS.terms, real && live, why);
+  terms.addEventListener("click", () => {
+    plusSheet(false);
+    $("taddbtn").click();
+  });
+  grid.append(terms);
+}
+
+$("tplus").addEventListener("click", () => {
+  const open = $("tpgrid").hidden;
+  plusSheet(open);
+  /* THE KEYBOARD AND THE GRID CANNOT BOTH HAVE THE BOTTOM OF THE SCREEN.
+     Opening the grid takes the focus off the box so the phone puts the
+     keyboard away; otherwise the grid opens underneath it. */
+  if (open) $("tbox").blur();
+});
+/* Typing closes it. Somebody who has started a message has answered the
+   question the grid was asking. */
+$("tbox").addEventListener("focus", () => { plusSheet(false); });
+
 /* ---------------------------------------------------------------------------
  * A VIDEO CALL, INSIDE THE CONVERSATION
  *
@@ -2371,6 +2571,7 @@ function drawChatDoor() {
   $("tnew").hidden = true;
   $("tmore").hidden = true;
   $("tvid").hidden = true;
+  $("tpgrid").hidden = true;
   $("tmenu").hidden = true;
   $("tpin").hidden = true;
   $("tleft").hidden = true;
@@ -2757,6 +2958,7 @@ function drawWriteNew() {
   $("twho").hidden = true;
   $("tmore").hidden = true;
   $("tvid").hidden = true;
+  $("tpgrid").hidden = true;
   $("tmenu").hidden = true;
   $("tpin").hidden = true;
   $("tleft").hidden = true;
@@ -3433,6 +3635,7 @@ async function drawDoor(key) {
     micShow();
     $("tmore").hidden = true;
   $("tvid").hidden = true;
+  $("tpgrid").hidden = true;
     return;
   }
   /* THE COUNT IN THE TITLE AND NOT THE LINE UNDER IT — "Beijing Apt Rentals
@@ -3681,23 +3884,13 @@ function drawThread(t) {
     : last.canAnswer ? T("note.oneSub")
     : T({ shut: "note.shut", waiting: "note.waitSub" }[last.why] || "note.doneSub");
 
-  /* THE VIDEO BUTTON, AND ONLY WHERE A CALL IS A REAL OFFER.
-   *
-   * An open thread and nothing else. A one-answer introduction is not a
-   * conversation two people have agreed to have, and ringing somebody's phone
-   * out of one is the version of this feature that gets the app deleted — the
-   * server refuses it either way (notePermit), but a button that is refused
-   * when pressed is worse than no button.
-   *
-   * The name and face come off the row rather than being fetched: the call
-   * screen shows them before anything has connected, which is most of what it
-   * shows at all. */
-  const canCall = Boolean(last.open) && Boolean(t.who);
-  $("tvid").hidden = !canCall;
-  $("tvid").setAttribute("aria-label", T("cv.call"));
-  if (canCall) {
-    $("tvid").onclick = () => { callOut(t.who, t.handle || "", t.photo || ""); };
-  }
+  /* THE CALL LIVES BEHIND THE ＋ NOW — see drawPlus, and the note over it.
+     The header says who you are talking to; what you can do about it is one
+     gesture away, with the other four. The button stays in the markup and
+     stays hidden: it is one line to put back if the ＋ ever turns out to be
+     the wrong home for it. */
+  $("tvid").hidden = true;
+  $("tpgrid").hidden = true;
 
   /* WHO THEY ARE, ON THE SCREEN THAT OPENS WHEN YOU TAP THEIR FACE.
    *
@@ -3783,7 +3976,9 @@ function drawThread(t) {
        back "no", and nothing happened. There is nothing to fix on the route:
        two people cannot pin terms before one of them has been let in. */
     const realPerson = /^[a-f0-9]{20}$/.test(String(t.who || ""));
-    addBtn.hidden = !((last.canAnswer || last.open) && realPerson);
+    /* BEHIND THE ＋ TOO — see the note on askBtn. Still pressed, by the terms
+       tile in drawPlus, so everything below this line goes on working. */
+    addBtn.hidden = true;
   /* ASK THEM TO PAY — the whole product in one button.
    *
    * "Two people are chatting, then someone sends them a request to pay."
@@ -3795,12 +3990,22 @@ function drawThread(t) {
    * somebody who is actually on this board. `to` is their handle, so the
    * page they open greets them by name.
    */
+  /* AND THE ＋'S GRID, built here because it is a fact about this
+     conversation: what you can do with somebody depends on whether the thread
+     is open and whether they are on the board at all. */
+  drawPlus(t, last);
+
   const askBtn = $("taskbtn");
   const askSay = $("tasksay");
   if (askBtn) {
     if (askSay) askSay.textContent = T("ask.go");
     askBtn.setAttribute("aria-label", T("ask.go"));
-    askBtn.hidden = !((last.canAnswer || last.open) && realPerson);
+    /* BEHIND THE ＋ NOW. These were two full-width buttons stacked above the
+       box on every conversation, whether or not there was anything to ask
+       for — most of why this screen read as cluttered, and the thing Tom
+       photographed. They are tiles in the grid; both keep working exactly as
+       they did, and drawPlus presses this one for the terms tile. */
+    askBtn.hidden = true;
     askBtn.onclick = () => askSheet(t, last);
   }
 
