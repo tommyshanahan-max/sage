@@ -10582,7 +10582,21 @@ app.get("/api/notes", notesOff, async (req, res) => {
        *
        * Same rule as the box two fields up, for the same stated reason: the
        * page must not offer what the server will refuse. */
-      canDo: live.has(other(n)) && Boolean(st.can),
+      /* AND A WAITING PERSON IS NOT IN `live`, BECAUSE THEY HAVE NO ROW.
+       *
+       * `live` is built from board.people, and being on the list is exactly
+       * the state of having no page — so every thread with somebody who came
+       * through a link answered canDo:false, and the screen greyed all five
+       * tiles with "Not until they are on the board." The routes disagreed:
+       * callPair takes a w:<id>, notePermit answers about a waiting person
+       * the same way it answers about a member, and /api/request keeps the
+       * name when the target is not one.
+       *
+       * threadState has already decided whether these two may deal with each
+       * other at all, and for a waiting person it is the only thing that can.
+       * So `live` is asked about members and nothing else. */
+      canDo: Boolean(st.can)
+        && (String(them.who || "").startsWith("w:") || live.has(other(n))),
       cap: st.cap || undefined,
       /* WHAT WAS AGREED, ABOVE THE TALK. The reason to type in here at all
          rather than in WeChat — the terms sit over the conversation and cannot

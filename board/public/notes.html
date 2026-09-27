@@ -2640,10 +2640,26 @@ function drawPlus(t, last) {
   fill(grid);
   plusSheet(false);
 
-  /* SOMEBODY WHO IS NOT ON THE BOARD YET has a "w:<id>" for a `who`, and
-     every route behind these tiles takes twenty hex characters. They can be
-     written to and nothing else until a member lets them in — see the note
-     over the terms button. */
+  /* SOMEBODY WHO IS NOT ON THE BOARD YET has a "w:<id>" for a `who`.
+   *
+   * "why cant i video call him" / "it says not ubtil they are on baord."
+   *
+   * The sentence was mine and it was not true. THREE of these five work
+   * perfectly well for somebody on the waiting list, and the routes behind
+   * them have always said so — it was this line guessing on their behalf:
+   *
+   *   Video call      callPair takes w:<id>, and notePermit answers about a
+   *                   waiting person exactly as it does about a member.
+   *   Send money      it writes a line into the box. It is a message.
+   *   Request money   /api/request keeps the name when the target is not a
+   *                   member, which is most of what that route is for.
+   *
+   * The two that genuinely cannot are the two that need a person ROW rather
+   * than a conversation: a room is built out of member ids, and a memo names
+   * two people the board can look up. Those keep the sentence.
+   *
+   * One guess in one place, disagreeing with five routes, is the same fault
+   * as the grey call button this morning — see onBoard in server.js. */
   const real = /^[a-f0-9]{20}$/.test(String(t.who || ""));
   /* THE SERVER'S OWN ANSWER, NOT THIS PAGE'S GUESS AT IT.
    *
@@ -2660,9 +2676,14 @@ function drawPlus(t, last) {
   const live = last && last.canDo !== undefined
     ? Boolean(last.canDo)
     : Boolean(last && (last.open || last.canAnswer));
-  const why = !real ? T("pl.notYet")
-    : (last && last.canDo === false && (last.open || last.canAnswer)) ? T("pl.away")
+  /* THE REASON A TILE IS GREY, and "not on the board yet" is now only ever
+     the reason for the two that need a person row — so it is worked out per
+     tile rather than once for all five. `why` is what the other three say;
+     `whyRow` is the extra sentence the other two get. */
+  const why = (last && last.canDo === false && (last.open || last.canAnswer))
+      ? T("pl.away")
     : !live ? T("pl.closed") : "";
+  const whyRow = !real ? T("pl.notYet") : why;
 
   /* ADD SOMEBODY, which is the one that turns this into a room. It opens the
      picker with them already in it — a room still takes three and the screen
@@ -2670,14 +2691,15 @@ function drawPlus(t, last) {
   /* `live` AND NOT `last.open`, like the other four. Adding a page that is
      not up to a room is a room with a name in it nobody can reach. */
   const add = ptile(T("pl.add"), PATHS.person,
-    !OFF.groups && real && live, why || T("pl.closed"));
+    !OFF.groups && real && live, whyRow || T("pl.closed"));
   add.addEventListener("click", () => { plusSheet(false); addToChat(t); });
   grid.append(add);
 
   /* CALL. It was a button in the header; this is where he asked for it and
      it is the right place — the header is who you are talking to, not what
      you can do about it. */
-  const call = ptile(T("pl.call"), PATHS.video, real && live, why);
+  /* NOT `real`. A waiting person can be called — see the note above. */
+  const call = ptile(T("pl.call"), PATHS.video, live, why);
   call.addEventListener("click", () => {
     plusSheet(false);
     callOut(t.who, t.handle || "", t.photo || "");
@@ -2695,7 +2717,8 @@ function drawPlus(t, last) {
    * So this is the only true version of "send money" here: it tells them you
    * want to pay and asks them to raise it. One tap, in the thread, where they
    * will see it. */
-  const pay = ptile(T("pl.pay"), PATHS.send, real && live, why);
+  // Not `real` either: this one writes a line into the box, and that is all.
+  const pay = ptile(T("pl.pay"), PATHS.send, live, why);
   pay.addEventListener("click", () => {
     plusSheet(false);
     $("tbox").value = T("pl.payLine");
@@ -2705,14 +2728,15 @@ function drawPlus(t, last) {
   grid.append(pay);
 
   /* REQUEST MONEY — the sheet that already exists, unchanged. */
-  const ask = ptile(T("pl.ask"), PATHS.ask, real && live, why);
+  // Nor this: /api/request keeps the name when the target is not a member.
+  const ask = ptile(T("pl.ask"), PATHS.ask, live, why);
   ask.addEventListener("click", () => { plusSheet(false); askSheet(t, last); });
   grid.append(ask);
 
   /* AND THE TERMS BUTTON, which used to be a full-width button above the box
      on every conversation. It is the fifth thing you can do with somebody and
      it belongs with the other four. */
-  const terms = ptile(T("pl.terms"), PATHS.terms, real && live, why);
+  const terms = ptile(T("pl.terms"), PATHS.terms, real && live, whyRow);
   terms.addEventListener("click", () => {
     plusSheet(false);
     $("taddbtn").click();
