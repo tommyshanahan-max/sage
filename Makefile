@@ -2254,6 +2254,46 @@ faces: ## Whose photo is not showing, and put one back: make faces [WHO="Nicole"
 	  /seed/faces.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  "$(WHO)"
 
+mailout: ## A letter to everybody, rehearsed first: make mailout [SEND=1]
+	@# "we shoiudl emial eveyroen to come to platform."
+	@#
+	@# Prints how many people can be reached at all \u2014 which is not on any
+	@# screen and is the number that decides whether this is worth doing \u2014 then
+	@# the whole of one real letter, with somebody's name and their own number
+	@# in it. Nothing leaves the box without SEND=1.
+	@#
+	@# Once per person per day, stamped before the first one goes, and every
+	@# letter carries a one-press way out. Those three are what keep the
+	@# message mail and the login mail arriving: they leave from the same
+	@# domain, and a list that gets reported takes them with it.
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/mailout.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  "$(if $(SEND),true,false)" "$$(grep -E '^TOMSCODING_PUBLIC=' .env | tail -1 | cut -d= -f2-)"
+
+up-safe: ## Build everything without the ssh session being able to kill it: make up-safe
+	@# "Connection to 45.77.8.166 closed by remote host." Twice, both times in
+	@# the middle of a build. A docker build of eleven images is the heaviest
+	@# thing this box ever does, and when it runs out of memory the kernel
+	@# picks something to kill — sometimes sshd, and then the build dies with
+	@# the session that started it. Nothing says so; the terminal just returns.
+	@#
+	@# setsid puts the build in its own session, so it survives the ssh going
+	@# away, and the tail is only a window onto it: Ctrl-C closes the window
+	@# and the build carries on. Reconnect and tail the same file to look
+	@# again.
+	@#
+	@# It prints the free memory first, because that is the number that
+	@# decides whether this happens, and nobody has ever looked at it.
+	@printf '\n  memory before the build\n'
+	@free -h 2>/dev/null | sed 's/^/    /' || echo "    (no free(1) on this box)"
+	@printf '\n'
+	@rm -f /tmp/up.log
+	@setsid $(MAKE) up > /tmp/up.log 2>&1 < /dev/null & \
+	  sleep 2; \
+	  printf '  building. Ctrl-C closes this window, not the build.\n'; \
+	  printf '  to look again:  ssh root@%s "tail -f /tmp/up.log"\n\n' "$$(hostname -I 2>/dev/null | awk '{print $$1}')"; \
+	  tail -f /tmp/up.log
+
 stripe-who: ## Which Stripe account the board's key belongs to, and whether it still works
 	@# THE DAY STRIPE CLOSED AN ACCOUNT. A key in .env is a string nobody can
 	@# read anything off, so "is the payment side dead" was a question with no

@@ -19667,6 +19667,225 @@ app.get("/api/snap", snapGate, async (_req, res) => {
  * Telling those apart by hand meant a screen, and the person who has to do it
  * cannot use one — see the note about screens in CLAUDE.md. Read-only.
  */
+/* ---------------------------------------------------------------------------
+ * A LETTER TO EVERYBODY
+ *
+ * "we shoiudl emial eveyroen to come to platform."
+ *
+ * The one-to-one mail already works: somebody writes to you, you do not read
+ * it, an hour later it is in your inbox with a link to the conversation. This
+ * is the other kind, and they are not the same thing — which is most of what
+ * these routes are careful about.
+ *
+ * THREE RULES, AND THEY ARE WHAT KEEP THE FIRST KIND ARRIVING.
+ *
+ *   It says something true and personal, or it is not worth sending. Every
+ *   letter carries the one number that belongs to the person reading it: how
+ *   many people on this board are the thing their own sentence says they are
+ *   looking for. A letter that says "come back" and nothing else is a letter
+ *   that teaches somebody to ignore the next one.
+ *
+ *   Once per person per mailout, stamped before anything is sent. A list that
+ *   sends twice is a list that gets reported, and a report on a young sending
+ *   domain takes the login mail and the message mail down with it.
+ *
+ *   A way out, in every one, honoured for ever, and it stops THESE and
+ *   nothing else. Somebody who never wants another letter to everybody still
+ *   gets told when a person writes to them, because that is the thing they
+ *   left an address for.
+ *
+ * DRY BY DEFAULT. It prints who would get it and exactly what they would
+ * read; nothing leaves the box until SEND=1. The same shape as `make cards`,
+ * for the same reason: a send you cannot rehearse is a send you find out
+ * about afterwards.
+ * ------------------------------------------------------------------------- */
+
+/** How many people are on this board, and how many of them can be reached.
+ *
+ *  ASKED FIRST, ALWAYS. "Email everybody" is a different job depending on
+ *  whether everybody is four people or four hundred, and the answer is not
+ *  visible from any screen. */
+app.get("/api/admin/reach", admin, async (_req, res) => {
+  res.set("Cache-Control", "no-store");
+  const board = await store.load(FILE);
+  const live = board.people.filter((q) => q.state === "published" && q.handle);
+  const withMail = live.filter((q) => q.mail);
+  const today = dayKey(Date.now());
+  res.json({
+    configured: mailReady(),
+    people: live.length,
+    reachable: withMail.length,
+    optedOut: withMail.filter((q) => q.noMail).length,
+    hadToday: withMail.filter((q) => q.mailedAt === today).length,
+    /* AND THE PEOPLE ON THE LIST, counted separately. They are not members
+       and this letter is not for them — a letter saying "come back to the
+       board" to somebody who was never let in is the worst mail this board
+       could send. Counted so the number is not a surprise later. */
+    waiting: board.waits.filter((w) => !w.done && w.reach).length,
+  });
+});
+
+/** WHAT EACH PERSON WOULD READ, and — only when told — the send.
+ *
+ *  The words are built here rather than on a page, because they have to be
+ *  identical in the rehearsal and in the send. Two copies of a sentence is
+ *  one sentence that will one day be wrong in the version nobody looks at.
+ */
+function mailoutWords(board, q, origin) {
+  /* THE ONE NUMBER THAT IS THEIRS. Their own sentence says what they are
+     looking for; this counts the people here who are that. Same rule the
+     panel uses — see /api/admin/queue — so the two can never disagree. */
+  const wants = (Array.isArray(q.say) ? q.say : [])
+    .map((r) => r && r.want).filter(Boolean);
+  const saysIt = (p, role) => (Array.isArray(p.say) ? p.say : [])
+    .some((r) => r && r.me && (role === store.ANYONE || r.me === role));
+  const live = board.people.filter((p) => p.by !== q.by
+    && p.state === "published" && p.handle);
+  let n = 0;
+  let role = "";
+  for (const w of wants) {
+    const c = live.filter((p) => saysIt(p, w)).length;
+    if (c > n) { n = c; role = w; }
+  }
+  const zh = /[一-鿿]/.test(String(q.handle || ""));
+  const site = process.env.BOARD_SITE_NAME || "The Exchange";
+  const link = origin + "/browse";
+  const off = origin + "/m/off/" + q.id + "." + sign("nomail:" + q.id);
+
+  /* THE HOOK IS A NUMBER AND A NOUN, and it is the first thing on the line.
+     "There are people you should meet" is a sentence about nothing; "14
+     investors" is a reason to open the app.
+     TWO IS THE FLOOR, and that is a judgement rather than a rounding. "1
+     founder on The Exchange" is a true sentence and a worse reason to come
+     back than not being written to at all — it says the board is empty in
+     the voice of a board that is full. Under two it says the plain count,
+     which is honest and does not pretend to be a match. */
+  const enough = n >= 2 && role;
+  const head = enough
+    ? (zh ? `${site} 上有 ${n} 个${roleZh(role)}` : `${n} ${roleWord(role, n)} on ${site}`)
+    : (zh ? `${site} 上现在有 ${live.length} 个人` : `${live.length} people on ${site} now`);
+  const why = enough
+    ? (zh ? "这正是你说你在找的。" : "That is what you said you were looking for.")
+    : (zh ? "看看有没有你要找的人。" : "Have a look and see who is here.");
+
+  return {
+    to: q.mail,
+    subject: zh ? head : head,
+    text: (zh
+      ? `${q.handle}——\n\n${head}。\n${why}\n\n${link}\n`
+      : `${q.handle} —\n\n${head}.\n${why}\n\n${link}\n`)
+      + (zh
+        ? `\n\n—\n你收到这封信，是因为你在${site}留过邮箱。\n不想再收到这种信：${off}\n（别人给你留言时，我们还是会通知你。）\n`
+        : `\n\n—\nYou are getting this because you left an address on ${site}.\nNo more letters like this: ${off}\n(You will still be told when somebody writes to you.)\n`),
+    n, role,
+  };
+}
+
+/* THE ROLE, AS A WORD IN A SENTENCE. The board stores a key; a letter needs
+   a noun, and a plural one in English. Anything not named here falls back to
+   the key itself, which is a word somebody chose and is never nonsense. */
+const ROLE_WORDS = {
+  investor: ["investors", "投资人"], founder: ["founders", "创始人"],
+  buyer: ["buyers", "买家"], seller: ["sellers", "卖家"],
+  agent: ["agents", "经纪人"], producer: ["producers", "制片人"],
+  talent: ["people in front of camera", "演员"], director: ["directors", "导演"],
+  supplier: ["suppliers", "供应商"], student: ["students", "学生"],
+  teacher: ["teachers", "老师"], lawyer: ["lawyers", "律师"],
+};
+/* A NOUN THAT AGREES WITH ITS NUMBER. "1 founders" is the sort of thing that
+   tells a reader a machine wrote to them, which is the one impression a
+   letter meant to bring somebody back cannot afford. The plural is what is
+   stored, because it is the common case; the singular is that with its s
+   taken off, which is right for every word in the table. */
+const roleWord = (r, n) => {
+  const many = (ROLE_WORDS[r] || [String(r) + "s"])[0];
+  return n === 1 ? many.replace(/s$/, "") : many;
+};
+const roleZh = (r) => (ROLE_WORDS[r] || [null, String(r)])[1] || String(r);
+
+app.post("/api/admin/mailout", admin, express.json({ limit: "2kb" }), async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const send = Boolean(req.body?.send);
+  const again = Boolean(req.body?.again);
+  if (send && !mailReady()) return res.status(503).json({ error: "unconfigured" });
+
+  const origin = String(req.body?.origin || PUBLIC || "").replace(/\/+$/, "");
+  if (!origin) return res.status(400).json({ error: "origin" });
+
+  const board = await store.load(FILE);
+  const today = dayKey(Date.now());
+  const due = board.people.filter((q) => q.state === "published" && q.handle
+    && q.mail && !q.noMail && (again || q.mailedAt !== today));
+  const skipped = {
+    noAddress: board.people.filter((q) => q.state === "published" && q.handle && !q.mail).length,
+    optedOut: board.people.filter((q) => q.mail && q.noMail).length,
+    already: board.people.filter((q) => q.mail && !q.noMail && q.mailedAt === today).length,
+  };
+
+  const letters = due.map((q) => ({ handle: q.handle, ...mailoutWords(board, q, origin) }));
+  if (!send) return res.json({ dry: true, n: letters.length, skipped, letters });
+
+  /* STAMPED BEFORE A SINGLE ONE GOES. The send is a network call per person
+     and takes minutes; a second run landing in the middle of it would find
+     the same rows unstamped and send the whole list again. */
+  const ids = new Set(due.map((q) => q.id));
+  await change((b) => {
+    for (const q of b.people) if (ids.has(q.id)) q.mailedAt = today;
+    return { ok: true };
+  });
+
+  /* A TRICKLE, NOT A BLAST. Two hundred letters leaving one young domain in
+     one second is the single fastest way to be classified as bulk and have
+     the whole domain throttled — after which the login mail and the message
+     mail stop arriving too, and nobody connects the two events. One a second
+     is slow enough to look like an application and fast enough to finish. */
+  let sent = 0;
+  const bad = [];
+  for (const m of letters) {
+    const ok = await sendMail({ to: m.to, subject: m.subject, text: m.text })
+      .catch(() => false);
+    if (ok === false) bad.push(m.handle); else sent += 1;
+    await new Promise((r) => setTimeout(r, 1000));
+  }
+  console.log("mailout: sent " + sent + " of " + letters.length);
+  res.json({ dry: false, n: letters.length, sent, bad, skipped });
+});
+
+/* THE WAY OUT, AND IT IS ONE PRESS FROM THE LETTER ITSELF.
+ *
+ * No login, no form, no "are you sure": somebody who wants out of a mailing
+ * list and is asked to sign in first is somebody who marks it as spam
+ * instead, which costs this board every other kind of mail it sends.
+ *
+ * Signed, so the link works for exactly one person and cannot be walked. It
+ * is open like the other doors — the whole point is that it works for
+ * somebody who is not on this browser and may never come back.
+ */
+app.get("/m/off/:id.:sig", async (req, res) => {
+  const id = String(req.params.id || "");
+  const sig = String(req.params.sig || "");
+  const site = process.env.BOARD_SITE_NAME || "The Exchange";
+  const page = (line) => res.status(200).type("html").send(
+    `<!doctype html><meta charset="utf-8">`
+    + `<meta name="viewport" content="width=device-width,initial-scale=1">`
+    + `<title>${site}</title>`
+    + `<body style="margin:0;min-height:100vh;display:grid;place-items:center;`
+    + `background:#EEF0F4;color:#1c1917;font:400 17px/1.5 -apple-system,`
+    + `BlinkMacSystemFont,'PingFang SC',Segoe UI,Helvetica,Arial,sans-serif">`
+    + `<p style="max-width:22rem;padding:0 1.2rem;text-align:center">${line}</p>`);
+  if (!/^[a-f0-9]{20}$/.test(id) || !safeEqual(sig, sign("nomail:" + id))) {
+    return page("That link does not open anything.<br>这个链接打不开。");
+  }
+  await change((b) => {
+    const q = b.people.find((x) => x.id === id);
+    if (q) q.noMail = true;
+    return { ok: true };
+  });
+  page("Done — no more letters like that one.<br>"
+    + "You will still be told when somebody writes to you."
+    + "<br><br>好了，这种信不会再发给你了。<br>别人给你留言时还是会通知你。");
+});
+
 /* WHETHER A NAMED MEMBER CAN BRING ANYBODY IN, AND WHAT IS STOPPING THEM.
  *
  * "i just tried to add someone new from the chat page ... it doesnt seem to

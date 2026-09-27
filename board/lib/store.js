@@ -1687,6 +1687,22 @@ export function cleanPerson(raw) {
       const m = s(raw.mail, 120).trim().toLowerCase();
       return /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/.test(m) ? m : "";
     })(),
+    /* WHEN THE LAST LETTER TO EVERYBODY WENT TO THIS PERSON.
+     *
+     * A day stamp, so a second run of the same mailout cannot send it twice —
+     * the commonest way a mailing list turns into a complaint. Empty is
+     * everybody who has never had one. See /api/admin/mailout. */
+    mailedAt: /^\d{4}-\d{2}-\d{2}$/.test(String(raw.mailedAt || ""))
+      ? String(raw.mailedAt) : "",
+    /* AND WHETHER THEY ASKED NOT TO GET THEM.
+     *
+     * One press, from a link in the letter itself, and it is honoured for
+     * ever. It stops the letters to everybody and NOTHING else: a message
+     * somebody actually sent them still reaches their inbox, because that is
+     * the thing they gave the address for. Two different kinds of mail and
+     * conflating them would be either spam or a broken app, depending which
+     * way round the mistake went. */
+    noMail: Boolean(raw.noMail),
     /* GOOGLE'S OWN ID FOR AN ACCOUNT, if this person attached one.
      *
      * Digits and nothing else — it is the `sub` claim, which is what is
