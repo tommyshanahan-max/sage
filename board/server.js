@@ -10718,6 +10718,23 @@ app.get("/api/notes", notesOff, async (req, res) => {
        would rather ask than guess at — what to write, whether to write at
        all — so it is the last place he should be missing from. */
     butler: butler.configured(),
+    /* WHICH BUILD THIS IS, SO A PHONE CAN NOTICE IT IS OUT OF DATE.
+     *
+     * The cost of not having it, on one evening: a fix went out, the box said
+     * `running 5e0c28a`, and the phone went on drawing the screen from before
+     * it — so the button was still grey and the sentence under it was one the
+     * deployed code no longer contains. Twenty minutes went into deciding
+     * whether the bug was in the code or in the deploy, and it was in
+     * neither.
+     *
+     * ON THIS RESPONSE RATHER THAN A ROUTE OF ITS OWN. Every screen in the
+     * app already asks for this one, often; a second request whose only job
+     * is to say "still the same" is a request nobody should be paying for.
+     *
+     * It is the asset build id, which changes when anything under public/
+     * changes — see ASSETS. Not the commit: a deploy that touches only the
+     * server has nothing for a phone to re-read. */
+    build: (ASSETS && ASSETS.id) || "",
     /* SOMEBODY RINGING, RIGHT NOW, IN ONE OF THESE THREADS.
      *
      * The other half of the push. A buzz in a pocket says "someone is calling

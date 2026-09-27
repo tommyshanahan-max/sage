@@ -1519,6 +1519,10 @@ let GROUPS = [];
 /* How many things have happened that this phone has not seen — see the bell
    in the header and /api/bells. A number, never the rows. */
 let BELLS = 0;
+/* WHICH BUILD THIS PAGE WAS SERVED FROM, and whether it is already on its way
+   to a newer one. See the note in load(). */
+let BUILT = "";
+let RELOADING = false;
 
 async function load() {
   /* AN INVITED ARRIVAL HAS NO INBOX YET. They are nobody to this server until
@@ -1548,6 +1552,32 @@ async function load() {
   try {
     const d = await fetch("/api/notes", { cache: "no-store",
       headers: device ? { "x-board-device": device } : {} }).then((r) => r.json());
+    /* A DEPLOY WENT OUT AND THIS PHONE KEPT DRAWING THE OLD SCREEN.
+     *
+     * The box said `running 5e0c28a`, the fix was in it, and the button on
+     * the phone was still grey with a sentence the deployed code no longer
+     * contains. Twenty minutes went into deciding whether the bug was in the
+     * code or the deploy; it was in neither.
+     *
+     * So the build id rides along on this response — see /api/notes — and
+     * the first one seen is kept. When it changes, the app has been deployed
+     * out from under this page and every line of it is stale, so it reloads
+     * itself. ONCE: `location.reload()` on a board that somehow reports a new
+     * id every time would be a page that never finishes loading, and BUILT is
+     * set before the reload so the fresh page starts from the new one.
+     *
+     * NOT DURING A CALL. Forty-five seconds is the whole of a call and a
+     * reload in the middle of one drops it — a stale screen is a smaller
+     * problem than a conversation cut off. It will catch the next load. */
+    if (d.build) {
+      if (!BUILT) BUILT = d.build;
+      else if (BUILT !== d.build && !RELOADING && !CALL) {
+        RELOADING = true;
+        BUILT = d.build;
+        location.reload();
+        return;
+      }
+    }
     NOTES = d.notes || [];
     WAITING = Boolean(d.waiting);
     CAN = d.can || [];
@@ -4406,7 +4436,20 @@ function doorWatch(key) {
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) return;
   const who = openWho();
-  if (who.startsWith("d:") && !DOORINFO) drawDoor(who.slice(2));
+  if (who.startsWith("d:") && !DOORINFO) return void drawDoor(who.slice(2));
+  /* COMING BACK TO THE APP IS WHEN A PHONE SHOULD LOOK AGAIN.
+   *
+   * Two things were stale until somebody pressed something: the messages,
+   * and — worse — the code itself. A deploy went out, the box reported the
+   * new build, and this page went on drawing the old screen because nothing
+   * had asked the server anything since before it. load() checks both; see
+   * the build note in there.
+   *
+   * NOT DURING A CALL, and not on a screen that is mid-something: the
+   * invited door and the write-a-link screen hold state that a redraw would
+   * throw away. */
+  if (CALL || INVITED || CHATROOM || who === "new") return;
+  load();
 });
 
 function drawThread(t) {
