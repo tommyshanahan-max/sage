@@ -9,7 +9,7 @@ COMPOSE := docker compose
 # without this line `make board` finds a file by that name, decides it is
 # already up to date, and exits saying so — a deploy command that prints a
 # reassuring sentence and deploys nothing.
-.PHONY: board mailout up-safe can-invite stripe-who call-check
+.PHONY: board board-build mailout up-safe can-invite stripe-who call-check
 .PHONY: version faces cards traffic tier-two try try-china china wallets mo-code visits app-state claire-episodes deal claire-key claire-count claire-seed claire-video listing invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who bells twice admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions whitelabel blocked partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check post post-status post-run post-login post-code post-logins weidian-pull weidian-json weidian-reviews shop-chapter review-tidy product-names review-move
 
 help: ## Show this help
@@ -2584,17 +2584,29 @@ board: ## Deploy the board and nothing else: make board
 	@printf '\n'
 	git fetch origin
 	git reset --hard origin/$(BRANCH)
-	@# BUILT IS READ AGAIN HERE, AND THAT IS THE WHOLE POINT OF THIS LINE.
-	@# The variable at the top of this file is a `:=`, evaluated when make
-	@# PARSES the Makefile — which is before the reset two lines up has
-	@# happened. So the first run of this target built the new code and
-	@# stamped it with the old commit, and `make version` duly reported the
-	@# board as running older code than the disk. It was not: only the label
-	@# was wrong, which is the most confusing way for this to be wrong.
-	BUILT=$$(git rev-parse --short HEAD) $(COMPOSE) build board
-	$(COMPOSE) up -d --no-deps board
+	@# AND NOW HAND OVER TO THE MAKEFILE THAT WAS JUST FETCHED.
+	@#
+	@# This target changes the working tree it is running out of, and make
+	@# read this file into memory before the first line of the recipe ran. So
+	@# every variable here — BUILT most of all, which is a `:=` evaluated at
+	@# parse time — still holds the value it had at the OLD commit, and a fix
+	@# to this Makefile can never take effect on the run that delivers it.
+	@#
+	@# It showed up as a deploy that built the new code and stamped it with
+	@# the previous commit, twice, each time reported by `make version` as
+	@# "running older code than the disk" — which was false about the code
+	@# and true about the label, the most confusing way round for it to be.
+	@#
+	@# A sub-make re-reads the file from disk. Everything below the reset
+	@# happens at the commit that was just fetched, including the rule that
+	@# decides what to do next.
+	@$(MAKE) --no-print-directory board-build
 	@printf '\n'
 	@$(MAKE) --no-print-directory version
+
+board-build: ## (internal) Build and restart the board at whatever is on disk
+	$(COMPOSE) build board
+	$(COMPOSE) up -d --no-deps board
 
 rebuild: ## Rebuild the workspace image (picks up new CLI versions)
 	$(COMPOSE) build --no-cache workspace
