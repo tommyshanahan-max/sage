@@ -321,7 +321,20 @@
   .said{display:flex;gap:.6rem;margin:0 0 .9rem;align-items:flex-start}
   .said.mine{flex-direction:row-reverse}
   .said .av{width:2rem;height:2rem;font-size:.85rem;box-shadow:none}
-  .bub{max-width:78%;padding:.6rem .85rem;border-radius:1.1rem;background:var(--raise);
+  /* THE BUBBLE IS NOT THE FLEX ITEM. .saywrap is — it holds the bubble and
+     the time under it — and the squeezing happens to that.
+     WHY IT SQUEEZES: `overflow-wrap: anywhere` is the one value of that
+     property that changes an element's MIN-CONTENT width. It declares every
+     character a legal break, so the narrowest the bubble can be is one
+     character, so the narrowest the wrapper can be is one character, and in a
+     flex row that is an invitation. The wrapper took it: "Hi" came out 37px
+     wide and two lines tall, one letter above the other.
+     `anywhere` has to stay — a pasted address with no spaces in it must wrap
+     rather than run off the screen — so the shrinking is what stops. The cap
+     moves up here with it; max-width on a box that is not being laid out was
+     never doing the job it looked like it was doing. */
+  .saywrap{flex-shrink:0;max-width:78%;min-width:0}
+  .bub{max-width:100%;padding:.6rem .85rem;border-radius:1.1rem;background:var(--raise);
     border:1px solid var(--line);font-size:1rem;line-height:1.5;overflow-wrap:anywhere;
     white-space:pre-wrap}
   .said.mine .bub{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
@@ -2529,7 +2542,12 @@ function paintRoom(g) {
      * a guest who has not made one — stays a plain face, because a tile that
      * leads to a 404 is worse than one that does nothing. */
     if (!m.mine) row.append(faceLink(m, face(m, "small")));
-    const wrap = el("div");
+    /* NAMED, BECAUSE IT IS THE FLEX ITEM AND THE BUBBLE IS NOT.
+       It held the bubble and the timestamp under it and had no class, so
+       every rule written for "the bubble" — including the one stopping it
+       being squeezed — landed on an element that is not the one the row
+       lays out. See .saywrap in the stylesheet. */
+    const wrap = el("div", "saywrap");
     const bub = el("div", "bub");
     /* @somebody drawn as a mention. Never innerHTML — see at.js. */
     atText(bub, said, g.who.map((x) => x.handle).filter(Boolean));
