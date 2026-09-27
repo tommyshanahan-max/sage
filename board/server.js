@@ -10235,6 +10235,22 @@ async function callPair(req) {
   return { me, them: target.by, handle: target.handle || "", board };
 }
 
+/* A REFUSED CALL, IN THE LOG, BY HANDLE.
+ *
+ * "Video call fail" was the whole of what could be known: the screen said
+ * "Again?" and the board said nothing at all, so there was no way to find out
+ * which of six rules had refused it without guessing.
+ *
+ * The handle and the reason, and nothing else — no device hash, no id. It is
+ * one line per refusal and none per call that works, so it is readable in
+ * `make logs` rather than being something to grep for. */
+function callRefused(req, p) {
+  // The action is the last piece of the path — these routes spell it out
+  // rather than taking it as a parameter, so there is nothing in req.params.
+  const what = String(req.path || "").split("/").filter(Boolean).pop() || "call";
+  console.log("call refused: " + p.error + " (" + what + ")");
+}
+
 /* THE BUZZ IN A POCKET, in whatever language each phone said it reads.
  *
  * NO NAME IN IT, like every other push this board sends — see the note at the
@@ -10268,7 +10284,7 @@ async function ringPhone(to) {
 app.post("/api/call/:who/ring", notesOff, express.json({ limit: "2kb" }), async (req, res) => {
   res.set("Cache-Control", "no-store");
   const p = await callPair(req);
-  if (p.error) return res.status(p.code).json({ error: p.error });
+  if (p.error) { callRefused(req, p); return res.status(p.code).json({ error: p.error }); }
   if (!call.ring(p.me, p.them)) {
     /* THEY PRESSED CALL AT THE SAME MOMENT. The earlier ring stands and this
        screen becomes the one being called, rather than both of them ending up
@@ -10285,7 +10301,7 @@ app.post("/api/call/:who/ring", notesOff, express.json({ limit: "2kb" }), async 
 app.post("/api/call/:who/answer", notesOff, express.json({ limit: "2kb" }), async (req, res) => {
   res.set("Cache-Control", "no-store");
   const p = await callPair(req);
-  if (p.error) return res.status(p.code).json({ error: p.error });
+  if (p.error) { callRefused(req, p); return res.status(p.code).json({ error: p.error }); }
   if (!call.answer(p.me, p.them)) return res.status(409).json({ error: "over" });
   const st = call.state(p.me, p.them);
   res.json({ ok: true, ...st, ice: call.iceServers(), relay: call.relay(), handle: p.handle });
@@ -10296,7 +10312,7 @@ app.post("/api/call/:who/answer", notesOff, express.json({ limit: "2kb" }), asyn
 app.post("/api/call/:who/bye", notesOff, express.json({ limit: "2kb" }), async (req, res) => {
   res.set("Cache-Control", "no-store");
   const p = await callPair(req);
-  if (p.error) return res.status(p.code).json({ error: p.error });
+  if (p.error) { callRefused(req, p); return res.status(p.code).json({ error: p.error }); }
   call.bye(p.me, p.them);
   res.json({ ok: true });
 });
@@ -10305,7 +10321,7 @@ app.post("/api/call/:who/bye", notesOff, express.json({ limit: "2kb" }), async (
 app.post("/api/call/:who/send", notesOff, express.json({ limit: "16kb" }), async (req, res) => {
   res.set("Cache-Control", "no-store");
   const p = await callPair(req);
-  if (p.error) return res.status(p.code).json({ error: p.error });
+  if (p.error) { callRefused(req, p); return res.status(p.code).json({ error: p.error }); }
   call.send(p.me, p.them, req.body?.m);
   res.json({ ok: true });
 });

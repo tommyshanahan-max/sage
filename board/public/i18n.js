@@ -3852,6 +3852,14 @@ export const STRINGS = {
                         "没连上。再试一次，或者发消息。"],
   "cv.noRelay":        ["Couldn't connect on this network.",
                         "当前网络下连不上。"],
+  /* WHY A CALL WOULD NOT START. It used to be "Again?" for every one of
+     these, which told the person nothing and told whoever was trying to fix
+     it less. The last one carries a status code on purpose: ugly and
+     readable beats tidy and useless. */
+  "cv.gone":           ["You cannot call them from here.", "这里打不了给他。"],
+  "cv.self":           ["That is you.", "那是你自己。"],
+  "cv.noDevice":       ["This browser is not signed in.", "这个浏览器没有登录。"],
+  "cv.noGo":           ["The call would not start ({n}).", "电话没能接通（{n}）。"],
 
 
   /* ---------------------------------------------------------------------

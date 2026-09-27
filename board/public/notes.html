@@ -2601,8 +2601,10 @@ async function callOut(who, handle, photo) {
   $("cvme").hidden = false;
   callSay(T("cv.ringing", { who: handle }));
   let d = null;
+  let status = 0;
   try {
     const r = await callApi("ring");
+    status = r.status;
     d = await r.json().catch(() => null);
     if (!r.ok) {
       /* THEY RANG AT THE SAME MOMENT. Their ring stands; this screen becomes
@@ -2611,7 +2613,25 @@ async function callOut(who, handle, photo) {
       if (d && d.error === "crossed") { CALL.role = "in"; callShow("in"); callSay(T("cv.incoming", { who: handle })); callLoop(); return; }
       throw new Error((d && d.error) || "no");
     }
-  } catch { callHang(T("act.again")); return; }
+  } catch (e) {
+    /* IT SAID "Again?" AND THAT IS ALL IT SAID.
+     *
+     * Every way this can fail came out as one word with a question mark,
+     * which is no use to the person pressing the button and no use to
+     * anybody trying to find out why — it was reported as "video call fail"
+     * because that is genuinely all the screen knew how to say.
+     *
+     * Each refusal the server can give has a sentence now. Anything not on
+     * the list carries its status code, which is ugly and is the point: an
+     * unnamed failure that can be read out is a failure somebody can act on,
+     * and a pretty one that cannot is the thing being fixed. */
+    const known = { gone: "cv.gone", self: "cv.self", profile: "note.needProfile",
+                    closed: "note.closed", shut: "note.shut",
+                    waiting: "note.waiting", no: "cv.noDevice" };
+    const key = known[String(e.message)];
+    callHang(key ? T(key) : T("cv.noGo", { n: status || 0 }));
+    return;
+  }
   CALL.since = d.since || 0;
   CALL.ice = d.ice || [];
   CALL.relay = Boolean(d.relay);
