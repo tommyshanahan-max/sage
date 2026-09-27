@@ -4506,6 +4506,27 @@ async function watchInbox() {
   /* Re-read the guards: the fetch took time, and a call can have started in
      it. Painting over a call in progress would drop the call. */
   if (document.hidden || CALL || INVITED || CHATROOM || openWho() === "new") return;
+  /* A DEPLOY WENT OUT AND THIS PHONE WAS ALREADY OPEN.
+   *
+   * "The messages are there now but didn't arrive in real time" — with the
+   * fix for exactly that already on the box. The page in his hand had been
+   * loaded before the deploy, so it had no tick in it, and the only thing
+   * that reloads a stale page is load(), which a page with no tick only runs
+   * when the phone comes back to the app. An app somebody never leaves is
+   * never brought up to date, and the newer the fix the longer it hides.
+   *
+   * So the tick checks the build too. It is the same one line load() reads —
+   * see the long note there — and it has to be HERE rather than left to the
+   * signature below, because a deploy does not change a single message. */
+  if (d.build) {
+    if (!BUILT) BUILT = d.build;
+    else if (BUILT !== d.build && !RELOADING) {
+      RELOADING = true;
+      BUILT = d.build;
+      location.reload();
+      return;
+    }
+  }
   if (sigOf(d) === SIG) return;
   load();
 }

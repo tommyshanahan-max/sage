@@ -551,6 +551,25 @@ try {
   console.error("assets: not built (" + err.message + ") — serving the plain files");
 }
 
+/* WHICH COMMIT THIS CONTAINER WAS BUILT FROM, for the one question a phone
+ * asks about itself: am I running the code that is on the box.
+ *
+ * NOT ASSETS.id, AND THAT IS THE WHOLE POINT OF THIS LINE. That id is a hash
+ * over public/*.js and nothing else — so a deploy that changes notes.html,
+ * which is most of them, produces the SAME id, and a page that checks it
+ * decides it is up to date while serving a screen that is days old. The
+ * symptom was "the messages are there now but didn't arrive in real time",
+ * said about a fix that was already on the box; the page in his hand had no
+ * way to find out.
+ *
+ * board/Dockerfile writes it, last, after the COPYs, so it changes on every
+ * deploy and invalidates nothing above it. Empty off the box — `make try`, a
+ * laptop — where ASSETS.id goes on standing in. */
+let BUILT_AT = "";
+try {
+  BUILT_AT = (await readFile("/app/BUILT", "utf8")).trim().slice(0, 40);
+} catch { BUILT_AT = ""; /* not in a container. ASSETS.id below is the fallback */ }
+
 /* Immutable, because the address contains a hash of the content: a changed
    file is a different address, so this copy can never be stale.
  *
@@ -10936,7 +10955,7 @@ app.get("/api/notes", notesOff, async (req, res) => {
      * It is the asset build id, which changes when anything under public/
      * changes — see ASSETS. Not the commit: a deploy that touches only the
      * server has nothing for a phone to re-read. */
-    build: (ASSETS && ASSETS.id) || "",
+    build: BUILT_AT || (ASSETS && ASSETS.id) || "",
     /* SOMEBODY RINGING, RIGHT NOW, IN ONE OF THESE THREADS.
      *
      * The other half of the push. A buzz in a pocket says "someone is calling
