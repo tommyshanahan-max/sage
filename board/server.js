@@ -5647,6 +5647,13 @@ app.post("/api/write", express.json({ limit: "4kb" }), gate, async (req, res) =>
     return { code: row.code, till: row.till, to: row.to, from: mine.handle };
   });
   if (!out) {
+    /* SAID OUT LOUD, so `make logs` answers it too. A refusal somebody is
+       looking at on a phone in another country is a refusal nobody here can
+       see, and the screen and the log disagreeing is worse than either — so
+       it is the same word in both. No device hash and no name: which member
+       it was is not what anybody is trying to find out. */
+    console.log("write refused: " + (why || "no")
+      + (need.length ? " (" + need.join(",") + ")" : ""));
     return res.status(400).json({ error: why || "no", ...(need.length ? { need } : {}) });
   }
   res.json({ ok: true, ...out });

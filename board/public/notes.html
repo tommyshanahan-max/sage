@@ -3469,16 +3469,46 @@ async function getLink() {
     if (d && d.ok) {
       LINK = { code: d.code, till: d.till };
     } else if (d && d.error === "standing" && Array.isArray(d.need) && d.need.length) {
-      /* WHICH OF THE THREE IS MISSING, not "your profile page says what is
-         left" — standing() has already worked it out. */
-      const first = ["face", "days", "said"].find((k) => d.need.includes(k));
+      /* WHICH ONE IS MISSING, not "your profile page says what is left" —
+         standing() has already worked it out. ALL FIVE of them: the first
+         version of this list knew about three, so somebody blocked by the
+         other two got the vague sentence instead of the exact one. */
+      const first = ["face", "days", "said", "guests", "room"]
+        .find((k) => d.need.includes(k));
       LINK = { why: T({ face: "wn.needFace", days: "wn.needDays",
-                        said: "wn.needSaid" }[first] || "wn.mkStanding") };
+                        said: "wn.needSaid", guests: "wn.needGuests",
+                        room: "wn.needRoom" }[first] || "wn.mkStanding") };
     } else {
-      const known = { standing: "wn.mkStanding", nopage: "note.needProfile" };
-      LINK = { why: T(known[d && d.error] || "act.again") };
+      /* EVERY REFUSAL THIS ROUTE CAN GIVE, and there is no "Again?" left in
+         the list.
+         "Again?" is act.again, and it is what this screen showed for five
+         different things going wrong — including two that are the board
+         telling somebody exactly what is wrong and the screen declining to
+         pass it on. Tom got it twice and there was no way to tell from the
+         outside which of the five it was, which cost two rounds of
+         screenshots.
+         The last line is deliberate and stays: an error nobody has mapped yet
+         prints its own name, small, rather than a shrug. A word somebody can
+         read out is worth more than a tidy sentence that says nothing. */
+      const known = {
+        standing: "wn.mkStanding",   // rationed, and need[] was empty
+        nopage:   "note.needProfile",
+        invite:   "wn.linkDoor",     // gate: this browser is not admitted
+        no:       "wn.linkNoDevice", // the board did not recognise the phone
+        contact:  "wn.mkNoContact",
+        bad:      "wn.linkFailed",
+        again:    "wn.linkFailed",
+      };
+      const key = known[d && d.error];
+      LINK = { why: key ? T(key)
+        : T("wn.linkFailed") + " (" + ((d && d.error) || "?") + ")" };
     }
-  } catch { LINK = { why: T("act.again") }; }
+  } catch (err) {
+    /* A THROW IS NOT A REFUSAL. The board said nothing readable at all —
+       offline, or an error page where JSON was expected — and that is a
+       different thing from being told no. */
+    LINK = { why: T("wn.linkOffline") };
+  }
   LINKING = false;
   if (openWho() === "new") drawWriteNew();
 }

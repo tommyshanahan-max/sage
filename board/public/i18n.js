@@ -3922,6 +3922,22 @@ export const STRINGS = {
   /* A refusal that names the missing half, rather than "Again?" — see
      sendInvited. */
   "wn.needYourName":   ["Put your name in first.", "\u5148\u5199\u4e0a\u4f60\u7684\u540d\u5b57\u3002"],
+  /* THE OTHER TWO WAYS BRINGING SOMEBODY IN IS RATIONED — see standing() in
+     server.js. The screen knew about three of the five and gave everybody
+     else the vague sentence. */
+  "wn.needGuests":     ["The people you brought in have not posted yet. One of them saying something opens this again.",
+                        "\u4f60\u5e26\u8fdb\u6765\u7684\u4eba\u8fd8\u6ca1\u53d1\u8fc7\u4e1c\u897f\u3002\u4ed6\u4eec\u4e2d\u6709\u4eba\u53d1\u4e00\u6761\uff0c\u8fd9\u91cc\u5c31\u53c8\u5f00\u4e86\u3002"],
+  "wn.needRoom":       ["That is all the links for today. Tomorrow there are more.",
+                        "\u4eca\u5929\u7684\u94fe\u63a5\u7528\u5b8c\u4e86\u3002\u660e\u5929\u8fd8\u6709\u3002"],
+  /* AND THE FIVE THINGS THAT USED TO COME OUT AS "Again?" — see getLink. */
+  "wn.linkDoor":       ["This phone is not through the door yet.",
+                        "\u8fd9\u90e8\u624b\u673a\u8fd8\u6ca1\u8fdb\u95e8\u3002"],
+  "wn.linkNoDevice":   ["The board does not recognise this phone. Open Chat and come back.",
+                        "\u677f\u5b50\u8ba4\u4e0d\u51fa\u8fd9\u90e8\u624b\u673a\u3002\u5148\u56de\u804a\u5929\u518d\u8fc7\u6765\u3002"],
+  "wn.linkFailed":     ["The board could not make a link just now.",
+                        "\u73b0\u5728\u751f\u6210\u4e0d\u4e86\u94fe\u63a5\u3002"],
+  "wn.linkOffline":    ["No answer from the board. Check the signal and try again.",
+                        "\u677f\u5b50\u6ca1\u6709\u56de\u5e94\u3002\u770b\u770b\u4fe1\u53f7\uff0c\u518d\u8bd5\u4e00\u6b21\u3002"],
   "wn.yourReply":      ["Your answer", "你的回复"],
   "wn.replyPh": [
     "Performer, Sydney, free from March. Two features and a series.",
