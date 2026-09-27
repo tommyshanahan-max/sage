@@ -1524,6 +1524,19 @@ let BELLS = 0;
 let BUILT = "";
 let RELOADING = false;
 
+/* WHAT THE INBOX LOOKED LIKE LAST TIME, IN ONE LINE — see watchInbox(). Four
+   things, because those are the four that mean the screen is out of date: a
+   message arrived, one was read somewhere else, somebody is ringing, or
+   somebody new became writable. */
+const sigOf = (d) => [
+  (d.notes || []).length,
+  ((d.notes || []).slice(-1)[0] || {}).id || "",
+  d.unread || 0,
+  (d.ring && d.ring.who) || "",
+  (d.can || []).length,
+].join("|");
+let SIG = "";
+
 async function load() {
   /* AN INVITED ARRIVAL HAS NO INBOX YET. They are nobody to this server until
      they answer, so asking for one would be a 403 before the screen has drawn
@@ -1583,6 +1596,7 @@ async function load() {
     CAN = d.can || [];
     YOU = d.you || { handle: "", photo: "" };
     UNREAD = d.unread || 0;
+    SIG = sigOf(d);
     /* SOMEBODY IS RINGING, RIGHT NOW.
      *
      * The other half of the push. The buzz says "someone is calling you" and
@@ -4451,6 +4465,52 @@ document.addEventListener("visibilitychange", () => {
   if (CALL || INVITED || CHATROOM || who === "new") return;
   load();
 });
+
+/* AND WHILE HE IS LOOKING AT IT, WHICH IS THE CASE THAT WAS MISSING.
+ *
+ * "she messages me, and i get a notification someone messaged me but i dont
+ * see the message instantly on the screen" — and the same evening, a video
+ * call that rang out with nobody answering.
+ *
+ * Both were one thing: this page asked the server for the inbox when it
+ * opened, when the phone came back to it, and after something was pressed,
+ * and at no other moment. A messenger sitting open on a phone is precisely
+ * the moment a message arrives, so the buzz landed on the lock screen and the
+ * screen underneath it did not move. WORSE FOR A CALL: an incoming call is
+ * `ring` on the /api/notes answer (see the note in load), so somebody already
+ * in the app never saw it ring at all — a call is over in forty-five seconds
+ * and there was nothing to answer.
+ *
+ * A CHEAP ASK AND A RARE REDRAW. The tick reads /api/notes and compares one
+ * line — see sigOf — and only when that line changes does it run the full
+ * load, which paints. So a quiet inbox costs one small request and nothing
+ * else: no repaint, no jump to the bottom of a thread somebody is reading,
+ * no compose box surprised mid-sentence.
+ *
+ * FIVE SECONDS. Slow enough that a phone in a pocket is not doing work, fast
+ * enough that a message and a ringing phone both feel like now.
+ *
+ * The same four screens sit it out as the one above, for the same reasons,
+ * and a hidden tab asks nothing — the visibility handler above is what brings
+ * it back in step. */
+let INBOXTICK = 0;
+async function watchInbox() {
+  if (document.hidden || CALL || INVITED || CHATROOM) return;
+  if (openWho() === "new") return;
+  let d;
+  try {
+    d = await fetch("/api/notes", { cache: "no-store",
+      headers: device ? { "x-board-device": device } : {} }).then((r) => (r.ok ? r.json() : null));
+  } catch { return; /* a phone in a lift. The next tick is five seconds away */ }
+  if (!d) return;
+  /* Re-read the guards: the fetch took time, and a call can have started in
+     it. Painting over a call in progress would drop the call. */
+  if (document.hidden || CALL || INVITED || CHATROOM || openWho() === "new") return;
+  if (sigOf(d) === SIG) return;
+  load();
+}
+clearInterval(INBOXTICK);
+INBOXTICK = setInterval(watchInbox, 5000);
 
 function drawThread(t) {
   $("twho").hidden = false;
