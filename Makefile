@@ -2584,7 +2584,14 @@ board: ## Deploy the board and nothing else: make board
 	@printf '\n'
 	git fetch origin
 	git reset --hard origin/$(BRANCH)
-	$(COMPOSE) build board
+	@# BUILT IS READ AGAIN HERE, AND THAT IS THE WHOLE POINT OF THIS LINE.
+	@# The variable at the top of this file is a `:=`, evaluated when make
+	@# PARSES the Makefile — which is before the reset two lines up has
+	@# happened. So the first run of this target built the new code and
+	@# stamped it with the old commit, and `make version` duly reported the
+	@# board as running older code than the disk. It was not: only the label
+	@# was wrong, which is the most confusing way for this to be wrong.
+	BUILT=$$(git rev-parse --short HEAD) $(COMPOSE) build board
 	$(COMPOSE) up -d --no-deps board
 	@printf '\n'
 	@$(MAKE) --no-print-directory version
