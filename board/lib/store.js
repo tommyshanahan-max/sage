@@ -587,7 +587,13 @@ export const MO = "mo";
  * Nobody is ever filed under it: cleanWait only accepts a WAITROOMS key and
  * falls back to "other", so a row can never claim it.
  */
-export const WAITROOMS_CHAT = ["film", "invest", "raise", "trade", "other", "rewards"];
+/* "learn" IS HERE AND NOT IN WAITROOMS, for the same reason "rewards" is not.
+ * Nobody is ever filed under it — cleanWait only accepts a WAITROOMS key — and
+ * anybody may stand in it whatever they came for. It was also promised before
+ * it existed: door.other.say has read "Film, money, hiring, language —
+ * different rooms, one building" since the doors were written, and language
+ * was the one with no room behind it. */
+export const WAITROOMS_CHAT = ["film", "invest", "raise", "trade", "learn", "other", "rewards"];
 
 /** The one door that is not about what somebody does. See above. */
 export const OPEN_DOOR = "rewards";

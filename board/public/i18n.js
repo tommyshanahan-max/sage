@@ -515,6 +515,20 @@ export const STRINGS = {
     "People sourcing from China, and the factories and trading companies supplying them — with the agents, the distributors and the lawyers who sit in between. All on the same board, which is the point of it.",
     "从中国采购的人，和给他们供货的工厂与外贸公司——还有夹在中间的代理、经销商和律师。都在同一个板子上，这正是它的意义所在。",
   ],
+  /* THE ROOM THAT NEEDS NOBODY TO BE IN BUSINESS YET. Every other door asks
+     what you do; this one asks what you are trying to say. It is also the
+     only door on the board that gives somebody something in the first two
+     minutes rather than asking them for something. */
+  "door.learn.head": [
+    "What do I say when the bottle comes out?",
+    "酒瓶子一开，该说什么？",
+  ],
+  "door.learn.under": ["The part that is not in the textbook.", "课本上没有的那部分。"],
+  "door.learn.say": [
+    "People learning Chinese, and learning how things are actually done here — with the ones who have been doing both for twenty years. Same building as the film, the money and the factories, which is the point of it.",
+    "在学中文、也在学这儿的事到底怎么办的人——还有已经学了二十年的那几位。跟影视、资金、工厂在同一栋楼里，这才是重点。",
+  ],
+
   "door.other.head": [
     "Who would you ring, if you knew them yet?",
     "如果你认识那个人，你会给谁打电话？",
@@ -1454,6 +1468,7 @@ export const STRINGS = {
   "waitroom.invest":   ["Investing", "投资"],
   "waitroom.raise":    ["Raising", "融资"],
   "waitroom.trade":    ["Factories & buyers", "工厂与买家"],
+  "waitroom.learn":    ["Chinese & culture", "中文与文化"],
   "waitroom.other":    ["Something else", "别的"],
   /* THE SIXTH DOOR, AND THE ONLY ONE THAT IS NOT ABOUT WHAT SOMEBODY DOES.
      Everybody can stand in it whatever they came for, because where you are in

@@ -763,7 +763,9 @@ const el = (t, c, x) => { const n = document.createElement(t); if (c) n.classNam
 const fill = (n) => { while (n.firstChild) n.removeChild(n.firstChild); };
 
 /* ---- the doors ---------------------------------------------------------- */
-const DOORS = ["film", "invest", "raise", "trade", "other"];
+/* "other" STAYS LAST because it is the one that means "none of the above",
+   and a catch-all above a named door is a door nobody reads past. */
+const DOORS = ["film", "invest", "raise", "trade", "learn", "other"];
 function drawDoors() {
   const box = $("doors");
   fill(box);
