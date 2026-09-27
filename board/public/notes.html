@@ -1887,11 +1887,13 @@ function drawList(T0) {
    * was already one row up — "Tom, Axel" sitting under Axel — and the list
    * read as the app having lost track of who you were talking to.
    *
-   * SO THE PERSON'S ROW SWALLOWS IT. One row per person, and it opens
-   * whichever of the two had the last word in it, so the memo and everything
-   * said in the room are still one tap away and nothing is deleted to tidy a
-   * screen. A room of three stays its own row; so does a room of two with
-   * somebody you have no thread with, because there is nothing to swallow it.
+   * SO THE PERSON'S ROW SWALLOWS IT. One row per person, and it opens the
+   * chat with them — the chat, every time, with the ＋ on it. The room is not
+   * deleted to tidy a screen: the terms tile behind the ＋ opens it, which is
+   * what it was made for and the only reason anybody goes there.
+   *
+   * A room of three stays its own row. So does a room of two with somebody
+   * you have no thread with, because there is nothing to swallow it.
    */
   const ROOMOF = new Map();   // a thread's who  -> the room that is also them
   const PAIRED = new Set();   // the rooms that no longer need a row
@@ -1915,12 +1917,12 @@ function drawList(T0) {
     /* t.last.at, NOT t.at. A thread has no `at` of its own — it is its
        newest note's — so every two-person row sorted as "" and sank below
        every group, however old the group and however new the message. */
-    ...T0.map((t) => {
-      const g = ROOMOF.get(t.who) || null;
-      const mine = (t.last && t.last.at) || "";
-      const at = g && String(lastAt(g)) > String(mine) ? lastAt(g) : mine;
-      return { at, row: () => listRow(t, g) };
-    }),
+    /* SORTED ON THE CHAT'S OWN NEWEST LINE, not the room's. The row opens the
+       chat, so the row has to be about the chat — a row sorted to the top by
+       something said in a room, showing a month-old preview, is a row that
+       lies about itself twice over. */
+    ...T0.map((t) => ({ at: (t.last && t.last.at) || "",
+                        row: () => listRow(t, ROOMOF.get(t.who) || null) })),
     // Not the hand-kept rooms: they are cards in the banner — see drawWaiting.
     ...GROUPS.filter((g) => !g.hand && !PAIRED.has(g.id))
       .map((g) => ({ at: lastAt(g), row: () => groupRow(g) })),
@@ -2130,13 +2132,19 @@ function groupRow(g) {
  *  are not told. See swipeRow.
  */
 function listRow(t, room) {
-  /* THE ROOM OF TWO THAT IS ALSO THIS PERSON — see drawList. When the last
-     thing either of you said was said in there, this row is that room: the
-     same face and the same name, because it is the same person, and it opens
-     where the conversation actually is. */
-  const inRoom = Boolean(room) && String(lastAt(room)) > String((t.last && t.last.at) || "");
-  const says = room && Array.isArray(room.says) ? room.says : [];
-  const newest = says[says.length - 1] || null;
+  /* THE ROOM OF TWO THAT IS ALSO THIS PERSON — see drawList.
+   *
+   * IT OPENS THE CHAT. ALWAYS. The first version of this opened whichever of
+   * the two had the last word, which was clever and wrong: "Whn i open Axel i
+   * see the group message not the 1-1 and no +". A row with a person's name
+   * and a person's face has to be that person's conversation every time, with
+   * the ＋ on it and everything behind the ＋. A room is not somewhere to land
+   * by surprise because of when something was last said in it.
+   *
+   * The room is still there and nothing in it is lost — the terms tile behind
+   * the ＋ opens it, which is what it was made for. `room` is kept here for
+   * the delete below, which has to take both halves.
+   */
   const b = el("button", "trow");
   b.type = "button";
   const wrap2 = el("div", "avwrap");
@@ -2152,25 +2160,20 @@ function listRow(t, room) {
   const mid = el("div", "mid");
   const nm = el("div", "nm");
   nm.append(el("b", t.unread ? "new" : null, t.handle || "—"));
-  const shown = inRoom && newest ? newest : t.last;
-  const at = inRoom ? lastAt(room) : t.last.at;
-  const time = el("time", null, when(at));
-  time.dateTime = at;
+  const time = el("time", null, when(t.last.at));
+  time.dateTime = t.last.at;
   nm.append(time);
   const prev = el("p", "prev");
   /* "You:" IN FRONT OF YOUR OWN LAST LINE. Without it a row whose newest
      message is one you sent reads as one they sent, and the whole list is a
      guess about who spoke last. */
-  if (shown.mine) prev.append(el("span", "k", T("note.youSaid") + " "));
+  if (t.last.mine) prev.append(el("span", "k", T("note.youSaid") + " "));
   // See saidShort. A voice note in a one-to-one thread printed "You:" and
   // nothing at all.
-  prev.append(document.createTextNode(saidShort(shown)));
+  prev.append(document.createTextNode(saidShort(t.last)));
   mid.append(nm, prev);
   b.append(wrap2, mid);
-  b.addEventListener("click", () => {
-    if (inRoom) { location.assign("/groups?g=" + encodeURIComponent(room.id)); return; }
-    openThread(t.who);
-  });
+  b.addEventListener("click", () => openThread(t.who));
 
   /* DELETING IT TAKES BOTH HALVES, and the sentence says so.
    *
