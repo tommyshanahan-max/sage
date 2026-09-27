@@ -68,17 +68,17 @@
 (() => {
   const zh = (navigator.language || "").startsWith("zh");
   const W = zh ? {
-    hostTitle: "你的直播课", go: "开始直播", watch: "观看", live: "直播中", ready: "未开播",
-    title: "{who}的直播课", notYet: "{who}还没开播", left: "{who}已下播", ended: "直播已结束",
+    hostTitle: "你的直播", go: "开始直播", watch: "观看", live: "直播中", ready: "未开播",
+    title: "{who}的直播", notYet: "{who}还没开播", left: "{who}已下播", ended: "直播已结束",
     again: "重新开始", back: "重新观看", sound: "点一下打开声音", conn: "正在连接…", lost: "连接断了，正在重连…",
-    cam: "请允许使用摄像头和麦克风，再试一次。", key: "这个链接打不开直播。", over: "这节直播课已经结束了。",
+    cam: "请允许使用摄像头和麦克风，再试一次。", key: "这个链接打不开直播。", over: "这场直播已经结束了。",
     full: "人数已满。", net: "连不上，检查一下网络再试。", today: "今天",
   } : {
-    hostTitle: "Your live class", go: "Go live", watch: "Watch", live: "LIVE", ready: "Not live",
-    title: "{who} · live class", notYet: "{who} isn't live yet", left: "{who} has ended the live", ended: "Live ended",
+    hostTitle: "Your live", go: "Go live", watch: "Watch", live: "LIVE", ready: "Not live",
+    title: "{who} · live", notYet: "{who} isn't live yet", left: "{who} has ended the live", ended: "Live ended",
     again: "Go live again", back: "Watch again", sound: "Tap for sound", conn: "Connecting…", lost: "Connection dropped — reconnecting…",
-    cam: "Allow the camera and microphone, then try again.", key: "This link doesn't open a live class.", over: "This live class is over.",
-    full: "This class is full.", net: "Can't connect — check the network and try again.", today: "Today",
+    cam: "Allow the camera and microphone, then try again.", key: "This link doesn't open a live.", over: "This live is over.",
+    full: "This live is full.", net: "Can't connect — check the network and try again.", today: "Today",
   };
   const fill = (s, v) => s.replace(/\{(\w+)\}/g, (_, k) => v[k] ?? "");
   const $ = (id) => document.getElementById(id);

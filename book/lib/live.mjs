@@ -107,6 +107,8 @@ export function ticket(room, identity, name, host) {
    room with its limit, count who is in it, and say something into it. A
    minute-long admin ticket per call, signed with the same key. */
 async function twirp(method, room, body) {
+  // The terminal (cli.mjs) never runs liveSetup; it reads the key kept by it.
+  if (!SECRET) { try { SECRET = readFileSync(path.join(DIR, "live-secret"), "utf8").trim(); } catch { /* off */ } }
   if (!SECRET) throw new Error("live is off");
   const now = Math.floor(Date.now() / 1000);
   const t = b64({ alg: "HS256", typ: "JWT" }) + "." + b64({ iss: KEY, nbf: now - 10, exp: now + 60,
@@ -142,12 +144,19 @@ export async function watching(room) {
   }
 }
 
+/** Everybody out: the live has been ended. Their pages see the connection
+ *  close and say the live is over. */
+export async function closeRoom(room) {
+  try { await twirp("DeleteRoom", room, { room }); } catch { /* already empty */ }
+}
+
 /** Something said into the room by the server — a sale, a gift, a message,
  *  the item now pinned. Viewers cannot send into the room themselves: every
  *  line goes through here, where it can be limited and kept. */
-export async function tell(room, msg) {
+export async function tell(room, msg, to) {
   try {
-    await twirp("SendData", room, { room, data: Buffer.from(JSON.stringify(msg)).toString("base64"), kind: "RELIABLE", topic: "live" });
+    await twirp("SendData", room, { room, data: Buffer.from(JSON.stringify(msg)).toString("base64"), kind: "RELIABLE", topic: "live",
+      ...(to ? { destination_identities: to } : {}) });
   } catch { /* nobody there, or LiveKit away — the page asks again on join */ }
 }
 
@@ -163,6 +172,8 @@ export function cleanLive(r) {
     hKey: /^[a-f0-9]{24}$/.test(r.hKey) ? r.hKey : randomBytes(12).toString("hex"),
     vKey: /^[a-f0-9]{24}$/.test(r.vKey) ? r.vKey : randomBytes(12).toString("hex"),
     off: Boolean(r.off),
+    // Which app made it, when one did — an app sees and ends only its own.
+    ...(/^[a-z0-9-]{1,30}$/.test(r.app || "") ? { app: r.app } : {}),
     max: Math.min(CEIL, Math.max(1, Number.parseInt(r.max, 10) || MAX)),
     // WHAT IS FOR SALE, added from the seller's phone mid-live. The photo is
     // a file beside book.json, not in it — see /photo in server.mjs.
@@ -181,6 +192,33 @@ export function cleanLive(r) {
     }).filter(Boolean),
   };
 }
+
+/** A new live, from the terminal (`make book-live`) or from an app (POST
+ *  /api/lives). `when` is Beijing time, "2026-10-03 19:00", or empty for
+ *  now. Returns the row, or a sentence saying what was wrong with the ask. */
+export function newLive({ host, title, when, max, app }) {
+  if (!String(host || "").trim()) return { error: 'host is who is on camera, as viewers see it: host: "Tom"' };
+  let start = new Date(Date.now() + 8 * 3600e3).toISOString().slice(0, 16) + ":00+08:00";
+  if (when) {
+    const w = String(when).trim().replace(" ", "T");
+    if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(w)) return { error: 'when is "2026-10-03 19:00", Beijing time, or left out for now' };
+    start = w + ":00+08:00";
+  }
+  const l = cleanLive({ id: randomBytes(8).toString("hex"), host, title, start, max });
+  if (!l) return { error: "not a live" };
+  if (app) l.app = app;
+  return { live: l };
+}
+
+/** Its two links, and until when they work. */
+export const links = (l) => ({
+  id: l.id,
+  seller: `${PUBLIC}/live/${l.id}#${l.hKey}`,
+  viewer: `${PUBLIC}/live/${l.id}#${l.vKey}`,
+  start: l.start,
+  until: new Date(Date.parse(l.start) + 12 * 3600e3).toISOString(),
+  max: l.max,
+});
 
 /* Open from the moment it is made until twelve hours after it starts — so the
    teacher can try the camera the day before, and a market day is one link

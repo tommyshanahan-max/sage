@@ -577,7 +577,7 @@ BOOK_ENV = -e SHELF="$(SHELF)" -e NAME="$(NAME)" -e ZH="$(ZH)" -e LINE="$(LINE)"
   -e TAGS="$(TAGS)" -e PRICE="$(PRICE)" -e MINUTES="$(MINUTES)" -e PHOTO="$(PHOTO)" \
   -e VOICE="$(VOICE)" -e PAY="$(PAY)" -e HOURS="$(HOURS)" -e ID="$(ID)" \
   -e FEE="$(FEE)" -e LEAD="$(LEAD)" -e CUT="$(CUT)" -e AMOUNT="$(AMOUNT)" \
-  -e TITLE="$(TITLE)" -e WHEN="$(WHEN)" -e MAX="$(MAX)"
+  -e TITLE="$(TITLE)" -e WHEN="$(WHEN)" -e MAX="$(MAX)" -e OFF="$(OFF)"
 
 book-teacher: ## Add or update a teacher: make book-teacher SHELF=studypal NAME="Li Wei" PRICE=¥120 HOURS="mon-fri 19:00 20:00"
 	@$(COMPOSE) exec -T $(BOOK_ENV) book node cli.mjs teacher
@@ -623,6 +623,9 @@ book-test: ## Book a test lesson and print its two video links (phone + laptop)
 
 book-live: ## A live, up to 10 watching: make book-live NAME=Julia [TITLE="HSK 4"] [WHEN="2026-10-03 19:00"] [MAX=100]
 	@$(COMPOSE) exec -T $(BOOK_ENV) book node cli.mjs live
+
+book-app: ## A key for an app to start lives itself (shown once): make book-app NAME=laonei [OFF=1 to remove]
+	@$(COMPOSE) exec -T $(BOOK_ENV) book node cli.mjs app
 
 book-live-off: ## Close a live class early: make book-live-off ID=…
 	@$(COMPOSE) exec -T $(BOOK_ENV) book node cli.mjs live-off

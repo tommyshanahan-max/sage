@@ -29,6 +29,9 @@ export function load() {
       bookings: (Array.isArray(raw.bookings) ? raw.bookings : []).map(cleanBooking).filter(Boolean),
       teams: (Array.isArray(raw.teams) ? raw.teams : []).map(cleanTeam).filter(Boolean),
       lives: (Array.isArray(raw.lives) ? raw.lives : []).map(cleanLive).filter(Boolean),
+      // Apps allowed to start lives: a name and the hash of its key.
+      apps: (Array.isArray(raw.apps) ? raw.apps : []).filter((a) => a && /^[a-z0-9-]{1,30}$/.test(a.name) && /^[a-f0-9]{64}$/.test(a.hash))
+        .map((a) => ({ name: a.name, hash: a.hash, at: String(a.at || "") })),
     };
     /* A booking read without room keys was just given some by cleanBooking.
        Written straight back, or the next read would mint different ones and
@@ -38,7 +41,7 @@ export function load() {
       || (raw.lives || []).some((l) => l && (!l.hKey || !l.vKey))) save(db);
     return db;
   } catch {
-    return { teachers: [], bookings: [], teams: [], lives: [] };
+    return { teachers: [], bookings: [], teams: [], lives: [], apps: [] };
   }
 }
 

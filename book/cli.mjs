@@ -19,7 +19,8 @@
  */
 import { load, save, newId, cleanTeacher, cleanBooking, cleanTeam, DAYS, slotsFor, HOUSE_CUT } from "./lib/store.mjs";
 import { teamView } from "./lib/team.mjs";
-import { cleanLive } from "./lib/live.mjs";
+import { newLive, closeRoom } from "./lib/live.mjs";
+import { createHash, randomBytes } from "node:crypto";
 
 const E = process.env;
 // Where the booking service is reached from outside, for printing room links.
@@ -152,15 +153,10 @@ if (cmd === "teacher") {
   /* A LIVE CLASS: two links. NAME is the teacher, as the group will see it.
      WHEN is Beijing time and optional — without it the class is open now,
      for the next twelve hours. TITLE is optional too. */
-  if (!E.NAME) { console.error('Needs NAME="…" — the teacher, as the group sees it.'); process.exit(1); }
-  let start = new Date(Date.now() + 8 * 3600e3).toISOString().slice(0, 16) + ":00+08:00";
-  if (E.WHEN) {
-    const w = String(E.WHEN).trim().replace(" ", "T");
-    if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(w)) { console.error('WHEN is "2026-10-03 19:00", Beijing time.'); process.exit(1); }
-    start = w + ":00+08:00";
-  }
+  const made = newLive({ host: E.NAME, title: E.TITLE, when: E.WHEN, max: E.MAX });
+  if (made.error) { console.error(made.error.replace("host is", "NAME is").replace("when is", "WHEN is")); process.exit(1); }
+  const l = made.live;
   const db = load();
-  const l = cleanLive({ id: newId(), host: E.NAME, title: E.TITLE, start, max: E.MAX });
   db.lives.push(l);
   save(db);
   console.log(`Live class — ${l.host}${l.title ? ", " + l.title : ""}, ${when(l.start.slice(0, 16) + "+08:00")}. Up to ${l.max} watching.\n`);
@@ -173,7 +169,24 @@ if (cmd === "teacher") {
   if (!l) { console.error(`No live class ${E.ID || "(ID=…)"}.`); process.exit(1); }
   l.off = true;
   save(db);
+  await closeRoom("live-" + l.id);
   console.log(`Closed. Both links for ${l.host}'s live class now say it is over.`);
+} else if (cmd === "app") {
+  /* A KEY FOR AN APP THAT STARTS LIVES ITSELF — Laonei first. Printed once
+     and kept here only as a hash, so this file cannot give it back; running
+     this again for the same NAME makes a new key and the old one stops
+     working, which is also how a leaked key is dealt with. OFF=1 removes the
+     app's key altogether. */
+  const name = String(E.NAME || "").toLowerCase().replace(/[^a-z0-9-]/g, "");
+  if (!name) { console.error("Needs NAME=laonei — the app the key is for."); process.exit(1); }
+  const db = load();
+  db.apps = db.apps.filter((a) => a.name !== name);
+  if (E.OFF) { save(db); console.log(`${name} has no key now. Its lives stay as they are.`); process.exit(0); }
+  const key = "bk_" + randomBytes(24).toString("hex");
+  db.apps.push({ name, hash: createHash("sha256").update(key).digest("hex"), at: new Date().toISOString() });
+  save(db);
+  console.log(`Key for ${name} — goes in ${name}'s own server settings, never in a page:\n\n  ${key}\n`);
+  console.log(`It is shown once. Lost: run this again for a new one (the old one stops).`);
 } else if (cmd === "test") {
   /* A REAL BOOKING TO TRY THE VIDEO ON: the first free slot of the first
      teacher on SHELF (default studypal), booked for "Test", and both links

@@ -37,6 +37,7 @@ import { teamView, tutorView } from "./lib/team.mjs";
 import * as notify from "./lib/notify.mjs";
 import { liveSetup } from "./lib/live.mjs";
 import * as market from "./lib/market.mjs";
+import * as apps from "./lib/apps.mjs";
 
 // Where the service is reached from outside — for links put in messages.
 const PUBLIC = (process.env.BOOK_PUBLIC || "https://thexchange.app/book").replace(/\/$/, "");
@@ -208,6 +209,11 @@ const server = http.createServer(async (req, res) => {
     try { return send(res, 200, readFileSync(path.join(HERE, "public/live.html")), "text/html; charset=utf-8"); }
     catch { return send(res, 404, { error: "missing" }); }
   }
+  // An app starting and ending its own lives — lib/apps.mjs.
+  if (p === "/api/lives" || p.startsWith("/api/lives/")) {
+    if (await apps.routes(req, res, p, { send, readBody })) return;
+  }
+
   // Everything else a live does — joining, the stall, gifts, chat: lib/market.mjs.
   if (p.startsWith("/api/live/")) {
     const ip = String(req.headers["x-forwarded-for"] || req.socket.remoteAddress || "").split(",")[0].trim();
