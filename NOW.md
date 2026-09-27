@@ -2080,6 +2080,37 @@ went looking for a DNS problem while the real one was a deploy that had been
 run on the MacBook instead of the box. A line in this file that has stopped
 being true costs more than a line that was never written.
 
+## The disk on the box
+
+**It ran out on 27 Sep and everything looked like something else.** The board
+could not write `board.json` — ENOSPC — so minting a link, saving a profile
+and sending a message all threw, Express answered with its default HTML error
+page, and the app read that as "No answer from the board. Check the signal",
+on a phone with four bars. Two hours and six screenshots went into looking for
+a bug in the link screen.
+
+Six gigabytes of it was docker's **build cache**: ten deploys in an afternoon,
+each one a fresh layer of `node_modules`. `docker builder prune -f` and
+`docker image prune -f` got it back.
+
+```
+ssh -t root@45.77.8.166 'cd ~/tc && make space'
+```
+
+That prints how full the disk is, what the biggest things under `~/tc` are,
+clears the cache and the dangling images, and prints it again. **It never
+touches volumes** — `board_data` is the board, and a prune that takes volumes
+is the one command here that cannot be undone. Never offer
+`docker system prune --volumes`.
+
+`make board` now looks before it builds and refuses under a gigabyte free,
+because a build on a full disk does not fail loudly — it half-writes a layer,
+the container comes up, and the first anybody knows is a screen saying
+something untrue.
+
+**75G disk, and it was at 95% after clearing.** Something else on there is
+large and it will fill again.
+
 ## Mail
 
 | | |

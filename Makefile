@@ -9,7 +9,7 @@ COMPOSE := docker compose
 # without this line `make board` finds a file by that name, decides it is
 # already up to date, and exits saying so — a deploy command that prints a
 # reassuring sentence and deploys nothing.
-.PHONY: board board-build mailout up-safe can-invite stripe-who call-check can-call board-log
+.PHONY: board board-build mailout up-safe can-invite stripe-who call-check can-call board-log space
 .PHONY: version faces cards traffic tier-two try try-china china wallets mo-code visits app-state claire-episodes deal claire-key claire-count claire-seed claire-video listing invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who bells twice admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions whitelabel blocked partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check post post-status post-run post-login post-code post-logins weidian-pull weidian-json weidian-reviews shop-chapter review-tidy product-names review-move
 
 help: ## Show this help
@@ -2574,6 +2574,32 @@ fix-browser: ## Restart the browser after a black screen
 reload: ## Reload Caddy config without dropping connections
 	$(COMPOSE) exec caddy caddy reload --config /etc/caddy/Caddyfile
 
+space: ## How full the disk is, and clear what is safe to clear:  make space
+	@# THE DAY THIS EXISTS FOR. The board could not write board.json — ENOSPC,
+	@# no space left on device — so every link, every message and every profile
+	@# save threw, and the app said "No answer from the board. Check the
+	@# signal" at somebody standing next to the router. It took two hours and
+	@# six screenshots to find, because a full disk looks exactly like a bug in
+	@# whatever you happened to be doing.
+	@#
+	@# Six gigabytes of it was docker's build cache. Ten deploys in an
+	@# afternoon is ten layers of node_modules nobody will ever read again.
+	@#
+	@# WHAT THIS WILL NOT TOUCH, and the reason it is this and not `docker
+	@# system prune`: no volumes, ever. board_data is the board — every
+	@# profile, every message, every deal — and it lives in a volume. A prune
+	@# that takes volumes is the one command on this box that cannot be undone.
+	@printf '\n  BEFORE\n'
+	@df -h / | tail -1
+	@printf '\n  the biggest things under ~/tc\n'
+	@du -sh $(CURDIR)/* 2>/dev/null | sort -rh | head -8 || true
+	@printf '\n  clearing docker build cache and dangling images\n'
+	docker builder prune -f
+	docker image prune -f
+	@printf '\n  AFTER\n'
+	@df -h / | tail -1
+	@printf '\n'
+
 board: ## Deploy the board and nothing else: make board
 	@# SIX DEPLOYS IN ONE DAY AND HALF OF THEM DIED. "Connection closed by
 	@# remote host" twice, "port 22 timed out" three times — every one of them
@@ -2594,6 +2620,19 @@ board: ## Deploy the board and nothing else: make board
 	@# a new service, a new env var, a change under agent/ or cfm/. This
 	@# target touches the board alone and will not notice anything else.
 	@printf '\n'
+	@# LOOK AT THE DISK FIRST. A build on a box with nothing left does not
+	@# fail loudly — it half-writes a layer, the container comes up, and the
+	@# first thing anybody notices is a screen saying something untrue. One
+	@# gigabyte is roughly what an image build needs here; under that, this
+	@# stops and says so rather than making the mess worse.
+	@free=$$(df -Pk / | tail -1 | awk '{print $$4}'); \
+	  if [ "$$free" -lt 1048576 ]; then \
+	    printf '\n  THE DISK IS FULL. %s free, and a build needs about a gigabyte.\n' \
+	      "$$(df -h / | tail -1 | awk '{print $$4}')"; \
+	    printf '  Nothing has been changed. Clear what is safe to clear:\n\n'; \
+	    printf '    make space\n\n'; \
+	    exit 1; \
+	  fi
 	git fetch origin
 	git reset --hard origin/$(BRANCH)
 	@# AND NOW HAND OVER TO THE MAKEFILE THAT WAS JUST FETCHED.
