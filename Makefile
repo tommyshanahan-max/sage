@@ -2243,6 +2243,18 @@ faces: ## Whose photo is not showing, and put one back: make faces [WHO="Nicole"
 	  /seed/faces.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  "$(WHO)"
 
+can-invite: ## Who can bring somebody in, and what stops the rest: make can-invite [WHO="Tom"]
+	@# "i just tried to add someone new from the chat page, it doesnt seem to
+	@# work." Bringing people in is rationed — a photograph on your profile, a
+	@# day on the board, something posted this week — and the rationing is
+	@# invisible until somebody tries and is refused. This reads it out.
+	@#
+	@# A missing photograph is the commonest one and the one that looks most
+	@# like a broken button.  make faces  is the other half of that.
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/can-invite.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  "$(WHO)"
+
 cards: ## What tonight's report card says to each member: make cards [SEND=1]
 	@# The card goes out once a day, in one hour of the day, to a phone — so
 	@# the only way to check it was to wait until evening and ask somebody to

@@ -2788,6 +2788,14 @@ function drawWriteNew() {
   micShow();
   $("tshut").hidden = true;
   $("tbox").placeholder = T("wn.mkLine");
+  /* THE EXAMPLE IS THREE LINES AND THE BOX IS ONE, so it was cut off
+     mid-word — an example message that does not finish reads as a bug in the
+     box rather than as a suggestion. The box grows with what is TYPED (see
+     the input handler) and a placeholder types nothing, so it is grown here
+     once, to the same limit. */
+  const b = $("tbox");
+  b.style.height = "auto";
+  b.style.height = Math.min(Math.max(b.scrollHeight, 76), 128) + "px";
   $("tsaid").hidden = true;
 }
 
@@ -2808,6 +2816,19 @@ async function sendNew() {
   } catch { d = null; }
   $("tsend").disabled = false;
   if (!d || !d.ok) {
+    /* WHAT IS ACTUALLY MISSING, NOT "YOUR PROFILE PAGE SAYS WHAT IS LEFT".
+     *
+     * Being told to go and look somewhere else, from the screen you are on,
+     * with the message you have just written still in the box, is a dead end
+     * — and the board already knows the answer: standing() works out exactly
+     * which of the three tests failed and now sends it. One sentence, naming
+     * the one thing to do. The old line stays for the case where the server
+     * is older than this page and sends no list. */
+    if (d && d.error === "standing" && Array.isArray(d.need) && d.need.length) {
+      const first = ["face", "days", "said"].find((k) => d.need.includes(k));
+      return say(T({ face: "wn.needFace", days: "wn.needDays",
+                     said: "wn.needSaid" }[first] || "wn.mkStanding"), true);
+    }
     const known = { contact: "wn.mkNoContact", standing: "wn.mkStanding",
                     nopage: "note.needProfile" };
     return say(T(known[d && d.error] || "act.again", { what: (d && d.what) || "" }), true);
@@ -4046,7 +4067,22 @@ $("tmore").addEventListener("click", () => {
 });
 $("segmine").addEventListener("click", () => roomTab("mine"));
 $("segopen").addEventListener("click", () => roomTab("open"));
-$("plus").addEventListener("click", () => peopleSheet(true));
+/* THE ＋ GOES STRAIGHT THERE WHEN THERE IS NOTHING TO CHOOSE FROM.
+ *
+ * "i just tried to add someone new from the chat page ... it doesnt seem to
+ * work." It worked. It was three taps: ＋ opened a sheet, the sheet held one
+ * dashed circle, and the circle opened the screen. For a member with nobody in
+ * their strip the whole of that sheet was the sentence "Nobody yet" and the
+ * circle — a screen whose only content is a paragraph saying there is nothing
+ * here, in front of the one thing being asked for.
+ *
+ * So: a strip with people in it is a choice and the sheet is right. An empty
+ * one is not a choice, and the ＋ means the only thing it can mean.
+ */
+$("plus").addEventListener("click", () => {
+  if (!CAN.length) { location.hash = "#new"; return; }
+  peopleSheet(true);
+});
 $("scrim").addEventListener("click", () => peopleSheet(false));
 /* Anything tapped in the sheet goes somewhere — a face, "Someone", Groups —
    and the sheet should not be waiting open on the way back. */

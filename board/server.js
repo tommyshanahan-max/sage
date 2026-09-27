@@ -5572,11 +5572,16 @@ app.post("/api/write", express.json({ limit: "4kb" }), gate, async (req, res) =>
   if (shaped) return res.status(400).json({ error: "contact", what: shaped });
 
   let why = "";
+  let need = [];
   const out = await change((board) => {
     const mine = board.people.find((q) => q.by === me);
     if (!mine || !mine.handle) { why = "nopage"; return null; }
     const rank = standing(board, me);
-    if (!rank.can) { why = "standing"; return null; }
+    /* WHICH OF THE THREE, not just that one of them failed. The screen used
+       to answer "your profile page says what is left", which is a dead end
+       from a screen with a written message still in the box — and standing()
+       has worked the answer out already. See sendNew in notes.html. */
+    if (!rank.can) { why = "standing"; need = rank.need || []; return null; }
     const taken = codesTaken(board);
     let code = store.newCode();
     for (let i = 0; i < 50 && taken.has(code); i++) code = store.newCode();
@@ -5589,7 +5594,9 @@ app.post("/api/write", express.json({ limit: "4kb" }), gate, async (req, res) =>
     board.writes.push(row);
     return { code: row.code, till: row.till, to: row.to, from: mine.handle };
   });
-  if (!out) return res.status(400).json({ error: why || "no" });
+  if (!out) {
+    return res.status(400).json({ error: why || "no", ...(need.length ? { need } : {}) });
+  }
   res.json({ ok: true, ...out });
 });
 
@@ -19660,6 +19667,43 @@ app.get("/api/snap", snapGate, async (_req, res) => {
  * Telling those apart by hand meant a screen, and the person who has to do it
  * cannot use one — see the note about screens in CLAUDE.md. Read-only.
  */
+/* WHETHER A NAMED MEMBER CAN BRING ANYBODY IN, AND WHAT IS STOPPING THEM.
+ *
+ * "i just tried to add someone new from the chat page ... it doesnt seem to
+ * work." Three different things wear that sentence: the screen was three taps
+ * deep, the refusal named no fix, and underneath both of those a member with
+ * no photograph on their row simply cannot bring anybody in and there was no
+ * way to find that out from here. The first two are fixed on the screen; this
+ * is the third, answered from the terminal in one line rather than by opening
+ * somebody's profile and reading it.
+ *
+ * Read-only, and it says nothing about anybody else. */
+app.get("/api/admin/can-invite", admin, async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const want = String(req.query.who || "").trim().toLowerCase();
+  const board = await store.load(FILE);
+  const rows = board.people.filter((q) => q.handle);
+  const hit = want
+    ? rows.filter((q) => {
+        const h = q.handle.toLowerCase();
+        return h === want || h.split(/\s+/)[0] === want;
+      })
+    : rows;
+  if (want && !hit.length) {
+    return res.json({ error: "nobody", near: rows.map((q) => q.handle).slice(0, 8) });
+  }
+  if (want && hit.length > 1) {
+    return res.json({ error: "two", n: hit.length, who: hit.map((q) => q.handle) });
+  }
+  res.json({
+    people: hit.map((q) => {
+      const r = standing(board, q.by);
+      return { handle: q.handle, can: Boolean(r.can), staff: Boolean(r.staff),
+        need: r.need || [], guests: r.guests || 0 };
+    }),
+  });
+});
+
 app.get("/api/admin/faces-why", admin, async (_req, res) => {
   const board = await store.load(FILE);
   res.set("Cache-Control", "no-store");

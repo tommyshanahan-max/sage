@@ -3703,6 +3703,19 @@ export const STRINGS = {
   "wn.mkShare":        ["Send it", "发出去"],
   "wn.mkDone":         ["Done", "完成"],
   "wn.mkTill":         ["Good for a day. One person, once.", "一天内有效，只给一个人，只能用一次。"],
+  /* WHICH ONE IS MISSING, AND NOTHING ELSE.
+     A refusal that says "your profile page says what is left" is a refusal
+     that sends somebody to another screen to find out what they did wrong,
+     with the message they wrote still sitting in the box. The board knows
+     which of the three tests failed — standing() computes it — so it says
+     the one thing to do and stops. Same order the tests run in, so somebody
+     missing two of them is told the one to do first. */
+  "wn.needFace":       ["Put a photo on your profile first — then you can bring people in.",
+                        "先给你的资料上传张照片，就能带人进来了。"],
+  "wn.needDays":       ["You can bring people in from tomorrow.",
+                        "明天就可以带人进来了。"],
+  "wn.needSaid":       ["Post something on the feed this week first.",
+                        "本周先在动态里发一条。"],
   "wn.mkStanding": [
     "You cannot bring people to the door yet — same as an invite. Your profile page says what is left.",
     "你还不能带人到门口——和邀请码一样的条件。你的资料页上写着还差什么。",
