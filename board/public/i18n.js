@@ -6322,7 +6322,12 @@ export const STRINGS = {
      every sentence: a room that asks you about every message is not a room
      anybody relaxes in. */
   "grp.flag":          ["Report", "举报"],
-  "grp.placeholder":   ["Say something to the group.", "跟群里说点什么。"],
+  /* SHORT ENOUGH TO FIT THE BOX IT IS IN. "Say something to the group." wrapped
+     to two lines in a 195px composer and was cut off after "to the" — a
+     placeholder that does not finish its own sentence reads as a broken box.
+     You are in the room; it does not need saying that the room is who hears
+     you. */
+  "grp.placeholder":   ["Say something", "说点什么"],
   /* SOMEBODY INVITED STRAIGHT INTO THE ROOM, READING IT WITH NO NAME.
      One sentence where the composer goes. Not "welcome", not an explanation of
      what a profile is, and no reassurance: they can see the conversation, they

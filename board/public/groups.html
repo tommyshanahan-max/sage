@@ -81,18 +81,30 @@
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 
   .top{display:flex;align-items:center;gap:.8rem;margin:0 0 1.3rem}
-  .top h1{margin:0;font-family:var(--serif);font-weight:400;font-size:1.75rem;line-height:1.1}
+  /* THE TITLE TAKES WHAT IS LEFT AND CUTS. Without min-width:0 a flex child
+     refuses to shrink below its content, so the name pushed everything else
+     over and wrapped anyway — which is how "Tom, Axel, Nicole" came out as
+     two lines with 中文 stacked into a column beside it. A room named from
+     three handles is as long as three handles and no font size fixes that;
+     an ellipsis does. */
+  .top > div{flex:1;min-width:0}
+  .top h1{margin:0;font-family:var(--serif);font-weight:400;font-size:1.75rem;line-height:1.1;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   /* "Macau, March" broke across two lines on a 390px screen, because ⋯ and
      the language button take their width first and the title gets what is
      left. Smaller, and it fits on one. */
   @media (max-width:26rem){ .top h1{font-size:1.4rem} }
-  .top p{margin:.15rem 0 0;font-size:.85rem;color:var(--muted)}
+  .top p{margin:.15rem 0 0;font-size:.85rem;color:var(--muted);
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .back{border:0;background:none;color:var(--ink);padding:.2rem;margin-left:-.3rem;
     display:grid;place-items:center;flex:0 0 auto}
   .back svg{width:1.5rem;height:1.5rem;stroke:currentColor;fill:none;stroke-width:1.8;
     stroke-linecap:round;stroke-linejoin:round}
+  /* NEVER BROKEN ACROSS TWO LINES. Squeezed, 中文 stacked one character above
+     the other and read as a two-character column rather than a button. */
   .lang{margin-left:auto;flex:0 0 auto;border:1px solid var(--line);background:var(--raise);
-    color:var(--ink-2);border-radius:99px;padding:.42rem .9rem;font-size:.85rem;line-height:1}
+    color:var(--ink-2);border-radius:99px;padding:.42rem .9rem;font-size:.85rem;line-height:1;
+    white-space:nowrap}
 
   .rule{display:flex;align-items:center;gap:.9rem;margin:0 0 .3rem}
   .rule span{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;
@@ -379,9 +391,14 @@
     box-shadow:0 10px 30px rgba(0,0,0,.12);z-index:30}
   .atmenu button{font:inherit;font-size:.85rem;padding:.35rem .7rem;border-radius:99px;
     border:1px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer}
-  .compose textarea{flex:1;min-height:2.9rem;max-height:9rem;resize:vertical;font:inherit;
+  /* IT GROWS WITH WHAT IS TYPED — see grow() below, which is the whole fix.
+     This box is about 195px wide on a phone (a mic and a Send beside it), so
+     one ordinary sentence is three lines in it; at a fixed 2.9rem you could
+     not see what you were writing past the second. resize:vertical was the
+     only way out and it is a corner nobody can drag with a thumb. */
+  .compose textarea{flex:1;min-height:2.9rem;max-height:9rem;resize:none;font:inherit;
     padding:.65rem .8rem;border-radius:1rem;border:1px solid var(--line);
-    background:var(--raise);color:var(--ink)}
+    background:var(--raise);color:var(--ink);overflow-y:auto}
   .compose button{flex:0 0 auto;border:0;border-radius:99px;background:var(--accent);
     color:var(--accent-ink);padding:.7rem 1.15rem;font-size:.95rem}
   .saycsaid{margin:.6rem 0 0;font-size:.85rem;line-height:1.55;color:var(--t5)}
@@ -2648,6 +2665,15 @@ function paintRoom(g) {
   ta.rows = 1;
   ta.maxLength = 600;
   ta.placeholder = T("grp.placeholder");
+  /* THE BOX GROWS WITH WHAT IS TYPED, to the limit in the stylesheet. Without
+     this it is two lines for ever and a message of any length is written
+     blind — the fault Tom photographed, where even the empty placeholder was
+     cut off in the middle of a word. */
+  const grow = () => {
+    ta.style.height = "auto";
+    ta.style.height = Math.min(ta.scrollHeight, 144) + "px";
+  };
+  ta.addEventListener("input", grow);
   /* @ somebody in the room — the same module the door rooms use, so the
      gesture is one gesture and not two that drift apart. */
   /* g.who already carries him — the doorman is in every room's `who` rather
@@ -2743,6 +2769,7 @@ function paintRoom(g) {
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(d.error || "no");
       ta.value = "";
+      grow();   // back to one line, or the empty box keeps the message's height
       said.textContent = "";
       await load();
       // It went, and something came out of it — see stripContact.
