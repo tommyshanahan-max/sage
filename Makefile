@@ -2254,6 +2254,41 @@ faces: ## Whose photo is not showing, and put one back: make faces [WHO="Nicole"
 	  /seed/faces.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
 	  "$(WHO)"
 
+stripe-who: ## Which Stripe account the board's key belongs to, and whether it still works
+	@# THE DAY STRIPE CLOSED AN ACCOUNT. A key in .env is a string nobody can
+	@# read anything off, so "is the payment side dead" was a question with no
+	@# way to answer it short of opening a dashboard that may itself be shut.
+	@#
+	@# Asks Stripe. The key never leaves the container and never appears in
+	@# this file, in a command line, or in the output: what comes back is the
+	@# account id, its country, and whether charges are still enabled.
+	@printf '\n'
+	@$(COMPOSE) exec -T board sh -c '\
+	  if [ -z "$$BOARD_STRIPE_KEY" ]; then \
+	    echo "  the board has no Stripe key set — nothing to ask about."; exit 0; fi; \
+	  curl -s -u "$$BOARD_STRIPE_KEY:" https://api.stripe.com/v1/account' 2>/dev/null \
+	  | node -e '\
+	    let s=""; process.stdin.on("data",c=>s+=c).on("end",()=>{ \
+	      if(!s.trim()){console.log("  no answer — is the board up, and can it reach the internet?");return;} \
+	      let d=null; try{d=JSON.parse(s)}catch{}; \
+	      if(!d){console.log("  Stripe answered something unreadable.");return;} \
+	      if(d.error){ \
+	        console.log("  Stripe refused the key: "+(d.error.message||d.error.type)); \
+	        console.log(""); \
+	        console.log("  A closed account is the commonest reason. Every payment"); \
+	        console.log("  screen on this board is dead until a working key is in .env."); \
+	        return; } \
+	      console.log("  account    "+(d.id||"?")); \
+	      console.log("  name       "+((d.settings&&d.settings.dashboard&&d.settings.dashboard.display_name)||d.business_profile&&d.business_profile.name||"—")); \
+	      console.log("  country    "+(d.country||"?")); \
+	      console.log("  charges    "+(d.charges_enabled?"enabled":"OFF")); \
+	      console.log("  payouts    "+(d.payouts_enabled?"enabled":"OFF")); \
+	      if(!d.charges_enabled||!d.payouts_enabled){ \
+	        console.log(""); \
+	        console.log("  This account cannot take money. The payment screens will fail."); } \
+	    });'
+	@printf '\n'
+
 can-invite: ## Who can bring somebody in, and what stops the rest: make can-invite [WHO="Tom"]
 	@# "i just tried to add someone new from the chat page, it doesnt seem to
 	@# work." Bringing people in is rationed — a photograph on your profile, a
