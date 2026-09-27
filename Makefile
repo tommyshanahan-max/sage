@@ -2715,6 +2715,21 @@ board: ## Deploy the board and nothing else: make board
 	  fi
 	git fetch origin
 	git reset --hard origin/$(BRANCH)
+	@# AND PUT THE BRANCH NAME ON IT TOO, which the reset above does not.
+	@#
+	@# A reset moves the commit and leaves HEAD attached to whatever branch
+	@# the box happened to be on — so a box that was last deployed from
+	@# another session's branch goes on calling itself that branch while
+	@# holding this one's code. The summary at the end then prints a branch
+	@# name that is not the code on disk, and `make deploy` can never
+	@# fast-forward, because the local branch name and the commit disagree.
+	@# That cost most of an afternoon and a screen reported missing three
+	@# times — see the deploy section of CLAUDE.md.
+	@#
+	@# -B rather than checkout: it creates the branch if the box has never
+	@# had it and repoints it if it has, and the tree already matches, so
+	@# there is nothing here that can refuse.
+	git checkout -B $(BRANCH) origin/$(BRANCH)
 	@# AND NOW HAND OVER TO THE MAKEFILE THAT WAS JUST FETCHED.
 	@#
 	@# This target changes the working tree it is running out of, and make
