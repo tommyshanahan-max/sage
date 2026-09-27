@@ -10,6 +10,37 @@ through, and add the date to anything that changes.
 
 ---
 
+## Two people arrived as Tom, 27 Sep
+
+Tom sent a chat link. Two people opened it, made a profile, went back to the
+same link — and came in **as him**, with his whole Chat list on their phone.
+One of them sent a screenshot of it.
+
+What did it: `BOARD_DEMO_DEVICE`. It pins every browser that loads a page to
+one device number, so an App Store reviewer arrives as the seeded member
+instead of as nobody. On the demo board that is the point. On the real one it
+hands whoever opens a link somebody else's account, and no screen says so.
+
+Shut two ways, 27 Sep:
+
+- **The pin now needs two switches.** `BOARD_DEMO=1` says a container is the
+  demo board, and it is set in exactly one place — the `board-demo` service in
+  `docker-compose.yml`. Anywhere else the pin is ignored and the board says so
+  at boot. One name in `.env` can no longer do this.
+- **And it never takes an identity that is already there.** A fresh browser
+  still gets the seeded reviewer; somebody who made a profile a minute ago
+  keeps their own.
+
+**A device number IS the account here, so shutting the door does not evict
+anybody.** The two who walked in still hold his number. `make evict WHO="Tom"`
+is the other half: it prints a link to send yourself, one tap on the phone that
+should keep the account, and everybody else's copy stops being him. Nothing
+else changes — same page, same people, same messages.
+
+    make no-back                # shut every walk-in-as-somebody-else door
+    make who-am-i               # what is still open
+    make evict WHO="Tom"        # take the account back
+
 ## Waiting on other people
 
 | | |

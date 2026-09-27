@@ -2619,6 +2619,21 @@ export const STRINGS = {
     "这块板还没开邮箱登录。用钥匙进吧。",
   ],
 
+  /* THE ONE TAP THAT TAKES AN ACCOUNT BACK. Written for the phone it is
+     tapped on, in the tense it happens in: somebody else is you right now,
+     and after this they are not. No explaining of how it works — see /k/ in
+     server.js for that. */
+  "k.title":           ["Only this phone", "只有这台手机"],
+  "k.line": [
+    "Tap once. Anywhere else signed in as you stops being you.",
+    "点一下。别处用你身份登录的，全部作废。",
+  ],
+  "k.go":              ["This is my phone", "这是我的手机"],
+  "k.done":            ["Done. Only this phone is {who}.", "好了。现在只有这台手机是 {who}。"],
+  "k.open":            ["Open the board", "进入交换"],
+  "k.old":             ["That link is used up. Ask for another.", "这个链接用过了，再要一个。"],
+  "k.no":              ["That link is no good.", "这个链接无效。"],
+
   /* LEAVING FOR GOOD. It lists what goes before it goes, because a plain
      "are you sure?" makes somebody guess, and the guess is always smaller
      than the truth — most people think this hides a profile. */

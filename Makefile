@@ -9,7 +9,7 @@ COMPOSE := docker compose
 # without this line `make board` finds a file by that name, decides it is
 # already up to date, and exits saying so — a deploy command that prints a
 # reassuring sentence and deploys nothing.
-.PHONY: board board-build mailout up-safe can-invite stripe-who call-check can-call board-log space who-am-i no-back
+.PHONY: board board-build mailout up-safe can-invite stripe-who call-check can-call board-log space who-am-i no-back evict
 .PHONY: version faces cards traffic tier-two try try-china china wallets mo-code visits app-state claire-episodes deal claire-key claire-count claire-seed claire-video listing invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who bells twice admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions whitelabel blocked partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check post post-status post-run post-login post-code post-logins weidian-pull weidian-json weidian-reviews shop-chapter review-tidy product-names review-move
 
 help: ## Show this help
@@ -2574,6 +2574,24 @@ fix-browser: ## Restart the browser after a black screen
 reload: ## Reload Caddy config without dropping connections
 	$(COMPOSE) exec caddy caddy reload --config /etc/caddy/Caddyfile
 
+evict: ## Somebody else is signed in as you:  make evict WHO="Tom"
+	@# THE HALF `make no-back` CANNOT DO. Shutting the door stops the next
+	@# person walking in as somebody else. It does nothing about the two
+	@# already holding the number — on this board a device number IS the
+	@# account, so those phones go on being him until the number changes.
+	@#
+	@# This makes a new one and moves the person onto it. Every other copy is
+	@# left owning nothing. It prints a link to send yourself and open on the
+	@# phone that should keep the account: one button, one tap, fifteen
+	@# minutes. Not `make back`, which would move him onto the leaked number
+	@# he is trying to get rid of — see scripts/evict.mjs.
+	@test -n "$(WHO)" || { echo 'make evict WHO="your name on the board"'; exit 1; }
+	$(COMPOSE) run --rm --no-deps -T \
+	  -e BOARD_PUBLIC_URL="https://$$(grep -E '^TOMSCODING_BOARD_DOMAIN=' .env | tail -1 | cut -d= -f2- | tr -d '\"')" \
+	  -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/evict.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  --who "$(WHO)"
+
 who-am-i: ## Is anybody able to walk in as somebody else:  make who-am-i
 	@# THE NIGHT THIS EXISTS FOR. Two people opened an invite link, made a
 	@# profile, went back to the link — and came in as Tom, with his
@@ -2599,9 +2617,17 @@ who-am-i: ## Is anybody able to walk in as somebody else:  make who-am-i
 	  && printf '  BOARD_BACK_CODE is set  typing it makes you %s, and it is never spent\n' \
 	       "$$($(COMPOSE) exec -T board printenv BOARD_BACK_WHO 2>/dev/null)" \
 	  || printf '  no standing way-back code\n'
+	@# THE PIN NOW NEEDS TWO SWITCHES. BOARD_DEMO=1 says this container is the
+	@# demo board; without it the pin is ignored and the board says so at boot
+	@# — see DEMO_BOARD in board/server.js. Both lines are printed, because
+	@# "set" and "doing anything" stopped being the same thing.
 	@$(COMPOSE) exec -T board printenv BOARD_DEMO_DEVICE 2>/dev/null | grep -q . \
-	  && printf '  BOARD_DEMO_DEVICE is set  EVERY browser that arrives is the same person\n' \
+	  && { $(COMPOSE) exec -T board printenv BOARD_DEMO 2>/dev/null | grep -q '^1$$' \
+	       && printf '  BOARD_DEMO_DEVICE is set AND THIS IS THE DEMO BOARD\n    EVERY browser that arrives is the same person\n' \
+	       || printf '  BOARD_DEMO_DEVICE is set but ignored — this is not the demo board\n'; } \
 	  || printf '  no demo device pin\n'
+	@printf '\n  Anybody who already walked in is still signed in on their own phone.\n'
+	@printf '  That is what `make evict WHO="Tom"` is for.\n\n'
 	@printf '\n  Any line above in capitals is a way into somebody else account.\n'
 	@printf '  Turn it off:  make no-back\n\n'
 
@@ -2613,8 +2639,10 @@ no-back: ## Shut every walk-in-as-somebody-else door:  make no-back
 	  sed -i "s/^$$k=/#$$k=/" .env; \
 	done
 	$(COMPOSE) up -d --no-deps board
-	@printf '\n  Shut. Anybody who walked in that way is still signed in on their\n'
-	@printf '  own phone — this stops new ones. Check with:  make who-am-i\n\n'
+	@printf '\n  Shut. This stops new ones. Anybody who already walked in is still\n'
+	@printf '  signed in on their own phone — take the account back with:\n'
+	@printf '      make evict WHO="Tom"\n'
+	@printf '  And check what is still open with:  make who-am-i\n\n'
 
 space: ## How full the disk is, and clear what is safe to clear:  make space
 	@# THE DAY THIS EXISTS FOR. The board could not write board.json — ENOSPC,

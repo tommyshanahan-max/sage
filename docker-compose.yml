@@ -1554,6 +1554,11 @@ services:
       # are the seeded member: matches, cards, two conversations. See DEMO_TAG
       # in board/server.js, and `make demo-board`, which seeds against exactly
       # this value.
+      # THE SECOND SWITCH, AND THE ONLY PLACE IT IS SET. BOARD_DEMO_DEVICE
+      # alone does nothing now: a board that is not this one ignores it and
+      # says so at boot. It cost two people seeing Tom's whole inbox —
+      # see the note over DEMO_BOARD in board/server.js.
+      BOARD_DEMO: "1"
       BOARD_DEMO_DEVICE: ${TOMSCODING_BOARD_DEMO_DEVICE:-demoreviewer00000000000000000001}
       BOARD_NOTES: "on"
       # Apple asks for a person a reader can reach on any app carrying other

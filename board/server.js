@@ -360,9 +360,40 @@ const DEMO_URL = (() => {
   return /^https?:\/\/[a-z0-9.-]+(?::\d{2,5})?$/i.test(want) ? want : "";
 })();
 
-const DEMO_DEVICE = String(process.env.BOARD_DEMO_DEVICE || "").replace(/[^A-Za-z0-9_-]/g, "").slice(0, 64);
+/* THE ONE BOARD WHERE EVERY BROWSER IS ALLOWED TO BE THE SAME PERSON.
+ *
+ * THE NIGHT THIS EXISTS FOR. Two people opened a chat link Tom had sent
+ * them, made a profile, went back to the same link — and arrived as Tom,
+ * with every conversation he has ever had on the screen in front of them.
+ * One of them was his daughter; one of them sent a screenshot.
+ *
+ * BOARD_DEMO_DEVICE is why. It pins every browser that loads a page to one
+ * device number, so an App Store reviewer opening the demo arrives as the
+ * seeded member rather than as nobody with an empty inbox. On the demo board
+ * that is the whole point. On the real one it hands whoever opens a link
+ * somebody else's account, and NOTHING ON ANY SCREEN SAYS SO — not the
+ * person's, not Tom's.
+ *
+ * So the pin now needs two switches, the way DOOR_IN needs a code before it
+ * can be turned on: the device number, and BOARD_DEMO=1 saying this whole
+ * container is the demo. One name in .env can no longer do it, and a name
+ * typed into the wrong block is ignored and said out loud at boot rather
+ * than silently obeyed. See the board-demo service in docker-compose.yml,
+ * which is the only place BOARD_DEMO is set. */
+const DEMO_BOARD = process.env.BOARD_DEMO === "1";
+const DEMO_WANT = String(process.env.BOARD_DEMO_DEVICE || "").replace(/[^A-Za-z0-9_-]/g, "").slice(0, 64);
+const DEMO_DEVICE = DEMO_BOARD ? DEMO_WANT : "";
+if (DEMO_WANT && !DEMO_BOARD) {
+  console.log("BOARD_DEMO_DEVICE is set on a board that is not the demo (BOARD_DEMO is not 1). IGNORED — it would have made every browser the same person.");
+}
+/* AND IT NEVER TAKES AN IDENTITY THAT IS ALREADY THERE. A reviewer arrives
+ * with an empty browser and gets the seeded member, which is what this is
+ * for. Somebody who has been here before, or who made a profile a minute
+ * ago on this same phone, keeps their own — the old line overwrote it on
+ * every page load, so answering an invite and then reopening the link
+ * replaced the person who had just answered with the person in the pin. */
 const DEMO_TAG = DEMO_DEVICE
-  ? '<script>try{localStorage.setItem("board:device",'
+  ? '<script>try{if(!localStorage.getItem("board:device"))localStorage.setItem("board:device",'
     + JSON.stringify(DEMO_DEVICE) + ')}catch(e){}</script>'
   : "";
 
@@ -691,7 +722,7 @@ const ROOT_IS_BOARD = process.env.BOARD_AT_ROOT === "1";
    the button was never on the screen. The POST to /china/api/connect came
    back as door.html too, and an HTML page from a JSON fetch fails silently.
    `china` and not `china\/`: /china itself is the fork. */
-const OPEN_PATHS = /^\/(china|enter|auth\/google|i\/|w\/|r\/|s\/|d\/|pay\/|demo(?:\.png)?$|api\/demo\/ask$|sell$|api\/sell$|dealio|europay-[a-z]+\.html|api\/pay\/onboard$|api\/dealio\/try\/qr$|shop\/|order\/|orders$|api\/shop\/|api\/shop-media$|api\/order\/|api\/orders$|api\/product\/|api\/memo\/|api\/request(?:s|\/|$)|api\/say\/|api\/snap|api\/door$|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.(?:html|pdf)|g\/|share-exchange\.png|share-square\.png|about|rules|terms|privacy|rewards|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/wake|api\/front(?:-face)?|api\/offer|api\/wait|api\/butler$|api\/ep\/ask$|api\/butler-voice$|api\/butler-hear$|api\/write\/|hi\/|api\/chat-door\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
+const OPEN_PATHS = /^\/(china|enter|auth\/google|i\/|w\/|r\/|s\/|d\/|pay\/|demo(?:\.png)?$|api\/demo\/ask$|sell$|api\/sell$|dealio|europay-[a-z]+\.html|api\/pay\/onboard$|api\/dealio\/try\/qr$|shop\/|order\/|orders$|api\/shop\/|api\/shop-media$|api\/order\/|api\/orders$|api\/product\/|api\/memo\/|api\/request(?:s|\/|$)|api\/say\/|api\/snap|api\/door$|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.(?:html|pdf)|g\/|share-exchange\.png|share-square\.png|about|rules|terms|privacy|rewards|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/wake|api\/front(?:-face)?|api\/offer|api\/wait|api\/butler$|api\/ep\/ask$|api\/butler-voice$|api\/butler-hear$|api\/write\/|hi\/|k\/|api\/handover$|api\/chat-door\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
 
 /* ---- BEING SOMEBODY YOU SPEAK FOR ----------------------------------------
  *
@@ -2092,6 +2123,14 @@ app.get(["/w/:code"], (req, res, next) => page("notes.html", req, res, next));
  * as a prefix, which is why there is nothing to add there.
  */
 app.get(["/join/chat/:key"], (req, res, next) => page("notes.html", req, res, next));
+
+/* THE ONE TAP THAT MOVES AN ACCOUNT ONTO A NEW KEY.
+ *
+ * Outside the door, like /w/ and /join — the browser tapping it is not
+ * anybody yet, which is the whole situation. It gives nothing away on its
+ * own: the page shows a name and a button, and the token behind it is spent
+ * by the first tap and dead after fifteen minutes. See /api/handover. */
+app.get(["/k/:token"], (req, res, next) => page("key.html", req, res, next));
 
 /* WHAT ROOM THE LINK IS FOR, TO WHOEVER IS STANDING OUTSIDE IT.
  *
@@ -8546,6 +8585,74 @@ app.post("/api/admin/back", admin, express.json({ limit: "2kb" }), async (req, r
   });
   if (out?.error) return res.status(404).json(out);
   res.status(201).json(out);
+});
+
+/* A NEW KEY FOR A MEMBER, AND EVERY COPY OF THE OLD ONE STOPS BEING THEM.
+ *
+ * WHY IT EXISTS. Two people opened a chat link, and ended up holding Tom's
+ * device number — his whole inbox on their phone. Switching off what put it
+ * there (see DEMO_BOARD above) stops the next one; it does nothing about the
+ * number already sitting in two browsers, which goes on being him for ever,
+ * because a device number IS the account on this board.
+ *
+ * So: mint a new one and move the person onto it. Every other browser is
+ * holding a number that now belongs to nobody — not signed out with a
+ * message, simply not him any more.
+ *
+ * THE TOKEN IS NOT THE KEY. `make evict` prints a link to paste to himself;
+ * a link that carried the key would leave the key in a chat log for ever.
+ * The token is good for one tap and fifteen minutes, and the key is made on
+ * the server and handed to exactly one browser — the one that taps.
+ *
+ * IN MEMORY, DELIBERATELY. It lives for a quarter of an hour and nothing is
+ * gained by writing it to disk; a restart in that window costs one more
+ * `make evict` and an unread token is a token that never existed. */
+const HANDOVER = new Map();
+const HANDOVER_MINS = 15;
+
+app.post("/api/admin/handover", admin, express.json({ limit: "2kb" }), async (req, res) => {
+  const who = String(req.body?.who || "").trim().toLowerCase();
+  if (!who) return res.status(400).json({ error: "who" });
+  const board = await store.load(FILE);
+  const q = board.people.find((x) => String(x.handle || "").toLowerCase() === who);
+  if (!q) return res.status(404).json({ error: "nobody" });
+  const now = Date.now();
+  for (const [t, v] of HANDOVER) if (v.till < now) HANDOVER.delete(t);
+  const token = randomUUID().replace(/-/g, "").slice(0, 24);
+  HANDOVER.set(token, { id: q.id, till: now + HANDOVER_MINS * 60 * 1000 });
+  res.status(201).json({ token, handle: q.handle || "", mins: HANDOVER_MINS });
+});
+
+/** The tap. One-time: the token is taken out of the map before anything else
+ *  can go wrong, so a double tap on a slow phone cannot mint two keys and
+ *  leave the second browser holding the account. */
+app.post("/api/handover", express.json({ limit: "1kb" }), async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const token = String(req.body?.token || "").replace(/[^a-f0-9]/g, "").slice(0, 24);
+  const row = token ? HANDOVER.get(token) : null;
+  if (!row) return res.status(404).json({ error: "no" });
+  HANDOVER.delete(token);
+  if (row.till < Date.now()) return res.status(410).json({ error: "old" });
+  /* The key exists in this response and in the browser that receives it, and
+     nowhere else — the server keeps the salted hash, as it does for every
+     other identity here. Same shape as the one the sign-in flow makes. */
+  const key = randomUUID() + randomUUID().slice(0, 8);
+  const to = store.hashDevice(key, SALT);
+  const out = await change((board) => {
+    const q = board.people.find((x) => x.id === row.id);
+    if (!q) return { error: "nobody" };
+    if (q.by === to) return { handle: q.handle || "" };
+    /* rebind rather than an assignment: it is the one function that knows
+       every table keyed on a device, and it MOVES rather than copies — which
+       is the point. The old number is left owning nothing. */
+    store.rebind(board, q.by, to);
+    return { handle: q.handle || "" };
+  });
+  if (out?.error) return res.status(404).json(out);
+  // The member's own cookie, as the sign-in flow sets: this browser has just
+  // become somebody who is through the door.
+  setCookie(res, to);
+  res.json({ ok: true, key, handle: out.handle });
 });
 
 /* THE SAME THING FROM THE BOX.
