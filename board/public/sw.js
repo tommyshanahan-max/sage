@@ -191,21 +191,65 @@ async function whatToSay() {
   } catch { return SAID; }
 }
 
+/** One notification, drawn from whichever of the two says. Called twice per
+ *  push — see below — and the tag is what makes the second one replace the
+ *  first rather than sit under it. */
+const show = (say, again) => self.registration.showNotification(say.title, {
+  body: say.body,
+  icon: "/icon-512.png",
+  badge: "/favicon.png",
+  /* TWO TAGS, NOT ONE. Messages collapse into each other — eleven replies
+     overnight are one line — and that is right for messages and wrong
+     here: a report card replacing the unread message somebody has not
+     looked at yet is the app taking a notification away. */
+  tag: say.to.startsWith("/notes") ? "board-note" : "board-card",
+  /* THE SECOND ONE CORRECTS THE FIRST; IT DOES NOT ANNOUNCE ITSELF. Both
+     halves of the same push buzzing is two buzzes for one message, which on
+     a phone reads as two messages. */
+  renotify: !again,
+  silent: Boolean(again),
+  data: { to: say.to },
+});
+
 self.addEventListener("push", (e) => {
   e.waitUntil((async () => {
-    const say = await whatToSay();
-    await self.registration.showNotification(say.title, {
-      body: say.body,
-      icon: "/icon-512.png",
-      badge: "/favicon.png",
-      /* TWO TAGS, NOT ONE. Messages collapse into each other — eleven replies
-         overnight are one line — and that is right for messages and wrong
-         here: a report card replacing the unread message somebody has not
-         looked at yet is the app taking a notification away. */
-      tag: say.to.startsWith("/notes") ? "board-note" : "board-card",
-      renotify: true,
-      data: { to: say.to },
-    });
+    /* SOMETHING TRUE ON THE LOCK SCREEN, ALWAYS, AND THE RIGHT THING NORMALLY.
+     *
+     * A photograph of Tom's phone: the board's icon, "交换", and under it the
+     * word "Notification" and nothing else. That is not a line this file has
+     * ever contained — it is what iOS puts up ITSELF when a push handler
+     * finishes without showing anything. This handler was finishing without
+     * showing anything because it waited on /api/wake first, and a worker has
+     * a short budget: a phone in China asking a box in Tokyo can spend all of
+     * it before a word is drawn. A buzz saying "Notification" is a message
+     * nobody knows they have.
+     *
+     * So: give the answer a moment, and if it comes, one correct notification
+     * as before. If it does not, put the fixed line up NOW — true of every
+     * push but the daily card — and correct it silently when the answer
+     * lands. Worst case is a correct sentence instead of a placeholder. */
+    const asked = whatToSay();
+    const quick = await Promise.race([
+      asked.catch(() => null),
+      new Promise((r) => setTimeout(() => r(null), 700)),
+    ]);
+    if (quick) return void await show(quick);
+
+    await show(SAID);
+    const late = await asked.catch(() => null);
+    if (!late || (late.body === SAID.body && late.to === SAID.to)) return;
+    /* THE CARD IS NOT A MESSAGE AND MUST NOT LEAVE ONE BEHIND. The two kinds
+       carry different tags on purpose, so a late card does not replace the
+       line above — it would sit under it, and the phone would show a message
+       that never arrived. Taking the placeholder down costs nothing: it went
+       up under the message tag, which means it had already replaced whatever
+       unread message line was there. */
+    if (late.to !== SAID.to) {
+      for (const n of await self.registration.getNotifications({ tag: "board-note" })) {
+        if (n.body === SAID.body) n.close();
+      }
+    }
+    await show(late, true);
   })());
 });
 
