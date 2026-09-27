@@ -613,6 +613,31 @@ const initial = (name) => (String(name || "?").trim()[0] || "?").toLowerCase();
 let device = "";
 try { device = localStorage.getItem("board:device") || ""; } catch { /* private window */ }
 
+/* SOMEBODY WHO HAS NEVER USED THIS APP GOES TO A CHAT, NOT TO A PROFILE.
+ *
+ * "he said it took him to my profile!!! HES HOULD GOTO CHAT." A member hands
+ * their own address to a friend — which is what people do, and every other
+ * product on earth has trained them that it works — and the friend landed on
+ * a page about that member with a Follow button they cannot press. What they
+ * wanted was the member.
+ *
+ * NO DEVICE ID IS THE TEST, and it is exact. Every browser that has ever
+ * opened this app has one; a browser with none has never been here. The
+ * server cannot make this call — a plain page navigation carries cookies and
+ * nothing else, and on a board that is not in read-lock nobody has the
+ * cookie, so admittedReq answers false for members too and would have sent
+ * them to a chat with themselves.
+ *
+ * BEFORE ANYTHING IS DRAWN. location.replace rather than assign, so the back
+ * button goes where they came from rather than to a page they never chose to
+ * be on. /hi mints a one-person code and hands over to the arrival screen
+ * that already works — see /hi/:handle in server.js.
+ */
+if (!device) {
+  const who = decodeURIComponent(location.pathname.split("/").filter(Boolean)[1] || "");
+  if (who) { location.replace("/hi/" + encodeURIComponent(who)); }
+}
+
 /* WHAT GOOGLE SAID, ON THE WAY BACK IN.
  *
  * The callback is a redirect and a redirect cannot hand a page a JSON body, so

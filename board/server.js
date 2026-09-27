@@ -691,7 +691,7 @@ const ROOT_IS_BOARD = process.env.BOARD_AT_ROOT === "1";
    the button was never on the screen. The POST to /china/api/connect came
    back as door.html too, and an HTML page from a JSON fetch fails silently.
    `china` and not `china\/`: /china itself is the fork. */
-const OPEN_PATHS = /^\/(china|enter|auth\/google|i\/|w\/|r\/|s\/|d\/|pay\/|demo(?:\.png)?$|api\/demo\/ask$|sell$|api\/sell$|dealio|europay-[a-z]+\.html|api\/pay\/onboard$|api\/dealio\/try\/qr$|shop\/|order\/|orders$|api\/shop\/|api\/shop-media$|api\/order\/|api\/orders$|api\/product\/|api\/memo\/|api\/request(?:s|\/|$)|api\/say\/|api\/snap|api\/door$|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.(?:html|pdf)|g\/|share-exchange\.png|share-square\.png|about|rules|terms|privacy|rewards|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/wake|api\/front(?:-face)?|api\/offer|api\/wait|api\/butler$|api\/ep\/ask$|api\/butler-voice$|api\/butler-hear$|api\/write\/|api\/chat-door\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
+const OPEN_PATHS = /^\/(china|enter|auth\/google|i\/|w\/|r\/|s\/|d\/|pay\/|demo(?:\.png)?$|api\/demo\/ask$|sell$|api\/sell$|dealio|europay-[a-z]+\.html|api\/pay\/onboard$|api\/dealio\/try\/qr$|shop\/|order\/|orders$|api\/shop\/|api\/shop-media$|api\/order\/|api\/orders$|api\/product\/|api\/memo\/|api\/request(?:s|\/|$)|api\/say\/|api\/snap|api\/door$|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.(?:html|pdf)|g\/|share-exchange\.png|share-square\.png|about|rules|terms|privacy|rewards|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/wake|api\/front(?:-face)?|api\/offer|api\/wait|api\/butler$|api\/ep\/ask$|api\/butler-voice$|api\/butler-hear$|api\/write\/|hi\/|api\/chat-door\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
 
 /* ---- BEING SOMEBODY YOU SPEAK FOR ----------------------------------------
  *
@@ -1282,15 +1282,22 @@ app.use(async (req, res, next) => {
     const q = board.people.find((x) =>
       x.state === "published" && String(x.handle || "").toLowerCase() === want);
     if (q && q.id) {
-      /* Their own room, chosen the way the Share button chooses it, so a
-         visitor lands among the people the member is actually among. */
-      const rooms = Array.isArray(q.rooms) ? q.rooms : [];
-      const door = rooms.includes("talent") || rooms.includes("agent") ? "/r/film"
-        : rooms.includes("invest") ? "/r/invest"
-        : rooms.includes("raise") ? "/r/raise"
-        : rooms.includes("buy") || rooms.includes("sell") ? "/r/trade"
-        : "/about";
-      return res.redirect(302, door + "?via=" + encodeURIComponent(q.id));
+      /* A CHAT WITH THEM, NOT A ROOM AND NOT THE PROFILE.
+       *
+       * "he said it took him to my profile!!! HES HOULD GOTO CHAT." /
+       * "ANYONE I SEND THE LINK TO ISNT A STRANGER ITS AN INVITE VIA
+       * MESSENGER INTO MESSENGER AND THEN THEY GO INTO THE APP."
+       *
+       * This used to pick one of four public rooms out of the member's own
+       * sentence and send the visitor there — which is a place, and what
+       * somebody who was sent a link by a friend wants is the friend. It is
+       * the same answer /join/chat gives, so it is the same road: /hi mints
+       * a one-person code for this member and hands over to the door that
+       * already works.
+       *
+       * EVERY LINK OF THEIRS NOW LANDS IN THE SAME PLACE, which is the point:
+       * there is no longer a wrong one of their links to send. */
+      return res.redirect(302, "/hi/" + encodeURIComponent(q.handle));
     }
     /* No such member. The waiting list rather than the door: somebody who
        followed a link to a person who is not here still came from somewhere,
@@ -1733,6 +1740,52 @@ app.get(["/notes", "/notes/"], notesOff,
  * the door with the rest of it: the rows name people the reader deals with,
  * and the page is useless and unreadable to anybody else anyway — /api/bells
  * answers a device and nothing else. */
+/* AN OPEN DOOR INTO A CHAT WITH ONE MEMBER.
+ *
+ * The one-person link from ＋ is minted by the member and spent once. This is
+ * the other half: their own address, the one they hand out, the one a friend
+ * forwards. It mints a code on arrival and hands over to the door — so there
+ * is exactly one arrival screen in this app and it is the one that already
+ * works, rather than a second one to keep in step.
+ *
+ * NOT RATIONED BY standing(). That rations how many people a member may BRING
+ * IN; this is somebody who already has the member's address and is knocking
+ * on it. What it is rationed by is a plain per-hour cap, which is about the
+ * door and not about the member.
+ *
+ * NO NAME AND NO LINE. Same as the ＋ link — the name that matters is the one
+ * the arriving person types, and it is asked for on the door.
+ */
+const HI_MAX = 30;                         // codes one member's link may mint an hour
+app.get("/hi/:handle", notesOff, async (req, res) => {
+  const want = String(req.params.handle || "").trim().toLowerCase();
+  const out = await change((board) => {
+    const q = board.people.find((x) => onBoard(x)
+      && String(x.handle || "").toLowerCase() === want);
+    if (!q) return null;
+    const hour = Date.now() - 3600_000;
+    const mine = board.writes.filter((w) => w.by === q.by && !w.to && !w.line
+      && Date.parse(w.at || "") > hour);
+    if (mine.length >= HI_MAX) return null;
+    const taken = codesTaken(board);
+    let code = store.newCode();
+    for (let i = 0; i < 50 && taken.has(code); i++) code = store.newCode();
+    if (taken.has(code)) return null;
+    const row = store.cleanWrite({
+      id: store.newId(), code, by: q.by, to: "", line: "",
+      till: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+    });
+    if (!row) return null;
+    board.writes.push(row);
+    return { code: row.code };
+  });
+  /* No such member, or the door is being knocked on faster than anybody
+     knocks: the page that says what this place is, which is the honest thing
+     to show somebody holding a link that leads nowhere. */
+  if (!out) return res.redirect(302, "/about");
+  return res.redirect(302, "/join/chat/" + out.code);
+});
+
 app.get(["/bells", "/bells/"], notesOff,
   (req, res, next) => page("bells.html", req, res, next));
 
