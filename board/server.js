@@ -5585,8 +5585,23 @@ app.post("/api/write", express.json({ limit: "4kb" }), gate, async (req, res) =>
   if (!me) return res.status(400).json({ error: "no" });
   const to = String(req.body?.to || "").trim().slice(0, 40);
   const line = String(req.body?.line || "").trim().slice(0, 600);
-  if (!to) return res.status(400).json({ error: "name" });
-  if (!line) return res.status(400).json({ error: "line" });
+  /* A NAME AND A LINE ARE BOTH OPTIONAL NOW.
+   *
+   * "Dont worry about adding text just make it possible to share the link
+   * immediately, why would you need invite someone in the aop anyway? You can
+   * message your connects directly."
+   *
+   * Right on both counts. The people already here are one tap away in Chat,
+   * so the only thing this path is for is getting a link to somebody who is
+   * NOT here — and the link is the whole of it. A screen that made somebody
+   * name a person and compose a sentence before it would hand over a URL was
+   * three steps in front of one.
+   *
+   * NOTHING DOWNSTREAM NEEDED THEM. `to` was only ever the greeting on the
+   * door page, and `line` became the first message of the thread. The name
+   * that matters is the one the ARRIVING person types — see /api/write/reply,
+   * which is where the waiting row gets its name — and that was always true.
+   */
   /* THE PROFILE RULE APPLIES TO A LINE WRITTEN TO A STRANGER exactly as it
      applies to one written on a profile: no contact details in it. The link
      itself is the way to answer, and a WeChat id in the text is a way to take
@@ -5605,6 +5620,20 @@ app.post("/api/write", express.json({ limit: "4kb" }), gate, async (req, res) =>
        from a screen with a written message still in the box — and standing()
        has worked the answer out already. See sendNew in notes.html. */
     if (!rank.can) { why = "standing"; need = rank.need || []; return null; }
+    /* THE LIVE ONE THEY ALREADY HAVE, rather than a second. The screen mints
+       on opening, so without this every look at it leaves another way in
+       lying about — each good for a day and each spendable by whoever ends up
+       with it. A bare link with no name and no line on it is interchangeable
+       with any other, so there is never a reason to hold two: the newest
+       unspent one is handed back.
+       A link written TO somebody, with a line in it, is not interchangeable
+       and is never reused. */
+    if (!to && !line) {
+      const now = Date.now();
+      const had = board.writes.filter((w) => w.by === me && !w.wait && !w.to
+        && !w.line && w.till && new Date(w.till) > now).slice(-1)[0];
+      if (had) return { code: had.code, till: had.till, to: "", from: mine.handle };
+    }
     const taken = codesTaken(board);
     let code = store.newCode();
     for (let i = 0; i < 50 && taken.has(code); i++) code = store.newCode();

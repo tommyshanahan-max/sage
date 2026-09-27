@@ -3698,7 +3698,9 @@ export const STRINGS = {
      whole point of the second one: one is a member you matched with, the
      other is somebody you know who is not here. */
   "plus.write":        ["Message a member", "给成员发消息"],
-  "plus.reach":        ["Write to somebody new", "写给还没进来的人"],
+  /* IT HANDS OVER A LINK, so it says so. "Write to somebody new" promised a
+     screen with a message on it, which is exactly what this stopped being. */
+  "plus.reach":        ["Send somebody a link", "\u53d1\u4e2a\u94fe\u63a5\u7ed9\u4eba"],
 
   /* ---- AND THE MEMBER'S HALF: writing one. -------------------------------
      The output is a whole block to paste, not six characters. This is the one
@@ -3729,6 +3731,18 @@ export const STRINGS = {
   /* wn.mkGo ("Make the note") is retired with the sheet it was on: making and
      sending are one press now, and the press is the send arrow in the
      messenger. */
+  /* ---- THE SCREEN IS THE LINK NOW. ------------------------------------
+     "just make it possible to share the link immediately." The name and the
+     message that used to come first are gone: the people already here are one
+     tap away in Chat, so this path is only ever about somebody who is not,
+     and the link is the whole of what is being handed over. */
+  "wn.linkTitle":      ["Send somebody a link", "\u53d1\u4e2a\u94fe\u63a5\u7ed9\u4eba"],
+  "wn.linkMaking":     ["Making a link\u2026", "\u6b63\u5728\u751f\u6210\u94fe\u63a5\u2026"],
+  /* WHAT THE LINK DOES, in the words of what happens to whoever opens it.
+     Not "invite link", which says what it is called rather than what it is
+     for. */
+  "wn.linkLab":        ["They open this and write back. That puts them on the list.",
+                        "\u5bf9\u65b9\u70b9\u5f00\u8fd9\u4e2a\u56de\u4f60\u4e00\u53e5\uff0c\u5c31\u7b97\u6392\u8fdb\u540d\u5355\u4e86\u3002"],
   "wn.mkTo":           ["To", "写给"],
   /* A SEND THAT REFUSES SAYS WHICH HALF IS MISSING. Both of these were a
      cursor moving and nothing else — see sendNew. The message box shows the
@@ -3887,6 +3901,10 @@ export const STRINGS = {
      --------------------------------------------------------------------- */
   "wn.title":          ["A note for you", "有人写给你"],
   "wn.wrote":          ["{who} wrote to you", "{who} 写给你"],
+  /* WHEN THERE IS NO MESSAGE, which is the ordinary case now — a link sent on
+     its own. "wrote to you" over nothing is the page claiming a note that is
+     not there. */
+  "wn.sentYou":        ["{who} sent you this", "{who} \u53d1\u4e86\u8fd9\u4e2a\u7ed9\u4f60"],
   "wn.onThe":          ["on The Exchange", "在 The Exchange 上"],
   "wn.answerHead":     ["Write back", "回他一句"],
   "wn.answerLede": [

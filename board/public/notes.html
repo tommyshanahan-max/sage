@@ -226,6 +226,30 @@
      name it will be sent to. It was at the bottom of the screen, above the
      keyboard, a long way from anything it explained. */
   .wnwhy{margin:.7rem 0 0;color:var(--muted);font-size:.9rem;line-height:1.45}
+
+  /* THE LINK, AND IT IS THE WHOLE SCREEN — see drawWriteNew. At the top,
+     where the eye lands, rather than at the bottom where a conversation
+     would put its newest line: nothing is being read here, one thing is being
+     taken away. */
+  .linkcard{margin:1.2rem 0 0}
+  .linklab{margin:0 0 .7rem;font-size:1rem;line-height:1.45;color:var(--ink-2)}
+  /* THE URL ITSELF, READABLE AND SELECTABLE. `anywhere` because it has no
+     spaces in it and the alternative is a line running off the screen — and
+     `user-select:all` so one press takes the lot on a phone that has no idea
+     what a double-click is. */
+  .linkurl{margin:0;padding:.75rem .9rem;border:1px solid var(--line);
+    border-radius:.9rem;background:var(--raise);font-size:.95rem;
+    line-height:1.45;overflow-wrap:anywhere;user-select:all;
+    -webkit-user-select:all}
+  .linkacts{display:flex;gap:.6rem;margin:.9rem 0 0}
+  .linkacts button{flex:1;border:1px solid var(--line);background:var(--raise);
+    color:var(--ink);border-radius:99px;padding:.7rem 1rem;font:inherit;
+    font-size:1rem}
+  .linkacts button.primary{border-color:var(--accent);background:var(--accent);
+    color:var(--accent-ink)}
+  .linktill{margin:.8rem 0 0;color:var(--muted);font-size:.85rem;text-align:center}
+  .linkwhy{margin:0;color:var(--muted);font-size:.95rem;line-height:1.5}
+  .linkwhy.bad{color:var(--t5)}
   .tnew span{display:block;font-size:.66rem;letter-spacing:.1em;
     text-transform:uppercase;color:var(--muted);font-weight:700}
   .tnew input{width:100%;border:0;background:none;font:inherit;
@@ -1740,6 +1764,11 @@ function paint() {
   $("tunvet").hidden = true;
   homeLang();
   tabWords();
+  /* THE THREAD PANE IS BOTTOM-ALIGNED UNLESS A SCREEN SAYS OTHERWISE, and
+     three of them do. Cleared here rather than by each of the others, because
+     the one that forgets is the one that inherits a layout from whichever
+     screen was up before it. */
+  $("talk").classList.remove("attop");
   if (INVITED) return drawInvited();
   if (CHATROOM) return drawChatDoor();
   const T0 = threads();
@@ -2345,10 +2374,17 @@ function drawInvited() {
 
   $("twhoname").textContent = NOTE.from || T("board.someone");
   $("twhosub").textContent = T("wn.onThe");
-  talk.append(el("p", "when", T("wn.wrote", { who: NOTE.from || T("board.someone") })));
-  const bub = el("div", "bub them");
-  bub.textContent = NOTE.line;
-  talk.append(bub);
+  talk.append(el("p", "when", T(NOTE.line ? "wn.wrote" : "wn.sentYou",
+    { who: NOTE.from || T("board.someone") })));
+  /* ONLY IF THERE IS ONE. A link sent with no message is the ordinary case
+     now — see /api/write — and an empty bubble is a grey pill with nothing in
+     it, which reads as a message that failed to load rather than as one that
+     was never written. */
+  if (NOTE.line) {
+    const bub = el("div", "bub them");
+    bub.textContent = NOTE.line;
+    talk.append(bub);
+  }
   /* WHAT ANSWERING DOES, before they answer. A queue is not a door, and
      somebody who writes back expecting to be let in has been misled by
      leaving it out. One line, where a message would be. */
@@ -3227,7 +3263,6 @@ async function sendInvited() {
  * What was sent stays on screen as a bubble afterwards — the sheet can be
  * dismissed by accident, and a message you cannot get back is worse than an
  * extra button. */
-let MADE = null;
 
 /* EVERYBODY ON THE BOARD, FETCHED ONCE AND KEPT.
  *
@@ -3363,6 +3398,60 @@ async function findPeople() {
  * row to say — see drawWriteNew and findPeople.
  */
 
+/* SENDING SOMEBODY A LINK.
+ *
+ * "Dont worry about adding text just make it possible to share the link
+ * immediately, why would you need invite someone in the aop anyway? You can
+ * message your connects directly."
+ *
+ * Both halves of that are right, and together they take the screen apart. The
+ * people already here are one tap away in Chat, so nothing on this path is
+ * about them — it exists to get a link to somebody who is NOT here. And the
+ * link is the whole of it: a name to type and a sentence to compose were two
+ * steps in front of the only thing anybody came for, and the sentence went
+ * into a WeChat message they were about to write anyway.
+ *
+ * So the screen is the link. It is there when the screen opens, with the
+ * phone's own share sheet on one button and the clipboard on the other.
+ *
+ * ONE LINK AT A TIME. The server hands back the live one rather than minting
+ * a second — see /api/write. Opening this screen five times is one way in,
+ * not five lying about.
+ */
+let LINK = null;      // { code, till } once the server has answered
+let LINKING = false;  // one request in flight, however many paints
+
+function linkWords() {
+  return LINK && LINK.code ? location.origin + "/join/chat/" + LINK.code : "";
+}
+
+async function getLink() {
+  if (LINK || LINKING) return;
+  LINKING = true;
+  try {
+    const d = await fetch("/api/write", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      /* No name and no line. Both are optional now and this path sends
+         neither — see the note over /api/write. */
+      body: JSON.stringify({ device }),
+    }).then((r) => r.json());
+    if (d && d.ok) {
+      LINK = { code: d.code, till: d.till };
+    } else if (d && d.error === "standing" && Array.isArray(d.need) && d.need.length) {
+      /* WHICH OF THE THREE IS MISSING, not "your profile page says what is
+         left" — standing() has already worked it out. */
+      const first = ["face", "days", "said"].find((k) => d.need.includes(k));
+      LINK = { why: T({ face: "wn.needFace", days: "wn.needDays",
+                        said: "wn.needSaid" }[first] || "wn.mkStanding") };
+    } else {
+      const known = { standing: "wn.mkStanding", nopage: "note.needProfile" };
+      LINK = { why: T(known[d && d.error] || "act.again") };
+    }
+  } catch { LINK = { why: T("act.again") }; }
+  LINKING = false;
+  if (openWho() === "new") drawWriteNew();
+}
+
 function drawWriteNew() {
   $("listview").hidden = true;
   $("listtop").hidden = true;
@@ -3373,143 +3462,71 @@ function drawWriteNew() {
   $("tmenu").hidden = true;
   $("tpin").hidden = true;
   $("tleft").hidden = true;
-  /* THE SCREEN SAYS WHAT IT IS. It had no name at all: the header held the
-     name box, whose placeholder read as a greyed-out title, so the only words
-     at the top of the screen were "Their name" — which looks like a statement
-     about who you are talking to rather than a question. */
+  $("wnew").hidden = true;
+  /* NO COMPOSER. There is nothing to type on this screen any more, and a box
+     with a send arrow beside it is an invitation to type something that would
+     go nowhere. */
+  $("twrite").hidden = true;
+  $("tshut").hidden = true;
   $("twho").hidden = false;
   $("twho").removeAttribute("href");
-  $("twhoname").textContent = T("wn.mkTitle");
+  $("twhoname").textContent = T("wn.linkTitle");
   $("twhosub").textContent = "";
-  $("wnew").hidden = false;
-  $("tnewk").textContent = T("wn.mkTo");
-  $("tnewname").placeholder = T("wn.mkName");
-  /* AND WHAT THE SEND ARROW DOES, under the name it goes to. This line used
-     to sit at the bottom of the screen just above the keyboard, the length of
-     an empty phone away from the box it explains. */
-  $("wnwhy").textContent = T("wn.mkHint");
-  /* THE LIST IS BUILT FROM WHAT IS IN THE BOX, so it is rebuilt here: this
-     screen is redrawn on every paint and a stale list of matches for a name
-     that has since been sent is a list of the wrong people. With the box
-     empty there is nothing to show — see findPeople. */
-  if (!$("tnewname").dataset.find) {
-    $("tnewname").dataset.find = "1";   // once, however many times this draws
-    $("tnewname").addEventListener("input", () => { findPeople(); });
-    /* Escape closes the list and leaves what was typed, because what was typed
-       is still a note somebody may want to send. */
-    $("tnewname").addEventListener("keydown", (e) => {
-      if (e.key === "Escape") { $("tfind").hidden = true; fill($("tfind")); }
-    });
-  }
-  /* LAST, AND THAT IS THE WHOLE OF WHY THE ROW WAS MISSING. This was called
-     three lines up, where the fill() under it emptied the box a moment after
-     findPeople had filled it — the list was shown, and shown empty. It draws
-     its own contents, so nothing else here needs to clear them first. */
-  findPeople();
 
+  /* fill() IN THIS FILE RETURNS NOTHING. bells.html has one that returns the
+     node and this was written from that habit — `const talk = fill(...)` made
+     talk undefined, the append threw, and the screen drew its header and then
+     stopped. A blank screen under a title, which is the exact fault this
+     whole change is about. */
   const talk = $("talk");
   fill(talk);
-  if (MADE) {
-    /* SENT. The block as it went, as a bubble — because that is what it is —
-       with the two ways to send it again underneath. */
-    const bub = el("div", "bub mine");
-    bub.textContent = MADE.words;
-    talk.append(bub);
-    const row = el("div", "again");
-    if (!IN_WECHAT && navigator.share) {
-      const b2 = el("button", "primary", T("wn.mkShare"));
-      b2.type = "button";
-      b2.addEventListener("click", () => {
-        navigator.share({ text: MADE.words }).catch(() => {});
-      });
-      row.append(b2);
-    }
-    const cp = el("button", null, T("cards.copy"));
-    cp.type = "button";
-    cp.addEventListener("click", () => {
-      cp.textContent = T(copyText(MADE.words)
-        ? (IN_WECHAT ? "act.wxCopied" : "cards.copied") : "act.copyFail");
-    });
-    row.append(cp);
-    talk.append(row);
-    talk.append(el("p", "when", T("wn.mkTill")));
-  }
-  /* NOTHING IN THE BUBBLE AREA UNTIL THERE IS A BUBBLE. The line saying what
-     send does used to be drawn here, which put it at the far end of an empty
-     screen from the box it is about. It is under the name now — see wnwhy. */
+  /* AT THE TOP. .talk is bottom-aligned because a conversation is read from
+     its newest line up; this is not a conversation, it is one card, and
+     bottom-aligned it sat under half a screen of nothing with the thing you
+     came for below the fold on a short phone. */
+  talk.classList.add("attop");
+  const card = el("div", "linkcard");
 
-  $("twrite").hidden = false;
-  micShow();
-  $("tshut").hidden = true;
-  $("tbox").placeholder = T("wn.mkLine");
-  /* THE EXAMPLE IS THREE LINES AND THE BOX IS ONE, so it was cut off
-     mid-word — an example message that does not finish reads as a bug in the
-     box rather than as a suggestion. The box grows with what is TYPED (see
-     the input handler) and a placeholder types nothing, so it is grown here
-     once, to the same limit. */
-  const b = $("tbox");
-  b.style.height = "auto";
-  b.style.height = Math.min(Math.max(b.scrollHeight, 76), 128) + "px";
-  $("tsaid").hidden = true;
-}
-
-/** Mint the note and hand it straight to the share sheet. */
-async function sendNew() {
-  const to = $("tnewname").value.trim();
-  const line = $("tbox").value.trim();
-  /* IT SAYS WHICH HALF IS MISSING. Both of these used to move the cursor and
-     nothing else, which on a phone is no reaction at all — and the message
-     box shows the example as a PLACEHOLDER, so the screen looks like it has a
-     message in it already. Somebody presses send on what they can see, and
-     the app does nothing and explains nothing. */
-  if (!to) { $("tnewname").focus(); return say(T("wn.needName"), true); }
-  if (!line) { $("tbox").focus(); return say(T("wn.needLine"), true); }
-  $("tsend").disabled = true;
-  say(T("wn.sending"));
-  let d = null;
-  try {
-    d = await fetch("/api/write", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ device, to, line }),
-    }).then((r) => r.json());
-  } catch { d = null; }
-  $("tsend").disabled = false;
-  if (!d || !d.ok) {
-    /* WHAT IS ACTUALLY MISSING, NOT "YOUR PROFILE PAGE SAYS WHAT IS LEFT".
-     *
-     * Being told to go and look somewhere else, from the screen you are on,
-     * with the message you have just written still in the box, is a dead end
-     * — and the board already knows the answer: standing() works out exactly
-     * which of the three tests failed and now sends it. One sentence, naming
-     * the one thing to do. The old line stays for the case where the server
-     * is older than this page and sends no list. */
-    if (d && d.error === "standing" && Array.isArray(d.need) && d.need.length) {
-      const first = ["face", "days", "said"].find((k) => d.need.includes(k));
-      return say(T({ face: "wn.needFace", days: "wn.needDays",
-                     said: "wn.needSaid" }[first] || "wn.mkStanding"), true);
-    }
-    const known = { contact: "wn.mkNoContact", standing: "wn.mkStanding",
-                    nopage: "note.needProfile" };
-    return say(T(known[d && d.error] || "act.again", { what: (d && d.what) || "" }), true);
+  if (!LINK) {
+    getLink();
+    card.append(el("p", "linkwhy", T("wn.linkMaking")));
+    talk.append(card);
+    return;
   }
-  MADE = { words: T("wn.mkBlock", { who: d.to, line,
-    /* THE ADDRESS SAYS WHAT IS ON THE END OF IT — see the note over CHATKEY.
-       /w/<code> still opens this same screen and always will; what goes out
-       from today says chat in it. */
-    url: location.origin + "/join/chat/" + d.code }) };
-  $("tbox").value = "";
-  $("tbox").style.height = "auto";
-  $("tsaid").hidden = true;
-  drawWriteNew();
-  /* STRAIGHT INTO THE SHEET. This is the whole point of the change: the note
-     is made and sent in one press rather than made, displayed, and then sent
-     from a second screen. */
+  if (LINK.why) {
+    /* A REASON, NOT A SPINNER THAT STOPPED. Somebody who cannot bring people
+       in yet is told the one thing to do about it. */
+    card.append(el("p", "linkwhy bad", LINK.why));
+    talk.append(card);
+    return;
+  }
+
+  /* THE LINK ITSELF, READABLE. It is the thing being sent, so it is on the
+     screen rather than behind a button that claims to have copied something
+     — a Copy that says "Copied" and put nothing on the clipboard is
+     indistinguishable from one that worked. */
+  card.append(el("p", "linklab", T("wn.linkLab")));
+  card.append(el("p", "linkurl", linkWords()));
+
+  const row = el("div", "linkacts");
   if (!IN_WECHAT && navigator.share) {
-    navigator.share({ text: MADE.words }).catch(() => { /* dismissed is fine */ });
-  } else {
-    copyText(MADE.words);
-    say(T(IN_WECHAT ? "act.wxCopied" : "cards.copied"));
+    const b = el("button", "primary", T("wn.mkShare"));
+    b.type = "button";
+    b.addEventListener("click", () => {
+      navigator.share({ text: linkWords() }).catch(() => { /* dismissed is fine */ });
+    });
+    row.append(b);
   }
+  const cp = el("button", null, T("cards.copy"));
+  cp.type = "button";
+  cp.addEventListener("click", () => {
+    cp.textContent = T(copyText(linkWords())
+      ? (IN_WECHAT ? "act.wxCopied" : "cards.copied") : "act.copyFail");
+  });
+  row.append(cp);
+  card.append(row);
+  card.append(el("p", "linktill", T("wn.mkTill")));
+  talk.append(card);
 }
 
 /** A ROOM AT THE DOOR, drawn on the thread screen.
@@ -4779,9 +4796,11 @@ $("tbox").addEventListener("input", () => {
 
 $("tsend").addEventListener("click", async () => {
   const who = openWho();
-  // Writing to somebody who is not here yet is the same button on the same
-  // screen — see drawWriteNew. A room at the door is the same again.
-  if (who === "new") return sendNew();
+  /* "#new" HAS NO COMPOSER ANY MORE — it is a link and two buttons, see
+     drawWriteNew — so there is nothing for this to send. Guarded rather than
+     assumed: the send arrow is hidden on that screen, and a hidden button is
+     still a button a keyboard can reach. */
+  if (who === "new") return;
   if (who.startsWith("d:")) return sendDoor(who.slice(2));
   if (INVITED) return sendInvited();
   const b = $("tbox");
