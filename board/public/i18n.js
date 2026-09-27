@@ -8173,8 +8173,11 @@ export const STRINGS = {
   "wl.cantReach":      ["Couldn't reach the Exchange. Check your connection and try again.", "连不上 The Exchange，检查网络后重试。"],
   "wl.confirmIdentity":["Confirm identity", "去实名"],
   "wl.checkAmountAgain":["Check the amount again", "重新确认金额"],
-  "wl.membersOnly":    ["The wallet is for members. Once your page is up on the board, it's here.", "钱包仅限成员使用。你的主页上板后即可使用。"],
-  "wl.backToMessages": ["Back to Messages", "返回消息"],
+  /* ONE FACT AND THE BUTTON UNDER IT. It used to explain the membership rule
+     and then offer a way back to Messages, which is not a thing anybody can
+     do about it. */
+  "wl.membersOnly":    ["The wallet opens when your page is up.", "主页建好，钱包就开。"],
+  "wl.makePage":       ["Make your page", "去建主页"],
   "wl.notOnHere":      ["The wallet isn't switched on here yet.", "这里还没开通钱包。"],
   "wl.delete":         ["Delete", "删除"],
   "wl.point":          ["Point", "小数点"],

@@ -445,7 +445,11 @@ async function paint() {
     if (!W || back || scr.fresh !== false) await load();
     out = await scr(parts.slice(1), q);
   } catch (err) {
-    if (err instanceof ApiError && err.status === 401) out = { title: T("wl.title"), body: frag(note("info", T("wl.membersOnly")), h("a", { class: "btn ghost", href: "/notes", text: T("wl.backToMessages") })) };
+    /* NO PAGE YET, SO NO WALLET — and the button is the way out of that, not
+       the way back to where they came from. "create profile to set up
+       wallet": the rule is right and the screen used to state it and then
+       offer Messages, which is the one thing that does not change it. */
+    if (err instanceof ApiError && err.status === 401) out = { title: T("wl.title"), body: frag(note("info", T("wl.membersOnly")), h("a", { class: "btn", href: "/room", text: T("wl.makePage") })) };
     else if (err instanceof ApiError && err.status === 404) out = { title: T("wl.title"), body: frag(note("info", T("wl.notOnHere"))) };
     else { out = { title: T("wl.title"), body: frag() }; setTimeout(() => showError(err)); }
   }

@@ -4924,7 +4924,7 @@ const num = (name, fallback) => {
   const v = Number(process.env[name]);
   return Number.isFinite(v) && v >= 0 ? v : fallback;
 };
-const BRING_DAYS = num("BOARD_BRING_DAYS", 1);
+const BRING_DAYS = num("BOARD_BRING_DAYS", 0);
 /* POSTING TWICE A WEEK WAS THE PRICE OF AN INVITE, and it stopped being the
  * right one. It was written when the board was a feed and what a member did
  * here was write on it; what a member does here now is say what they are

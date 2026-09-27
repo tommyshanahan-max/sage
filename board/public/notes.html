@@ -3558,7 +3558,14 @@ async function getLink() {
          other two got the vague sentence instead of the exact one. */
       const first = ["face", "days", "said", "guests", "room"]
         .find((k) => d.need.includes(k));
-      LINK = { why: T({ face: "wn.needFace", days: "wn.needDays",
+      /* "face" IS TWO DIFFERENT PEOPLE. standing() fails it for a member
+         whose page has no photograph on it AND for somebody who has no page
+         at all — and "put a photo on your profile" said to the second is an
+         instruction about a thing that does not exist. The board cannot tell
+         them apart in one word; this screen can, because it knows whether
+         there is a handle. */
+      const noFace = first === "face" && !YOU.handle ? "note.needProfile" : "";
+      LINK = { why: T(noFace || { face: "wn.needFace", days: "wn.needDays",
                         said: "wn.needSaid", guests: "wn.needGuests",
                         room: "wn.needRoom" }[first] || "wn.mkStanding") };
     } else {
