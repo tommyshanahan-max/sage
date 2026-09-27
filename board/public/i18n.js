@@ -5239,6 +5239,13 @@ export const STRINGS = {
   "note.clear":        ["Delete this conversation", "\u5220\u6389\u8fd9\u6bb5\u5bf9\u8bdd"],
   "note.clearSure":    ["Delete it from your phone? They keep theirs, and are not told.",
                         "\u4ece\u4f60\u8fd9\u8fb9\u5220\u6389\uff1f\u5bf9\u65b9\u90a3\u8fb9\u8fd8\u5728\uff0c\u4e5f\u4e0d\u4f1a\u77e5\u9053\u3002"],
+  /* THE SAME ROW WHEN A ROOM OF TWO IS RIDING ON IT — see listRow. Deleting
+     it takes the room with it, and a room of two that one of you leaves is
+     gone for both of you, messages and all. That is a different thing to do
+     to somebody than putting your own copy away, so it is the first clause
+     rather than a reassurance at the end. */
+  "note.clearBoth":    ["The room you two pinned terms in goes for both of you. Delete it?",
+                        "\u4f60\u4eec\u4fe9\u5b9a\u6761\u6b3e\u7684\u90a3\u4e2a\u623f\u95f4\u4f1a\u4e00\u8d77\u6d88\u5931\u3002\u786e\u5b9a\u5220\uff1f"],
   "note.shut":         ["This conversation is closed.", "这个对话已经结束了。"],
   "note.needProfile":  ["Fill in your own profile first — an introduction from nobody is not one.",
                         "先填好自己的资料——没有名字的自我介绍不算自我介绍。"],

@@ -1878,13 +1878,52 @@ function drawList(T0) {
      sorted together by when that was — not grouped by kind, which would put
      the newest thing on the screen below three older ones for no reason a
      reader could see. */
+  /* A ROOM OF TWO IS NOT A SECOND CONVERSATION WITH THE SAME PERSON.
+   *
+   * "These refunds 2 peoplegrpops can be removed." He is right, and they are
+   * not something anybody asked for: a room of two is what /api/note/terms
+   * makes when somebody presses Write terms, because the memo needed a room
+   * to live in. It then turned up in Chat as a second row for a person who
+   * was already one row up — "Tom, Axel" sitting under Axel — and the list
+   * read as the app having lost track of who you were talking to.
+   *
+   * SO THE PERSON'S ROW SWALLOWS IT. One row per person, and it opens
+   * whichever of the two had the last word in it, so the memo and everything
+   * said in the room are still one tap away and nothing is deleted to tidy a
+   * screen. A room of three stays its own row; so does a room of two with
+   * somebody you have no thread with, because there is nothing to swallow it.
+   */
+  const ROOMOF = new Map();   // a thread's who  -> the room that is also them
+  const PAIRED = new Set();   // the rooms that no longer need a row
+  for (const g of GROUPS) {
+    if (g.hand) continue;
+    /* The doorman does not count and neither does a guest with no name — see
+       the note over `who` in /api/groups. Two people means two people. */
+    const real = (Array.isArray(g.who) ? g.who : []).filter((q) => q && !q.bot && q.handle);
+    if (real.length !== 2) continue;
+    const them = real.find((q) => !q.self);
+    const t = them && T0.find((x) => x.who === them.who);
+    /* ONE ROOM PER PERSON. Two of them with the same person is the same
+       duplication one level down; the newest wins and the older keeps its own
+       row rather than vanishing. */
+    if (!t || ROOMOF.has(t.who)) continue;
+    ROOMOF.set(t.who, g);
+    PAIRED.add(g.id);
+  }
+
   const rows = [
     /* t.last.at, NOT t.at. A thread has no `at` of its own — it is its
        newest note's — so every two-person row sorted as "" and sank below
        every group, however old the group and however new the message. */
-    ...T0.map((t) => ({ at: (t.last && t.last.at) || "", row: () => listRow(t) })),
+    ...T0.map((t) => {
+      const g = ROOMOF.get(t.who) || null;
+      const mine = (t.last && t.last.at) || "";
+      const at = g && String(lastAt(g)) > String(mine) ? lastAt(g) : mine;
+      return { at, row: () => listRow(t, g) };
+    }),
     // Not the hand-kept rooms: they are cards in the banner — see drawWaiting.
-    ...GROUPS.filter((g) => !g.hand).map((g) => ({ at: lastAt(g), row: () => groupRow(g) })),
+    ...GROUPS.filter((g) => !g.hand && !PAIRED.has(g.id))
+      .map((g) => ({ at: lastAt(g), row: () => groupRow(g) })),
   ].sort((a, b) => String(b.at).localeCompare(String(a.at)));
 
   $("none").hidden = rows.length > 0;
@@ -2048,9 +2087,14 @@ function groupRow(g) {
   const last = says[says.length - 1];
   const prev = el("p", "prev");
   if (last) {
-    /* Who spoke, because in a room of five the name is half the message. */
+    /* Who spoke, because in a room of five the name is half the message.
+       NOT IN A ROOM OF TWO, where the name is already the title of the row:
+       "Hugo — Hugo: Only ever talked here." is the same word twice and the
+       second one is in the half somebody is trying to read. */
     if (last.mine) prev.append(el("span", "k", T("note.youSaid") + " "));
-    else if (last.handle) prev.append(el("span", "k", last.handle + ": "));
+    else if (last.handle && others.length > 1) {
+      prev.append(el("span", "k", last.handle + ": "));
+    }
     prev.append(document.createTextNode(saidShort(last)));
   } else {
     /* Nothing said yet, so say who is in it instead — an empty room with
@@ -2085,7 +2129,14 @@ function groupRow(g) {
  *  people mean by deleting a chat: your copy goes, they keep theirs, and they
  *  are not told. See swipeRow.
  */
-function listRow(t) {
+function listRow(t, room) {
+  /* THE ROOM OF TWO THAT IS ALSO THIS PERSON — see drawList. When the last
+     thing either of you said was said in there, this row is that room: the
+     same face and the same name, because it is the same person, and it opens
+     where the conversation actually is. */
+  const inRoom = Boolean(room) && String(lastAt(room)) > String((t.last && t.last.at) || "");
+  const says = room && Array.isArray(room.says) ? room.says : [];
+  const newest = says[says.length - 1] || null;
   const b = el("button", "trow");
   b.type = "button";
   const wrap2 = el("div", "avwrap");
@@ -2101,27 +2152,49 @@ function listRow(t) {
   const mid = el("div", "mid");
   const nm = el("div", "nm");
   nm.append(el("b", t.unread ? "new" : null, t.handle || "—"));
-  const time = el("time", null, when(t.last.at));
-  time.dateTime = t.last.at;
+  const shown = inRoom && newest ? newest : t.last;
+  const at = inRoom ? lastAt(room) : t.last.at;
+  const time = el("time", null, when(at));
+  time.dateTime = at;
   nm.append(time);
   const prev = el("p", "prev");
   /* "You:" IN FRONT OF YOUR OWN LAST LINE. Without it a row whose newest
      message is one you sent reads as one they sent, and the whole list is a
      guess about who spoke last. */
-  if (t.last.mine) prev.append(el("span", "k", T("note.youSaid") + " "));
+  if (shown.mine) prev.append(el("span", "k", T("note.youSaid") + " "));
   // See saidShort. A voice note in a one-to-one thread printed "You:" and
   // nothing at all.
-  prev.append(document.createTextNode(saidShort(t.last)));
+  prev.append(document.createTextNode(saidShort(shown)));
   mid.append(nm, prev);
   b.append(wrap2, mid);
-  b.addEventListener("click", () => openThread(t.who));
+  b.addEventListener("click", () => {
+    if (inRoom) { location.assign("/groups?g=" + encodeURIComponent(room.id)); return; }
+    openThread(t.who);
+  });
 
-  return swipeRow(b, T("note.clearSure"), () =>
-    fetch("/api/note/hide", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      // A waiting person's thread is addressed by their row — see blank().
-      body: JSON.stringify({ device, who: String(t.who || "").replace(/^w:/, "") }),
-    }).then((r) => { if (!r.ok) throw new Error("no"); }));
+  /* DELETING IT TAKES BOTH HALVES, and the sentence says so.
+   *
+   * One row on the screen, so one row has to go — hiding only the thread
+   * would put the room straight back on the list as its own row, which reads
+   * as the delete not having worked. And a room of two that one of you walks
+   * out of is deleted outright, messages and all: it is not a room any more.
+   * That is a real thing to do to somebody else, so it is said plainly rather
+   * than hidden behind the milder sentence a thread on its own gets. */
+  const hideThread = () => fetch("/api/note/hide", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    // A waiting person's thread is addressed by their row — see blank().
+    body: JSON.stringify({ device, who: String(t.who || "").replace(/^w:/, "") }),
+  }).then((r) => { if (!r.ok) throw new Error("no"); });
+  /* THE ROOM FIRST. If leaving fails the thread is still there and the row
+     comes back; the other way round leaves somebody looking at a room whose
+     conversation they just deleted. */
+  const both = () => fetch("/api/group/leave", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ device, group: room.id }),
+  }).then((r) => { if (!r.ok) throw new Error("no"); }).then(hideThread);
+
+  return swipeRow(b, T(room ? "note.clearBoth" : "note.clearSure"),
+    room ? both : hideThread);
 }
 
 function openThread(who) {
