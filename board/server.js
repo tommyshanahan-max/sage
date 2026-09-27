@@ -1218,9 +1218,40 @@ app.use(async (req, res, next) => {
    */
   const listRow = await onTheList(req);
   if (listRow) {
-    if (req.path === "/api/door" || req.path === "/api/group/say") return next();
-    if (req.method === "GET") return next();
-    return res.status(403).json({ error: "soon" });
+    /* EVERYBODY WHO IS HERE CAN USE ALL OF IT.
+     *
+     * "I want veryone to HAVE FULL ACESS TO ALL BUTTONS." / "they enter via
+     * the chat link, into a chat, and see the buttopns."
+     *
+     * They do see them — every screen in this app is readable from the list,
+     * which was the old rule: read everything, change nothing. So somebody
+     * arrived in a conversation, saw a call button and a money button and a
+     * ＋, and every one of them answered `soon`. A button you can see and
+     * cannot press is worse than one that is not there, and there were forty
+     * of them.
+     *
+     * WHAT THIS COSTS, said plainly because it is a door and not a setting:
+     * somebody holding a link is now a member in everything but the word.
+     * They can post, write to any member, and raise a money request. The
+     * waiting list still exists and vouching still decides who is IN — what
+     * it no longer decides is what the app lets them touch.
+     *
+     * WHAT IT DOES NOT TOUCH. A block still holds, both ways. Every route
+     * still works out who is asking and answers about them alone. The rules
+     * INSIDE a conversation are unchanged — threadState still refuses any
+     * pair that has not matched, followed each way, or written to each other,
+     * and somebody on the list has no person row, so most of Browse simply
+     * has nothing to say about them. This opens the door; it does not make
+     * anybody a match.
+     *
+     * ONE LINE TO PUT BACK. BOARD_OPEN=off in .env restores the old rule
+     * without a deploy — see OPEN_LIST. */
+    if (!OPEN_LIST) {
+      if (req.path === "/api/door" || req.path === "/api/group/say") return next();
+      if (req.method === "GET") return next();
+      return res.status(403).json({ error: "soon" });
+    }
+    return next();
   }
   if (await admittedReq(req)) return next();
   if (req.path.startsWith("/api/")) {
@@ -1678,6 +1709,17 @@ const gate = async (req, res, next) => {
  * file into a 404 without a deploy, which is the thing you want within reach
  * on the one surface here that two people can use to reach each other.
  */
+/* WHETHER SOMEBODY ON THE LIST MAY PRESS THINGS, AND NOT ONLY READ THEM.
+ *
+ * On, because that is what was asked for — see the long note in the door.
+ * BOARD_OPEN=off in .env puts back the old rule, where the list could read
+ * every screen and write nothing, and it takes a restart rather than a
+ * deploy. It is a switch rather than plain code for the same reason
+ * BOARD_NOTES is: it is the kind of decision somebody may want to reverse at
+ * eleven at night without waiting for a build.
+ */
+const OPEN_LIST = String(process.env.BOARD_OPEN || "on").toLowerCase() !== "off";
+
 const NOTES_ON = String(process.env.BOARD_NOTES || "on").toLowerCase() !== "off";
 const notesOff = (req, res, next) =>
   (NOTES_ON ? next() : res.status(404).json({ error: "not in this version" }));
