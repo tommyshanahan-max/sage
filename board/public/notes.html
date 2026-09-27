@@ -596,7 +596,9 @@
      fifth tile sitting at its own height. */
   .pgrid button b{font-weight:400;font-size:.72rem;line-height:1.25;
     text-align:center;color:var(--ink-2);max-width:5rem;min-height:2.5em}
-  .pgrid button:disabled{opacity:.4}
+  /* .off, NOT :disabled — see ptile. A disabled button cannot be pressed and
+     the whole point is that this one can. */
+  .pgrid button:disabled,.pgrid button.off{opacity:.4}
   .send{flex:0 0 auto;width:2.4rem;height:2.4rem;border:0;border-radius:50%;
     background:var(--accent);color:var(--accent-ink);display:grid;
     place-items:center;cursor:pointer}
@@ -2493,10 +2495,35 @@ function ptile(label, path, on, off) {
   /* A TILE THAT CANNOT WORK IS SHOWN AND DIMMED RATHER THAN HIDDEN, and the
      press says why. A grid that changes shape between two conversations is a
      grid nobody learns the positions of — and "why is it not there" is a
-     worse question than "why is it grey". */
+     worse question than "why is it grey".
+   *
+   * AND THE PRESS REALLY DOES SAY IT NOW. It used to set `disabled` and put
+   * the reason in a `title`, which is a tooltip: it needs a mouse to hover
+   * and there is no mouse. On a phone a disabled button does not fire at all,
+   * so the tile was grey, the tap did nothing, and the sentence explaining
+   * why existed in an attribute nobody could ever reach. "when i press video
+   * for Axel there is no reaction." There was none to have.
+   *
+   * So it stays pressable and answers. NOT aria-disabled either, which was
+   * the first fix and is the same lie in a second place: it announces a
+   * control that does nothing, and this one does something — it explains
+   * itself. The reason goes in the label instead, so the sentence is read out
+   * with the tile rather than found by pressing it. */
   if (!on) {
-    b.disabled = true;
-    if (off) b.title = off;
+    b.classList.add("off");
+    if (off) b.setAttribute("aria-label", label + " — " + off);
+    /* stopImmediatePropagation, AND THAT IS THE WHOLE OF IT. Every caller
+       hangs the tile's real action on this same button after ptile returns,
+       so without this BOTH fire: the reason was said and then the call it
+       could not make overwrote it with its own failure. "Allow the camera and
+       microphone" where the answer was "their page is not up". This listener
+       is registered first, so it is the one that gets to stop the rest. */
+    b.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      plusSheet(false);
+      say(off || T("note.failed"), true);
+    });
   }
   return b;
 }
