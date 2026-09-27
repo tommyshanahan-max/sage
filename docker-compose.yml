@@ -1397,6 +1397,36 @@ services:
       - book_data:/book:ro
     command: ["-c", "/book/turnserver.conf"]
 
+  # THE LIVE CLASS VIDEO SERVER — one teacher, up to ten watching (Book's
+  # /live pages). LiveKit, free and self-hosted. The teacher's phone sends its
+  # video here once and this sends it on to each viewer; phone to phone, the
+  # teacher would have to upload it ten times. See book/lib/live.mjs.
+  #
+  # Its settings, key included, are written by the book container on start
+  # into the volume mounted here read-only — nothing to put in .env, same as
+  # the relay. Browsers reach it two ways: its signalling through Caddy at
+  # /book/lk (no new certificate), and the video itself straight to this
+  # box's address on the two ports below. Published ports, not host
+  # networking, so Caddy finds it by name; Docker opens published ports
+  # itself, so there is no ufw rule to add.
+  livekit:
+    profiles: ["board"]
+    image: livekit/livekit-server:v1.13.7
+    container_name: tomscoding-livekit
+    restart: unless-stopped
+    depends_on:
+      - book
+    volumes:
+      - book_data:/book:ro
+    command: ["--config", "/book/livekit.yaml"]
+    expose:
+      - "7880"
+    ports:
+      - "7881:7881/tcp"
+      - "7882:7882/udp"
+    networks:
+      - tomscoding
+
   #
   # Off unless asked for, like every other optional service here — add `claire`
   # to COMPOSE_PROFILES in .env to switch it on. A new product does not get to

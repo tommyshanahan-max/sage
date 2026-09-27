@@ -6,6 +6,8 @@
  *   make book-off NAME="Li Wei"    hide a teacher (NAME=… again with book-on)
  *   make book-cancel ID=…          free a booked slot
  *   make book-demo                 four made-up teachers on the "demo" shelf
+ *   make book-live NAME=Julia      a live class: her link to go live, and one
+ *                                  link for the group to watch
  *
  * Values come in as environment variables, not arguments, so a name with a
  * space or a line with a "·" in it survives make, docker and the shell
@@ -17,6 +19,7 @@
  */
 import { load, save, newId, cleanTeacher, cleanBooking, cleanTeam, DAYS, slotsFor, HOUSE_CUT } from "./lib/store.mjs";
 import { teamView } from "./lib/team.mjs";
+import { cleanLive, MAX as LIVE_MAX } from "./lib/live.mjs";
 
 const E = process.env;
 // Where the booking service is reached from outside, for printing room links.
@@ -145,6 +148,32 @@ if (cmd === "teacher") {
   t.paid.push({ at: new Date().toISOString(), amount });
   save(db);
   console.log(`Recorded ¥${amount} paid to ${t.name}. Owed now ¥${teamView(db, t).owed}.`);
+} else if (cmd === "live") {
+  /* A LIVE CLASS: two links. NAME is the teacher, as the group will see it.
+     WHEN is Beijing time and optional — without it the class is open now,
+     for the next three hours. TITLE is optional too. */
+  if (!E.NAME) { console.error('Needs NAME="…" — the teacher, as the group sees it.'); process.exit(1); }
+  let start = new Date(Date.now() + 8 * 3600e3).toISOString().slice(0, 16) + ":00+08:00";
+  if (E.WHEN) {
+    const w = String(E.WHEN).trim().replace(" ", "T");
+    if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(w)) { console.error('WHEN is "2026-10-03 19:00", Beijing time.'); process.exit(1); }
+    start = w + ":00+08:00";
+  }
+  const db = load();
+  const l = cleanLive({ id: newId(), host: E.NAME, title: E.TITLE, start });
+  db.lives.push(l);
+  save(db);
+  console.log(`Live class — ${l.host}${l.title ? ", " + l.title : ""}, ${when(l.start.slice(0, 16) + "+08:00")}. Up to ${LIVE_MAX} watching.\n`);
+  console.log(`  ${l.host} goes live here (send only to ${l.host}):\n  ${PUBLIC}/live/${l.id}#${l.hKey}\n`);
+  console.log(`  Everybody else watches here (send to the group):\n  ${PUBLIC}/live/${l.id}#${l.vKey}\n`);
+  console.log(`Open until three hours after it starts. Done early: make book-live-off ID=${l.id}`);
+} else if (cmd === "live-off") {
+  const db = load();
+  const l = db.lives.find((x) => x.id === E.ID);
+  if (!l) { console.error(`No live class ${E.ID || "(ID=…)"}.`); process.exit(1); }
+  l.off = true;
+  save(db);
+  console.log(`Closed. Both links for ${l.host}'s live class now say it is over.`);
 } else if (cmd === "test") {
   /* A REAL BOOKING TO TRY THE VIDEO ON: the first free slot of the first
      teacher on SHELF (default studypal), booked for "Test", and both links

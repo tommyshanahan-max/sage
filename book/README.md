@@ -27,6 +27,20 @@ make book-demo                    # made-up teachers on the "demo" shelf
 Also: `MINUTES=45`, `PHOTO=https://…`, `VOICE=https://…` (a short clip),
 `PAY=https://…` (a Dealio link, shown after booking). All times are Beijing.
 
+## Live class
+
+One teacher on camera, up to ten watching — through LiveKit on the box
+(`livekit` in docker-compose.yml; see `lib/live.mjs` for why not phone to
+phone).
+
+```
+make book-live NAME=Julia TITLE="HSK 4 speaking" WHEN="2026-10-03 19:00"
+make book-live-off ID=…
+```
+
+Prints her link (goes live) and one link for the group (watches). Without
+`WHEN` it is open now; either way, until three hours after the start.
+
 ## Not yet
 
 - Nobody is told when a lesson is booked — `make book-list` shows them.

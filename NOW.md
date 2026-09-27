@@ -1978,6 +1978,15 @@ between Tom's phone and his Mac**, through `make book-test`'s two links.
   is no rail to a Chinese bank card (Stripe can't, Airwallex declined).
   A lesson counts as earned once its start time passes — nothing checks it
   actually happened.
+- **Live class, built 27 Sep, not deployed.** One teacher on camera, up to
+  10 watching (`BOOK_LIVE_MAX`), through LiveKit — the `tomscoding-livekit`
+  container, image `livekit/livekit-server:v1.13.7`, published 7881/tcp and
+  7882/udp, signalling via Caddy at `/book/lk`. `make book-live NAME=Julia`
+  prints two links: hers (sends) and one for the group (watch only). Tested
+  here against a real LiveKit 1.13.7 with Chromium's fake camera: 10 viewers
+  got 720p video and sound, the 11th was told "This class is full". Not yet
+  tried on a phone, nor across the Great Firewall. Wise payouts are next:
+  Tom's Wise Business account exists, verification pending.
 
 ## Voice messages — live 24 Sep, watched working on Tom's phone
 

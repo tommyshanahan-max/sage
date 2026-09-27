@@ -14,6 +14,7 @@
 import { readFileSync, writeFileSync, renameSync, mkdirSync } from "node:fs";
 import { randomBytes } from "node:crypto";
 import path from "node:path";
+import { cleanLive } from "./live.mjs";
 
 const DIR = process.env.BOOK_DIR || "/data";
 const FILE = path.join(DIR, "book.json");
@@ -27,15 +28,17 @@ export function load() {
       teachers: (Array.isArray(raw.teachers) ? raw.teachers : []).map(cleanTeacher).filter(Boolean),
       bookings: (Array.isArray(raw.bookings) ? raw.bookings : []).map(cleanBooking).filter(Boolean),
       teams: (Array.isArray(raw.teams) ? raw.teams : []).map(cleanTeam).filter(Boolean),
+      lives: (Array.isArray(raw.lives) ? raw.lives : []).map(cleanLive).filter(Boolean),
     };
     /* A booking read without room keys was just given some by cleanBooking.
        Written straight back, or the next read would mint different ones and
        the link somebody was sent would stop opening its own room. */
     if ((raw.bookings || []).some((b) => b && (!b.sKey || !b.tKey))
-      || (raw.teams || []).some((t) => t && !t.key)) save(db);
+      || (raw.teams || []).some((t) => t && !t.key)
+      || (raw.lives || []).some((l) => l && (!l.hKey || !l.vKey))) save(db);
     return db;
   } catch {
-    return { teachers: [], bookings: [], teams: [] };
+    return { teachers: [], bookings: [], teams: [], lives: [] };
   }
 }
 
