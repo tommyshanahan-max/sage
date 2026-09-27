@@ -6804,7 +6804,6 @@ export const STRINGS = {
      do rather than the thing they are. "See where you are" is a queue
      position; the page it opens is where they write their own — which is also
      what moves them up it. */
-  "note.onList":       ["Your page — finish it and you move up", "你的资料——写完就往前排"],
   "note.canDeal":      ["deal", "已成交"],
   "note.canTo":        ["To {who}", "写给 {who}"],
   "note.canHow": [

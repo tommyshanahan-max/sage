@@ -695,9 +695,6 @@
     padding:.45rem .2rem;font-size:.64rem;text-decoration:none;letter-spacing:.02em}
   .bar a span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .bar a[aria-current="page"]{color:var(--accent)}
-  /* The one line a waiting person gets instead of three tabs they cannot use. */
-  .bar a.waitbar{flex:1;flex-direction:row;justify-content:center;
-    font-size:.82rem;color:var(--ink-2);letter-spacing:0}
   .bar svg{width:1.5rem;height:1.5rem;stroke:currentColor;fill:none;stroke-width:1.7;
     stroke-linecap:round;stroke-linejoin:round}
   /* On a wide screen index.html moves its bar into the masthead. This page has
@@ -1373,12 +1370,6 @@
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h18v10H3z"/><circle cx="12" cy="12" r="2.4"/></svg>
     <span id="tabmoney"></span>
   </a>
-  <!-- In place of the three tabs, for somebody on the list.
-       /room AND NOT /waiting. /waiting is the operator's screen — it asks for
-       an admin key — so the one bar a person at the door is given led them to
-       a password box for somebody else's tool. /room is their own: where they
-       stand, and the form that makes their page. -->
-  <a class="waitbar" href="/room" id="waitbar" hidden></a>
 </nav>
 
 <script type="module">
@@ -1836,26 +1827,39 @@ function paint() {
   $("listtop").hidden = Boolean(here);
   $("threadview").hidden = !here;
   document.title = T("note.inbox");
-  /* THE BAR IS FOR MEMBERS. Somebody on the list has one conversation and
-     three tabs that would bounce them off a door, so they get the one line
-     that is true for them instead: where they stand, and how to get in. */
+  /* THE SAME BAR FOR EVERYBODY, AND THE RULE BEHIND THE OLD ONE IS GONE.
+   *
+   * Somebody on the list used to get one line instead of four tabs, because
+   * the four would have bounced them off a door. They do not any more — see
+   * OPEN_LIST in server.js: the list has had the run of the app since the
+   * night "SECOND TIER HAS FULL ACCESS" was said. Hiding the tabs was the
+   * last thing still keeping them out, and it was invisible from the server.
+   *
+   * The line it showed instead went with it: "Your page — finish it and you
+   * move up". "nobody cares about moving up or knows what it means". */
   /* THE ANCHORS, NOT THE LABELS INSIDE THEM. tabcards and tabbrowse are the
      <span>s that hold the words — hiding those left two tabs that were still
      there, still tappable, and now wordless. */
-  for (const id of ["tabcardsgo", "tabbrowsego", "tabmego", "tabmoneygo"]) $(id).hidden = WAITING;
+  for (const id of ["tabcardsgo", "tabbrowsego", "tabmego", "tabmoneygo"]) $(id).hidden = false;
   /* AND THE MONEY TAB IS NOT IN THE APP, for anybody, waiting or not. The
      note lives over webOnly in server.js. */
   if (IN_APP) $("tabmoneygo").hidden = true;
-  $("waitbar").hidden = !WAITING;
-  /* Not for the waiting list and not for an invited arrival: both are being
-     asked to get in, and two asks at once is neither. */
-  offerInstall($("install"), !WAITING);
+  /* OFFERED TO THE LIST TOO, NOW THERE IS NOTHING ELSE ON THE BAR. These
+     were held back because the one line above was already asking something
+     of them, and two asks at once is neither. */
+  offerInstall($("install"), true);
   // Deliberately not awaited: it asks the board for the key and the browser
   // for its registration, and the list must not wait on either.
-  offerNotify($("notify"), !WAITING);
-  if (WAITING) $("waitbar").textContent = T("note.onList");
-  $("tabmego").href = YOU.handle
-    ? "/p/" + encodeURIComponent(YOU.handle.toLowerCase()) : "/browse";
+  offerNotify($("notify"), true);
+  /* WHERE PROFILE GOES FOR SOMEBODY ON THE LIST. /room — their own screen:
+     where they stand, and the form that makes the page.
+     WAITING IS TESTED BEFORE THE HANDLE, and that is the bug this line was
+     written for. Somebody on the list HAS a handle — the name on their
+     waiting row, "hi" in the case that started this — and there is no person
+     behind it, so the tab went to /p/hi and said "Not on this board" about
+     the person tapping it. */
+  $("tabmego").href = WAITING ? "/room"
+    : (YOU.handle ? "/p/" + encodeURIComponent(YOU.handle.toLowerCase()) : "/browse");
   $("back").setAttribute("aria-label", T("nav.back"));
   $("plus").setAttribute("aria-label", T("note.canHead"));
   if (here) { drawThread(here); return; }
@@ -3317,7 +3321,6 @@ function drawInvitedTabs() {
   $("tabme").textContent = T("nav.profile");
   $("tabmoney").textContent = T("nav.money");
   for (const id of ["tabcardsgo", "tabbrowsego", "tabmego"]) $(id).hidden = false;
-  $("waitbar").hidden = true;
   $("tabmego").href = "/waiting";
 }
 
