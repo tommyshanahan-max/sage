@@ -3813,6 +3813,15 @@ export const STRINGS = {
      every one of them is a thing you are about to do — "Payment request" is
      a noun somebody has to work out; "Request money" is the press. */
   "pl.add":            ["Add person", "拉人进来"],
+  /* ---- adding a third person, from inside the conversation ----------------
+     The page that used to do this is gone: a room needs three, there are two
+     of you, so this is one choice and then the three of you are talking. */
+  "ac.head":           ["Who else should be in this?", "还想拉谁进来？"],
+  "ac.nobody": [
+    "Nobody to add yet. You can put somebody in a group once you have matched — you follow each other and you are after the same thing.",
+    "现在没人可拉。要先和对方匹配上——互相关注，而且找的是同一件事。",
+  ],
+  "ac.few":            ["A group needs three people.", "一个群至少要三个人。"],
   "pl.call":           ["Video call", "视频通话"],
   "pl.pay":            ["Send money", "我要付款"],
   "pl.ask":            ["Request money", "收款"],

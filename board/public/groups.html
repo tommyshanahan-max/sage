@@ -1034,51 +1034,36 @@ function paint() {
   paintList();
 }
 
-/* --------------------------------------------------------------- the list */
+/* ------------------------------------------------------- making a new one */
 
+/* THE LIST OF ROOMS USED TO BE HERE AND IT WAS A SECOND INBOX.
+ *
+ * "Is this page even necessary now." Mostly it was not. Every room on it was
+ * already a row in Chat — mixed in with the two-person threads and sorted by
+ * what was said last, which is where anybody looks for a conversation, and
+ * which is the list that gets opened. This one was the same rooms again, in
+ * another place, under a word ("Groups") that makes a room sound like a
+ * different kind of thing from a chat when it is a chat with more people in
+ * it.
+ *
+ * Two lists of one set of conversations is one list to keep in step and one
+ * nobody reads. So the rooms live in Chat and this page does the one thing
+ * Chat cannot: make a new one.
+ *
+ * /groups?g=<id> IS UNTOUCHED. That is the room itself and every link on this
+ * board points at it. What is gone is only the index in front of it.
+ */
 function paintList() {
   $("topact").hidden = true;
-  $("title").textContent = T("grp.title");
-  $("sub").textContent = GROUPS.length
-    ? T("grp.count", { n: GROUPS.length }) : T("grp.sub");
+  $("title").textContent = T("grp.start");
+  $("sub").textContent = "";
   const box = $("screen");
   fill(box);
-
-  if (PICKING) { box.append(picker()); return; }
-
-  /* The button first. Making one is the thing somebody opens this page to do
-     while there are none, and it stays at the top afterwards because a list of
-     three rooms is not long enough to bury it under. */
-  const start = el("button", "start", T("grp.start"));
-  start.type = "button";
-  start.addEventListener("click", () => { PICKING = true; PICKED = []; paint(); });
-  box.append(start);
-
-  if (!GROUPS.length) {
-    const none = el("div", "none");
-    none.append(el("b", null, T("grp.none")), el("p", null, T("grp.noneBody")));
-    box.append(none);
-    return;
-  }
-
-  box.append(Object.assign(el("div", "rule"), {}));
-  const r = el("div", "rule");
-  r.append(el("span", null, T("grp.yours")), el("i"));
-  box.append(r);
-
-  for (const g of GROUPS) {
-    const b = el("button", "room");
-    b.type = "button";
-    const faces = el("div", "faces");
-    for (const p of g.who.slice(0, 4)) faces.append(face(p));
-    const m = el("div", "m");
-    m.append(el("b", null, g.name || nameOf(g)));
-    const last = g.says[g.says.length - 1];
-    m.append(el("p", null, last ? last.text : T("grp.quiet")));
-    b.append(faces, m, el("span", "chev", "›"));
-    b.addEventListener("click", () => go(g.id));
-    box.append(b);
-  }
+  /* Straight into the picker. There is nothing else on this screen to choose
+     between any more, and a page whose only content is one button is a tap
+     somebody has to make to find out there was nothing behind it. */
+  PICKING = true;
+  box.append(picker());
 }
 
 /** What to call a room nobody named: the people in it. */
@@ -1094,9 +1079,12 @@ function picker() {
 
   if (!CANADD.length) {
     box.append(el("p", "lede", T("grp.nobody")));
+    /* BACK MEANS CHAT NOW. It used to mean the list of rooms on this page,
+       and there is no list any more — the rooms are in Chat, which is also
+       where somebody sent here by "nobody to add yet" actually wants to be. */
     const back = el("button", "start", T("nav.back"));
     back.type = "button";
-    back.addEventListener("click", () => { PICKING = false; paint(); });
+    back.addEventListener("click", () => { location.assign("/notes"); });
     box.append(back);
     return box;
   }
@@ -3350,13 +3338,15 @@ function leaveButton(g) {
 }
 
 $("back").addEventListener("click", () => {
-  // Out of a room to the list, out of the list to the board. One button, and
-  // it always goes back one step rather than off the page.
-  if (PICKING) { PICKING = false; paint(); return; }
+  /* One button, and it always goes back one step rather than off the page.
+     THE LIST IS GONE, so two of these steps changed where they land: out of
+     a room goes to Chat, which is where the rooms are now, and out of the
+     picker goes there too — "PICKING = false; paint()" would just paint the
+     picker again, which is a back button that does nothing. */
   if (ADDING) { ADDING = false; INFO = true; paint(); return; }
   if (INFO) { INFO = false; paint(); return; }
-  if (OPEN) { go(""); return; }
-  if (history.length > 1) history.back(); else location.href = "/feed";
+  if (PICKING || OPEN) { location.assign("/notes"); return; }
+  if (history.length > 1) history.back(); else location.href = "/notes";
 });
 
 setLang(pickLang());

@@ -1014,6 +1014,23 @@
   .qcard{width:100%;max-width:34rem;background:var(--raise);
     border-radius:1.1rem 1.1rem 0 0;padding:1.1rem 1.05rem
     calc(1.1rem + env(safe-area-inset-bottom,0));max-height:92vh;overflow:auto}
+  /* ---- ADDING A THIRD PERSON, in the sheet the payment request already uses.
+     A search and a short list of faces; the whole screen is one choice. */
+  .acfind{width:100%;margin:.9rem 0 .6rem;padding:.7rem .85rem;font:inherit;
+    border:1px solid var(--line);border-radius:.8rem;
+    background:var(--paper);color:var(--ink)}
+  .aclist{display:flex;flex-direction:column;gap:.15rem;max-height:17rem;
+    overflow-y:auto}
+  .acone{display:flex;align-items:center;gap:.7rem;width:100%;padding:.5rem .3rem;
+    border:0;background:none;text-align:left;font:inherit;color:var(--ink);
+    border-radius:.6rem;cursor:pointer}
+  .acone:hover,.acone:focus-visible{background:var(--paper)}
+  .acone b{font-weight:400;font-size:.98rem}
+  .acsaid{margin:.7rem 0 0;font-size:.85rem;color:var(--muted);text-align:center}
+  .acsaid.bad{color:var(--warn,#c0392b)}
+  .acshut{display:block;width:100%;margin:.9rem 0 0;padding:.75rem;border:0;
+    border-radius:99px;background:var(--paper);color:var(--ink);font:inherit;
+    font-size:.95rem;cursor:pointer}
   .qlab{margin:0 0 .5rem;font-size:.72rem;letter-spacing:.14em;
     text-transform:uppercase;color:var(--muted)}
   .qcard label{display:block;margin:0 0 .75rem}
@@ -2145,6 +2162,108 @@ function drawInvited() {
  * THE CODE IS NOT IN THE LINK and this screen is the whole of why that rule
  * survives the new address. A link forwarded by accident lands here and stops.
  */
+/* ADDING A THIRD PERSON, WITHOUT LEAVING THE CONVERSATION.
+ *
+ * "you can start a group already buy adding someone to a chat so the entrie
+ * page is reduandant." It was: this sent you to /groups?with=<id>, a page
+ * whose whole job was a list of rooms already listed on Chat and a picker.
+ * The list is gone and now the picker is too — the thing being asked for is
+ * "get Keith in on this", and that should happen where the thought happened.
+ *
+ * ONE PERSON, BECAUSE THAT IS ALL IT TAKES. A room needs three; there are two
+ * of you, so choosing one more makes it. Naming it, adding a fourth and a
+ * fifth are all things the room itself already does, on the screen where you
+ * can see who is in it.
+ *
+ * ONLY PEOPLE YOU MATCHED WITH, which is what CAN is. The server checks the
+ * same rule again and silently drops anybody who no longer passes it — see
+ * /api/group — so a list gone stale cannot fail the whole thing over one
+ * person who unfollowed while the sheet was open.
+ */
+function addToChat(t) {
+  const back = el("div", "qsheet");
+  const card = el("div", "qcard");
+  card.append(el("p", "qlab", T("pl.add")));
+  card.append(el("h3", "rtitle", T("ac.head", { who: t.handle || "" })));
+
+  const shut = () => { back.remove(); document.body.style.overflow = ""; };
+  const said = el("p", "acsaid");
+  said.hidden = true;
+
+  /* EVERYBODY BUT THE TWO ALREADY IN IT. Offering to add the person you are
+     talking to is an offer that cannot do anything. */
+  const pool = (CAN || []).filter((q) => q.who && q.who !== t.who);
+  if (!pool.length) {
+    card.append(el("p", "when", T("ac.nobody")));
+  } else {
+    const find = document.createElement("input");
+    find.className = "acfind";
+    find.maxLength = 40;
+    find.placeholder = T("grp.findName");
+    find.autocomplete = "off";
+    const list = el("div", "aclist");
+    const draw = () => {
+      const typed = find.value.trim().toLowerCase();
+      fill(list);
+      const hits = pool
+        .filter((q) => !typed || String(q.handle || "").toLowerCase().includes(typed))
+        .slice(0, 8);
+      if (!hits.length) { list.append(el("p", "when", T("dr.tellNone"))); return; }
+      for (const q of hits) {
+        const b = el("button", "acone");
+        b.type = "button";
+        const av = el("span", "av small", initial(q.handle));
+        av.style.background = wash(q.handle);
+        if (q.photo) {
+          const img = Object.assign(document.createElement("img"),
+            { src: "/api/public-media?id=" + encodeURIComponent(q.photo), alt: "", loading: "lazy" });
+          img.addEventListener("load", () => { fill(av); av.append(img); });
+        }
+        b.append(av, el("b", null, q.handle));
+        b.addEventListener("click", () => { make(q); });
+        list.append(b);
+      }
+    };
+    find.addEventListener("input", draw);
+    card.append(find, list);
+    draw();
+
+    async function make(q) {
+      said.hidden = false;
+      said.className = "acsaid";
+      said.textContent = T("note.sending");
+      let d = null;
+      try {
+        const r = await fetch("/api/group", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ device, who: [t.who, q.who] }),
+        });
+        d = await r.json().catch(() => null);
+        if (!r.ok || !d || !d.id) throw new Error((d && d.error) || "no");
+      } catch (e) {
+        said.className = "acsaid bad";
+        const known = { profile: "note.needProfile", few: "ac.few", many: "grp.outFullWhy" };
+        said.textContent = T(known[String(e.message)] || "act.again");
+        return;
+      }
+      /* STRAIGHT INTO THE ROOM. The thing that was asked for is the three of
+         you talking, and a "made it" screen with a button on it is one more
+         press between somebody and that. */
+      location.assign("/groups?g=" + encodeURIComponent(d.id));
+    }
+  }
+
+  card.append(said);
+  const no = el("button", "acshut", T("key.cancel"));
+  no.type = "button";
+  no.addEventListener("click", shut);
+  card.append(no);
+  back.addEventListener("click", (e) => { if (e.target === back) shut(); });
+  back.append(card);
+  document.body.append(back);
+  document.body.style.overflow = "hidden";
+}
+
 /* ---------------------------------------------------------------------------
  * THE ＋ IN A CONVERSATION
  *
@@ -2228,9 +2347,7 @@ function drawPlus(t, last) {
      that makes one is the screen that makes every other one. */
   const add = ptile(T("pl.add"), PATHS.person,
     !OFF.groups && real && Boolean(last && last.open), why || T("pl.closed"));
-  add.addEventListener("click", () => {
-    location.assign("/groups?with=" + encodeURIComponent(t.who || ""));
-  });
+  add.addEventListener("click", () => { plusSheet(false); addToChat(t); });
   grid.append(add);
 
   /* CALL. It was a button in the header; this is where he asked for it and
@@ -4596,7 +4713,11 @@ function drawCan() {
       grp.href = "/groups";
       const face = el("span", "av pile two");
       face.append(el("i"), el("i"));
-      grp.append(face, el("b", null, T("grp.title")));
+      /* "New group", NOT "Groups". /groups is the screen that makes one now —
+         the list of rooms it used to open was the same rooms already listed
+         on this page. A circle labelled with a place is a circle you press to
+         go and look; one labelled with an act says what happens. */
+      grp.append(face, el("b", null, T("grp.start")));
       strip.append(grp);
     }
   }

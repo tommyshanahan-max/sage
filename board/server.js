@@ -1685,8 +1685,22 @@ const notesOff = (req, res, next) =>
 app.get(["/notes", "/notes/"], notesOff,
   (req, res, next) => page("notes.html", req, res, next));
 
-app.get(["/groups", "/groups/"], notesOff,
-  (req, res, next) => page("groups.html", req, res, next));
+/* /groups IS A ROOM, AND ONLY A ROOM.
+ *
+ * "you can start a group already buy adding someone to a chat so the entrie
+ * page is reduandant." It was. Without ?g= this served an index: a list of
+ * rooms that were already rows in Chat, and a picker for starting one. The
+ * list was a second inbox for the same conversations; the picker is now a
+ * sheet inside the conversation that prompted it, which is where somebody
+ * decides to add a third person. Neither has a page any more.
+ *
+ * A REDIRECT AND NOT A 404, because this address is in links, in histories
+ * and on somebody's home screen. /notes is where the rooms are, so it is
+ * where an old /groups link should land. */
+app.get(["/groups", "/groups/"], notesOff, (req, res, next) => {
+  if (!req.query.g && !req.query.with) return res.redirect(302, "/notes");
+  return page("groups.html", req, res, next);
+});
 
 /* The switcher, the roster and the folder drop. Behind the door like the rest
    of the board — it is nothing but somebody's own roster — and not in
