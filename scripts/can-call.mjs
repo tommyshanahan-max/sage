@@ -19,6 +19,7 @@
  *   make can-call WHO="Axel Hugo"     these people
  *   make can-call                     everybody not in Browse
  */
+import { boardFetch } from "./wait-board.mjs";
 const [, , base, key, who] = process.argv;
 if (!base || !key) {
   console.error("usage: can-call.mjs <board url> <admin key> [names]");
@@ -32,7 +33,8 @@ const say = (m) => console.log(m);
    running the command twice is the thing this exists to stop. */
 const WANT = String(who || "").trim().split(/\s+/).filter(Boolean);
 
-const r = await fetch(base + "/api/public?queue=1", {
+/* boardFetch, NOT fetch — see wait-board.mjs. */
+const r = await boardFetch(base + "/api/public?queue=1", {
   headers: { "x-admin-secret": key }, signal: AbortSignal.timeout(20_000) })
   .catch(() => null);
 if (!r) { say("\n  The board did not answer. Is it up?  make ps\n"); process.exit(1); }

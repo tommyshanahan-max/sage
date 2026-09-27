@@ -19,6 +19,7 @@
  *   make can-invite                everybody, and who is blocked
  *   make can-invite WHO="Tom"      one person
  */
+import { boardFetch } from "./wait-board.mjs";
 const [, , base, key, who] = process.argv;
 if (!base || !key) {
   console.error("usage: can-invite.mjs <board url> <admin key> [who]");
@@ -29,7 +30,9 @@ const say = (m) => console.log(m);
 
 const url = base + "/api/admin/can-invite"
   + (WHO ? "?who=" + encodeURIComponent(WHO) : "");
-const r = await fetch(url, { headers: { "x-admin-secret": key },
+/* boardFetch, NOT fetch: run straight after `make board` this lands on a
+   container that has restarted and is not listening yet. See wait-board.mjs. */
+const r = await boardFetch(url, { headers: { "x-admin-secret": key },
   signal: AbortSignal.timeout(20_000) }).catch(() => null);
 if (!r) { say("\n  The board did not answer. Is it up?  make ps\n"); process.exit(1); }
 if (r.status === 401 || r.status === 403) {
