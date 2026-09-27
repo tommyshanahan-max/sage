@@ -9,7 +9,7 @@ COMPOSE := docker compose
 # without this line `make board` finds a file by that name, decides it is
 # already up to date, and exits saying so — a deploy command that prints a
 # reassuring sentence and deploys nothing.
-.PHONY: board board-build mailout up-safe can-invite stripe-who call-check can-call board-log space
+.PHONY: board board-build mailout up-safe can-invite stripe-who call-check can-call board-log space who-am-i no-back
 .PHONY: version faces cards traffic tier-two try try-china china wallets mo-code visits app-state claire-episodes deal claire-key claire-count claire-seed claire-video listing invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who bells twice admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions whitelabel blocked partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check post post-status post-run post-login post-code post-logins weidian-pull weidian-json weidian-reviews shop-chapter review-tidy product-names review-move
 
 help: ## Show this help
@@ -2573,6 +2573,48 @@ fix-browser: ## Restart the browser after a black screen
 
 reload: ## Reload Caddy config without dropping connections
 	$(COMPOSE) exec caddy caddy reload --config /etc/caddy/Caddyfile
+
+who-am-i: ## Is anybody able to walk in as somebody else:  make who-am-i
+	@# THE NIGHT THIS EXISTS FOR. Two people opened an invite link, made a
+	@# profile, went back to the link — and came in as Tom, with his
+	@# conversations in front of them.
+	@#
+	@# Three settings on this box can do that, and all three are meant to be
+	@# on for an hour in front of a reviewer and off afterwards. None of them
+	@# is visible from any screen, so the only way to know is to ask the
+	@# container — which is also the only thing that CAN answer, because the
+	@# names in .env are TOMSCODING_* and the container sees BOARD_*.
+	@#
+	@#   BOARD_DOOR_IN    a BUTTON on the front door. Tap it and you are
+	@#                    BOARD_BACK_WHO. No code, no wall at all.
+	@#   BOARD_BACK_CODE  type it and you become BOARD_BACK_WHO, and it is
+	@#                    never spent, so it works for everybody for ever.
+	@#   BOARD_DEMO_DEVICE  every browser that arrives is the same person.
+	@printf '\n'
+	@$(COMPOSE) exec -T board printenv BOARD_DOOR_IN 2>/dev/null | grep -q '^1$$' \
+	  && printf '  BOARD_DOOR_IN=1    ANYBODY WHO OPENS THE DOOR CAN TAP A BUTTON AND BE:\n    %s\n\n' \
+	       "$$($(COMPOSE) exec -T board printenv BOARD_BACK_WHO 2>/dev/null)" \
+	  || printf '  the one-tap door button is off\n'
+	@$(COMPOSE) exec -T board printenv BOARD_BACK_CODE 2>/dev/null | grep -q . \
+	  && printf '  BOARD_BACK_CODE is set  typing it makes you %s, and it is never spent\n' \
+	       "$$($(COMPOSE) exec -T board printenv BOARD_BACK_WHO 2>/dev/null)" \
+	  || printf '  no standing way-back code\n'
+	@$(COMPOSE) exec -T board printenv BOARD_DEMO_DEVICE 2>/dev/null | grep -q . \
+	  && printf '  BOARD_DEMO_DEVICE is set  EVERY browser that arrives is the same person\n' \
+	  || printf '  no demo device pin\n'
+	@printf '\n  Any line above in capitals is a way into somebody else account.\n'
+	@printf '  Turn it off:  make no-back\n\n'
+
+no-back: ## Shut every walk-in-as-somebody-else door:  make no-back
+	@# Comments the three lines out of .env and restarts the board. Nothing
+	@# else changes and nothing is deleted — the values stay on the line
+	@# behind a #, so turning one back on for a demo is uncommenting it.
+	@for k in TOMSCODING_BOARD_DOOR_IN TOMSCODING_BOARD_BACK_CODE TOMSCODING_BOARD_BACK_WHO TOMSCODING_BOARD_DEMO_DEVICE; do \
+	  sed -i "s/^$$k=/#$$k=/" .env; \
+	done
+	$(COMPOSE) up -d --no-deps board
+	@printf '\n  Shut. Anybody who walked in that way is still signed in on their\n'
+	@printf '  own phone — this stops new ones. Check with:  make who-am-i\n\n'
 
 space: ## How full the disk is, and clear what is safe to clear:  make space
 	@# THE DAY THIS EXISTS FOR. The board could not write board.json — ENOSPC,
