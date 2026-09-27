@@ -6,6 +6,11 @@
      browser to the one seeded identity. See BOARD_DEMO_DEVICE in server.js. -->
 {{DEMO}}
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<!-- FIRST, AND NOT A MODULE. A page that dies in the browser said nothing to
+     anybody — see public/oops.js. It has to run before the module below so it
+     can report the module failing to parse, which is what a blank screen with
+     a working bar under it actually is. -->
+<script src="/oops.js"></script>
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" href="/favicon.png" sizes="192x192">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -1528,6 +1533,13 @@ const sigOf = (d) => [
 ].join("|");
 let SIG = "";
 
+/* A DEPLOY MUST NOT TAKE A HALF-WRITTEN MESSAGE WITH IT. The page reloads
+   itself when the board reports a build it has not seen — which is right, and
+   is wrong at the one moment somebody has a sentence in the box and has not
+   pressed send. It waits; the next tick is five seconds away and the box is
+   usually empty by then. */
+const typing = () => { const b = $("tbox"); return Boolean(b && b.value.trim()); };
+
 async function load() {
   /* AN INVITED ARRIVAL HAS NO INBOX YET. They are nobody to this server until
      they answer, so asking for one would be a 403 before the screen has drawn
@@ -1575,7 +1587,7 @@ async function load() {
      * problem than a conversation cut off. It will catch the next load. */
     if (d.build) {
       if (!BUILT) BUILT = d.build;
-      else if (BUILT !== d.build && !RELOADING && !CALL) {
+      else if (BUILT !== d.build && !RELOADING && !CALL && !typing()) {
         RELOADING = true;
         BUILT = d.build;
         location.reload();
@@ -4530,7 +4542,7 @@ async function watchInbox() {
    * signature below, because a deploy does not change a single message. */
   if (d.build) {
     if (!BUILT) BUILT = d.build;
-    else if (BUILT !== d.build && !RELOADING) {
+    else if (BUILT !== d.build && !RELOADING && !typing()) {
       RELOADING = true;
       BUILT = d.build;
       location.reload();

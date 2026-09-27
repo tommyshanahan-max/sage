@@ -6,6 +6,11 @@
      browser to the one seeded identity. See BOARD_DEMO_DEVICE in server.js. -->
 {{DEMO}}
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<!-- FIRST, AND NOT A MODULE. A page that dies in the browser said nothing to
+     anybody — see public/oops.js. It has to run before the module below so it
+     can report the module failing to parse, which is what a blank screen with
+     a working bar under it actually is. -->
+<script src="/oops.js"></script>
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" href="/favicon.png" sizes="192x192">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">

@@ -741,7 +741,7 @@ const ROOT_IS_BOARD = process.env.BOARD_AT_ROOT === "1";
    the button was never on the screen. The POST to /china/api/connect came
    back as door.html too, and an HTML page from a JSON fetch fails silently.
    `china` and not `china\/`: /china itself is the fork. */
-const OPEN_PATHS = /^\/(china|enter|auth\/google|i\/|w\/|r\/|s\/|d\/|pay\/|demo(?:\.png)?$|api\/demo\/ask$|sell$|api\/sell$|dealio|europay-[a-z]+\.html|api\/pay\/onboard$|api\/dealio\/try\/qr$|shop\/|order\/|orders$|api\/shop\/|api\/shop-media$|api\/order\/|api\/orders$|api\/product\/|api\/memo\/|api\/request(?:s|\/|$)|api\/say\/|api\/snap|api\/door$|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.(?:html|pdf)|g\/|share-exchange\.png|share-square\.png|about|rules|terms|privacy|rewards|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/wake|api\/front(?:-face)?|api\/offer|api\/wait|api\/butler$|api\/ep\/ask$|api\/butler-voice$|api\/butler-hear$|api\/write\/|hi\/|k\/|api\/handover$|api\/chat-door\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
+const OPEN_PATHS = /^\/(china|enter|auth\/google|i\/|w\/|r\/|s\/|d\/|pay\/|demo(?:\.png)?$|api\/demo\/ask$|sell$|api\/sell$|dealio|europay-[a-z]+\.html|api\/pay\/onboard$|api\/dealio\/try\/qr$|shop\/|order\/|orders$|api\/shop\/|api\/shop-media$|api\/order\/|api\/orders$|api\/product\/|api\/memo\/|api\/request(?:s|\/|$)|api\/say\/|api\/snap|api\/door$|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.(?:html|pdf)|g\/|share-exchange\.png|share-square\.png|about|rules|terms|privacy|rewards|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/wake|api\/front(?:-face)?|api\/offer|api\/wait|api\/butler$|api\/ep\/ask$|api\/butler-voice$|api\/butler-hear$|api\/write\/|hi\/|k\/|api\/handover$|api\/oops$|oops\.js$|api\/chat-door\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
 
 /* ---- BEING SOMEBODY YOU SPEAK FOR ----------------------------------------
  *
@@ -5815,6 +5815,38 @@ app.post("/api/write", express.json({ limit: "4kb" }), gate, async (req, res) =>
 /** What the person who opened the link is looking at. No device needed and
  *  nothing about the board given away: the name they were called, who wrote
  *  it, their face, and the line. */
+/* A SCREEN THAT DIED, IN ONE LINE, IN THE BOARD'S OWN LOG.
+ *
+ * See public/oops.js for what sends it and why. "Crashed" was the whole of a
+ * bug report from a phone in another country, and there was nothing on this
+ * side to put beside it.
+ *
+ * OUTSIDE THE DOOR, because the screens most likely to break in front of
+ * somebody are the ones they meet before they are anybody. Nothing is stored
+ * and nothing is answered: it is a line in the log and a 204.
+ *
+ * A CEILING PER MINUTE ACROSS THE WHOLE BOARD. A bad deploy is every phone
+ * reporting at once, and a log nobody can read is the same as no log. The
+ * count is dropped and started again each minute rather than kept per device
+ * — a device number in here would be the one identifying thing this route
+ * was written not to carry. */
+let OOPS_MIN = 0;
+let OOPS_N = 0;
+app.post("/api/oops", express.json({ limit: "2kb", type: ["application/json", "text/plain"] }),
+  (req, res) => {
+    const min = Math.floor(Date.now() / 60000);
+    if (min !== OOPS_MIN) { OOPS_MIN = min; OOPS_N = 0; }
+    if (OOPS_N >= 60) return res.status(204).end();
+    OOPS_N += 1;
+    const one = (v, n) => String(v ?? "").replace(/[\r\n]+/g, " ").slice(0, n);
+    const what = one(req.body?.what, 300);
+    if (what) {
+      console.log("screen broke on " + one(req.body?.at, 80) + ": " + what
+        + (req.body?.where ? " (" + one(req.body.where, 120) + ")" : ""));
+    }
+    res.status(204).end();
+  });
+
 app.get("/api/write/:code", async (req, res) => {
   res.set("Cache-Control", "no-store");
   const code = String(req.params.code || "").trim().toUpperCase();
