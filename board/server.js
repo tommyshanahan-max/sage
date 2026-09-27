@@ -5745,10 +5745,18 @@ app.post("/api/write/reply", express.json({ limit: "8kb" }), async (req, res) =>
      * address the first message to.
      */
     if (w.by) {
-      board.notes.push(store.cleanNote({
-        id: store.newId(), at: w.at || new Date().toISOString(),
-        by: w.by, to: me, text: w.line,
-      }));
+      /* THE FIRST ONE ONLY IF SOMETHING WAS WRITTEN. A link sent on its own
+         is the ordinary case now — see the note over /api/write — and a note
+         with no text in it draws as an empty grey bubble at the top of the
+         thread, which reads as a message that failed to load rather than as
+         one that was never written. The conversation starts with their
+         answer, which is the honest first line of it. */
+      if (w.line) {
+        board.notes.push(store.cleanNote({
+          id: store.newId(), at: w.at || new Date().toISOString(),
+          by: w.by, to: me, text: w.line,
+        }));
+      }
       board.notes.push(store.cleanNote({
         id: store.newId(), at: new Date().toISOString(),
         by: me, to: w.by, text: reply,

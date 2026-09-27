@@ -2390,6 +2390,29 @@ function drawInvited() {
      leaving it out. One line, where a message would be. */
   talk.append(el("p", "when", T("wn.next", { who: NOTE.from || T("board.someone") })));
 
+  /* THEIR NAME, WHEN THE LINK DID NOT CARRY ONE.
+   *
+   * It used to: the member typed "Ray" before sending, and the reply was
+   * filed under that. A link sent on its own has nobody's name in it — see
+   * /api/write — so the reply was going up with an empty name, the route was
+   * refusing it, and the screen said "Again?" at somebody who had done
+   * nothing wrong.
+   *
+   * It is the right person to ask, too. The name that ends up on the waiting
+   * row should be the one they call themselves, not the one a friend typed
+   * for them into a box on another phone. */
+  const askName = !NOTE.to;
+  $("wnew").hidden = !askName;
+  if (askName) {
+    $("tnewk").textContent = T("wn.yourName");
+    /* NO PLACEHOLDER. The box is shared with the write-to-somebody screen,
+       whose placeholder is "Their name" — over a label reading YOUR NAME that
+       is two answers to one question. The label is the whole of what needs
+       saying here. */
+    $("tnewname").placeholder = "";
+    $("wnwhy").textContent = "";
+    $("tfind").hidden = true;
+  }
   $("twrite").hidden = false;
   micShow();
   $("tshut").hidden = true;
@@ -3234,19 +3257,27 @@ function drawInvitedTabs() {
  *  note into a thread, and reloads onto the real conversation. */
 async function sendInvited() {
   const text = $("tbox").value.trim();
-  if (!text) { $("tbox").focus(); return; }
+  /* Theirs if they typed it, the sender's if the link carried one — see the
+     note over askName in drawInvited. */
+  const name = ($("tnewname").value.trim() || NOTE.to || "").trim();
+  if (!name) { $("tnewname").focus(); return say(T("wn.needYourName"), true); }
+  if (!text) { $("tbox").focus(); return say(T("wn.needLine"), true); }
   $("tsend").disabled = true;
   say(T("wn.sending"));
   let d = null;
   try {
     d = await fetch("/api/write/reply", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ device, code: INVITED, name: NOTE.to, reply: text }),
+      body: JSON.stringify({ device, code: INVITED, name, reply: text }),
     }).then((r) => r.json());
   } catch { d = null; }
   $("tsend").disabled = false;
   if (!d || (!d.ok && !d.already)) {
-    return say(T({ spent: "wn.spentHead", old: "wn.oldHead", bad: "wn.badCode" }[d && d.error]
+    /* `name` and `reply` are in the list now. They were not, so a refusal
+       for either came out as "Again?" — which is what somebody sees when the
+       app knows exactly what is wrong and will not say. */
+    return say(T({ spent: "wn.spentHead", old: "wn.oldHead", bad: "wn.badCode",
+                   name: "wn.needYourName", reply: "wn.needLine" }[d && d.error]
       || "act.again"), true);
   }
   if (d.already) { location.href = "/browse"; return; }

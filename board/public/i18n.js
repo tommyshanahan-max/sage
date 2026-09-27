@@ -3738,11 +3738,18 @@ export const STRINGS = {
      and the link is the whole of what is being handed over. */
   "wn.linkTitle":      ["Send somebody a link", "\u53d1\u4e2a\u94fe\u63a5\u7ed9\u4eba"],
   "wn.linkMaking":     ["Making a link\u2026", "\u6b63\u5728\u751f\u6210\u94fe\u63a5\u2026"],
-  /* WHAT THE LINK DOES, in the words of what happens to whoever opens it.
-     Not "invite link", which says what it is called rather than what it is
-     for. */
-  "wn.linkLab":        ["They open this and write back. That puts them on the list.",
-                        "\u5bf9\u65b9\u70b9\u5f00\u8fd9\u4e2a\u56de\u4f60\u4e00\u53e5\uff0c\u5c31\u7b97\u6392\u8fdb\u540d\u5355\u4e86\u3002"],
+  /* WHAT IT DOES FOR THE PERSON SENDING IT, which is not the same thing as
+     what it does for the board.
+     "why is putting htem on the list, it brings them into the chat doesnt
+     it" — it does, and that is the half that matters here. Answering the
+     link writes both sides as the first messages of a thread, so the moment
+     they reply the two of them are in a conversation (see /api/write/reply).
+     The waiting list is real and it is how they eventually become a member,
+     but it is the board's business and it is already explained on the screen
+     they land on. Saying it here described the filing rather than the thing
+     that happens. */
+  "wn.linkLab":        ["They write back, and you are in a chat with them.",
+                        "\u4ed6\u56de\u4f60\u4e00\u53e5\uff0c\u4f60\u4eec\u5c31\u5728\u4e00\u4e2a\u5bf9\u8bdd\u91cc\u4e86\u3002"],
   "wn.mkTo":           ["To", "写给"],
   /* A SEND THAT REFUSES SAYS WHICH HALF IS MISSING. Both of these were a
      cursor moving and nothing else — see sendNew. The message box shows the
@@ -3912,6 +3919,9 @@ export const STRINGS = {
     "你的回复会发给 {who}，同时把你放进等候名单。说说你是谁、在找什么——别人就是看这个来决定的。",
   ],
   "wn.yourName":       ["Your name", "你的名字"],
+  /* A refusal that names the missing half, rather than "Again?" — see
+     sendInvited. */
+  "wn.needYourName":   ["Put your name in first.", "\u5148\u5199\u4e0a\u4f60\u7684\u540d\u5b57\u3002"],
   "wn.yourReply":      ["Your answer", "你的回复"],
   "wn.replyPh": [
     "Performer, Sydney, free from March. Two features and a series.",
