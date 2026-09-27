@@ -42,6 +42,37 @@ Prints her link (goes live) and one link for the group (watches). Without
 `WHEN` it is open now; either way, until twelve hours after the start.
 `MAX=100` for a live more than ten may watch (a market stall).
 
+## Selling during a live
+
+Whoever is live taps **+**: the phone keeps a still from the camera already
+streaming, they type a name and a price (A$), and it joins the row under the
+video. Viewers tap an item and pay with Apple Pay, Google Pay or a card, over
+the video; the room sees "Amy bought …". 🎁 sends $2, $5 or $20. Chat asks
+for a name once. The seller's green pill is the takings, and opens who
+bought what with where to send it.
+
+Payments go through Square (Australia), `lib/pay.mjs`:
+
+```
+ssh -t root@45.77.8.166 'cd ~/tc && make book-square'
+```
+
+asks for three values from Square's Developer Console and turns Apple Pay on
+for the domain. Without it a live has no Buy or gift buttons. To try the page
+with no account: `BOOK_SQUARE_FAKE=1` (refused when a real token is set).
+
+## Another app starting lives (Laonei)
+
+```
+make book-app NAME=laonei      # its key, shown once
+```
+
+From that app's server, with `Authorization: Bearer <key>`:
+`POST /api/lives {host, title?, when?, max?}` → `{id, seller, viewer, …}`,
+`GET /api/lives/<id>` → open, watching, takings, `POST /api/lives/<id>/end`.
+Show the seller link to whoever goes live and the viewer link to everybody
+else. In a frame: `allow="camera; microphone; autoplay; payment"`.
+
 ## Not yet
 
 - Nobody is told when a lesson is booked — `make book-list` shows them.

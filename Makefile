@@ -627,6 +627,9 @@ book-live: ## A live, up to 10 watching: make book-live NAME=Julia [TITLE="HSK 4
 book-app: ## A key for an app to start lives itself (shown once): make book-app NAME=laonei [OFF=1 to remove]
 	@$(COMPOSE) exec -T $(BOOK_ENV) book node cli.mjs app
 
+book-square: ## Square keys, so a live takes Apple Pay (asks for 3 values; run with ssh -t)
+	@bash scripts/square-keys.sh
+
 book-live-off: ## Close a live class early: make book-live-off ID=…
 	@$(COMPOSE) exec -T $(BOOK_ENV) book node cli.mjs live-off
 

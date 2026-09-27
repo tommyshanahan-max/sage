@@ -1,20 +1,24 @@
 /* SELLING DURING A LIVE — the stall, the gifts and the chat.
  *
- * Tom's use for the live: standing at a market with one phone, showing what
- * he has, and people watching buy it or send a gift. So the seller's side is
- * built for one hand: tap +, the phone keeps a still from the camera that is
- * already streaming, type a name and a price, and it is pinned under the
- * video for everybody watching. No second phone, no camera app, no upload
- * step — the stream never stops.
+ * Tom's use for the live: standing at a market in China with one phone,
+ * showing what he has to people watching anywhere, who buy it or send a gift
+ * with Apple Pay — a double-click over the video, and it is theirs. So the
+ * seller's side is built for one hand: tap +, the phone keeps a still from
+ * the camera that is already streaming, type a name and a price, and it
+ * joins the row under the video for everybody watching. No second phone, no
+ * camera app, no upload step — the stream never stops.
  *
  * EVERYTHING ANYBODY SEES ARRIVE — a line of chat, a sale, a gift, the item
- * now pinned — is said into the room by this server (`tell`), never by a
+ * now shown — is said into the room by this server (`tell`), never by a
  * viewer's own browser. Viewers are not allowed to send into the room at all
  * (see `ticket` in live.mjs). That is what lets a chat line be rate-limited
- * and a "Amy sent ¥20" be true: it is only ever sent once Stripe says paid.
+ * and "Amy sent $5" be true: it is sent only after Square says COMPLETED.
  *
- * The buyer's phone number goes to the seller's screen and nowhere else. It
- * is what he needs to hand over the oranges, and nothing a viewer needs.
+ * The buyer's contact — name, email, address, from Apple or Google Pay —
+ * goes to the seller's screen and nowhere else. It is what he needs to send
+ * what was bought, and nothing a viewer needs.
+ *
+ * PRICES ARE AUSTRALIAN DOLLARS, IN CENTS: Square in Australia — see pay.mjs.
  */
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { randomBytes } from "node:crypto";
@@ -24,11 +28,10 @@ import { ticket, liveOpen, watching, ensureRoom, tell } from "./live.mjs";
 import * as pay from "./pay.mjs";
 
 const DIR = process.env.BOOK_DIR || "/data";
-const PUBLIC = (process.env.BOOK_PUBLIC || "https://thexchange.app/book").replace(/\/$/, "");
 const room = (l) => "live-" + l.id;
-// The gifts a viewer can pick. Any other amount is refused: a free box is a
-// place to type 99999 by mistake.
-export const GIFTS = [5, 20, 50];
+// The gifts a viewer can pick, in cents. Any other amount is refused: a free
+// box is a place to type 99999 by mistake.
+export const GIFTS = [200, 500, 2000];
 
 /* The last thirty things said, per live, so somebody arriving mid-way sees
    the conversation they walked into. Memory only — a restart forgets the chat
@@ -41,6 +44,7 @@ function feed(id, line) {
   FEED.set(id, f);
 }
 const first = (name) => String(name || "").trim().split(/\s+/)[0].slice(0, 16);
+const clean = (v, n) => String(v || "").replace(/[\u0000-\u001f]/g, " ").trim().slice(0, n);
 
 /* One chat line per address every two seconds. The booking bucket in
    server.mjs is for writes to a file; this one is for a room with a hundred
@@ -54,77 +58,43 @@ function chatty(ip) {
   return false;
 }
 
-const photoFile = (l, item) => path.join(DIR, "live", l.id, item + ".jpg");
-const itemOut = (l, i) => ({ id: i.id, name: i.name, price: i.price, photo: `live/${l.id}/photo/${i.id}` });
+const photoFile = (id, item) => path.join(DIR, "live", id, item + ".jpg");
+const itemOut = (l, i) => ({ id: i.id, name: i.name, cents: i.cents, photo: `live/${l.id}/photo/${i.id}` });
 
-/** What the seller's screen shows: the takings, and who to hand what to. */
+/** What the seller's screen shows: the takings, and who to send what to. */
 function takings(l) {
-  const paid = l.sales.filter((x) => x.paid);
   return {
-    yuan: paid.reduce((n, x) => n + x.yuan, 0),
-    sold: paid.filter((x) => x.kind === "item").length,
-    gifts: paid.filter((x) => x.kind === "gift").length,
-    list: paid.slice(-50).reverse().map((x) => ({ kind: x.kind, item: x.item, yuan: x.yuan, name: x.name, phone: x.phone, at: x.at })),
+    cents: l.sales.reduce((n, x) => n + x.cents, 0),
+    sold: l.sales.filter((x) => x.kind === "item").length,
+    gifts: l.sales.filter((x) => x.kind === "gift").length,
+    list: l.sales.slice(-50).reverse().map((x) => ({ kind: x.kind, item: x.item, cents: x.cents, name: x.name, contact: x.contact, at: x.at })),
   };
 }
-
-/** Stripe has said paid: count it once, and tell the room. */
-async function paid(l, x) {
-  const line = x.kind === "gift" ? { t: "gift", name: first(x.name), yuan: x.yuan } : { t: "buy", name: first(x.name), item: x.item };
-  feed(l.id, line);
-  await tell(room(l), line);
-  await tell(room(l), { t: "takings", ...takings(l) }, ["host"]);
-}
-
-/* ASKING STRIPE ABOUT EVERY SALE STILL WAITING, every ten seconds, instead
-   of a webhook — see pay.mjs. A sale is asked about until it is paid or
-   Stripe lets its form expire (half an hour). */
-let busy = false;
-export async function settle(only) {
-  if (busy || !pay.on()) return;
-  busy = true;
-  try {
-    const db = load();
-    const done = [];
-    for (const l of db.lives) {
-      for (const x of l.sales) {
-        if (x.paid || x.gone || !x.session || (only && x.id !== only)) continue;
-        if (Date.now() - Date.parse(x.at) > 40 * 60e3) { x.gone = true; continue; }
-        let st = "open";
-        try { st = await pay.status(x.session); } catch (e) { console.log("live settle:", e.message); }
-        if (st === "paid") { x.paid = true; done.push([l, x]); }
-        else if (st === "expired") x.gone = true;
-      }
-    }
-    save(db);
-    for (const [l, x] of done) await paid(l, x);
-  } finally { busy = false; }
-}
-setInterval(() => settle(), 10e3).unref();
 
 /** The live's routes. Returns false when the path is not one of them. */
 export async function routes(req, res, p, { send, readBody, allowed, ip }) {
   let m = p.match(/^\/api\/live\/([a-f0-9]{16})\/photo\/([a-f0-9]{8})$/);
   if (req.method === "GET" && m) {
     try {
+      const jpg = readFileSync(photoFile(m[1], m[2]));
       res.writeHead(200, { "Content-Type": "image/jpeg", "Cache-Control": "public, max-age=86400", "Access-Control-Allow-Origin": "*" });
-      res.end(readFileSync(photoFile({ id: m[1] }, m[2])));
+      res.end(jpg);
     } catch { send(res, 404, { error: "gone" }); }
     return true;
   }
-  m = p.match(/^\/api\/live\/([a-f0-9]{16})\/(info|join|state|say|item|pin|pay|check)$/);
+  m = p.match(/^\/api\/live\/([a-f0-9]{16})\/(info|join|state|say|item|pin|pay)$/);
   if (!m || req.method !== "POST") return false;
   const what = m[2];
-  // A photo is the one big thing anybody sends: a phone's still, already
-  // shrunk by the page to 640px, is well under this.
-  const b = await readBody(req, what === "item" ? 400e3 : 4096);
-  const key = String((b && b.key) || "");
+  // A photo is the one big thing anybody sends: a still, already shrunk by
+  // the page to 640px, is well under this.
+  const b = (await readBody(req, what === "item" ? 400e3 : 4096)) || {};
+  const key = String(b.key || "");
   const db = load();
   const l = db.lives.find((x) => x.id === m[1]);
   const host = Boolean(l && key === l.hKey);
   if (!l || (!host && key !== l.vKey)) return send(res, 403, { error: "key" }), true;
   if (!liveOpen(l)) return send(res, 410, { error: "over" }), true;
-  const about = { host, name: l.host, title: l.title, start: l.start, pay: pay.on(), gifts: GIFTS };
+  const about = { host, name: l.host, title: l.title, start: l.start, pay: pay.client(), gifts: GIFTS };
 
   if (what === "info") return send(res, 200, about), true;
 
@@ -142,17 +112,16 @@ export async function routes(req, res, p, { send, readBody, allowed, ip }) {
   }
 
   if (what === "state") {
-    const pin = l.items.find((i) => i.id === l.pinned);
     return send(res, 200, {
-      pinned: pin ? itemOut(l, pin) : null,
-      items: host ? l.items.map((i) => itemOut(l, i)) : undefined,
+      items: l.items.map((i) => itemOut(l, i)),
+      pinned: l.pinned,
       feed: FEED.get(l.id) || [],
       takings: host ? takings(l) : undefined,
     }), true;
   }
 
   if (what === "say") {
-    const text = String(b.text || "").replace(/[\u0000-\u001f]/g, " ").trim().slice(0, 120);
+    const text = clean(b.text, 120);
     const name = host ? l.host : first(b.name);
     if (!text || !name) return send(res, 400, { error: "empty" }), true;
     if (chatty(ip)) return send(res, 429, { error: "slow" }), true;
@@ -165,24 +134,26 @@ export async function routes(req, res, p, { send, readBody, allowed, ip }) {
   if (what === "item" || what === "pin") {
     if (!host) return send(res, 403, { error: "key" }), true;
     if (what === "item") {
-      const name = String(b.name || "").replace(/[\u0000-\u001f]/g, " ").trim().slice(0, 40);
-      const price = Math.round(Number(b.price));
-      if (!name || !(price >= 1 && price <= 100000)) return send(res, 400, { error: "item" }), true;
+      const name = clean(b.name, 40);
+      const cents = Math.round(Number(b.price) * 100);
+      if (!name || !(cents >= 100 && cents <= 1e6)) return send(res, 400, { error: "item" }), true;
       const id = randomBytes(4).toString("hex");
       const jpg = /^data:image\/jpeg;base64,([A-Za-z0-9+/=]+)$/.exec(String(b.photo || ""));
       if (jpg) {
-        mkdirSync(path.dirname(photoFile(l, id)), { recursive: true });
-        writeFileSync(photoFile(l, id), Buffer.from(jpg[1], "base64"));
+        mkdirSync(path.dirname(photoFile(l.id, id)), { recursive: true });
+        writeFileSync(photoFile(l.id, id), Buffer.from(jpg[1], "base64"));
       }
-      l.items.push({ id, name, price });
+      l.items.push({ id, name, cents });
       l.pinned = id;
     } else {
       l.pinned = l.items.some((i) => i.id === b.item) ? b.item : "";
     }
     save(db);
-    const pin = l.items.find((i) => i.id === l.pinned);
-    await tell(room(l), { t: "pin", item: pin ? itemOut(l, pin) : null });
-    return send(res, 200, { ok: true, items: l.items.map((i) => itemOut(l, i)), pinned: pin ? itemOut(l, pin) : null }), true;
+    const items = l.items.map((i) => itemOut(l, i));
+    // The whole row each time: a dozen items is a few hundred bytes, and a
+    // viewer who missed one message is never left with a stale row.
+    await tell(room(l), { t: "items", items, pinned: l.pinned });
+    return send(res, 200, { ok: true, items, pinned: l.pinned }), true;
   }
 
   if (what === "pay") {
@@ -190,42 +161,32 @@ export async function routes(req, res, p, { send, readBody, allowed, ip }) {
     if (!allowed(ip)) return send(res, 429, { error: "slow" }), true;
     const kind = b.kind === "gift" ? "gift" : "item";
     const item = kind === "item" ? l.items.find((i) => i.id === b.item) : null;
-    const yuan = kind === "gift" ? Number(b.yuan) : item && item.price;
-    if (kind === "item" ? !item : !GIFTS.includes(yuan)) return send(res, 400, { error: "what" }), true;
-    const name = String(b.name || "").replace(/[\u0000-\u001f]/g, " ").trim().slice(0, 30);
-    const phone = String(b.phone || "").replace(/[^\d+ -]/g, "").trim().slice(0, 30);
-    // The seller has to be able to find who bought it; a gift needs only a
-    // name to thank.
-    if (!name || (kind === "item" && phone.replace(/\D/g, "").length < 6)) return send(res, 400, { error: "who" }), true;
-    const x = { id: newId(), kind, item: item ? item.name : "", yuan, name, phone: kind === "item" ? phone : "",
-      at: new Date().toISOString(), session: "", paid: false, gone: false };
+    const cents = kind === "gift" ? Number(b.cents) : item && item.cents;
+    if (kind === "item" ? !item : !GIFTS.includes(cents)) return send(res, 400, { error: "what" }), true;
+    const token = String(b.token || "").slice(0, 400);
+    if (!token) return send(res, 400, { error: "token" }), true;
+    // Apple or Google Pay's contact, or what a card payer typed. A gift needs
+    // only a name to thank; a sale needs somewhere to send it.
+    const name = clean(b.name, 40) || "Someone";
+    const contact = kind === "item" ? clean(b.contact, 300) : "";
+    let square;
     try {
-      const s = await pay.checkout({
-        yuan, method: b.method, ref: "live:" + l.id + ":" + x.id,
-        label: kind === "gift" ? `Gift for ${l.host}` : item.name,
-        // Back to the live, with the key as a query this time: Stripe keeps a
-        // query and is not promised to keep a #fragment. The page moves it
-        // back into the fragment on arrival.
-        back: `${PUBLIC}/live/${l.id}?k=${key}&sale=${x.id}`,
-      });
-      x.session = s.id;
-      l.sales.push(x);
-      save(db);
-      return send(res, 200, { ok: true, sale: x.id, secret: s.client_secret, pk: pay.PK }), true;
+      square = await pay.charge({ token, cents, note: `${kind === "gift" ? "Gift" : item.name} · live ${l.id} · ${name}` });
     } catch (e) {
       console.log("live pay:", e.message);
-      return send(res, 502, { error: "stripe" }), true;
+      return send(res, 402, { error: "declined" }), true;
     }
-  }
-
-  if (what === "check") {
-    // Back from paying: ask Stripe about this one now rather than in ten
-    // seconds, so the "thank you" and the line in the room arrive together.
-    const x = l.sales.find((s) => s.id === b.sale);
-    if (!x) return send(res, 404, { error: "gone" }), true;
-    if (!x.paid) await settle(x.id);
-    const again = load().lives.find((y) => y.id === l.id).sales.find((s) => s.id === x.id);
-    return send(res, 200, { paid: Boolean(again && again.paid), kind: x.kind, item: x.item, yuan: x.yuan }), true;
+    // Written from a fresh read: the charge took a second or two, and the
+    // seller may have added an item meanwhile.
+    const db2 = load();
+    const l2 = db2.lives.find((x) => x.id === l.id);
+    l2.sales.push({ id: newId(), kind, item: item ? item.name : "", cents, name, contact, at: new Date().toISOString(), square });
+    save(db2);
+    const line = kind === "gift" ? { t: "gift", name: first(name), cents } : { t: "buy", name: first(name), item: item.name };
+    feed(l.id, line);
+    await tell(room(l), line);
+    await tell(room(l), { t: "takings", ...takings(l2) }, ["host"]);
+    return send(res, 200, { ok: true }), true;
   }
   return false;
 }

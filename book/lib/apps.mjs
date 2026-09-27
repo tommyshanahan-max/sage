@@ -61,10 +61,10 @@ export async function routes(req, res, p, { send, readBody }) {
   }
 
   const open = liveOpen(l);
-  const paid = l.sales.filter((x) => x.paid);
   return send(res, 200, {
     ...links(l), host: l.host, title: l.title, open,
     watching: open ? await watching("live-" + l.id) : 0,
-    takings: { yuan: paid.reduce((n, x) => n + x.yuan, 0), sold: paid.filter((x) => x.kind === "item").length, gifts: paid.filter((x) => x.kind === "gift").length },
+    takings: { cents: l.sales.reduce((n, x) => n + x.cents, 0), currency: "AUD",
+      sold: l.sales.filter((x) => x.kind === "item").length, gifts: l.sales.filter((x) => x.kind === "gift").length },
   }), true;
 }

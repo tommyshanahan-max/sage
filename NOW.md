@@ -1987,6 +1987,15 @@ between Tom's phone and his Mac**, through `make book-test`'s two links.
   got 720p video and sound, the 11th was told "This class is full". Not yet
   tried on a phone, nor across the Great Firewall. Wise payouts are next:
   Tom's Wise Business account exists, verification pending.
+- **Selling during a live, built 28 Sep, not deployed.** For Tom at a market
+  in China, a global audience watching. Items added mid-live from the
+  streaming camera, a row under the video, Apple Pay / Google Pay / card
+  over the video through **Square (Australia)** — Tom has no Stripe account
+  for this, and Wise only takes Apple Pay on its own page. Gifts $2/$5/$20,
+  chat, takings with buyers' contacts. Tested here in fake-pay mode only.
+  Waiting on Tom: a Square AU account, then `make book-square` (ssh -t).
+  Laonei starts lives through `POST /api/lives` (`make book-app
+  NAME=laonei`); Laonei's own screens are the Laonei session's work.
 
 ## Voice messages — live 24 Sep, watched working on Tom's phone
 

@@ -1,8 +1,17 @@
 <!doctype html>
-<!-- THE LIVE CLASS. One teacher on camera, the group watching. The #key in
-     the link says which: the teacher's link sends, the group's link watches.
-     The video goes through LiveKit on the box — see lib/live.mjs for why a
-     class of ten cannot go phone to phone the way a lesson does. -->
+<!-- THE LIVE. One person on camera — a teacher, or Tom at a market stall —
+     and everybody else watching. The #key in the link says which: the
+     seller's link sends, the viewers' link watches. The video goes through
+     LiveKit on the box — see lib/live.mjs for why it cannot go phone to phone.
+
+     WHAT A VIEWER SEES: the video, a row of what is for sale under it, the
+     chat, and a gift button. Tap an item and a sheet slides up over the
+     video with Square's Apple Pay button: a double-click and it is bought,
+     and the room sees it. The video keeps playing the whole time.
+
+     WHAT THE SELLER SEES: the same row and chat, the takings, and a + that
+     keeps a still from the camera already streaming — one phone, one hand.
+     The selling itself is lib/market.mjs; the money, lib/pay.mjs. -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -12,32 +21,75 @@
   *{box-sizing:border-box}
   html,body{margin:0;height:100%;background:#111;color:#fff;
     font:17px/1.4 -apple-system,BlinkMacSystemFont,"PingFang SC","Segoe UI",Helvetica,Arial,sans-serif}
+  button,input{font-family:inherit}
   .pre{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;
     gap:14px;padding:24px;text-align:center;background:#faf7f1;color:#1c1917}
   .pre h1{margin:0;font:700 28px/1.2 Georgia,"Songti SC",serif}
   .pre p{margin:0;color:#57504a}
   .pre video{width:220px;height:290px;object-fit:cover;border-radius:18px;background:#e8e2d8;transform:scaleX(-1)}
-  .go{border:0;border-radius:16px;padding:16px 40px;background:#c8261e;color:#fff;font-weight:700;font-size:18px;
-    font-family:inherit;cursor:pointer}
+  .go{border:0;border-radius:16px;padding:16px 40px;background:#c8261e;color:#fff;font-weight:700;font-size:18px;cursor:pointer}
   .err{color:#b3261e;min-height:1.2em}
-  .live{position:fixed;inset:0;background:#111}
+  .live{position:fixed;inset:0;background:#111;overflow:hidden}
   #v{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#111}
   .me #v{object-fit:cover;transform:scaleX(-1)}
   .me.back #v{transform:none}
-  .top{position:absolute;left:14px;top:max(14px,env(safe-area-inset-top));display:flex;gap:8px;align-items:center}
-  .pill{border-radius:8px;padding:5px 10px;font-weight:700;font-size:15px;background:rgba(0,0,0,.45);backdrop-filter:blur(8px)}
+  .top{position:absolute;left:14px;right:14px;top:max(14px,env(safe-area-inset-top));display:flex;gap:8px;align-items:center}
+  .pill{border:0;color:#fff;border-radius:8px;padding:5px 10px;font-weight:700;font-size:15px;background:rgba(0,0,0,.45);backdrop-filter:blur(8px)}
   .pill.on{background:#d93025}
+  .pill.money{background:#0B6E4F;cursor:pointer}
   .pill svg{width:16px;height:16px;vertical-align:-3px;margin-right:4px;fill:none;stroke:currentColor;stroke-width:2}
+  .x{margin-left:auto;width:40px;height:40px;border-radius:50%;border:0;background:rgba(0,0,0,.45);color:#fff;display:grid;place-items:center;cursor:pointer}
+  .x svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round}
   .state{position:absolute;left:0;right:0;top:40%;padding:0 24px;text-align:center;font-size:20px;font-weight:600;
     text-shadow:0 1px 6px rgba(0,0,0,.6)}
   .state button{margin-top:16px}
-  .bar{position:absolute;left:0;right:0;bottom:max(22px,env(safe-area-inset-bottom));
-    display:flex;justify-content:center;gap:18px}
-  .bar button{width:62px;height:62px;border-radius:50%;border:0;background:rgba(255,255,255,.18);
-    color:#fff;display:grid;place-items:center;cursor:pointer;backdrop-filter:blur(8px)}
-  .bar button.off{background:#fff;color:#111}
-  .bar button.end{background:#d93025}
-  .bar svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .low{position:absolute;left:0;right:0;bottom:0;padding:0 14px max(18px,env(safe-area-inset-bottom));
+    display:flex;flex-direction:column;gap:10px;background:linear-gradient(transparent,rgba(0,0,0,.45) 40%)}
+  .feed{display:flex;flex-direction:column;align-items:flex-start;gap:6px;max-width:80%}
+  .feed span{background:rgba(0,0,0,.45);border-radius:14px;padding:5px 11px;font-size:15px;animation:in .25s ease-out}
+  .feed span b{font-weight:700;margin-right:4px}
+  .feed span.g{background:#f5b301;color:#1c1917;font-weight:600}
+  .feed span.s{background:#fff;color:#1c1917;font-weight:600}
+  @keyframes in{from{opacity:0;transform:translateY(8px)}}
+  .row{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;margin:0 -14px;padding:4px 14px}
+  .row::-webkit-scrollbar{display:none}
+  .it{flex:none;display:flex;gap:10px;align-items:center;background:#fff;color:#1c1917;border:0;border-radius:14px;
+    padding:6px 12px 6px 6px;cursor:pointer;text-align:left;max-width:230px}
+  .it img,.it i{width:48px;height:48px;border-radius:10px;object-fit:cover;background:#eee;flex:none}
+  .it b{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px}
+  .it em{font-style:normal;font-weight:800;color:#c8261e}
+  .it.pin{outline:3px solid #f5b301}
+  .bar{display:flex;gap:10px;align-items:center;justify-content:center}
+  .say{flex:1;min-width:0;border:0;border-radius:22px;padding:12px 16px;background:rgba(0,0,0,.45);color:#fff;font-size:16px;outline:none}
+  .say::placeholder{color:#ddd}
+  .round{flex:none;width:52px;height:52px;border-radius:50%;border:0;background:rgba(255,255,255,.18);color:#fff;
+    display:grid;place-items:center;cursor:pointer;backdrop-filter:blur(8px);font-size:24px}
+  .round.gift{background:#f5b301}
+  .round.add{background:#fff;color:#1c1917}
+  .round.off{background:#fff;color:#111}
+  .round.end{background:#d93025}
+  .round svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .dim{position:fixed;inset:0;background:rgba(0,0,0,.35)}
+  .sheet{position:fixed;left:0;right:0;bottom:0;max-height:88%;overflow:auto;background:#fff;color:#1c1917;
+    border-radius:22px 22px 0 0;padding:20px 18px max(22px,env(safe-area-inset-bottom));animation:up .22s ease-out}
+  @keyframes up{from{transform:translateY(40px);opacity:.5}}
+  .sheet h2{margin:0 0 4px;font-size:21px}
+  .sheet .price{font-size:30px;font-weight:800;margin:2px 0 12px}
+  .sheet .shot{width:100%;max-height:260px;object-fit:cover;border-radius:16px;background:#eee;display:block;margin-bottom:12px}
+  .sheet input{width:100%;border:2px solid #e5e2dc;border-radius:12px;padding:13px 14px;font-size:17px;margin-bottom:10px}
+  .sheet .btn{width:100%;border:0;border-radius:14px;padding:15px;font-weight:700;font-size:17px;cursor:pointer;margin-top:8px}
+  .btn.dark{background:#1c1917;color:#fff}.btn.red{background:#c8261e;color:#fff}.btn.light{background:#f1efea;color:#1c1917}
+  .apay{display:block;width:100%;height:52px;border-radius:12px;cursor:pointer;margin-top:8px;
+    -webkit-appearance:-apple-pay-button;-apple-pay-button-type:buy;-apple-pay-button-style:black}
+  #gpay{margin-top:8px;min-height:0}
+  .amts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0 6px}
+  .amts button{border:2px solid #eee;background:#fff;border-radius:14px;padding:14px 4px;font-weight:800;font-size:22px;cursor:pointer}
+  .amts button small{display:block;font-size:24px;margin-bottom:2px}
+  .amts button.sel{border-color:#f5b301;background:#fff8e1}
+  .msg{min-height:1.3em;margin:10px 0 0;color:#b3261e;text-align:center}
+  .msg.ok{color:#0B6E4F;font-weight:700;font-size:20px}
+  .sale{display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid #eee}
+  .sale small{display:block;color:#6b645c;font-size:14px;word-break:break-word}
   [hidden]{display:none!important}
 </style>
 </head>
@@ -53,16 +105,28 @@
   <video id="v" autoplay playsinline muted></video>
   <div class="top">
     <span class="pill" id="badge"></span>
-    <span class="pill" id="count"><svg viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><b id="n">0</b></span>
+    <span class="pill"><svg viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><b id="n">0</b></span>
+    <button class="pill money" id="money" hidden></button>
+    <button class="x" id="leave" aria-label="Leave"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
   </div>
   <div class="state" id="state"></div>
-  <div class="bar">
-    <button id="mic" aria-label="Microphone" hidden><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
-    <button id="cam" aria-label="Camera" hidden><svg viewBox="0 0 24 24"><rect x="3" y="7" width="13" height="10" rx="2"/><path d="M16 11l5-3v8l-5-3"/></svg></button>
-    <button id="flip" aria-label="Flip camera" hidden><svg viewBox="0 0 24 24"><path d="M4 9a8 8 0 0 1 14-3l2 2M20 15a8 8 0 0 1-14 3l-2-2M20 4v4h-4M4 20v-4h4"/></svg></button>
-    <button id="end" class="end" aria-label="Leave"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+  <div class="low">
+    <div class="feed" id="feed"></div>
+    <div class="row" id="row" hidden></div>
+    <div class="bar" id="vbar" hidden>
+      <input class="say" id="say" maxlength="120" enterkeyhint="send">
+      <button class="round gift" id="gift" aria-label="Gift" hidden>🎁</button>
+    </div>
+    <div class="bar" id="hbar" hidden>
+      <button class="round" id="mic" aria-label="Microphone"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+      <button class="round" id="cam" aria-label="Camera"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="13" height="10" rx="2"/><path d="M16 11l5-3v8l-5-3"/></svg></button>
+      <button class="round" id="flip" aria-label="Flip camera"><svg viewBox="0 0 24 24"><path d="M4 9a8 8 0 0 1 14-3l2 2M20 15a8 8 0 0 1-14 3l-2-2M20 4v4h-4M4 20v-4h4"/></svg></button>
+      <button class="round add" id="add" aria-label="Sell something"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+      <button class="round end" id="end" aria-label="End"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
   </div>
 </div>
+<div id="over" hidden><div class="dim" id="dim"></div><div class="sheet" id="sheet"></div></div>
 <script src="../livekit.js"></script>
 <script>
 (() => {
@@ -73,25 +137,37 @@
     again: "重新开始", back: "重新观看", sound: "点一下打开声音", conn: "正在连接…", lost: "连接断了，正在重连…",
     cam: "请允许使用摄像头和麦克风，再试一次。", key: "这个链接打不开直播。", over: "这场直播已经结束了。",
     full: "人数已满。", net: "连不上，检查一下网络再试。", today: "今天",
+    say: "说点什么…", yourName: "你的名字", ok: "好", gift: "送{who}一份礼物", sent: "送了", bought: "买了",
+    card: "用银行卡付", payCard: "付 {amt}", email: "邮箱", addr: "寄到哪里", thanks: "谢谢！", declined: "没付成，换一种方式试试。",
+    payOff: "现在还不能付款。", sell: "卖一样东西", itemName: "叫什么", price: "价格（澳元）", addIt: "上架",
+    takings: "今天收入", noSales: "还没有卖出", gifted: "礼物", test: "付款（测试）",
   } : {
     hostTitle: "Your live", go: "Go live", watch: "Watch", live: "LIVE", ready: "Not live",
     title: "{who} · live", notYet: "{who} isn't live yet", left: "{who} has ended the live", ended: "Live ended",
     again: "Go live again", back: "Watch again", sound: "Tap for sound", conn: "Connecting…", lost: "Connection dropped — reconnecting…",
     cam: "Allow the camera and microphone, then try again.", key: "This link doesn't open a live.", over: "This live is over.",
     full: "This live is full.", net: "Can't connect — check the network and try again.", today: "Today",
+    say: "Say something…", yourName: "Your name", ok: "OK", gift: "Send {who} a gift", sent: "sent", bought: "bought",
+    card: "Pay by card", payCard: "Pay {amt}", email: "Email", addr: "Where to send it", thanks: "Thank you!", declined: "That didn't go through — try another way.",
+    payOff: "Paying isn't on yet.", sell: "Sell something", itemName: "What is it", price: "Price (A$)", addIt: "Add",
+    takings: "Today", noSales: "Nothing sold yet", gifted: "Gift", test: "Pay (test)",
   };
   const fill = (s, v) => s.replace(/\{(\w+)\}/g, (_, k) => v[k] ?? "");
   const $ = (id) => document.getElementById(id);
+  const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
+  const money = (c) => "$" + (c % 100 ? (c / 100).toFixed(2) : String(c / 100));
   const LK = window.LivekitClient;
 
   const id = location.pathname.split("/").pop();
   const key = location.hash.slice(1);
   const BASE = location.pathname.replace(/\/live\/[a-f0-9]+$/, "");
-  const api = (what) => fetch(`${BASE}/api/live/${id}/${what}`, {
-    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key }),
+  const api = (what, body) => fetch(`${BASE}/api/live/${id}/${what}`, {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key, ...body }),
   });
+  const store = { get: (k) => { try { return localStorage.getItem(k) || ""; } catch { return ""; } },
+    set: (k, v) => { try { localStorage.setItem(k, v); } catch { /* private window */ } } };
 
-  let info = null, room = null, tracks = [], front = true;
+  let info = null, room = null, tracks = [], front = true, items = [], pinned = "";
 
   const whenWord = (iso) => {
     const d = new Date(iso);
@@ -100,8 +176,9 @@
       + d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
   const stop = (txt) => { $("title").textContent = txt; $("sub").textContent = ""; $("go").hidden = true; };
+  const camera = () => LK.createLocalTracks({ audio: true, video: { facingMode: "user", resolution: LK.VideoPresets.h720.resolution } });
 
-  // Before anybody presses anything: whose class, and when. The teacher also
+  // Before anybody presses anything: whose live, and when. The seller also
   // sees their own camera, so the first time they are on is not the first
   // time they see themself.
   (async () => {
@@ -117,7 +194,7 @@
     $("go").textContent = info.host ? W.go : W.watch;
     if (info.host) {
       try {
-        tracks = await LK.createLocalTracks({ audio: true, video: { facingMode: "user", resolution: LK.VideoPresets.h720.resolution } });
+        tracks = await camera();
         const v = tracks.find((t) => t.kind === "video");
         if (v) { v.attach($("preview")); $("preview").hidden = false; }
       } catch { /* asked again on the press, which is a tap and allowed to prompt */ }
@@ -130,23 +207,274 @@
   };
   const count = () => {
     if (!room) return;
-    // Viewers only: the teacher is not their own audience.
-    const n = [...room.remoteParticipants.values()].filter((p) => p.identity !== "host").length + (info.host ? 0 : 1);
-    $("n").textContent = n;
+    // Viewers only: the seller is not their own audience.
+    $("n").textContent = [...room.remoteParticipants.values()].filter((p) => p.identity !== "host").length + (info.host ? 0 : 1);
   };
   const badge = (on) => { $("badge").textContent = on ? W.live : W.ready; $("badge").classList.toggle("on", on); };
+  const showHost = (track) => { track.attach($("v")); say(""); badge(true); };
 
-  function showHost(track) {
-    track.attach($("v"));
-    say("");
-    badge(true);
+  /* ---- THE ROW, THE CHAT, THE TAKINGS ------------------------------------ */
+  function drawRow() {
+    const row = $("row");
+    row.replaceChildren();
+    // What the seller is holding up now goes first; the rest after it.
+    const list = [...items].sort((a, b) => (b.id === pinned) - (a.id === pinned));
+    for (const it of list) {
+      const b = el("button", "it" + (it.id === pinned ? " pin" : ""));
+      const img = el("img"); img.src = `${BASE}/api/${it.photo}`; img.alt = ""; img.onerror = () => img.replaceWith(el("i"));
+      const t = el("span"); t.append(el("b", "", it.name), el("em", "", money(it.cents)));
+      b.append(img, t);
+      b.onclick = () => (info.host ? pin(it.id) : buy(it));
+      row.append(b);
+    }
+    row.hidden = !list.length;
+  }
+  function line(m) {
+    const f = $("feed");
+    let s;
+    if (m.t === "say") { s = el("span"); s.append(el("b", "", m.name), document.createTextNode(m.text)); }
+    else if (m.t === "gift") s = el("span", "g", `🎁 ${m.name} ${W.sent} ${money(m.cents)}`);
+    else if (m.t === "buy") s = el("span", "s", `🛍 ${m.name} ${W.bought} ${m.item}`);
+    else return;
+    f.append(s);
+    while (f.children.length > 5) f.firstChild.remove();
+  }
+  let sales = null;
+  function drawMoney(t) {
+    if (!info.host || !t) return;
+    sales = t;
+    $("money").hidden = false;
+    $("money").textContent = money(t.cents);
+  }
+  function hear(m) {
+    if (m.t === "items") { items = m.items; pinned = m.pinned; drawRow(); }
+    else if (m.t === "takings") drawMoney(m);
+    else line(m);
+  }
+  async function catchUp() {
+    try {
+      const s = await (await api("state")).json();
+      items = s.items || []; pinned = s.pinned || "";
+      drawRow();
+      $("feed").replaceChildren();
+      (s.feed || []).slice(-5).forEach(line);
+      drawMoney(s.takings);
+    } catch { /* the next message brings the row */ }
   }
 
+  /* ---- SHEETS ------------------------------------------------------------ */
+  let onClose = null;
+  function sheet(build) {
+    const sh = $("sheet");
+    sh.replaceChildren();
+    build(sh);
+    $("over").hidden = false;
+  }
+  function close() {
+    $("over").hidden = true;
+    $("sheet").replaceChildren();
+    if (onClose) { const f = onClose; onClose = null; f(); }
+  }
+  $("dim").onclick = close;
+
+  /* ---- PAYING — Square's own buttons, over the video. See lib/pay.mjs. ---
+     Square's script is fetched the first time somebody opens a sheet that
+     takes money, never before: a viewer who only watches never loads it. */
+  let sq = null;
+  function square() {
+    if (sq) return sq;
+    sq = new Promise((ok, no) => {
+      if (info.pay.fake) return ok(null);
+      const s = document.createElement("script");
+      s.src = info.pay.script;
+      s.onload = () => { try { ok(window.Square.payments(info.pay.app, info.pay.location)); } catch (e) { no(e); } };
+      s.onerror = () => no(new Error("blocked"));
+      document.head.append(s);
+    });
+    sq.catch(() => { sq = null; });
+    return sq;
+  }
+  /* The buttons for one amount into `slot`. Apple Pay first — the double
+     click is the whole point — Google Pay beside it for Android, and a card
+     form behind one tap for everybody else. `send` gets Square's token and
+     whatever contact the wallet handed over. */
+  async function payButtons(slot, { cents, label, ship, send }) {
+    const msg = el("p", "msg");
+    const go = async (tokenize) => {
+      msg.className = "msg"; msg.textContent = "";
+      try {
+        const r = await tokenize();
+        if (!r) return;
+        const ok = await send(r.token, r.who || {});
+        if (ok) { msg.className = "msg ok"; msg.textContent = W.thanks; setTimeout(close, 1200); }
+        else msg.textContent = W.declined;
+      } catch { msg.textContent = W.declined; }
+    };
+    if (!info.pay) { msg.textContent = W.payOff; slot.append(msg); return; }
+    if (info.pay.fake) {
+      const b = el("button", "btn dark", W.test);
+      b.onclick = () => go(async () => ({ token: "fake-ok", who: { name: store.get("live:name") || "Test", contact: "test@example.com" } }));
+      slot.append(b, msg);
+      return;
+    }
+    let payments;
+    try { payments = await square(); } catch { msg.textContent = W.payOff; slot.append(msg); return; }
+    const req = payments.paymentRequest({
+      countryCode: info.pay.country, currencyCode: info.pay.currency,
+      total: { amount: (cents / 100).toFixed(2), label },
+      requestShippingContact: Boolean(ship), requestBillingContact: true,
+    });
+    // What the wallet knows about the buyer, as one line for the seller.
+    const who = (d) => {
+      const c = (d && d.shipping && d.shipping.contact) || (d && d.billing) || {};
+      const name = [c.givenName, c.familyName].filter(Boolean).join(" ");
+      const where = [...(c.addressLines || []), c.city, c.state, c.postalCode, c.countryCode].filter(Boolean).join(", ");
+      return { name, contact: [c.email, c.phone, where].filter(Boolean).join(" · ") };
+    };
+    const tokenOf = async (method) => {
+      const r = await method.tokenize();
+      if (r.status !== "OK") return null;
+      return { token: r.token, who: who(r.details) };
+    };
+    try {
+      const apple = await payments.applePay(req);
+      const b = el("div", "apay"); b.setAttribute("role", "button");
+      b.onclick = () => go(() => tokenOf(apple));
+      slot.append(b);
+    } catch { /* not an Apple device, or Apple Pay not set up for this site */ }
+    try {
+      const g = el("div"); g.id = "gpay"; slot.append(g);
+      const google = await payments.googlePay(req);
+      await google.attach("#gpay", { buttonColor: "black", buttonSizeMode: "fill", buttonType: "buy" });
+      g.onclick = () => go(() => tokenOf(google));
+    } catch { $("gpay") && $("gpay").remove(); }
+    // THE CARD, one tap deeper: the wallets above are the way most people
+    // pay, and a card form open by default is a wall of boxes.
+    const more = el("button", "btn light", W.card);
+    more.onclick = async () => {
+      more.remove();
+      const n = el("input"); n.placeholder = W.yourName; n.autocomplete = "name"; n.value = store.get("live:name");
+      const e = el("input"); e.placeholder = W.email; e.type = "email"; e.autocomplete = "email";
+      const a = el("input"); a.placeholder = W.addr; a.autocomplete = "street-address";
+      const c = el("div"); c.id = "cardslot";
+      const b = el("button", "btn red", fill(W.payCard, { amt: money(cents) }));
+      slot.insertBefore(c, msg);
+      slot.insertBefore(n, c);
+      if (ship) { slot.insertBefore(e, c); slot.insertBefore(a, c); }
+      slot.insertBefore(b, msg);
+      const card = await payments.card();
+      await card.attach("#cardslot");
+      onClose = () => card.destroy();
+      b.onclick = () => go(async () => {
+        const r = await card.tokenize();
+        if (r.status !== "OK") return null;
+        store.set("live:name", n.value.trim());
+        return { token: r.token, who: { name: n.value.trim(), contact: [e.value.trim(), a.value.trim()].filter(Boolean).join(" · ") } };
+      });
+    };
+    slot.append(more, msg);
+  }
+
+  function buy(it) {
+    sheet((sh) => {
+      const img = el("img", "shot"); img.src = `${BASE}/api/${it.photo}`; img.onerror = () => img.remove();
+      sh.append(img, el("h2", "", it.name), el("div", "price", money(it.cents)));
+      payButtons(sh, {
+        cents: it.cents, label: it.name, ship: true,
+        send: async (token, who) => (await api("pay", { kind: "item", item: it.id, token, name: who.name, contact: who.contact })).ok,
+      });
+    });
+  }
+  $("gift").onclick = () => sheet((sh) => {
+    sh.append(el("h2", "", fill(W.gift, { who: info.name })));
+    const amts = el("div", "amts");
+    const slot = el("div");
+    const pick = (c, b) => {
+      [...amts.children].forEach((x) => x.classList.toggle("sel", x === b));
+      slot.replaceChildren();
+      payButtons(slot, {
+        cents: c, label: fill(W.gift, { who: info.name }),
+        send: async (token, who) => (await api("pay", { kind: "gift", cents: c, token, name: who.name || store.get("live:name") })).ok,
+      });
+    };
+    info.gifts.forEach((c, i) => {
+      const b = el("button");
+      b.append(el("small", "", ["🌹", "☕", "🎉"][i] || "🎁"), document.createTextNode(money(c)));
+      b.onclick = () => pick(c, b);
+      amts.append(b);
+    });
+    sh.append(amts, slot);
+    pick(info.gifts[1], amts.children[1]);
+  });
+
+  /* ---- CHAT: a name once, then just typing ------------------------------- */
+  async function sendSay(text) {
+    let name = store.get("live:name");
+    if (!name) {
+      sheet((sh) => {
+        const n = el("input"); n.placeholder = W.yourName; n.autocomplete = "name";
+        const b = el("button", "btn red", W.ok);
+        b.onclick = () => { if (!n.value.trim()) return; store.set("live:name", n.value.trim()); close(); sendSay(text); };
+        sh.append(n, b);
+        setTimeout(() => n.focus(), 50);
+      });
+      return;
+    }
+    const r = await api("say", { text, name }).catch(() => null);
+    if (r && r.ok) $("say").value = "";
+  }
+  $("say").placeholder = W.say;
+  $("say").addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && $("say").value.trim()) sendSay($("say").value.trim());
+  });
+
+  /* ---- THE SELLER: + keeps a still from the live camera ------------------ */
+  $("add").onclick = () => {
+    // The frame the viewers are seeing, unmirrored, shrunk to 640px: a phone
+    // photo would be ten times the size and take the stream's upload with it.
+    const v = $("v"), c = document.createElement("canvas");
+    const s = Math.min(1, 640 / Math.max(v.videoWidth || 640, v.videoHeight || 640));
+    c.width = Math.round((v.videoWidth || 640) * s); c.height = Math.round((v.videoHeight || 480) * s);
+    try { c.getContext("2d").drawImage(v, 0, 0, c.width, c.height); } catch { /* no frame yet */ }
+    const photo = c.toDataURL("image/jpeg", 0.8);
+    sheet((sh) => {
+      const img = el("img", "shot"); img.src = photo;
+      const n = el("input"); n.placeholder = W.itemName;
+      const p = el("input"); p.placeholder = W.price; p.inputMode = "decimal";
+      const b = el("button", "btn red", W.addIt);
+      const msg = el("p", "msg");
+      b.onclick = async () => {
+        const r = await api("item", { name: n.value, price: p.value.replace(/[^\d.]/g, ""), photo }).catch(() => null);
+        if (!r || !r.ok) { msg.textContent = "?"; return; }
+        const j = await r.json();
+        items = j.items; pinned = j.pinned; drawRow();
+        close();
+      };
+      sh.append(el("h2", "", W.sell), img, n, p, b, msg);
+      setTimeout(() => n.focus(), 50);
+    });
+  };
+  async function pin(item) {
+    const r = await api("pin", { item: item === pinned ? "" : item }).catch(() => null);
+    if (r && r.ok) { const j = await r.json(); items = j.items; pinned = j.pinned; drawRow(); }
+  }
+  $("money").onclick = () => sheet((sh) => {
+    sh.append(el("h2", "", W.takings), el("div", "price", money(sales ? sales.cents : 0)));
+    if (!sales || !sales.list.length) sh.append(el("p", "", W.noSales));
+    for (const x of (sales ? sales.list : [])) {
+      const r = el("div", "sale");
+      const l = el("div");
+      l.append(el("b", "", `${x.kind === "gift" ? "🎁 " + W.gifted : x.item} · ${x.name}`), el("small", "", x.contact || ""));
+      r.append(l, el("b", "", money(x.cents)));
+      sh.append(r);
+    }
+  });
+
+  /* ---- JOINING ----------------------------------------------------------- */
   async function start() {
     $("err").textContent = "";
     if (info && info.host && !tracks.length) {
-      try { tracks = await LK.createLocalTracks({ audio: true, video: { facingMode: "user", resolution: LK.VideoPresets.h720.resolution } }); }
-      catch { $("err").textContent = W.cam; return; }
+      try { tracks = await camera(); } catch { $("err").textContent = W.cam; return; }
     }
     let r;
     try { r = await api("join"); } catch { $("err").textContent = W.net; return; }
@@ -159,20 +487,24 @@
       if (track.kind === "video") showHost(track);
       else document.body.append(track.attach());
     });
-    room.on(LK.RoomEvent.TrackUnsubscribed, (track) => track.detach().forEach((el) => { if (el !== $("v")) el.remove(); }));
+    room.on(LK.RoomEvent.TrackUnsubscribed, (track) => track.detach().forEach((e) => { if (e !== $("v")) e.remove(); }));
     room.on(LK.RoomEvent.ParticipantConnected, count);
     room.on(LK.RoomEvent.ParticipantDisconnected, (p) => {
       count();
       if (!info.host && p.identity === "host") { badge(false); say(fill(W.left, { who: info.name })); }
     });
+    // Only the server speaks into the room — see lib/market.mjs.
+    room.on(LK.RoomEvent.DataReceived, (payload, p, kind, topic) => {
+      if (p || topic !== "live") return;
+      try { hear(JSON.parse(new TextDecoder().decode(payload))); } catch { /* not ours */ }
+    });
     room.on(LK.RoomEvent.Reconnecting, () => say(W.lost));
-    room.on(LK.RoomEvent.Reconnected, () => say(""));
+    room.on(LK.RoomEvent.Reconnected, () => { say(""); catchUp(); });
     room.on(LK.RoomEvent.Disconnected, () => { if (room) ended(); });
     // A phone that will not play sound until it is touched: say so, once.
     room.on(LK.RoomEvent.AudioPlaybackStatusChanged, () => {
       if (room.canPlaybackAudio) return;
-      const b = document.createElement("button");
-      b.className = "go"; b.textContent = W.sound;
+      const b = el("button", "go", W.sound);
       b.onclick = () => room.startAudio().then(() => say(""));
       say("", b);
     });
@@ -180,6 +512,10 @@
     $("pre").hidden = true;
     $("live").hidden = false;
     $("live").classList.toggle("me", info.host);
+    $("hbar").hidden = !info.host;
+    $("vbar").hidden = info.host;
+    $("leave").hidden = info.host;
+    $("gift").hidden = !info.pay;
     badge(false);
     say(W.conn);
     try {
@@ -191,14 +527,13 @@
       return;
     }
     count();
+    catchUp();
     if (info.host) {
       for (const t of tracks) await room.localParticipant.publishTrack(t, t.kind === "video" ? { simulcast: true } : {});
       const v = tracks.find((t) => t.kind === "video");
       if (v) showHost(v);
-      ["mic", "cam", "flip"].forEach((b) => { $(b).hidden = false; });
     } else {
-      const h = room.remoteParticipants.get("host");
-      if (!h) say(fill(W.notYet, { who: info.name }));
+      if (!room.remoteParticipants.get("host")) say(fill(W.notYet, { who: info.name }));
       else say("");
       room.startAudio().catch(() => {});
     }
@@ -209,6 +544,7 @@
     const was = room;
     room = null;
     if (was) was.disconnect();
+    close();
     $("live").hidden = true;
     $("pre").hidden = false;
     $("preview").hidden = true;
@@ -232,11 +568,13 @@
     try { await v.restartTrack({ facingMode: front ? "user" : "environment" }); } catch { front = !front; }
     $("live").classList.toggle("back", !front);
   });
-  $("end").addEventListener("click", () => {
+  const leave = () => {
     if (info && info.host) tracks.forEach((t) => t.stop());
     tracks = [];
     ended();
-  });
+  };
+  $("end").addEventListener("click", leave);
+  $("leave").addEventListener("click", leave);
   addEventListener("pagehide", () => { if (room) room.disconnect(); });
 })();
 </script>

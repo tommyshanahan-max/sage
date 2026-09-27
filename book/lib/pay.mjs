@@ -1,92 +1,81 @@
-/* TAKING MONEY DURING A LIVE — Stripe, by hand, the way the board does it.
+/* TAKING MONEY DURING A LIVE — Square, Australia.
  *
- * The board's own Stripe file (board/lib/stripe.js) is where every lesson
- * below was learned, one evening at a time; this is the three calls a live
- * needs, carrying those lessons rather than rediscovering them:
+ * WHY SQUARE. What Tom asked for is "Apple Pay, double-click and it's over",
+ * over the video, for viewers anywhere. That needs a processor that takes
+ * Apple Pay from a web page: Stripe or Square. Tom has no Stripe account for
+ * this, Wise only takes Apple Pay on its own page (a tab switch and a tick
+ * by hand), and Square is built for exactly this — somebody selling at a
+ * market. Registered in Australia, so it charges AUD; prices are dollars.
  *
- *  - EMBEDDED, NOT A REDIRECT. The form draws inside the live page, over the
- *    video, so the payer never watches their phone hand them to a foreign
- *    domain mid-sale. `embedded_page`, the dahlia name; `embedded` is refused.
- *  - AUD, NOT YUAN. Tom's Stripe account is Australian, and Alipay on an
- *    Australian account presents in AUD — every CNY charge came back
- *    invalid_request_error from inside Stripe's own sheet on 24 Sep. Prices
- *    stay in yuan everywhere a person reads them; the conversion happens here,
- *    at the rate set by `make rate`, and nowhere else. No rate, no sale: a
- *    made-up rate would be making up what somebody is charged.
- *  - THE MONEY IS TOM'S FROM THE START. He is selling his own things and
- *    being given his own gifts, so there is no destination and no fee, exactly
- *    like the board's shop. If a live ever sells on somebody else's behalf,
- *    this is wrong and it is a licence question (二清) before a code one.
+ * HOW IT GOES. The page draws Square's own Apple Pay, Google Pay and card
+ * buttons (Square's script, web.squarecdn.com). A double-click there gives
+ * the page a one-time token, never a card number; the page sends the token
+ * here, and this charges it with one call. Square answers COMPLETED or not
+ * on the spot — so, unlike a redirect, there is nothing to wait for or poll,
+ * and "Amy bought the scarf" can be said the moment it is true.
  *
- * NO WEBHOOK. Every session a payment can come from was created here, so
- * this service simply asks Stripe about each one it is still waiting on (see
- * `settle` in server.mjs). Nothing to register in Stripe's dashboard, and a
- * payer who pays and closes the phone is still counted.
+ * THE MONEY IS TOM'S. He sells his own things and is given his own gifts, on
+ * his own Square account. Selling for somebody else would be a different
+ * thing — a licence question before a code question.
+ *
+ * THREE VALUES, ALL IN .env, via `make book-square`:
+ *   BOOK_SQUARE_TOKEN     the access token — secret, server only
+ *   BOOK_SQUARE_APP       the application id — public, the page needs it
+ *   BOOK_SQUARE_LOCATION  where sales are recorded — public
+ *
+ * BOOK_SQUARE_FAKE=1 is for trying the page without an account: every
+ * payment "succeeds" with no money moving. Refused outright when a real
+ * token is set, so it cannot be left on by mistake on a box that takes money.
  */
-const API = (process.env.BOOK_STRIPE_API || "https://api.stripe.com/v1").replace(/\/$/, "");
-const KEY = (process.env.BOOK_STRIPE_KEY || "").trim();
-export const PK = (process.env.BOOK_STRIPE_PK || "").trim();
-const VERSION = (process.env.BOOK_STRIPE_VERSION || "").trim();
-const RATE = Number(process.env.BOOK_AUD_PER_CNY);
+import { randomUUID } from "node:crypto";
 
-/** Whether a live can take money at all right now. */
-export const on = () => Boolean(KEY && PK && RATE > 0);
+const TOKEN = (process.env.BOOK_SQUARE_TOKEN || "").trim();
+const APP = (process.env.BOOK_SQUARE_APP || "").trim();
+const LOCATION = (process.env.BOOK_SQUARE_LOCATION || "").trim();
+const VERSION = (process.env.BOOK_SQUARE_VERSION || "").trim();
+// A sandbox app id starts "sandbox-"; its calls and its script live elsewhere.
+const SANDBOX = APP.startsWith("sandbox-");
+const API = SANDBOX ? "https://connect.squareupsandbox.com/v2" : "https://connect.squareup.com/v2";
+export const FAKE = process.env.BOOK_SQUARE_FAKE === "1" && !TOKEN;
+export const CURRENCY = "AUD";
 
-/** Yuan (whole) → Australian cents, rounded up: a rate a week old is wrong
- *  by a little, and the little should not come out of Tom. */
-export const audCents = (yuan) => Math.ceil(yuan * RATE * 100);
+export const on = () => FAKE || Boolean(TOKEN && APP && LOCATION);
 
-function form(obj, prefix = "", out = new URLSearchParams()) {
-  for (const [k, v] of Object.entries(obj)) {
-    if (v === undefined || v === null) continue;
-    const key = prefix ? `${prefix}[${k}]` : k;
-    if (Array.isArray(v)) v.forEach((x, i) => form({ [i]: x }, key, out));
-    else if (typeof v === "object") form(v, key, out);
-    else out.append(key, String(v));
+/** What the page needs to draw the buttons — none of it secret. */
+export const client = () => on() ? {
+  fake: FAKE, app: APP, location: LOCATION, currency: CURRENCY, country: "AU",
+  script: SANDBOX ? "https://sandbox.web.squarecdn.com/v1/square.js" : "https://web.squarecdn.com/v1/square.js",
+} : null;
+
+/** Charge one token. `cents` is what the viewer saw; `note` is what Tom sees
+ *  against it in Square. Resolves to Square's payment id, or throws with
+ *  Square's own reason (a declined card says so). */
+export async function charge({ token, cents, note }) {
+  if (FAKE) {
+    if (token !== "fake-ok") throw new Error("declined");
+    return "fake-" + randomUUID().slice(0, 8);
   }
-  return out;
-}
-
-async function call(path, body) {
-  const res = await fetch(API + path, {
-    method: body ? "POST" : "GET",
+  const res = await fetch(API + "/payments", {
+    method: "POST",
     headers: {
-      Authorization: "Bearer " + KEY,
-      ...(VERSION ? { "Stripe-Version": VERSION } : {}),
-      ...(body ? { "Content-Type": "application/x-www-form-urlencoded" } : {}),
+      Authorization: "Bearer " + TOKEN, "Content-Type": "application/json",
+      ...(VERSION ? { "Square-Version": VERSION } : {}),
     },
-    body: body ? form(body).toString() : undefined,
+    body: JSON.stringify({
+      source_id: token,
+      // A retry of the same press must not charge twice; a new press is new.
+      idempotency_key: randomUUID(),
+      amount_money: { amount: cents, currency: CURRENCY },
+      location_id: LOCATION,
+      note: String(note || "").slice(0, 500),
+      autocomplete: true,
+    }),
     signal: AbortSignal.timeout(20e3),
   });
-  const text = await res.text();
-  let json = null;
-  try { json = JSON.parse(text); } catch { /* prose */ }
-  if (!res.ok) throw new Error(`${path} -> ${res.status}: ${json?.error?.message || text.slice(0, 200)}`);
-  return json;
-}
-
-/** A payment form for one sale. `yuan` is the price as the viewer saw it. */
-export function checkout({ yuan, method, label, ref, back }) {
-  return call("/checkout/sessions", {
-    mode: "payment",
-    ui_mode: "embedded_page",
-    client_reference_id: ref,
-    return_url: back,
-    // The one they pressed, not all of them again: they already chose.
-    payment_method_types: [method === "card" ? "card" : "alipay"],
-    line_items: [{
-      quantity: 1,
-      price_data: { currency: "aud", unit_amount: audCents(yuan), product_data: { name: label } },
-    }],
-    // Half an hour, Stripe's shortest: a sale nobody finished stops being
-    // asked about soon after.
-    expires_at: Math.floor(Date.now() / 1000) + 31 * 60,
-  });
-}
-
-/** Paid, open or expired — Stripe's word for one session. */
-export async function status(session) {
-  const s = await call("/checkout/sessions/" + encodeURIComponent(session));
-  if (s?.payment_status === "paid") return "paid";
-  return s?.status === "expired" ? "expired" : "open";
+  const j = await res.json().catch(() => null);
+  const p = j && j.payment;
+  if (!res.ok || !p || p.status !== "COMPLETED") {
+    throw new Error((j && j.errors && j.errors[0] && (j.errors[0].code + ": " + j.errors[0].detail)) || "square " + res.status);
+  }
+  return p.id;
 }

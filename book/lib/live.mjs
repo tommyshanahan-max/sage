@@ -178,17 +178,18 @@ export function cleanLive(r) {
     // WHAT IS FOR SALE, added from the seller's phone mid-live. The photo is
     // a file beside book.json, not in it — see /photo in server.mjs.
     items: (Array.isArray(r.items) ? r.items : []).map((i) => i && /^[a-f0-9]{8}$/.test(i.id) && {
-      id: i.id, name: s(i.name, 40), price: Math.max(1, Math.min(100000, Math.round(Number(i.price) || 0))),
-    }).filter((i) => i && i.name && i.price),
+      // Cents, Australian: Square in Australia charges AUD — see pay.mjs.
+      id: i.id, name: s(i.name, 40), cents: Math.max(100, Math.min(1e6, Math.round(Number(i.cents) || 0))),
+    }).filter((i) => i && i.name && i.cents),
     pinned: /^[a-f0-9]{8}$/.test(r.pinned || "") ? r.pinned : "",
-    /* EVERY SALE AND GIFT, paid or still waiting. `session` is Stripe's, and
-       what `settle` asks about; `paid` flips once and is never unset. The
-       phone is only for handing over what was bought, and only the seller's
-       screen ever shows it. */
+    /* EVERY SALE AND GIFT, once Square has said COMPLETED — a payment that
+       failed is never written down. `contact` is what Apple or Google Pay
+       handed over for posting it (or what a card payer typed); only the
+       seller's screen ever shows it. */
     sales: (Array.isArray(r.sales) ? r.sales : []).map((x) => x && /^[a-f0-9]{16}$/.test(x.id) && {
-      id: x.id, kind: x.kind === "gift" ? "gift" : "item", item: s(x.item, 40), yuan: Math.max(0, Math.round(Number(x.yuan) || 0)),
-      name: s(x.name, 30), phone: s(x.phone, 30), at: s(x.at, 40), session: s(x.session, 200),
-      paid: Boolean(x.paid), gone: Boolean(x.gone),
+      id: x.id, kind: x.kind === "gift" ? "gift" : "item", item: s(x.item, 40),
+      cents: Math.max(0, Math.round(Number(x.cents) || 0)),
+      name: s(x.name, 40), contact: s(x.contact, 300), at: s(x.at, 40), square: s(x.square, 80),
     }).filter(Boolean),
   };
 }

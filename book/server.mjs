@@ -107,6 +107,13 @@ const server = http.createServer(async (req, res) => {
     catch { return send(res, 404, { error: "missing" }); }
   }
 
+  // Apple Pay's domain file, served at /.well-known/… by Caddy — see
+  // scripts/square-keys.sh. Plain text, exactly as Square gave it.
+  if (req.method === "GET" && p === "/apple-pay-domain") {
+    try { return send(res, 200, readFileSync(path.join(process.env.BOOK_DIR || "/data", "apple-pay-domain")), "text/plain"); }
+    catch { return send(res, 404, { error: "missing" }); }
+  }
+
   // THE SHELF: every teacher on it who is switched on, with their next free
   // time. Soonest first, because "who can I have tonight" is the question.
   let m = p.match(/^\/api\/shelf\/([a-z0-9-]{1,40})$/);
