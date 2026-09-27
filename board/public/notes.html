@@ -200,7 +200,14 @@
   .thead .tname b{display:block;font-family:var(--serif);font-weight:400;
     font-size:1.15rem;line-height:1.2;overflow:hidden;text-overflow:ellipsis;
     white-space:nowrap}
-  .thead .tname span{display:block;font-size:.76rem;color:var(--muted)}
+  /* ONE LINE, CUT IF IT HAS TO BE. There are four things in this header now
+     that the video button makes four, and on a 390px phone "Open — either of
+     you can write" wrapped to two lines and pushed the name up against the
+     back arrow. The name is what matters here; the line under it is a label. */
+  .thead .tname span{display:block;font-size:.76rem;color:var(--muted);
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  /* The two round buttons in the corner sit together and never shrink. */
+  .thead .more{flex:0 0 auto}
   /* The name, as a box, on the screen where a conversation's name would be. */
   .tnew{flex:1;min-width:0}
   .tnew span{display:block;font-size:.66rem;letter-spacing:.1em;
@@ -276,6 +283,42 @@
      field, one button. It sits where the first bubble would, which is the
      whole idea of the screen, so it is centred in the thread rather than
      docked anywhere. */
+  /* ---- THE CALL ----------------------------------------------------------
+     Over the whole app, not beside it. Two people, faces, three buttons, and
+     nothing else on the screen — see the note over #callv in the markup. */
+  .callv{position:fixed;inset:0;z-index:90;background:#0b0b0d}
+  #cvthem{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#0b0b0d}
+  /* YOURSELF, SMALL, AND MIRRORED. Everybody expects their own picture to
+     behave like a mirror and nobody expects the other person's to. */
+  #cvme{position:absolute;right:14px;top:max(14px,env(safe-area-inset-top,0px));
+    width:28vw;max-width:148px;aspect-ratio:3/4;object-fit:cover;border-radius:14px;
+    border:2px solid rgba(255,255,255,.7);transform:scaleX(-1);background:#26262b}
+  /* WHO, WHILE THERE IS NOTHING TO SEE. It sits under the video rather than
+     being hidden when the call connects: their picture covers it. */
+  .cvwho{position:absolute;left:0;right:0;top:26%;display:flex;flex-direction:column;
+    align-items:center;gap:.7rem;color:#fff;pointer-events:none}
+  .cvwho .av{width:6.4rem;height:6.4rem;border-radius:50%;display:grid;place-items:center;
+    font:400 2.4rem/1 var(--serif);color:#fff;overflow:hidden}
+  .cvwho .av img{width:100%;height:100%;object-fit:cover}
+  .cvwho b{font:400 1.5rem/1.2 var(--serif)}
+  .cvstate{position:absolute;left:0;right:0;top:calc(26% + 11rem);margin:0;text-align:center;
+    color:rgba(255,255,255,.82);font-size:.95rem;text-shadow:0 1px 6px rgba(0,0,0,.6)}
+  .cvbar{position:absolute;left:0;right:0;bottom:max(26px,env(safe-area-inset-bottom,0px));
+    display:flex;justify-content:center;gap:1.1rem}
+  .cvbar button{width:62px;height:62px;border-radius:50%;border:0;padding:0;
+    background:rgba(255,255,255,.18);color:#fff;display:grid;place-items:center;
+    -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+  .cvbar button svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2;
+    stroke-linecap:round;stroke-linejoin:round}
+  /* OFF IS THE LIT ONE. A muted microphone reads as a button that is doing
+     something, which it is; a dark one reads as a button that is not there. */
+  .cvbar button.off{background:#fff;color:#111}
+  .cvbar button.end{background:#d93025}
+  .cvbar button.yes{background:#1e9e54}
+  /* THE HEADER'S VIDEO BUTTON. Same size and weight as the ⋯ beside it — it is
+     one of two things in that corner, not a feature announcing itself. */
+  .thead .vid svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;
+    stroke-linecap:round;stroke-linejoin:round}
   /* THE LINE THAT IS THE SCREEN. It was a .when — grey, small, centred, the
      class this page uses for a timestamp — under a room name and above three
      faces, which made the one sentence somebody is here to read the quietest
@@ -1010,6 +1053,28 @@
 
   <!-- THE CONVERSATION. Header with the way back and their name, the lines as
        bubbles, and the box at the bottom where a thumb already is. -->
+  <!-- THE CALL, OVER EVERYTHING.
+       Its own layer rather than a screen of its own: the conversation is still
+       underneath it and hanging up puts you back in it mid-sentence, which is
+       what a call inside a chat is. See callOpen. -->
+  <div class="callv" id="callv" hidden>
+    <video id="cvthem" autoplay playsinline></video>
+    <video id="cvme" autoplay playsinline muted></video>
+    <div class="cvwho" id="cvwho"><span class="av" id="cvav"></span><b id="cvname"></b></div>
+    <p class="cvstate" id="cvstate"></p>
+    <div class="cvbar" id="cvbar">
+      <button id="cvmic" aria-label="Microphone"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+      <button id="cvcam" aria-label="Camera"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="13" height="10" rx="2"/><path d="M16 11l5-3v8l-5-3"/></svg></button>
+      <button id="cvend" class="end" aria-label="Hang up"><svg viewBox="0 0 24 24"><path d="M3 15c5-5 13-5 18 0l-3 3-3-2v-3c-2-1-4-1-6 0v3l-3 2z"/></svg></button>
+    </div>
+    <!-- BEING CALLED. Two buttons and nothing else on the screen: the choice
+         is answer or not, and a phone ringing is not a moment to read. -->
+    <div class="cvbar cvin" id="cvin" hidden>
+      <button id="cvno" class="end" aria-label="Decline"><svg viewBox="0 0 24 24"><path d="M3 15c5-5 13-5 18 0l-3 3-3-2v-3c-2-1-4-1-6 0v3l-3 2z"/></svg></button>
+      <button id="cvyes" class="yes" aria-label="Answer"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="13" height="12" rx="2.5"/><path d="M16 11l5-3v8l-5-3"/></svg></button>
+    </div>
+  </div>
+
   <div id="threadview" hidden>
     <div class="thead">
       <button class="back" id="back" aria-label="Back">
@@ -1038,6 +1103,13 @@
            between the two slots on every paint, rather than two buttons to
            keep in step. -->
       <span id="langaway"></span>
+      <!-- VIDEO. Beside the name of the person it calls, which is the only
+           place it can be: a call is a thing you do to somebody, and every
+           other screen would have to say who first. Hidden unless the thread
+           is open — see drawThread. -->
+      <button class="more vid" id="tvid" aria-label="Video call" hidden>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="13" height="12" rx="2.5"/><path d="M16 11l5-3v8l-5-3"/></svg>
+      </button>
       <button class="more" id="tmore" aria-label="More" aria-expanded="false">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/></svg>
       </button>
@@ -1308,6 +1380,14 @@ async function load() {
     CAN = d.can || [];
     YOU = d.you || { handle: "", photo: "" };
     UNREAD = d.unread || 0;
+    /* SOMEBODY IS RINGING, RIGHT NOW.
+     *
+     * The other half of the push. The buzz says "someone is calling you" and
+     * no more — no name in any push this board sends — so opening the app has
+     * to show the call itself or the buzz was a dead end. A call is over in
+     * forty-five seconds; there is no time to go looking through an inbox.
+     * Before paint(), because the layer sits over whatever it draws. */
+    if (d.ring && d.ring.who && !CALL) callIn(d.ring.who, d.ring.handle || "", d.ring.photo || "");
     /* Not awaited with the notes: a groups table that is slow or off must not
        hold up the inbox, and OFF.groups means there is nothing to ask for. */
     GROUPS = [];
@@ -1915,6 +1995,7 @@ function drawInvited() {
   $("threadview").hidden = false;
   $("tnew").hidden = true;
   $("tmore").hidden = true;
+  $("tvid").hidden = true;
   $("tmenu").hidden = true;
   $("tpin").hidden = true;
   $("tleft").hidden = true;
@@ -1981,12 +2062,286 @@ function drawInvited() {
  * THE CODE IS NOT IN THE LINK and this screen is the whole of why that rule
  * survives the new address. A link forwarded by accident lands here and stops.
  */
+/* ---------------------------------------------------------------------------
+ * A VIDEO CALL, INSIDE THE CONVERSATION
+ *
+ * THE VIDEO NEVER TOUCHES THIS BOARD. The two browsers send it to each other
+ * directly; the server carries only the few messages that introduce them —
+ * see lib/call.js, which explains why that is long-polling and not a socket.
+ *
+ * WHO CAN BE CALLED IS NOT DECIDED HERE. Every route goes through the same
+ * notePermit the composer uses: you can call whoever you can write to. This
+ * file shows the button when the thread is open and lets the server refuse.
+ *
+ * IT IS A LAYER, NOT A PAGE. The conversation stays underneath, so hanging up
+ * puts you back in it mid-sentence — which is what a call inside a chat is,
+ * and what a page of its own would have taken away.
+ * ------------------------------------------------------------------------- */
+let CALL = null;   // { who, handle, photo, role, since, gone, pc, local, ice }
+let CALLPOLL = false;
+
+const callSay = (t) => { $("cvstate").textContent = t || ""; };
+
+/** Their face while there is nothing to see yet. The same letter-and-colour
+ *  the rest of this page uses when somebody has no picture. */
+function callFace(handle, photo) {
+  const av = $("cvav");
+  fill(av);
+  av.textContent = initial(handle);
+  av.style.background = wash(handle);
+  if (photo) {
+    const img = Object.assign(document.createElement("img"),
+      { src: "/api/public-media?id=" + encodeURIComponent(photo), alt: "" });
+    img.addEventListener("load", () => { fill(av); av.append(img); });
+  }
+  $("cvname").textContent = handle || T("board.someone");
+}
+
+const callApi = (what, body) => fetch("/api/call/" + encodeURIComponent(CALL.who) + "/" + what, {
+  method: "POST", headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ device, ...body }),
+});
+const callSend = (m) => { if (CALL) callApi("send", { m }).catch(() => {}); };
+
+/** The camera and microphone, asked for once per call.
+ *
+ *  ASKED INSIDE THE TAP. A browser only opens the permission prompt from
+ *  inside the gesture that asked for it, so this cannot be moved earlier to
+ *  "warm it up" — doing that is how the prompt ends up silently refused. */
+async function callMedia() {
+  return navigator.mediaDevices.getUserMedia({
+    video: { facingMode: "user", width: { ideal: 640 } }, audio: true,
+  });
+}
+
+function callPc() {
+  const c = CALL;
+  if (c.pc) { c.pc.onicecandidate = null; c.pc.ontrack = null; c.pc.close(); }
+  c.pending = [];
+  c.pc = new RTCPeerConnection({ iceServers: c.ice || [] });
+  c.local.getTracks().forEach((t) => c.pc.addTrack(t, c.local));
+  c.pc.ontrack = (e) => { $("cvthem").srcObject = e.streams[0]; };
+  c.pc.onicecandidate = (e) => { if (e.candidate) callSend({ type: "ice", c: e.candidate }); };
+  c.pc.onconnectionstatechange = () => {
+    if (!CALL || CALL.pc !== c.pc) return;
+    const st = c.pc.connectionState;
+    if (st === "connected") {
+      clearTimeout(c.giveUp);
+      callSay("");
+      /* THEIR NAME AND LETTER GO THE MOMENT THEIR FACE ARRIVES. The comment
+         here used to say the video covered them; it does not — the video is
+         behind and these sit on top, so a live call had a grey initial parked
+         over the middle of the other person's face. */
+      $("cvwho").hidden = true;
+    }
+    else if (st === "failed") {
+      /* A CALL THAT CANNOT CONNECT LOOKS EXACTLY LIKE ONE ABOUT TO, and that
+         is the whole reason this branch says something instead of retrying
+         quietly. The caller tries once more — a first attempt can lose a race
+         with the addresses arriving — and then stops and says so. */
+      if (c.role === "out" && !c.retried) { c.retried = true; callSay(T("cv.conn")); setTimeout(callOffer, 1200); }
+      else callSay(T(c.relay ? "cv.noConn" : "cv.noRelay"));
+    } else if (st === "disconnected") {
+      callSay(T("cv.lost"));
+      // Nothing to look at again, so say who it was you were talking to.
+      $("cvwho").hidden = false;
+    }
+  };
+}
+
+async function callOffer() {
+  if (!CALL || CALL.gone) return;
+  callPc();
+  callSay(T("cv.conn"));
+  await CALL.pc.setLocalDescription(await CALL.pc.createOffer());
+  callSend({ type: "offer", sdp: CALL.pc.localDescription });
+}
+
+async function callFlush() {
+  for (const c of CALL.pending.splice(0)) {
+    try { await CALL.pc.addIceCandidate(c); } catch { /* stale */ }
+  }
+}
+
+async function callHandle(m) {
+  if (!m || !CALL || CALL.gone) return;
+  if (m.type === "answered") { CALL.role = "out"; await callOffer(); }
+  else if (m.type === "bye") callHang(T("cv.ended"));
+  else if (m.type === "offer") {
+    callPc();
+    await CALL.pc.setRemoteDescription(m.sdp);
+    await callFlush();
+    await CALL.pc.setLocalDescription(await CALL.pc.createAnswer());
+    callSend({ type: "answer", sdp: CALL.pc.localDescription });
+  } else if (m.type === "answer" && CALL.pc && CALL.pc.signalingState === "have-local-offer") {
+    await CALL.pc.setRemoteDescription(m.sdp);
+    await callFlush();
+  } else if (m.type === "ice") {
+    if (CALL.pc && CALL.pc.remoteDescription) {
+      try { await CALL.pc.addIceCandidate(m.c); } catch { /* stale */ }
+    } else if (CALL.pending) CALL.pending.push(m.c);
+  }
+}
+
+/** The held-open question, asked again as soon as it comes back. */
+async function callLoop() {
+  if (CALLPOLL) return;
+  CALLPOLL = true;
+  while (CALL && !CALL.gone) {
+    const who = CALL.who;
+    try {
+      const r = await fetch("/api/call/" + encodeURIComponent(who)
+        + "/poll?since=" + CALL.since, { cache: "no-store",
+        headers: device ? { "x-board-device": device } : {} });
+      if (!CALL || CALL.who !== who || CALL.gone) break;
+      if (!r.ok) { await new Promise((z) => setTimeout(z, 3000)); continue; }
+      const j = await r.json();
+      for (const x of j.msgs || []) {
+        CALL.since = Math.max(CALL.since, x.n);
+        try { await callHandle(x.m); } catch { /* the next one */ }
+      }
+    } catch { await new Promise((z) => setTimeout(z, 2000)); }
+  }
+  CALLPOLL = false;
+}
+
+/** Opening the layer. `role` is "out" when you pressed call and "in" when you
+ *  are being called; the two differ only in which buttons are on screen and
+ *  who makes the offer. */
+function callShow(role) {
+  $("callv").hidden = false;
+  $("cvwho").hidden = false;
+  /* AN EMPTY BOX IN THE CORNER IS NOT A SELF-VIEW. Somebody being called has
+     not been asked for a camera yet — that happens when they answer — so this
+     drew a dark rectangle with a border round nothing, on the one screen that
+     should be a face and two buttons. */
+  $("cvme").hidden = !($("cvme").srcObject);
+  $("cvbar").hidden = role === "in";
+  $("cvin").hidden = role !== "in";
+  $("cvmic").classList.remove("off");
+  $("cvcam").classList.remove("off");
+  document.body.style.overflow = "hidden";
+}
+
+function callHang(why) {
+  if (!CALL) return;
+  const c = CALL;
+  c.gone = true;
+  if (c.giveUp) clearTimeout(c.giveUp);
+  if (c.pc) { try { c.pc.close(); } catch { /* already */ } }
+  if (c.local) c.local.getTracks().forEach((t) => t.stop());
+  $("cvthem").srcObject = null;
+  $("cvme").srcObject = null;
+  /* THE SERVER IS TOLD LAST AND NOT WAITED FOR. Hanging up has to be
+     instant — a button that takes a round trip to close a call is a button
+     people press four times. */
+  callApi("bye").catch(() => {});
+  CALL = null;
+  if (why) say(why);
+  $("callv").hidden = true;
+  document.body.style.overflow = "";
+}
+
+/** PRESSING CALL. */
+async function callOut(who, handle, photo) {
+  if (CALL) return;
+  let local;
+  try { local = await callMedia(); }
+  catch { return say(T("cv.noCam"), true); }
+  CALL = { who, handle, photo, role: "out", since: 0, pending: [], local };
+  callFace(handle, photo);
+  callShow("out");
+  $("cvme").srcObject = local;
+  $("cvme").hidden = false;
+  callSay(T("cv.ringing", { who: handle }));
+  let d = null;
+  try {
+    const r = await callApi("ring");
+    d = await r.json().catch(() => null);
+    if (!r.ok) {
+      /* THEY RANG AT THE SAME MOMENT. Their ring stands; this screen becomes
+         the one being called rather than both ending up in a call neither of
+         them started. */
+      if (d && d.error === "crossed") { CALL.role = "in"; callShow("in"); callSay(T("cv.incoming", { who: handle })); callLoop(); return; }
+      throw new Error((d && d.error) || "no");
+    }
+  } catch { callHang(T("act.again")); return; }
+  CALL.since = d.since || 0;
+  CALL.ice = d.ice || [];
+  CALL.relay = Boolean(d.relay);
+  callLoop();
+  /* RINGS OUT BY ITSELF, at the same length the server gives up at — a phone
+     in a pocket stops ringing and so does this, so "did they see it" gets an
+     answer instead of being left hanging. */
+  CALL.giveUp = setTimeout(() => { if (CALL && !CALL.pc) callHang(T("cv.noAnswer", { who: handle })); },
+    (d.ring || 45000) + 2000);
+}
+
+/** BEING CALLED. Drawn from whatever told us — the inbox on load, or the poll
+ *  of a thread that is already open. */
+function callIn(who, handle, photo) {
+  if (CALL) return;
+  CALL = { who, handle, photo, role: "in", since: 0, pending: [] };
+  callFace(handle, photo);
+  callShow("in");
+  callSay(T("cv.incoming", { who: handle }));
+  callLoop();
+}
+
+$("cvyes").addEventListener("click", async () => {
+  if (!CALL) return;
+  let local;
+  try { local = await callMedia(); }
+  catch { return callSay(T("cv.noCam")); }
+  CALL.local = local;
+  $("cvme").srcObject = local;
+  $("cvme").hidden = false;
+  $("cvbar").hidden = false;
+  $("cvin").hidden = true;
+  callSay(T("cv.conn"));
+  let d = null;
+  try {
+    const r = await callApi("answer");
+    d = await r.json().catch(() => null);
+    if (!r.ok) throw new Error((d && d.error) || "no");
+  } catch { callHang(T("cv.ended")); return; }
+  CALL.ice = d.ice || [];
+  CALL.relay = Boolean(d.relay);
+  /* THE CALLER MAKES THE OFFER. Whoever rang has been waiting; answering
+     tells them so and they start it, which is one message rather than two
+     browsers both offering and one of them losing. */
+  CALL.giveUp = setTimeout(() => {
+    if (CALL && (!CALL.pc || CALL.pc.connectionState !== "connected")) {
+      callSay(T(CALL.relay ? "cv.noConn" : "cv.noRelay"));
+    }
+  }, 22000);
+});
+$("cvno").addEventListener("click", () => { callHang(""); });
+$("cvend").addEventListener("click", () => { callHang(""); });
+$("cvmic").addEventListener("click", () => {
+  const a = CALL && CALL.local && CALL.local.getAudioTracks()[0];
+  if (!a) return;
+  a.enabled = !a.enabled;
+  $("cvmic").classList.toggle("off", !a.enabled);
+});
+$("cvcam").addEventListener("click", () => {
+  const v = CALL && CALL.local && CALL.local.getVideoTracks()[0];
+  if (!v) return;
+  v.enabled = !v.enabled;
+  $("cvcam").classList.toggle("off", !v.enabled);
+});
+/* CLOSING THE TAB ENDS THE CALL. Without this the other person watches a
+   frozen picture until the connection times out, which is worse than being
+   hung up on because it looks like their own network. */
+addEventListener("pagehide", () => { if (CALL) callHang(""); });
+
 function drawChatDoor() {
   $("listview").hidden = true;
   $("listtop").hidden = true;
   $("threadview").hidden = false;
   $("tnew").hidden = true;
   $("tmore").hidden = true;
+  $("tvid").hidden = true;
   $("tmenu").hidden = true;
   $("tpin").hidden = true;
   $("tleft").hidden = true;
@@ -2372,6 +2727,7 @@ function drawWriteNew() {
   $("threadview").hidden = false;
   $("twho").hidden = true;
   $("tmore").hidden = true;
+  $("tvid").hidden = true;
   $("tmenu").hidden = true;
   $("tpin").hidden = true;
   $("tleft").hidden = true;
@@ -3026,6 +3382,7 @@ async function drawDoor(key) {
     $("twrite").hidden = true;
     micShow();
     $("tmore").hidden = true;
+  $("tvid").hidden = true;
     return;
   }
   /* THE COUNT IN THE TITLE AND NOT THE LINE UNDER IT — "Beijing Apt Rentals
@@ -3273,6 +3630,24 @@ function drawThread(t) {
     : last.open ? T("note.openSub")
     : last.canAnswer ? T("note.oneSub")
     : T({ shut: "note.shut", waiting: "note.waitSub" }[last.why] || "note.doneSub");
+
+  /* THE VIDEO BUTTON, AND ONLY WHERE A CALL IS A REAL OFFER.
+   *
+   * An open thread and nothing else. A one-answer introduction is not a
+   * conversation two people have agreed to have, and ringing somebody's phone
+   * out of one is the version of this feature that gets the app deleted — the
+   * server refuses it either way (notePermit), but a button that is refused
+   * when pressed is worse than no button.
+   *
+   * The name and face come off the row rather than being fetched: the call
+   * screen shows them before anything has connected, which is most of what it
+   * shows at all. */
+  const canCall = Boolean(last.open) && Boolean(t.who);
+  $("tvid").hidden = !canCall;
+  $("tvid").setAttribute("aria-label", T("cv.call"));
+  if (canCall) {
+    $("tvid").onclick = () => { callOut(t.who, t.handle || "", t.photo || ""); };
+  }
 
   /* WHO THEY ARE, ON THE SCREEN THAT OPENS WHEN YOU TAP THEIR FACE.
    *

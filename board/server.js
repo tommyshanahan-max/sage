@@ -37,6 +37,11 @@ import * as request from "./lib/request.js";
 import * as fapiao from "./lib/fapiao.js";
 import * as books from "./lib/books.js";
 import * as shop from "./lib/shop.js";
+import * as call from "./lib/call.js";
+/* The video relay's password and configuration, written before anything else
+   starts — the coturn container mounts this volume and reads that file, and it
+   is watching for it. See lib/call.js. */
+call.relaySetup();
 import * as sealed from "./lib/sealed.js";
 import * as terms from "./lib/terms.js";
 import { translate, configured as translateReady } from "./lib/translate.js";
@@ -10165,6 +10170,134 @@ app.post("/api/admin/cards", admin, express.json({ limit: "1kb" }), async (req, 
  *
  * The device id travels in a header rather than the query, because a query
  * string is the part of a request that ends up in logs and referrers. */
+/* ---------------------------------------------------------------------------
+ * A VIDEO CALL, BETWEEN TWO PEOPLE ALREADY IN A CONVERSATION
+ *
+ * THE RULE IS THE ONE THAT ALREADY EXISTS: you can call whoever you can write
+ * to. Every route here goes through notePermit, which is the same function the
+ * composer uses — so a person who may not be messaged may not be rung, a
+ * closed thread cannot be rung, and somebody who left a conversation is out of
+ * both at once. A second permission model for calls would be a second place
+ * for the answer to drift.
+ *
+ * NOTHING HERE TOUCHES THE BOARD FILE. A call is two queues in memory (see
+ * lib/call.js); what is left behind afterwards is whatever the two of them say
+ * in the thread, which is where a record of a conversation belongs.
+ *
+ * THE ADDRESS IS THE PERSON, not a room id: /api/call/<their id>/ring, the
+ * same id the thread is addressed by. There is nothing to mint and nothing to
+ * send anybody — both of them are already here, which is the difference
+ * between this and the lesson rooms next door.
+ * ------------------------------------------------------------------------- */
+
+/** Who is asking and who they mean, or the reason it is nobody. One function
+ *  because six routes need exactly this and a rule written six times is a rule
+ *  that will one day disagree with itself. */
+async function callPair(req) {
+  const me = hashDevice(String(req.body?.device || req.get("x-board-device") || ""), SALT);
+  const who = String(req.params.who || "");
+  if (!me) return { error: "no", code: 400 };
+  if (!/^(?:[a-f0-9]{20}|w:[a-f0-9]{20})$/.test(who)) return { error: "gone", code: 404 };
+  const board = await store.load(FILE);
+  const got = notePermit(board, me, who);
+  if (got.error) {
+    /* "enough" IS THE DAILY COUNT ON INTRODUCTIONS and it has nothing to say
+       about a call: you cannot ring somebody you have never written to, so by
+       the time this route is reached the thread is open and that count does
+       not apply. Everything else notePermit refuses, this refuses. */
+    if (got.error !== "enough") {
+      return { error: got.error, code: got.error === "gone" ? 404 : 403 };
+    }
+  }
+  const target = got.target || board.people.find((x) => x.id === who);
+  if (!target || !target.by) return { error: "gone", code: 404 };
+  return { me, them: target.by, handle: target.handle || "", board };
+}
+
+/* THE BUZZ IN A POCKET, in whatever language each phone said it reads.
+ *
+ * NO NAME IN IT, like every other push this board sends — see the note at the
+ * top of apns.js. What it adds to the fixed pair is the one thing that makes
+ * it worth waking a phone for: that this is a call, which will not still be
+ * ringing in ten minutes. Same per-row shape the daily card uses, because the
+ * language belongs to the phone and not to the board. */
+async function ringPhone(to) {
+  if (!to || (!push.configured() && !push.apnsOn())) return;
+  const board = await store.load(FILE);
+  const subs = (board.pushes || []).filter((x) => x.by === to);
+  if (!subs.length) return;
+  const words = (lang) => {
+    const zh = "有人打视频给你";
+    const en = "Someone is calling you";
+    if (lang === "zh") return { title: "交换", body: zh };
+    if (lang === "en") return { title: "The Exchange", body: en };
+    return { title: "交换 · The Exchange", body: zh + " · " + en };
+  };
+  const dead = (await Promise.all(subs.map((sub) =>
+    push.tell([sub], words(sub.lang || "")).catch(() => [])))).flat();
+  if (!dead.length) return;
+  const gone = new Set(dead);
+  await change((b) => {
+    b.pushes = (b.pushes || []).filter((x) => !gone.has(x.endpoint));
+    return { ok: true };
+  });
+}
+
+/** STARTING ONE. The only route that wakes a phone. */
+app.post("/api/call/:who/ring", notesOff, express.json({ limit: "2kb" }), async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const p = await callPair(req);
+  if (p.error) return res.status(p.code).json({ error: p.error });
+  if (!call.ring(p.me, p.them)) {
+    /* THEY PRESSED CALL AT THE SAME MOMENT. The earlier ring stands and this
+       screen becomes the one being called, rather than both of them ending up
+       in a call neither of them started. */
+    return res.status(409).json({ error: "crossed" });
+  }
+  ringPhone(p.them).catch(() => { /* a buzz that failed did not arrive */ });
+  const st = call.state(p.me, p.them);
+  res.json({ ok: true, ...st, ice: call.iceServers(), relay: call.relay(),
+    handle: p.handle, ring: call.RING_MS });
+});
+
+/** PICKING UP. */
+app.post("/api/call/:who/answer", notesOff, express.json({ limit: "2kb" }), async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const p = await callPair(req);
+  if (p.error) return res.status(p.code).json({ error: p.error });
+  if (!call.answer(p.me, p.them)) return res.status(409).json({ error: "over" });
+  const st = call.state(p.me, p.them);
+  res.json({ ok: true, ...st, ice: call.iceServers(), relay: call.relay(), handle: p.handle });
+});
+
+/** HANGING UP, AND TURNING ONE DOWN. The same press to the server; the screen
+ *  on the other end knows which of the two it was watching. */
+app.post("/api/call/:who/bye", notesOff, express.json({ limit: "2kb" }), async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const p = await callPair(req);
+  if (p.error) return res.status(p.code).json({ error: p.error });
+  call.bye(p.me, p.them);
+  res.json({ ok: true });
+});
+
+/** An offer, an answer, or an address to try. */
+app.post("/api/call/:who/send", notesOff, express.json({ limit: "16kb" }), async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const p = await callPair(req);
+  if (p.error) return res.status(p.code).json({ error: p.error });
+  call.send(p.me, p.them, req.body?.m);
+  res.json({ ok: true });
+});
+
+/** THE HELD-OPEN QUESTION. Twenty seconds at a time — see lib/call.js. */
+app.get("/api/call/:who/poll", notesOff, async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const p = await callPair(req);
+  if (p.error) return res.status(p.code).json({ error: p.error });
+  const since = Number(req.query.since) || 0;
+  res.json(await call.poll(p.me, p.them, since));
+});
+
 app.get("/api/notes", notesOff, async (req, res) => {
   const board = await store.load(FILE);
   const me = hashDevice(String(req.get("x-board-device") || ""), SALT);
@@ -10394,6 +10527,23 @@ app.get("/api/notes", notesOff, async (req, res) => {
        would rather ask than guess at — what to write, whether to write at
        all — so it is the last place he should be missing from. */
     butler: butler.configured(),
+    /* SOMEBODY RINGING, RIGHT NOW, IN ONE OF THESE THREADS.
+     *
+     * The other half of the push. A buzz in a pocket says "someone is calling
+     * you" and nothing else, so opening the app has to show the call or the
+     * buzz was a dead end — and a call is over in forty-five seconds, which is
+     * no time to go looking through an inbox for it. Nothing stored: see
+     * lib/call.js, where a call is two queues in memory. */
+    ring: (() => {
+      /* THE HASHES STAY IN HERE. `rows` is the raw notes and carries both
+         ends as device hashes; what goes out is the person id the thread is
+         already addressed by, which is what the screen needs and all it gets.
+         See the note over `name` at the top of this route. */
+      const r = call.ringingFrom(me, rows.map(other));
+      if (!r) return undefined;
+      const who = name(r.by);
+      return who.who ? { ...who, at: r.at } : undefined;
+    })(),
   });
 });
 

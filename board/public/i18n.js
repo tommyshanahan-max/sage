@@ -3756,6 +3756,29 @@ export const STRINGS = {
   "cd.goneBody":       ["Ask whoever sent it for a new one — it takes them a second.",
                         "找发给你的人再要一个，他那边一秒钟的事。"],
 
+  /* ---------------------------------------------------------------------
+     A VIDEO CALL INSIDE THE CONVERSATION.
+     Everything here is read in one second, by somebody holding a ringing
+     phone or watching a black screen. One line each, no explaining.
+     --------------------------------------------------------------------- */
+  "cv.call":           ["Video call", "视频通话"],
+  "cv.ringing":        ["Ringing {who}…", "正在呼叫 {who}…"],
+  "cv.incoming":       ["{who} is calling", "{who} 打来视频"],
+  "cv.conn":           ["Connecting…", "正在连接…"],
+  "cv.lost":           ["Connection dropped — reconnecting…", "连接断了，正在重连…"],
+  "cv.ended":          ["Call ended", "通话结束"],
+  "cv.noAnswer":       ["{who} did not pick up", "{who} 没接"],
+  "cv.noCam":          ["Allow the camera and microphone, then try again.",
+                        "请允许使用摄像头和麦克风，再试一次。"],
+  /* TWO DIFFERENT FAILURES AND THEY ARE NOT THE SAME SENTENCE. One is a
+     network between two people; the other is this board having no relay
+     configured at all, which no amount of trying again will fix. A call that
+     cannot connect looks exactly like one about to, so it has to say which. */
+  "cv.noConn":         ["Couldn't connect. Try again, or send a message.",
+                        "没连上。再试一次，或者发消息。"],
+  "cv.noRelay":        ["Couldn't connect on this network.",
+                        "当前网络下连不上。"],
+
 
   /* ---------------------------------------------------------------------
      A NOTE WRITTEN TO SOMEBODY WHO IS NOT HERE YET.

@@ -1311,6 +1311,15 @@ services:
       BOARD_GOOGLE_SECRET: ${TOMSCODING_BOARD_GOOGLE_SECRET:-}
       BOARD_DEMO_CODE: ${TOMSCODING_BOARD_DEMO_CODE:-}
       BOARD_DEMO_URL: ${TOMSCODING_BOARD_DEMO_URL:-}
+      # THE BOX'S PUBLIC ADDRESS, for the video relay below. Not a secret — it
+      # is the address every site here already answers on. Unset it and calls
+      # in Chat work on one network and nowhere else, which the call screen
+      # says out loud rather than spinning. See board/lib/call.js.
+      BOARD_TURN_HOST: ${TOMSCODING_TURN_IP:-45.77.8.166}
+      # The relay's password, and it is meant to be empty. The board mints one
+      # on first start and writes it where the relay reads it; a value here
+      # overrides that, which is only useful when one relay serves two boards.
+      BOARD_TURN_SECRET: ${TOMSCODING_TURN_SECRET:-}
     volumes:
       - board_data:/data
     expose:
@@ -1331,6 +1340,36 @@ services:
         limits:
           memory: ${TOMSCODING_BOARD_MEMORY:-256m}
     cpu_shares: ${TOMSCODING_BOARD_CPU_SHARES:-128}
+
+  # THE VIDEO RELAY for calls in Chat (TURN). Most calls go phone to phone and
+  # never touch it; it carries the ones where a network — Chinese mobile
+  # networks especially — will not let two phones reach each other at all.
+  #
+  # HOST NETWORKING, because a relay has to answer on the box's own address, on
+  # 3478 and on a range of UDP ports for the media itself. Its settings,
+  # password included, are written by the board container on start (see
+  # board/lib/call.js) into the volume mounted here read-only, so there is
+  # nothing to put in .env and nothing for anybody to do once per machine.
+  #
+  # IT STARTS BEFORE THAT FILE EXISTS, on a box that has never run this, and
+  # exits. `restart: unless-stopped` brings it back a second later and by then
+  # the board has written it. Worth knowing when reading `make ps` on a fresh
+  # box: a turn container that has restarted twice is this, not a fault.
+  #
+  # NOT A GENERAL-PURPOSE RELAY. It will not reach the containers on this box,
+  # it will not reach the cloud's metadata address, it relays no TCP, and each
+  # login is capped — see the conf written in board/lib/call.js.
+  turn:
+    profiles: ["board"]
+    image: coturn/coturn:4.6
+    container_name: tomscoding-turn
+    restart: unless-stopped
+    network_mode: host
+    depends_on:
+      - board
+    volumes:
+      - board_data:/board:ro
+    command: ["-c", "/board/turnserver.conf"]
 
   # ---------------------------------------------------------------------------
   # The demo board: the same app, with nobody real in it.

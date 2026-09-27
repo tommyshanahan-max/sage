@@ -2200,6 +2200,35 @@ version: ## Which commit this box is actually running: make version
 	  printf '    make up\n\n'; \
 	fi
 
+call-check: ## Whether a video call in Chat can actually connect: make call-check
+	@# THE FAILURE THIS EXISTS FOR IS INVISIBLE. A call with no relay behind
+	@# it works between two phones on the same wifi and fails on every mobile
+	@# network — and from the outside a call that can never connect looks
+	@# exactly like one that is about to. The screen says so after twenty
+	@# seconds; this says so before anybody has tried.
+	@#
+	@# Three questions, because they fail separately: does the board think it
+	@# has a relay, is the relay container up, and is anything actually
+	@# listening on the port the phones will be sent to.
+	@printf '\n'
+	@if $(COMPOSE) exec -T board sh -c 'test -s /data/turnserver.conf' 2>/dev/null; then \
+	  printf '  the board    has a relay configured\n'; \
+	else \
+	  printf '  the board    NO RELAY — calls work on one network and nowhere else\n'; \
+	  printf '               BOARD_TURN_HOST is unset, or /data is not writable\n'; \
+	fi
+	@up=$$(docker ps --filter name=tomscoding-turn --format '{{.Status}}' 2>/dev/null); \
+	if [ -n "$$up" ]; then printf '  the relay    %s\n' "$$up"; \
+	else printf '  the relay    NOT RUNNING — make up\n'; fi
+	@if command -v nc >/dev/null 2>&1; then \
+	  if nc -z -u -w2 127.0.0.1 3478 >/dev/null 2>&1; then \
+	    printf '  port 3478    answering\n'; \
+	  else printf '  port 3478    nothing there\n'; fi; \
+	else printf '  port 3478    (no nc on this box to check with)\n'; fi
+	@printf '\n'
+	@printf '  Two phones on two different networks is the only real test.\n'
+	@printf '\n'
+
 faces: ## Whose photo is not showing, and put one back: make faces [WHO="Nicole"]
 	@# "Her photo got removed when she was put on the waiting list." It was
 	@# not. A picture uploaded at the door is held until somebody looks at it,
