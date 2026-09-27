@@ -2591,8 +2591,18 @@ space: ## How full the disk is, and clear what is safe to clear:  make space
 	@# that takes volumes is the one command on this box that cannot be undone.
 	@printf '\n  BEFORE\n'
 	@df -h / | tail -1
-	@printf '\n  the biggest things under ~/tc\n'
-	@du -sh $(CURDIR)/* 2>/dev/null | sort -rh | head -8 || true
+	@# WHERE IT ACTUALLY GOES, which is not here. The first version of this
+	@# printed the biggest things under ~/tc and they came to twenty-four
+	@# megabytes on a box with sixty-eight gigabytes gone — a tidy listing
+	@# that answered the wrong question. Docker's own accounting first, then
+	@# the top of the filesystem, and ~/tc not at all.
+	@printf '\n  what docker is holding\n'
+	@docker system df || true
+	@printf '\n  the biggest things on the disk\n'
+	@# -x so it stops at the filesystem boundary and does not walk into
+	@# /proc, and -d1 because the answer at this box's size is always one of
+	@# six directories.
+	@du -xh -d1 / 2>/dev/null | sort -rh | head -10 || true
 	@printf '\n  clearing docker build cache and dangling images\n'
 	docker builder prune -f
 	docker image prune -f
