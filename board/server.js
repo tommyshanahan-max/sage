@@ -741,7 +741,7 @@ const ROOT_IS_BOARD = process.env.BOARD_AT_ROOT === "1";
    the button was never on the screen. The POST to /china/api/connect came
    back as door.html too, and an HTML page from a JSON fetch fails silently.
    `china` and not `china\/`: /china itself is the fork. */
-const OPEN_PATHS = /^\/(china|enter|auth\/google|i\/|w\/|r\/|s\/|d\/|pay\/|demo(?:\.png)?$|api\/demo\/ask$|sell$|api\/sell$|dealio|europay-[a-z]+\.html|api\/pay\/onboard$|api\/dealio\/try\/qr$|shop\/|order\/|orders$|api\/shop\/|api\/shop-media$|api\/order\/|api\/orders$|api\/product\/|api\/memo\/|api\/request(?:s|\/|$)|api\/say\/|api\/snap|api\/door$|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.(?:html|pdf)|g\/|share-exchange\.png|share-square\.png|about|rules|terms|privacy|rewards|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/wake|api\/front(?:-face)?|api\/offer|api\/wait|api\/butler$|api\/ep\/ask$|api\/butler-voice$|api\/butler-hear$|api\/write\/|hi\/|k\/|api\/handover$|api\/oops$|oops\.js$|api\/chat-door\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
+const OPEN_PATHS = /^\/(china|enter|auth\/google|i\/|w\/|r\/|s\/|d\/|pay\/|demo(?:\.png)?$|api\/demo\/ask$|sell$|api\/sell$|dealio|europay-[a-z]+\.html|api\/pay\/onboard$|api\/dealio\/try\/qr$|shop\/|order\/|orders$|api\/shop\/|api\/shop-media$|api\/order\/|api\/orders$|api\/product\/|api\/memo\/|api\/request(?:s|\/|$)|api\/say\/|api\/snap|api\/door$|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.(?:html|pdf)|g\/|share-exchange\.png|share-square\.png|about|rules|terms|privacy|rewards|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/wake|api\/front(?:-face)?|api\/offer|api\/wait|api\/butler$|api\/ep\/ask$|api\/butler-voice$|api\/butler-hear$|api\/write\/|hi\/|k\/|api\/handover$|api\/oops$|oops\.js$|rooms|api\/chat-door\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
 
 /* ---- BEING SOMEBODY YOU SPEAK FOR ----------------------------------------
  *
@@ -1529,6 +1529,22 @@ app.get("/q/:id", (req, res, next) => page("waiting-person.html", req, res, next
 /* The wallet's pages and API, behind the door like the rest of the board. */
 app.use(WALLET.routes);
 if (WALLET.on) app.get(["/wallet", "/wallet/"], (req, res, next) => page("wallet.html", req, res, next));
+
+/* THE SIX DOORS, AT AN ADDRESS THAT CAN BE PASTED ANYWHERE.
+ *
+ * Seventy-two people opened a door in a week and one began the form — and
+ * every one of the seventy-two arrived at the landing page, which tally()
+ * files under "other" because it names no room. The row of rooms is ON that
+ * page, under the pitch, the frames, the feed and the sentence: four screens
+ * down on a phone. The one thing that would have told somebody they were in
+ * the right building was the one thing they never reached.
+ *
+ * So: that row, alone, with nothing above it. Somebody who tapped a link
+ * about factories does not need the idea of a board sold to them first.
+ *
+ * Outside the door, like /r/ itself — it names rooms and says nothing about
+ * anybody in them. */
+app.get(["/rooms", "/rooms/"], (req, res, next) => page("rooms.html", req, res, next));
 
 app.get("/r/:room", (req, res, next) => {
   if (!store.WAITROOMS_CHAT.includes(String(req.params.room || ""))) {

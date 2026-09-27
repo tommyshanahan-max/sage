@@ -1201,6 +1201,29 @@ export const STRINGS = {
   "land.inside":       ["Go to the board", "回到板子"],
   "land.invite":       ["Invite only — a member has to bring you.", "邀请制——得有成员带你进来。"],
   "land.doors":        ["Which one are you here for", "你是为哪一件来的"],
+
+  /* THE SAME SIX DOORS, ON A PAGE OF THEIR OWN — see public/rooms.html.
+     NOT "which one are you here for". On the landing page that question sits
+     under the pitch and reads as a filter; alone on a screen it reads as a
+     test, and somebody who has not decided anything yet is being asked to
+     commit before they have seen a word anybody said.
+     So the headline names the place and the line under it takes the weight
+     off: you may read any room without being anybody. That is not a promise
+     being invented here — it is what the door already does, twelve lines of
+     it, before it asks for a thing. */
+  /* "ROOMS" ON ITS OWN READS AS CATEGORIES. A row of six named things with
+     arrows on them is what every directory on the internet looks like, and
+     somebody who thinks this is a list of topics has no reason to open one.
+     They are conversations with people in them, and the headline has to say
+     that before the arrows do.
+     六个群 rather than 聊天室: a WeChat user knows what a 群 is without
+     being told, and 聊天室 carries a decade nobody wants. */
+  "rooms.head":        ["Six chat rooms, one building.", "六个群，一栋楼。"],
+  "rooms.sub": [
+    "Go in and read what people are saying. You do not have to give a name.",
+    "进去看看大家在聊什么。不用留名字。",
+  ],
+  "rooms.whatis":      ["What is this place?", "这是个什么地方？"],
   /* THE OTHER PRODUCT ON THIS DOMAIN, ADMITTED AT THE FOOT.
      A payment provider assessing a platform application types the domain on
      the form, arrives here, and finds an invite-only board for doing business
