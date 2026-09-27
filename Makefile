@@ -9,7 +9,7 @@ COMPOSE := docker compose
 # without this line `make board` finds a file by that name, decides it is
 # already up to date, and exits saying so — a deploy command that prints a
 # reassuring sentence and deploys nothing.
-.PHONY: board board-build mailout up-safe can-invite stripe-who call-check
+.PHONY: board board-build mailout up-safe can-invite stripe-who call-check can-call
 .PHONY: version faces cards traffic tier-two try try-china china wallets mo-code visits app-state claire-episodes deal claire-key claire-count claire-seed claire-video listing invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who bells twice admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions whitelabel blocked partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check post post-status post-run post-login post-code post-logins weidian-pull weidian-json weidian-reviews shop-chapter review-tidy product-names review-move
 
 help: ## Show this help
@@ -1588,6 +1588,18 @@ hide: ## Take somebody out of Browse:  make hide WHO="their name"
 	@test -n "$(WHO)" || { echo 'which one? make hide WHO="their name"'; exit 1; }
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/person-out.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" --who "$(WHO)"
+
+can-call: ## Can I call them, and are they in Browse:  make can-call WHO="Axel Hugo"
+	@# TWO QUESTIONS THAT USED TO BE ONE. "i coudlnt call axel or hugo", then
+	@# "the buttons still dont work for Hugo and Axel" — both times the answer
+	@# was a review hold, which the board was reading as a reason nobody could
+	@# call them either. That rule is gone (see onBoard in server.js), so this
+	@# prints both: whether the buttons work, and whether strangers are shown
+	@# them. It clears a hold, which is yours; it cannot touch their own
+	@# switch or a block, and says so.
+	@# WHO is a list of first names; leave it out for everybody not in Browse.
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/can-call.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" "$(WHO)"
 
 show: ## Put them back:  make show WHO="their name"
 	@test -n "$(WHO)" || { echo 'which one? make show WHO="their name"'; exit 1; }

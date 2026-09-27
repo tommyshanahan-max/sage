@@ -8145,7 +8145,7 @@ app.post("/api/card/give", express.json({ limit: "4kb" }), gate, async (req, res
   if (!me || !/^[a-f0-9]{20}$/.test(who)) return res.status(400).json({ error: "no" });
 
   const out = await change((board) => {
-    const q = board.people.find((x) => x.id === who && x.state === "published");
+    const q = board.people.find((x) => x.id === who && onBoard(x));
     if (!q) return { error: "gone" };
     const st = pairState(board, me, q);
     // Checked on the way in as well as on the way out. The screen will not
@@ -8968,7 +8968,12 @@ const OFFER_LINES = Math.max(1, Number(process.env.BOARD_OFFER_LINES || 6));
  */
 function followKey(board, h) {
   if (!h) return "";
-  const q = board.people.find((x) => x.by === h && x.handle && x.state === "published");
+  /* onBoard, NOT published — the last place the two questions were still one.
+     A follow each way is how two people who met in a room open a conversation,
+     and it was silently worth nothing while either of their profiles sat in
+     the review queue. So the pair followed each other, the thread read closed,
+     and every button on it was grey. See onBoard. */
+  const q = board.people.find((x) => x.by === h && onBoard(x));
   if (q) return q.id;
   const w = board.waits.find((x) => x.by === h && !x.done);
   return w ? "w:" + w.id : "";
@@ -9026,6 +9031,37 @@ function writePair(board, me, them) {
   return false;
 }
 
+/** ON THIS BOARD AT ALL — which is a different question from being in Browse,
+ *  and treating them as one question is what made half a dozen people
+ *  uncallable.
+ *
+ *  "every persopn shoild have access to all the function at least for now."
+ *
+ *  `held` is the review queue, and `make hide` sets it too. Both are about
+ *  the DIRECTORY: whether a stranger scrolling Browse is shown this person.
+ *  Neither says anything about whether somebody already in a conversation
+ *  with them may call them, pay them or pin terms with them — and the gate on
+ *  every one of those buttons was reading it as if it did. Eight people sat
+ *  in a queue nobody had been told about, and their friends' screens said
+ *  nothing at all: "when i press video for Axel there is no reaction".
+ *
+ *  WHAT STILL CLOSES A DOOR, because these are decisions about the person
+ *  rather than about a listing:
+ *    removed   the row is deleted
+ *    refused   whoever runs the board said no
+ *  and, separately and always, a block either way — see threadState, which is
+ *  the check that actually protects anybody and is untouched by this.
+ *
+ *  A handle is still required. A row with no name on it is not somebody you
+ *  can be introduced to; there is nothing to say back.
+ *
+ *  NOT THE VIEW COUNTER, and that is the line this rule stops at. A page view
+ *  is a fact about Browse, so it keeps asking about Browse.
+ */
+function onBoard(q) {
+  return Boolean(q && q.handle && q.state !== "removed" && q.state !== "refused");
+}
+
 function threadState(board, me, them) {
   /* BLOCKED EITHER WAY CLOSES THE THREAD, and the two readings differ.
      Reading this as the blocker, the conversation is gone. Reading it as the
@@ -9063,8 +9099,11 @@ function threadState(board, me, them) {
    * refused by the route: an introduction from a name that does not exist is
    * not one. Two ways past it, both of them the other person having agreed —
    * a member who wrote to them first, or a follow each way. */
-  const hasPage = board.people.some((q) => q.by === me && q.handle
-    && q.state === "published");
+  /* AND THE SAME RULE ABOUT YOUR OWN. Somebody whose profile was still in
+     the queue could not write to anybody at all — the board took their words,
+     held them for review, and silently made them unable to use the thing they
+     had just joined. See onBoard. */
+  const hasPage = board.people.some((q) => q.by === me && onBoard(q));
   if (!hasPage && !writePair(board, me, them) && !bothFollow(board, me, them)) {
     return { can: false, why: "profile", open: false };
   }
@@ -9404,7 +9443,7 @@ function notePermit(board, me, who) {
         // without an id: there is no page and nothing to open.
         return { id: "", by: w.by, handle: w.name, state: "published" };
       })()
-    : board.people.find((x) => x.id === who && x.state === "published");
+    : board.people.find((x) => x.id === who && onBoard(x));
   // The same answer for a person who does not exist and one who has taken
   // themselves down, so this cannot be used to ask which ids are real.
   if (!target) return { error: "gone" };
@@ -10406,11 +10445,12 @@ app.get("/api/notes", notesOff, async (req, res) => {
 
   const rows0 = store.notesFor(board.notes, me);
   const other = (n) => (n.by === me ? n.to : n.by);
-  /* WHO IS ACTUALLY STILL IN BROWSE. notePermit will only act on a published
-     person with a handle; anybody else is "gone" to it. Built once here so
-     every row can say so — see canDo below. */
+  /* WHO notePermit WILL ACTUALLY ACT ON. Built once here so every row can
+     say so — see canDo below — and read through onBoard rather than testing a
+     state again here, because a screen that disagrees with the route is
+     exactly the grey button with no reason this was written to stop. */
   const live = new Set(board.people
-    .filter((q) => q.state === "published" && q.handle && q.by)
+    .filter((q) => onBoard(q) && q.by)
     .map((q) => q.by));
   /* A CONVERSATION YOU LEFT IS OFF YOUR LIST.
    *
@@ -10736,7 +10776,7 @@ function groupable(board, me) {
      refuses, which is the bug this kind of change ships with. */
   const all = isStaff(board, me);
   return board.people
-    .filter((q) => q.state === "published" && q.handle && q.by !== me
+    .filter((q) => onBoard(q) && q.by !== me
       && (all || matched(board, me, q.by)))
     .map((q) => ({ who: q.id, handle: q.handle,
       photo: q.photoState === "published" ? q.photo : "" }));
@@ -17695,7 +17735,7 @@ app.post("/api/follow", express.json({ limit: "8kb" }), async (req, res) => {
           return w && w.by ? { id: "", by: w.by, handle: w.name, state: "published",
                                wait: w } : null;
         })()
-      : board.people.find((x) => x.id === who && x.state === "published");
+      : board.people.find((x) => x.id === who && onBoard(x));
     if (!target) return null;
     // Following yourself is not a thing anybody means to do.
     if (target.by === me) {
