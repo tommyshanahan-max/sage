@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- Empty on every deployment but the demo board, where it pins this
+     browser to the one seeded identity. See BOARD_DEMO_DEVICE in server.js. -->
+{{DEMO}}
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="/favicon.png" sizes="192x192">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#EEF0F4">
+<meta name="theme-color" content="#0B0E15" media="(prefers-color-scheme: dark)">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="交换">
+<title>What happened</title>
+<!-- NOTHING IN THE CARD, for the same reason memo.html says nothing: this
+     address will be pasted somewhere eventually and a preview of somebody's
+     deals is a preview nobody consented to. -->
+<meta name="description" content="">
+<meta name="robots" content="noindex">
+<meta http-equiv="Cache-Control" content="no-cache">
+<meta name="color-scheme" content="light dark">
+<style>
+  :root{
+    --card:#FCFCFD; --paper:#EEF0F4; --raise:#F7F8FB; --ink:#151B28; --ink-2:#4E5968;
+    --muted:#8A939F; --line:#E3E6EC; --hair:#EAECF1;
+    --accent:#3F68D8; --accent-ink:#FFFFFF; --accent-soft:#E8ECF7;
+    --t3:#D99038;
+    --serif:Georgia,"Songti SC","Noto Serif CJK SC",'Times New Roman',serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",
+      "Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --card:#1B212D; --paper:#0B0E15; --raise:#141924; --ink:#E9EDF5; --ink-2:#A3B0C4;
+      --muted:#6F7D92; --line:#232B39; --hair:#1E2531;
+      --accent:#5C8DFF; --accent-ink:#0B0E15; --accent-soft:#18233D;
+      --t3:#E4A65A;
+    }
+  }
+  :root[data-theme="dark"]{
+    --card:#1B212D; --paper:#0B0E15; --raise:#141924; --ink:#E9EDF5; --ink-2:#A3B0C4;
+    --muted:#6F7D92; --line:#232B39; --hair:#1E2531;
+    --accent:#5C8DFF; --accent-ink:#0B0E15; --accent-soft:#18233D;
+    --t3:#E4A65A;
+  }
+  :root[data-lang="zh"]{
+    --serif:"Songti SC","Noto Serif CJK SC","Source Han Serif SC","STSong",Georgia,serif;
+    --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB",
+      "Microsoft YaHei","Noto Sans SC","Segoe UI",sans-serif;
+  }
+  :root[data-lang="zh"] body{line-height:1.75}
+  [hidden]{display:none!important}
+
+  *{box-sizing:border-box}
+  html{font-size:17px;-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+    font-size:1rem;line-height:1.5;-webkit-font-smoothing:antialiased}
+  main{max-width:34rem;margin:0 auto;padding:0 1.15rem 4rem}
+  button{font:inherit;cursor:pointer}
+  a{color:inherit}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+  .bar{display:flex;align-items:center;gap:.7rem;padding:.9rem 0 .2rem}
+  .bar button.back{color:var(--ink);background:none;border:0;padding:0;
+    display:grid;place-items:center;margin-left:-.3rem}
+  .bar svg{width:1.5rem;height:1.5rem;stroke:currentColor;fill:none;stroke-width:1.8;
+    stroke-linecap:round;stroke-linejoin:round}
+  .bar h1{margin:0;font-family:var(--sans);font-weight:600;font-size:1.12rem;line-height:1.2}
+  .bar #langslot{margin-left:auto}
+  .bar .lang{margin:0;border:1px solid var(--line);background:var(--raise);
+    color:var(--ink-2);border-radius:99px;padding:.42rem .9rem;font-size:.85rem;
+    line-height:1;white-space:nowrap}
+
+  /* ONE ROW IS ONE SENTENCE AND A FACE. No heading over it, no kind printed
+     beside it, no second line explaining what a memo is: the sentence names
+     the person and says the thing, and the row goes to it. Four seconds and
+     one glance — the list has to be readable running a thumb down it. */
+  .list{margin:1rem 0 0;border-top:1px solid var(--hair)}
+  .row{display:flex;align-items:center;gap:.8rem;width:100%;padding:.8rem .1rem;
+    border:0;border-bottom:1px solid var(--hair);background:none;color:var(--ink);
+    text-align:left;text-decoration:none;font:inherit}
+  .row:last-child{border-bottom:0}
+  .av{position:relative;flex:0 0 auto;width:2.6rem;height:2.6rem;border-radius:.8rem;
+    display:grid;place-items:center;overflow:hidden;color:#fff;font-size:1rem;
+    font-family:var(--serif)}
+  .av img{width:100%;height:100%;object-fit:cover}
+  .mid{flex:1;min-width:0}
+  .mid p{margin:0;font-size:1rem;line-height:1.45}
+  /* THE ONE THAT STILL WANTS SOMETHING, said in a word rather than a colour.
+     A dot alone is a thing to learn; "Needs you" is a thing to read. */
+  .mid .need{display:inline-block;margin-top:.2rem;padding:.1rem .5rem;
+    border-radius:99px;background:var(--accent-soft);color:var(--accent);
+    font-size:.74rem;letter-spacing:.02em}
+  time{flex:0 0 auto;color:var(--muted);font-size:.82rem}
+  /* UNSEEN IS HEAVIER, NOT BRIGHTER. The list is read in one pass and the new
+     ones have to come forward without the screen turning into a traffic
+     light. */
+  .row.new .mid p{font-weight:600}
+
+  .none{margin:3rem 0 0;text-align:center;color:var(--muted)}
+  .none b{display:block;font-family:var(--serif);font-size:1.5rem;color:var(--ink);
+    font-weight:400}
+  .none p{margin:.5rem 0 0;font-size:.95rem}
+</style>
+</head>
+<body>
+<main>
+  <div class="bar">
+    <button class="back" id="back" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+    </button>
+    <h1 id="title"></h1>
+    <span id="langslot"></span>
+  </div>
+  <div class="list" id="list"></div>
+  <div class="none" id="none" hidden></div>
+</main>
+
+<script type="module">
+import { T, when, setLang, pickLang, langButton } from "/i18n.js";
+
+const $ = (id) => document.getElementById(id);
+const fill = (n) => { while (n.firstChild) n.removeChild(n.firstChild); return n; };
+function el(tag, cls, text) {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text !== undefined && text !== null) n.textContent = text;
+  return n;
+}
+/* The same routine and so the same colour as every other face on this board —
+   see the note over wash() in notes.html. */
+function wash(name) {
+  let h = 0;
+  for (const ch of String(name || "?")) h = (h * 31 + ch.codePointAt(0)) % 360;
+  return "linear-gradient(150deg,hsl(" + h + " 26% 74%),hsl(" + ((h + 24) % 360) + " 24% 52%))";
+}
+const initial = (h) => (String(h || "?").trim()[0] || "?").toUpperCase();
+
+let device = "";
+try { device = localStorage.getItem("board:device") || ""; } catch { /* private window */ }
+
+let BELLS = [];
+
+function paint() {
+  $("title").textContent = T("bell.title");
+  $("back").setAttribute("aria-label", T("nav.back"));
+  const box = fill($("list"));
+  $("none").hidden = BELLS.length > 0;
+  if (!BELLS.length) {
+    fill($("none")).append(el("b", null, T("bell.none")), el("p", null, T("bell.noneBody")));
+    return;
+  }
+  for (const b of BELLS) {
+    const a = el("a", "row" + (b.seen ? "" : " new"));
+    a.href = b.to;
+    const av = el("div", "av", initial(b.handle));
+    av.style.background = wash(b.handle);
+    if (b.photo) {
+      const img = Object.assign(document.createElement("img"),
+        { src: "/api/public-media?id=" + encodeURIComponent(b.photo), alt: "", loading: "lazy" });
+      img.addEventListener("load", () => { av.textContent = ""; av.append(img); });
+    }
+    const mid = el("div", "mid");
+    mid.append(el("p", null, T("bell." + b.kind, { who: b.handle || "—" })));
+    /* Only on the ones that still want something. On a row about terms both
+       of you signed last month it would be a label that is always there,
+       which is a label nobody sees. */
+    if (b.open) mid.append(el("span", "need", T("bell.needs")));
+    const t = el("time", null, when(b.at));
+    t.dateTime = b.at;
+    a.append(av, mid, t);
+    box.append(a);
+  }
+}
+
+async function load() {
+  try {
+    const r = await fetch("/api/bells", { headers: { "x-board-device": device } });
+    const d = await r.json();
+    BELLS = Array.isArray(d.bells) ? d.bells : [];
+  } catch { BELLS = []; }
+  paint();
+  /* MARKED THE MOMENT THE SCREEN IS OPEN, not on the way out. Somebody who
+     reads one row and taps straight through to it never comes back here, and
+     a list that stays bold for ever is a bell that never stops ringing. */
+  if (device) {
+    fetch("/api/bells/seen", { method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ device }) }).catch(() => {});
+  }
+}
+
+$("back").addEventListener("click", () => {
+  if (history.length > 1) history.back(); else location.href = "/notes";
+});
+
+setLang(pickLang());
+$("langslot").append(langButton(paint));
+paint();
+load();
+</script>
+</body>
+</html>

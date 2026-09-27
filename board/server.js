@@ -1685,6 +1685,15 @@ const notesOff = (req, res, next) =>
 app.get(["/notes", "/notes/"], notesOff,
   (req, res, next) => page("notes.html", req, res, next));
 
+/* WHAT HAPPENED. The only list on this board that is not a list of people.
+ *
+ * "i dont want the memo in the chat. lets have it goto notications." Behind
+ * the door with the rest of it: the rows name people the reader deals with,
+ * and the page is useless and unreadable to anybody else anyway — /api/bells
+ * answers a device and nothing else. */
+app.get(["/bells", "/bells/"], notesOff,
+  (req, res, next) => page("bells.html", req, res, next));
+
 /* /groups IS A ROOM, AND ONLY A ROOM.
  *
  * "you can start a group already buy adding someone to a chat so the entrie
@@ -9755,6 +9764,30 @@ async function mailThem(to, from, link) {
 
 /** Buzz every device a member has turned this on for, and drop the ones the
  *  browser has thrown away. Never throws. */
+/** ONE THING THAT HAPPENED, WRITTEN DOWN FOR THE PERSON IT HAPPENED TO.
+ *
+ *  The twin of tellThem and its opposite in one respect: a push arrives once
+ *  and is gone, so a phone that was off, or asleep, or had never been asked
+ *  for permission, was told nothing and there was no record it had ever rung.
+ *  The answer up to now had been to make a ROOM for the memo so at least it
+ *  turned up somewhere — which put a conversation in Chat nobody had asked to
+ *  have. This is where it turns up instead.
+ *
+ *  CALLED INSIDE change(), NEVER AFTER IT. The row is part of the same write
+ *  as the thing it is about: a bell saved separately is a bell that can exist
+ *  for terms that failed to save, or be missing for terms that did.
+ *
+ *  Nothing of what happened is stored — see cleanBell. A kind, a reference,
+ *  and who did it.
+ */
+function ring(board, to, kind, ref, who) {
+  if (!to || !ref) return;
+  board.bells = Array.isArray(board.bells) ? board.bells : [];
+  const b = store.cleanBell({ id: store.newId(), to, kind, ref, who,
+    at: new Date().toISOString() });
+  if (b) board.bells.push(b);
+}
+
 async function tellThem(to, words) {
   /* THE GATE WAS THE WRONG ONE. push.configured() is the VAPID pair and
      nothing else, so a board holding an APNs key and no VAPID pair told
@@ -10960,6 +10993,77 @@ function dealOut(deal, handle) {
   return { ...rest, share: { t: share.t, code: share.code, to: share.to, until: share.until } };
 }
 
+/* ---------------------------------------------------------------------------
+ * WHAT HAPPENED — the screen behind the bell on Chat
+ *
+ * Every other screen on this board is a list of PEOPLE. This is the only list
+ * of THINGS, and it exists because the things had nowhere else to be: terms
+ * written, terms agreed, a payment claimed or confirmed, a reminder. Each of
+ * those buzzed a phone once and then existed only inside a room, which is why
+ * a room was being made for two people who already had a conversation.
+ *
+ * THE ROW IS A FACT, THE SENTENCE IS THE SCREEN'S. Nothing of what happened
+ * is stored or sent — see cleanBell. What goes down the wire is the kind, the
+ * person who did it, and where it goes: a list a shoulder can read holds no
+ * fee, no name of a job and no terms.
+ * ------------------------------------------------------------------------ */
+app.get("/api/bells", notesOff, async (req, res) => {
+  const me = hashDevice(String(req.get("x-board-device") || ""), SALT);
+  res.set("Cache-Control", "no-store");
+  if (!me) return res.json({ bells: [], unseen: 0 });
+  const board = await store.load(FILE);
+  const mine = (board.bells || []).filter((b) => b.to === me);
+  /* THE DEAL IS READ NOW RATHER THAN STORED THEN. A row saying "terms" from
+     three weeks ago should open terms as they are today, and say whose they
+     are from the memo rather than from a copy of it taken at the time — two
+     copies of one fact is how a list ends up disagreeing with the thing it
+     points at. A row whose memo has since gone is dropped rather than shown
+     as a tap that lands on nothing. */
+  const out = [];
+  for (const b of mine.slice().reverse()) {
+    const g = board.groups.find((x) => x.id === b.ref);
+    if (!g || !g.deal || !g.members.includes(me)) continue;
+    const q = b.who ? board.people.find((x) => x.id === b.who) : null;
+    out.push({
+      id: b.id, kind: b.kind, at: b.at, seen: b.seen,
+      /* Where it opens. The memo, on its own page, which is the whole reason
+         this exists: a thing to read rather than a room to be put in. */
+      to: "/groups?g=" + g.id,
+      who: q ? q.id : "", handle: q ? q.handle : "",
+      photo: q && q.photoState === "published" ? q.photo : "",
+      /* WHETHER IT STILL WANTS ANYTHING, AND ONLY WHERE THAT IS ONE THING.
+       *
+       * It is the reader not having agreed to these terms, and nothing else.
+       * The first version asked only that and hung the label on every row,
+       * money included — six rows all saying "Needs you", which is a label
+       * that has stopped saying anything. Whether a payment needs the reader
+       * next depends on which side of it they are and what the other one just
+       * said; that is a sentence, and the sentence is already the row.
+       *
+       * So the badge means one thing: these terms are unsigned by you. */
+      open: (b.kind === "terms" || b.kind === "agreed")
+        && !(g.deal.agreed || []).some((a) => a.who ===
+          (board.people.find((x) => x.by === me) || {}).handle),
+    });
+    if (out.length >= 60) break;
+  }
+  res.json({ bells: out, unseen: mine.filter((b) => !b.seen).length });
+});
+
+/** Opening the screen marks the lot. See the note in cleanBell on why this is
+ *  seen rather than read: a per-row receipt is a second thing to keep in step
+ *  and the difference is invisible to the person holding the phone. */
+app.post("/api/bells/seen", notesOff, express.json({ limit: "1kb" }), async (req, res) => {
+  const me = hashDevice(String(req.body?.device || ""), SALT);
+  if (!me) return res.status(400).json({ error: "no" });
+  await change((board) => {
+    board.bells = Array.isArray(board.bells) ? board.bells : [];
+    for (const b of board.bells) if (b.to === me) b.seen = true;
+    return { ok: true };
+  });
+  res.json({ ok: true });
+});
+
 app.get("/api/groups", notesOff, async (req, res) => {
   const me = hashDevice(String(req.get("x-board-device") || ""), SALT);
   res.set("Cache-Control", "no-store");
@@ -11238,7 +11342,9 @@ app.post("/api/group/deal", notesOff, express.json({ limit: "8kb" }), async (req
 
     g.deal = deal;
     Object.assign(g, store.cleanGroup(g));
-    return { ok: true, tell: otherSide(board, g, mine.handle) };
+    const tell = otherSide(board, g, mine.handle);
+    ring(board, tell, "terms", g.id, mine.id);
+    return { ok: true, tell };
   });
   if (out?.error) return res.status(400).json(out);
   res.json({ ok: true });
@@ -11281,7 +11387,9 @@ app.post("/api/group/deal/agree", notesOff, express.json({ limit: "2kb" }), asyn
     if (fee && !(fee.paid || []).some((r) => r.kind === "confirmed")) return { error: "fee" };
     g.deal.agreed.push({ who: mine.handle, at: new Date().toISOString() });
     Object.assign(g, store.cleanGroup(g));
-    return { ok: true, tell: otherSide(board, g, mine.handle) };
+    const tell = otherSide(board, g, mine.handle);
+    ring(board, tell, "agreed", g.id, mine.id);
+    return { ok: true, tell };
   });
   if (out?.error) return res.status(400).json(out);
   res.json({ ok: true });
@@ -16093,7 +16201,11 @@ app.post("/api/group/deal/paid", notesOff, express.json({ limit: "2kb" }), async
     if (kind !== "claimed" && !d.paid.some((r) => r.i === i && r.kind === "claimed")) return { error: "unclaimed" };
     d.paid.push({ i, kind, who: mine.handle, at: new Date().toISOString() });
     Object.assign(g, store.cleanGroup(g));
-    return { ok: true, tell: otherSide(board, g, mine.handle) };
+    const tell = otherSide(board, g, mine.handle);
+    /* The kind travels as it is: claimed, confirmed and denied are three
+       different sentences to read on a list. */
+    ring(board, tell, kind, g.id, mine.id);
+    return { ok: true, tell };
   });
   if (out?.error) return res.status(400).json(out);
   res.json({ ok: true });
@@ -16157,6 +16269,8 @@ app.post("/api/group/deal/fee", notesOff, express.json({ limit: "2kb" }), async 
        who is reading it rather than waiting for it. */
     const payer = kind === "claimed" ? "" :
       (board.people.find((x) => g.members.includes(x.by) && x.handle === d.hires) || {}).by || "";
+    /* Only ever reached on confirm or deny — a claim tells nobody, see above. */
+    ring(board, payer, kind, g.id, mine.id);
     return { ok: true, tell: payer };
   });
   if (out?.error) return res.status(400).json(out);
@@ -16185,7 +16299,9 @@ app.post("/api/group/deal/nudge", notesOff, express.json({ limit: "2kb" }), asyn
     if (last && Date.now() - Date.parse(last.at) < 20 * 3600 * 1000) return { error: "soon" };
     d.nudges.push({ i, at: new Date().toISOString() });
     Object.assign(g, store.cleanGroup(g));
-    return { ok: true, tell: otherSide(board, g, mine.handle) };
+    const tell = otherSide(board, g, mine.handle);
+    ring(board, tell, "nudge", g.id, mine.id);
+    return { ok: true, tell };
   });
   if (out?.error) return res.status(400).json(out);
   res.json({ ok: true });

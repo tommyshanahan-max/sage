@@ -6621,6 +6621,35 @@ export const STRINGS = {
     "确定退群？之后你就看不到它了，你说过的话会留在原处。",
   ],
 
+  /* ---------------------------------------------------------------------
+   * WHAT HAPPENED — the screen behind the bell on Chat.
+   *
+   * ONE SENTENCE PER ROW AND THE NAME FIRST, because the list is read running
+   * a thumb down it and the name is the half that decides whether the rest is
+   * worth reading. No kind printed beside it, no second line: the sentence IS
+   * the row.
+   *
+   * THE CHINESE IS WRITTEN, NOT TRANSLATED. "{who} 说钱到了" is what somebody
+   * says about a payment landing; a translation of "confirms receipt of the
+   * payment" would be a sentence out of a bank letter.
+   * ------------------------------------------------------------------- */
+  "bell.title":        ["What happened", "\u6709\u4ec0\u4e48\u52a8\u9759"],
+  "bell.none":         ["Nothing yet", "\u8fd8\u6ca1\u6709"],
+  "bell.noneBody":     ["Terms and payments turn up here.",
+                        "\u6761\u6b3e\u548c\u4ed8\u6b3e\u4f1a\u51fa\u73b0\u5728\u8fd9\u91cc\u3002"],
+  /* Two words, and it is the only thing on this screen that asks for
+     anything. "Needs you" rather than a dot: a dot is a thing to learn. */
+  "bell.needs":        ["Needs you", "\u7b49\u4f60"],
+  "bell.terms":        ["{who} wrote the terms.", "{who} \u5199\u597d\u4e86\u6761\u6b3e\u3002"],
+  "bell.agreed":       ["{who} agreed.", "{who} \u540c\u610f\u4e86\u3002"],
+  "bell.claimed":      ["{who} says they paid.", "{who} \u8bf4\u94b1\u5df2\u7ecf\u4ed8\u4e86\u3002"],
+  "bell.confirmed":    ["{who} says it arrived.", "{who} \u8bf4\u94b1\u5230\u4e86\u3002"],
+  "bell.denied":       ["{who} says it has not arrived.", "{who} \u8bf4\u94b1\u6ca1\u5230\u3002"],
+  "bell.nudge":        ["{who} is waiting to be paid.", "{who} \u5728\u7b49\u8fd9\u7b14\u94b1\u3002"],
+  /* The button on Chat. Labelled for a screen reader and for a long press;
+     the button itself is the drawing. */
+  "bell.open":         ["What happened", "\u6709\u4ec0\u4e48\u52a8\u9759"],
+
   "note.inbox":        ["Chat", "聊天"],
   "note.inboxSub":     ["Everyone you are talking to.", "你在聊的人。"],
   "note.none":         ["Nothing yet", "还没有消息"],

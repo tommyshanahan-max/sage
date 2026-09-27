@@ -683,7 +683,21 @@
     line-height:1.2;text-align:center;white-space:nowrap}
   .top #langhome{justify-self:start}
   .top #langhome .lang{margin:0}
-  .plus{justify-self:end;width:2.2rem;height:2.2rem;border-radius:50%;
+  /* The right-hand cell of the header holds two things now, so the cell is a
+     row and the two keep their own sizes. `justify-self` moved off .plus and
+     on to the pair: with it on the child, the bell pushed the ＋ off centre. */
+  .rights{justify-self:end;display:flex;align-items:center;gap:.55rem}
+  /* THE BELL. Drawn rather than filled, the weight of the ＋ beside it, and
+     the count sits on its shoulder the way an unread count does everywhere
+     else on this phone. */
+  .ring{position:relative;display:grid;place-items:center;width:2.2rem;height:2.2rem;
+    color:var(--ink);text-decoration:none}
+  .ring svg{width:1.4rem;height:1.4rem;stroke:currentColor;stroke-width:1.8;
+    stroke-linecap:round;stroke-linejoin:round;fill:none}
+  .ringn{position:absolute;top:-.15rem;right:-.15rem;min-width:1.05rem;height:1.05rem;
+    padding:0 .25rem;border-radius:99px;background:var(--t5);color:#fff;
+    font-size:.66rem;line-height:1.05rem;text-align:center;font-weight:600}
+  .plus{width:2.2rem;height:2.2rem;border-radius:50%;
     border:2px solid var(--ink);background:none;color:var(--ink);padding:0;
     display:grid;place-items:center}
   .plus svg{width:1.1rem;height:1.1rem;stroke:currentColor;stroke-width:2.2;
@@ -1075,9 +1089,18 @@
   <div class="top" id="listtop">
     <span id="langhome"></span>
     <h1 id="title"></h1>
-    <button class="plus" id="plus" type="button" hidden>
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-    </button>
+    <!-- WHAT HAPPENED, AND THE ＋, IN THAT ORDER. The bell is to the left of
+         the ＋ because the ＋ is the corner every messenger puts "start
+         something" in and moving it would cost more than the bell gains. -->
+    <div class="rights">
+      <a class="ring" id="ring" href="/bells">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 16V11a6 6 0 1 0-12 0v5l-1.6 2.2h15.2z"/><path d="M10 20.2a2.2 2.2 0 0 0 4 0"/></svg>
+        <span class="ringn" id="ringn" hidden></span>
+      </a>
+      <button class="plus" id="plus" type="button" hidden>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
+    </div>
   </div>
 
   <div id="listview">
@@ -1445,6 +1468,9 @@ const WAITROOMS = ["film", "invest", "raise", "trade", "other"];
  * what was said last. Opening one still goes to /groups?g=<id>, which already
  * draws a group properly — the page was never the problem, the door was. */
 let GROUPS = [];
+/* How many things have happened that this phone has not seen — see the bell
+   in the header and /api/bells. A number, never the rows. */
+let BELLS = 0;
 
 async function load() {
   /* AN INVITED ARRIVAL HAS NO INBOX YET. They are nobody to this server until
@@ -1496,6 +1522,20 @@ async function load() {
           headers: device ? { "x-board-device": device } : {} }).then((r) => r.json());
         GROUPS = Array.isArray(g.groups) ? g.groups : [];
       } catch { GROUPS = []; }
+    }
+    /* WHAT HAPPENED, COUNTED. Only the number here — the rows themselves are
+       the other screen's business, and fetching sixty of them to draw one
+       digit on a header is sixty rows down a phone's connection for nothing.
+       A board too old to know the route answers 404 and the bell simply
+       carries no count, which is the right failure. */
+    BELLS = 0;
+    if (YOU.handle) {
+      try {
+        const b = await fetch("/api/bells", { cache: "no-store",
+          headers: device ? { "x-board-device": device } : {} }).then((r) =>
+          (r.ok ? r.json() : { unseen: 0 }));
+        BELLS = Number(b.unseen) || 0;
+      } catch { BELLS = 0; }
     }
     /* Not awaited with the notes either, and for the same reason: the queue is
        a second question and the inbox must not wait on it. */
@@ -1862,6 +1902,12 @@ function drawList(T0) {
      a second line under the title; one line that carries both is one less
      thing to read. */
   $("title").textContent = T("note.inbox") + (unread ? " (" + unread + ")" : "");
+  /* THE BELL AND ITS COUNT. Nine and over reads "9+": the difference between
+     eleven and fourteen things you have not looked at is no difference, and a
+     two-digit badge on a 1.05rem circle is a smudge. */
+  $("ring").setAttribute("aria-label", T("bell.open"));
+  $("ringn").hidden = !BELLS;
+  $("ringn").textContent = BELLS > 9 ? "9+" : String(BELLS);
   /* No "Messages" rule over the list: the bar above already says it. */
   $("listrule").hidden = true;
   $("safetyk").textContent = T("note.safetyShort");
@@ -1895,6 +1941,20 @@ function drawList(T0) {
    * A room of three stays its own row. So does a room of two with somebody
    * you have no thread with, because there is nothing to swallow it.
    */
+  /* AND A ROOM OF TWO WITH A MEMO IN IT IS NOT A CONVERSATION AT ALL.
+   *
+   * It is a deal, and deals have their own screen now — the bell in the
+   * header. "i dont want the memo in the chat. lets have it goto
+   * notications." So it leaves this list whether or not there is a thread to
+   * fold it into: with one, the person's row is the row; with none, it is
+   * simply not here, and the bell is where it turns up when anything happens
+   * to it. Nothing is deleted and nothing is unreachable — the terms tile
+   * behind the ＋ opens it, and so does every row on that screen.
+   *
+   * A ROOM OF TWO WITH NO MEMO STAYS. Two people can still be talking in one
+   * — a room somebody left, a pair who never wrote terms — and that is a
+   * conversation with a row like any other.
+   */
   const ROOMOF = new Map();   // a thread's who  -> the room that is also them
   const PAIRED = new Set();   // the rooms that no longer need a row
   for (const g of GROUPS) {
@@ -1903,6 +1963,7 @@ function drawList(T0) {
        the note over `who` in /api/groups. Two people means two people. */
     const real = (Array.isArray(g.who) ? g.who : []).filter((q) => q && !q.bot && q.handle);
     if (real.length !== 2) continue;
+    if (g.deal) PAIRED.add(g.id);
     const them = real.find((q) => !q.self);
     const t = them && T0.find((x) => x.who === them.who);
     /* ONE ROOM PER PERSON. Two of them with the same person is the same

@@ -2130,6 +2130,45 @@ export function cleanPerson(raw) {
  */
 export const FOLLOW_ID = /^(?:[a-f0-9]{20}|w:[a-f0-9]{20})$/;
 
+/** ONE THING THAT HAPPENED, FOR ONE PERSON. See the note in the loader.
+ *
+ *  `kind` is a word the screen knows and nothing else — never a sentence, so
+ *  the row reads in whichever language the phone is set to. `ref` is the
+ *  twenty characters naming what it is about, which is what the row taps
+ *  through to; `who` is the person id of whoever did it, so the row can carry
+ *  a face without the list holding a name.
+ */
+/* A FEW THOUSAND, WHICH IS YEARS OF THEM FOR ONE BOARD. Kept because the
+   oldest row is the one nobody will ever scroll to and the file is read whole
+   on every request; the cap is what stops a list nobody opens from being the
+   reason a save gets slow. */
+export const BELL_MAX = 4000;
+
+/* SPLIT RATHER THAN ONE "paid", because the three halves of a payment are
+   three different things to be told: somebody says they sent it, somebody
+   says it arrived, somebody says it did not. A single kind would have made
+   the row say "something happened about the money", which is a row that has
+   to be tapped to be read and so is not a row. */
+export const BELL_KINDS = ["terms", "agreed", "claimed", "confirmed", "denied", "nudge"];
+
+export function cleanBell(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  const id = String(raw.id || "");
+  if (!/^[a-f0-9]{20}$/.test(id)) return null;
+  const to = String(raw.to || "").slice(0, 64);
+  const kind = String(raw.kind || "");
+  if (!to || !BELL_KINDS.includes(kind)) return null;
+  const ref = String(raw.ref || "");
+  if (!/^[a-f0-9]{20}$/.test(ref)) return null;
+  const who = String(raw.who || "");
+  return {
+    id, to, kind, ref,
+    who: /^[a-f0-9]{20}$/.test(who) ? who : "",
+    at: String(raw.at || "").slice(0, 40) || new Date().toISOString(),
+    seen: Boolean(raw.seen),
+  };
+}
+
 export function cleanFollow(raw) {
   if (!raw || typeof raw !== "object") return null;
   const by = String(raw.by || "").slice(0, 64);
@@ -3483,6 +3522,33 @@ export function cleanBoard(raw) {
     seenV.add(k);
     vouches.push(v);
   }
+  /* WHAT HAPPENED, FOR THE PERSON IT HAPPENED TO.
+   *
+   * Everything this board ever told anybody was a push, which is a thing that
+   * arrives once and is gone — miss the buzz and there is no record that it
+   * ever rang. So terms written, terms agreed and money settled had nowhere
+   * to be seen, and the answer had been to make a ROOM for them, which put a
+   * conversation in Chat that nobody had asked to have. "i dont want the memo
+   * in the chat. lets have it goto notications."
+   *
+   * A row is one fact and never its contents: who it is for, what kind of
+   * thing happened, who did it, and the twenty characters naming the thing.
+   * The screen reads the fact and writes the sentence, so a row that lands on
+   * a phone in the other language still reads in that language, and a row
+   * carrying a fee or a name in its text could never leak one from a list.
+   *
+   * SEEN, NOT READ. It goes grey when the screen has been opened, not when
+   * the memo has; the difference matters to nobody and a per-row read receipt
+   * is a thing to keep in step for no gain.
+   */
+  const bells = [];
+  const seenB = new Set();
+  for (const r of (Array.isArray(raw?.bells) ? raw.bells : [])) {
+    const v = cleanBell(r);
+    if (!v || seenB.has(v.id)) continue;
+    seenB.add(v.id);
+    bells.push(v);
+  }
   /* WHICH ONE-TIME PASSES HAVE ALREADY RUN.
      A migration that says "runs once" and has no way of knowing whether it
      did runs on every boot, and one of them was quietly republishing every
@@ -3628,6 +3694,9 @@ export function cleanBoard(raw) {
 
   return { posts, people, follows, notes, wants, invites, cards, grants, waits, vouches, ran,
     offers, shuts, hides, groups, says, signins, writes, pushes, blocks, announces,
+    /* Newest last, like says, and capped: a list nobody has opened for a year
+       is still one screen of rows and the rest is a file getting bigger. */
+    bells: bells.slice(-BELL_MAX),
     requests: requests.slice(-REQUEST_MAX),
     products: products.slice(-PRODUCT_MAX),
     orders: orders.slice(-ORDER_MAX),
