@@ -2339,14 +2339,32 @@ function drawPlus(t, last) {
      written to and nothing else until a member lets them in — see the note
      over the terms button. */
   const real = /^[a-f0-9]{20}$/.test(String(t.who || ""));
-  const live = Boolean(last && (last.open || last.canAnswer));
-  const why = !real ? T("pl.notYet") : !live ? T("pl.closed") : "";
+  /* THE SERVER'S OWN ANSWER, NOT THIS PAGE'S GUESS AT IT.
+   *
+   * It was `last.open || last.canAnswer`, which is about the conversation and
+   * says nothing about whether the person on the other end is still in
+   * Browse. A thread with somebody's abandoned second account passes that
+   * test and fails every route behind these tiles — which is why the call
+   * "works for Keith" and flashes for the rest. `canDo` is computed in
+   * /api/notes by the same rule notePermit applies. One rule, one place.
+   *
+   * A server older than this page sends no canDo, and then the old test is
+   * the right fallback: better an occasional refusal that now says why than
+   * every tile greyed out on a board that has not been deployed yet. */
+  const live = last && last.canDo !== undefined
+    ? Boolean(last.canDo)
+    : Boolean(last && (last.open || last.canAnswer));
+  const why = !real ? T("pl.notYet")
+    : (last && last.canDo === false && (last.open || last.canAnswer)) ? T("pl.away")
+    : !live ? T("pl.closed") : "";
 
   /* ADD SOMEBODY, which is the one that turns this into a room. It opens the
      picker with them already in it — a room still takes three and the screen
      that makes one is the screen that makes every other one. */
+  /* `live` AND NOT `last.open`, like the other four. Adding a page that is
+     not up to a room is a room with a name in it nobody can reach. */
   const add = ptile(T("pl.add"), PATHS.person,
-    !OFF.groups && real && Boolean(last && last.open), why || T("pl.closed"));
+    !OFF.groups && real && live, why || T("pl.closed"));
   add.addEventListener("click", () => { plusSheet(false); addToChat(t); });
   grid.append(add);
 
@@ -2566,7 +2584,47 @@ function callShow(role) {
   $("cvin").hidden = role !== "in";
   $("cvmic").classList.remove("off");
   $("cvcam").classList.remove("off");
+  // Put back whatever a previous failure hid — see callFailed.
+  $("cvmic").hidden = false;
+  $("cvcam").hidden = false;
   document.body.style.overflow = "hidden";
+}
+
+/* A CALL THAT WILL NOT START STAYS ON THE SCREEN AND SAYS SO.
+ *
+ * "THE VIDEO FRAME POPS UP FOR A MICROSECOND THEN GLITCHS." That is this
+ * exact path: the layer opens, the server refuses the ring, and the old code
+ * closed the layer in the same breath — so the only thing anybody could see
+ * was a flash, and the sentence explaining it landed on the screen behind,
+ * already gone.
+ *
+ * The camera and microphone are released, because nothing is going to use
+ * them. Everything else stays: their name, the reason, and one button to
+ * leave. A failure you can read is a failure somebody can report.
+ */
+function callFailed(words) {
+  if (!CALL) return;
+  const c = CALL;
+  if (c.giveUp) clearTimeout(c.giveUp);
+  if (c.pc) { try { c.pc.close(); } catch { /* already */ } }
+  if (c.local) c.local.getTracks().forEach((t) => t.stop());
+  c.local = null;
+  c.gone = true;               // stops the poll loop; the layer is not a call
+  $("cvme").srcObject = null;
+  $("cvme").hidden = true;
+  $("cvwho").hidden = false;
+  $("cvbar").hidden = false;
+  $("cvin").hidden = true;
+  // Only the way out. Mute and camera are buttons for a call that is happening.
+  $("cvmic").hidden = true;
+  $("cvcam").hidden = true;
+  callSay(words);
+  /* THE SERVER IS TOLD, so the other end is not left ringing at somebody who
+     never got in. It is fire and forget: this screen is already correct. */
+  fetch("/api/call/" + encodeURIComponent(c.who) + "/bye", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ device }),
+  }).catch(() => {});
 }
 
 function callHang(why) {
@@ -2629,7 +2687,7 @@ async function callOut(who, handle, photo) {
                     closed: "note.closed", shut: "note.shut",
                     waiting: "note.waiting", no: "cv.noDevice" };
     const key = known[String(e.message)];
-    callHang(key ? T(key) : T("cv.noGo", { n: status || 0 }));
+    callFailed(key ? T(key) : T("cv.noGo", { n: status || 0 }));
     return;
   }
   CALL.since = d.since || 0;

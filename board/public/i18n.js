@@ -3835,6 +3835,12 @@ export const STRINGS = {
   "pl.notYet":         ["Not until they are on the board.",
                         "等他进了板子再说。"],
   "pl.closed":         ["This conversation is closed.", "这个对话已经关了。"],
+  /* THE OTHER PERSON'S PAGE IS NOT IN BROWSE ANY MORE — taken down, held, or
+     an abandoned second account, which is the common one. The conversation
+     still reads; nothing can be sent to it. Said plainly rather than left as
+     a grey tile, because from the outside it looks like the app is broken. */
+  "pl.away":           ["Their page is not up. Nothing can be sent.",
+                        "他的主页不在了，发不了东西。"],
   "cv.call":           ["Video call", "视频通话"],
   "cv.ringing":        ["Ringing {who}…", "正在呼叫 {who}…"],
   "cv.incoming":       ["{who} is calling", "{who} 打来视频"],

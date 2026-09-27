@@ -10373,6 +10373,12 @@ app.get("/api/notes", notesOff, async (req, res) => {
 
   const rows0 = store.notesFor(board.notes, me);
   const other = (n) => (n.by === me ? n.to : n.by);
+  /* WHO IS ACTUALLY STILL IN BROWSE. notePermit will only act on a published
+     person with a handle; anybody else is "gone" to it. Built once here so
+     every row can say so — see canDo below. */
+  const live = new Set(board.people
+    .filter((q) => q.state === "published" && q.handle && q.by)
+    .map((q) => q.by));
   /* A CONVERSATION YOU LEFT IS OFF YOUR LIST.
    *
    * Leaving has always meant the thread closes for both of you and what was
@@ -10443,6 +10449,23 @@ app.get("/api/notes", notesOff, async (req, res) => {
          than discovered: a box that refuses the seventh message without ever
          having said there were six is a bug the person blames on themselves. */
       left: st.cap ? st.left : undefined,
+      /* AND WHETHER ANYTHING CAN BE DONE WITH THIS PERSON AT ALL.
+       *
+       * "IT WORKS FOR KEITH" — and not for the others, and the ＋ was missing
+       * from some chats and not others, "usualyl when their is duplicate
+       * accounbts for the same persn". That is one bug and this is it.
+       *
+       * A thread row is built from whoever is on the other end of the
+       * messages, and never asked whether that row is still in Browse.
+       * notePermit does ask — it looks for a PUBLISHED person and answers
+       * "gone" otherwise — so a thread with somebody's abandoned second
+       * account looked completely normal and refused every call, every
+       * payment request and every message with a 404 the screen turned into
+       * a flash.
+       *
+       * Same rule as the box two fields up, for the same stated reason: the
+       * page must not offer what the server will refuse. */
+      canDo: live.has(other(n)) && Boolean(st.can),
       cap: st.cap || undefined,
       /* WHAT WAS AGREED, ABOVE THE TALK. The reason to type in here at all
          rather than in WeChat — the terms sit over the conversation and cannot
