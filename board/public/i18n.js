@@ -3730,6 +3730,15 @@ export const STRINGS = {
      sending are one press now, and the press is the send arrow in the
      messenger. */
   "wn.mkTo":           ["To", "写给"],
+  /* A SEND THAT REFUSES SAYS WHICH HALF IS MISSING. Both of these were a
+     cursor moving and nothing else — see sendNew. The message box shows the
+     example as a placeholder, so the screen looks like it already holds a
+     message: pressing send on what you can see and getting silence is the
+     commonest way this screen was failing. */
+  "wn.needName":       ["Who is it going to? Put their name at the top.",
+                        "\u53d1\u7ed9\u8c01\uff1f\u5728\u4e0a\u9762\u5199\u4e0a\u4ed6\u7684\u540d\u5b57\u3002"],
+  "wn.needLine":       ["Write the message. The grey text is an example.",
+                        "\u5199\u4e0a\u4f60\u8981\u8bf4\u7684\u3002\u7070\u5b57\u53ea\u662f\u4e2a\u4f8b\u5b50\u3002"],
   /* THE PHONE'S OWN SHEET, which is how this actually reaches WeChat. The
      first version offered Copy and nothing else, and left somebody holding a
      block of text with no idea what to do with it. */

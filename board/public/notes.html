@@ -210,7 +210,22 @@
   /* The two round buttons in the corner sit together and never shrink. */
   .thead .more{flex:0 0 auto}
   /* The name, as a box, on the screen where a conversation's name would be. */
+  /* THE NAME BOX, ON ITS OWN, UNDER THE HEADER — see the markup note.
+     `position:relative` so the matches hanging off it at top:100% hang off
+     the box and not off a header they no longer live in. */
+  .wnew{position:relative;padding:.9rem 0 .2rem}
   .tnew{flex:1;min-width:0}
+  /* IT HAS TO LOOK LIKE SOMETHING YOU TYPE IN. In the header it was a bare
+     input with a placeholder, which on a phone reads as a greyed-out title —
+     "Their name" looked like the name of whoever this screen was about, and
+     there was nothing to say otherwise. */
+  .wnew .tnew{display:block;border:1px solid var(--line);border-radius:.9rem;
+    background:var(--raise);padding:.55rem .85rem}
+  .wnew .tnew input{font-size:1.05rem}
+  /* The one sentence that says what the send arrow does, directly under the
+     name it will be sent to. It was at the bottom of the screen, above the
+     keyboard, a long way from anything it explained. */
+  .wnwhy{margin:.7rem 0 0;color:var(--muted);font-size:.9rem;line-height:1.45}
   .tnew span{display:block;font-size:.66rem;letter-spacing:.1em;
     text-transform:uppercase;color:var(--muted);font-weight:700}
   .tnew input{width:100%;border:0;background:none;font:inherit;
@@ -1190,21 +1205,6 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 19l-7-7 7-7"/></svg>
       </button>
       <a class="tname" id="twho" href="#"><b id="twhoname"></b><span id="twhosub"></span></a>
-      <!-- WRITING TO SOMEBODY WHO IS NOT HERE. The same screen, with the one
-           thing that differs: there is no name yet, so the name is a box.
-           Everything else — the bubbles, the composer, the send arrow — is the
-           conversation view, because it IS one: you are writing the first
-           message of a thread that does not exist yet. -->
-      <label class="tnew" id="tnew" hidden>
-        <span id="tnewk"></span>
-        <input id="tnewname" maxlength="40" autocomplete="off">
-      </label>
-      <!-- WHO ON THE BOARD MATCHES WHAT IS BEING TYPED. Empty and hidden until
-           there is something to show; see findPeople(). It hangs under the
-           name box rather than replacing it, because the box still does its
-           original job — a name that is nobody here is somebody to write a
-           note to, and that is most of the names typed into it. -->
-      <div class="tfind" id="tfind" hidden></div>
       <!-- THE LANGUAGE BUTTON LIVES IN WHICHEVER HEADER IS UP. It was in the
            list's header only, which this screen hides — so opening a
            conversation, or the screen where you write a note that is about to
@@ -1227,6 +1227,28 @@
          has them: they are rare, permanent, and do not belong beside the box
          somebody types in. -->
     <div class="menu" id="tmenu" hidden></div>
+    <!-- WRITING TO SOMEBODY WHO IS NOT HERE YET.
+         "I'm trying to add someone into a chat from off the platform and I
+         don't understand what's going on myself. So how can anybody else?
+         What is this screen?"
+         It was a placeholder in the header that read as a greyed-out title,
+         a card offering the door you had just come through, nine hundred
+         pixels of nothing, and the one sentence explaining any of it down by
+         the keyboard. The name of the screen is in the header now and this is
+         the screen: who it goes to, and what happens when you press send. -->
+    <div class="wnew" id="wnew" hidden>
+      <label class="tnew" id="tnew">
+        <span id="tnewk"></span>
+        <input id="tnewname" maxlength="40" autocomplete="off">
+      </label>
+      <!-- WHO ON THE BOARD MATCHES WHAT IS BEING TYPED. Empty and hidden
+           until there is something to show; see findPeople(). It hangs under
+           the name box rather than replacing it, because the box still does
+           its original job — a name that is nobody here is somebody to write
+           a note to, and that is most of the names typed into it. -->
+      <div class="tfind" id="tfind" hidden></div>
+      <p class="wnwhy" id="wnwhy"></p>
+    </div>
     <!-- Who the person at the door is, above the conversation with them —
          see drawThread. Empty and hidden for a member, who has a page. -->
     <div class="tcard" id="tcard" hidden></div>
@@ -1700,11 +1722,24 @@ function homeLang() {
 }
 let LANGBTN = null;
 
+/** The five words along the bottom. Set here rather than halfway down paint(),
+ *  because three screens return before reaching that line — and one of them is
+ *  the write-to-somebody screen, so opening the app straight onto it, or
+ *  reloading there, gave a bar of five unlabelled drawings. */
+function tabWords() {
+  $("tabnotes").textContent = T("note.inbox");
+  $("tabcards").textContent = T("nav.cards");
+  $("tabbrowse").textContent = T("nav.browse");
+  $("tabme").textContent = T("nav.profile");
+  $("tabmoney").textContent = T("nav.money");
+}
+
 function paint() {
   const who = openWho();
   // Only a room at the door says it; drawDoor puts it back.
   $("tunvet").hidden = true;
   homeLang();
+  tabWords();
   if (INVITED) return drawInvited();
   if (CHATROOM) return drawChatDoor();
   const T0 = threads();
@@ -1728,11 +1763,6 @@ function paint() {
   $("listtop").hidden = Boolean(here);
   $("threadview").hidden = !here;
   document.title = T("note.inbox");
-  $("tabnotes").textContent = T("note.inbox");
-  $("tabcards").textContent = T("nav.cards");
-  $("tabbrowse").textContent = T("nav.browse");
-  $("tabme").textContent = T("nav.profile");
-  $("tabmoney").textContent = T("nav.money");
   /* THE BAR IS FOR MEMBERS. Somebody on the list has one conversation and
      three tabs that would bounce them off a door, so they get the one line
      that is true for them instead: where they stand, and how to get in. */
@@ -2284,7 +2314,7 @@ function drawInvited() {
   $("listview").hidden = true;
   $("listtop").hidden = true;
   $("threadview").hidden = false;
-  $("tnew").hidden = true;
+  $("wnew").hidden = true;
   $("tmore").hidden = true;
   $("tvid").hidden = true;
   $("tpgrid").hidden = true;
@@ -2980,7 +3010,7 @@ function drawChatDoor() {
   $("listview").hidden = true;
   $("listtop").hidden = true;
   $("threadview").hidden = false;
-  $("tnew").hidden = true;
+  $("wnew").hidden = true;
   $("tmore").hidden = true;
   $("tvid").hidden = true;
   $("tpgrid").hidden = true;
@@ -3252,21 +3282,21 @@ async function findPeople() {
   const typed = $("tnewname").value.trim().toLowerCase();
   const hide = () => { box.hidden = true; fill(box); };
 
-  /* AN EMPTY BOX IS NOT NOTHING TO SAY, and it was treated as nothing.
+  /* AN EMPTY BOX SHOWS NOTHING, and that used to be a problem worth a row.
    *
-   * The row offering an invite only appeared once letters had been typed — so
-   * pressing ＋, which is the whole gesture for "add somebody", showed a name
-   * box and a blank screen under it. Somebody who wants to bring in a person
-   * this board has never heard of has no name to type that would ever produce
-   * the row telling them they can.
+   * The screen was a name box in the header and a blank phone under it, so
+   * something had to be there saying you could bring somebody in — a card
+   * reading "Not on here yet? Invite them into this chat". It is gone, and
+   * the reason is that it was answering a question the screen now answers
+   * itself: the header says "Write to somebody", the line under the name says
+   * what the send arrow does. Offering that card on this screen was offering
+   * the door you had just walked through.
    *
-   * So the row is there from the moment the screen opens. Nothing else is:
-   * a list of everybody on the board, unasked, is a directory, and this board
-   * does not publish one. */
+   * A list of everybody on the board, unasked, is a directory, and this board
+   * does not publish one. So: nothing until a name is typed. */
   if (!typed) {
     fill(box);
-    box.append(inviteRow());
-    box.hidden = false;
+    box.hidden = true;
     return;
   }
 
@@ -3278,10 +3308,10 @@ async function findPeople() {
   const hits = all.filter((q) => !q.mine && String(q.handle || "")
     .toLowerCase().includes(typed)).slice(0, 8);
 
-  /* NO LONGER HIDDEN WHEN NOBODY MATCHES, and that is the point of the row at
-     the bottom of it. Typing a name this board has never heard of used to
-     close the list and leave a name box with nothing under it — at exactly
-     the moment the answer is "they are not on here yet". */
+  /* HIDDEN WHEN NOBODY MATCHES. Typing a name this board has never heard of
+     is the ordinary case on this screen, not an error to put a row under —
+     the screen already says what happens when you press send, so an empty
+     list is the honest answer and a card repeating it is noise. */
   fill(box);
   for (const q of hits) {
     const b = el("button");
@@ -3316,71 +3346,52 @@ async function findPeople() {
     box.append(b);
   }
 
-  box.append(inviteRow());
-  box.hidden = false;
+  box.hidden = !hits.length;
 }
 
-/** AND THE PERSON WHO IS NOT ON HERE AT ALL.
+/* THE ROW THAT SAID "Not on here yet? Invite them into this chat" IS GONE.
  *
- *  The ＋ on Messages reached everybody already through the door and nobody
- *  else, which is the wrong half of what "add somebody" means when the board
- *  is invite-only: the people you most want to write to are the ones you have
- *  not brought in yet.
+ * It was the last thing on the picker and the only thing on the write-to-
+ * somebody screen, and on that second screen it was offering the door you had
+ * just come through. "I'm trying to add someone into a chat from off the
+ * platform and I don't understand what's going on myself." Neither did the
+ * screen: the row was doing the explaining, badly, from the top of a blank
+ * phone, because nothing else on it said what it was.
  *
- *  IT DOES NOT MINT ANYTHING HERE. The invite is settled and it lives on one
- *  screen — a code, the message, and the phone's own share sheet. A second
- *  copy of it here is a second copy to keep in step, and the one that drifted
- *  would be the one nobody watches. So this is a door to it.
+ * What it actually did was focus the message box. The screen says its own
+ * name now and says what the send arrow does, so there is nothing left for a
+ * row to say — see drawWriteNew and findPeople.
  */
-function inviteRow() {
-  const inv = el("button", "inv");
-  inv.type = "button";
-  const iav = el("span", "av");
-  iav.textContent = "\uFF0B";
-  const imid = el("div", "fm");
-  imid.append(el("b", null, T("wn.notHere")), el("span", null, T("wn.notHereSub")));
-  inv.append(iav, imid);
-  /* AND IT STAYS ON THIS SCREEN NOW.
-   *
-   * It used to go to /browse?invite=1 — the board's own invite, on another tab
-   * — and that was the right answer while the only invite was a way on to the
-   * board. "i wanted it to add somoene drectlty into the chat messenger with
-   * me": the thing being asked for here is a conversation with the person
-   * typing, not a seat on the board, and the composer that makes exactly that
-   * is already open behind this row. The name typed above is kept; all this
-   * does is close the list and put the cursor in the message box, so the next
-   * press sends it.
-   */
-  inv.addEventListener("click", () => {
-    $("tfind").hidden = true;
-    fill($("tfind"));
-    /* WHICHEVER BOX IS STILL EMPTY. The row is on screen from the moment ＋ is
-       pressed — see findPeople — so it is tapped with no name typed as often as
-       with one, and focusing the message box then is a press that leads to a
-       send that refuses. */
-    ($("tnewname").value.trim() ? $("tbox") : $("tnewname")).focus();
-  });
-  return inv;
-}
 
 function drawWriteNew() {
   $("listview").hidden = true;
   $("listtop").hidden = true;
   $("threadview").hidden = false;
-  $("twho").hidden = true;
   $("tmore").hidden = true;
   $("tvid").hidden = true;
   $("tpgrid").hidden = true;
   $("tmenu").hidden = true;
   $("tpin").hidden = true;
   $("tleft").hidden = true;
-  $("tnew").hidden = false;
+  /* THE SCREEN SAYS WHAT IT IS. It had no name at all: the header held the
+     name box, whose placeholder read as a greyed-out title, so the only words
+     at the top of the screen were "Their name" — which looks like a statement
+     about who you are talking to rather than a question. */
+  $("twho").hidden = false;
+  $("twho").removeAttribute("href");
+  $("twhoname").textContent = T("wn.mkTitle");
+  $("twhosub").textContent = "";
+  $("wnew").hidden = false;
   $("tnewk").textContent = T("wn.mkTo");
   $("tnewname").placeholder = T("wn.mkName");
+  /* AND WHAT THE SEND ARROW DOES, under the name it goes to. This line used
+     to sit at the bottom of the screen just above the keyboard, the length of
+     an empty phone away from the box it explains. */
+  $("wnwhy").textContent = T("wn.mkHint");
   /* THE LIST IS BUILT FROM WHAT IS IN THE BOX, so it is rebuilt here: this
      screen is redrawn on every paint and a stale list of matches for a name
-     that has since been sent is a list of the wrong people. With the box empty
-     that is the invite row and nothing else — see findPeople. */
+     that has since been sent is a list of the wrong people. With the box
+     empty there is nothing to show — see findPeople. */
   if (!$("tnewname").dataset.find) {
     $("tnewname").dataset.find = "1";   // once, however many times this draws
     $("tnewname").addEventListener("input", () => { findPeople(); });
@@ -3422,10 +3433,10 @@ function drawWriteNew() {
     row.append(cp);
     talk.append(row);
     talk.append(el("p", "when", T("wn.mkTill")));
-  } else {
-    // One line, where the first bubble will be, saying what pressing send does.
-    talk.append(el("p", "when", T("wn.mkHint")));
   }
+  /* NOTHING IN THE BUBBLE AREA UNTIL THERE IS A BUBBLE. The line saying what
+     send does used to be drawn here, which put it at the far end of an empty
+     screen from the box it is about. It is under the name now — see wnwhy. */
 
   $("twrite").hidden = false;
   micShow();
@@ -3446,8 +3457,13 @@ function drawWriteNew() {
 async function sendNew() {
   const to = $("tnewname").value.trim();
   const line = $("tbox").value.trim();
-  if (!to) { $("tnewname").focus(); return; }
-  if (!line) { $("tbox").focus(); return; }
+  /* IT SAYS WHICH HALF IS MISSING. Both of these used to move the cursor and
+     nothing else, which on a phone is no reaction at all — and the message
+     box shows the example as a PLACEHOLDER, so the screen looks like it has a
+     message in it already. Somebody presses send on what they can see, and
+     the app does nothing and explains nothing. */
+  if (!to) { $("tnewname").focus(); return say(T("wn.needName"), true); }
+  if (!line) { $("tbox").focus(); return say(T("wn.needLine"), true); }
   $("tsend").disabled = true;
   say(T("wn.sending"));
   let d = null;
@@ -4021,7 +4037,7 @@ async function drawDoor(key) {
   $("listview").hidden = true;
   $("listtop").hidden = true;
   $("threadview").hidden = false;
-  $("tnew").hidden = true;
+  $("wnew").hidden = true;
   $("tmenu").hidden = true;
   /* THE PIN IS NOT BLANKED HERE ANY MORE. It was, because the only thing that
      ever went in it was a deal on a thread, and arriving at a door meant there
@@ -4275,7 +4291,7 @@ document.addEventListener("visibilitychange", () => {
 function drawThread(t) {
   $("twho").hidden = false;
   $("tmore").hidden = false;
-  $("tnew").hidden = true;
+  $("wnew").hidden = true;
   $("twhoname").textContent = t.handle || "—";
   // No page to open for somebody on the list — see drawMenu.
   const onList = String(t.who || "").startsWith("w:");
