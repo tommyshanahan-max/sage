@@ -2189,12 +2189,23 @@ version: ## Which commit this box is actually running: make version
 	@printf '\n'
 	@printf '  on disk    %s\n' "$$(git log --oneline -1)"
 	@printf '  branch     %s\n' "$$(git rev-parse --abbrev-ref HEAD)"
-	@built=$$($(COMPOSE) exec -T board sh -c 'cat /app/BUILT 2>/dev/null' 2>/dev/null); \
-	if [ -n "$$built" ]; then printf '  running    %s\n' "$$built"; \
-	else printf '  running    (the image does not say — it predates this)\n'; fi
-	@printf '\n'
-	@if [ -n "$$($(COMPOSE) exec -T board sh -c 'cat /app/BUILT 2>/dev/null' 2>/dev/null)" ] \
-	  && [ "$$($(COMPOSE) exec -T board sh -c 'cat /app/BUILT 2>/dev/null' 2>/dev/null)" != "$$(git rev-parse --short HEAD)" ]; then \
+	@# ASKED ONCE. It was read three times — once to print and twice more in
+	@# the test below — which is three round trips into the container and
+	@# three chances to disagree with itself.
+	@built=$$($(COMPOSE) exec -T board sh -c 'cat /app/BUILT 2>/dev/null' 2>/dev/null | tr -d '\r\n'); \
+	here=$$(git rev-parse --short HEAD); \
+	if [ -z "$$built" ]; then printf '  running    (the image does not say — it predates this)\n'; \
+	elif [ "$$built" = "unknown" ]; then printf '  running    unknown — the image was built without the stamp\n'; \
+	else printf '  running    %s\n' "$$built"; fi; \
+	printf '\n'; \
+	if [ "$$built" = "unknown" ]; then \
+	  printf '  THE IMAGE CARRIES NO COMMIT, so this cannot say whether it is current.\n'; \
+	  printf '  "unknown" is the Dockerfile default — the build ran without BUILT set,\n'; \
+	  printf '  which is what happens when the image is built by anything but this\n'; \
+	  printf '  Makefile. It is NOT evidence that the code is old.\n\n'; \
+	  printf '  Stamp it and find out:\n\n'; \
+	  printf '    BUILT=%s make up\n\n' "$$here"; \
+	elif [ -n "$$built" ] && [ "$$built" != "$$here" ]; then \
 	  printf '  THE BOARD IS RUNNING OLDER CODE THAN THE DISK.\n'; \
 	  printf '  board/ is built into the image, so a fetch alone does not move it:\n\n'; \
 	  printf '    make up\n\n'; \

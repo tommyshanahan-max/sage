@@ -3290,6 +3290,8 @@ export const STRINGS = {
    * above it was already breaking. The true version is narrower and still
    * worth saying: nothing is ever asked of you, and the one thing that can be
    * swapped is swapped by two people who each pressed a button for it. */
+  "bud.safetyShort":   ["Nobody here needs your number or your documents.",
+                        "这里不需要你的电话或证件。"],
   "bud.safety": [
     "Nothing here needs your phone number or your documents, and nobody should be asking you for them. A WeChat id is only ever swapped by two people who each chose to. You never have to meet anyone to use this.",
     "这里不需要你的电话或者证件，也不该有人向你要。微信号只在两个人都主动选择的情况下才会交换。你完全不用见面就能用这个应用。",
@@ -6634,6 +6636,12 @@ export const STRINGS = {
      for is the scam it was written to stop, which has a shape: somebody you
      have not agreed anything with, asking you to send money now, or asking for
      your documents. So it names that instead of banning a word. */
+  /* THE RULE ON THE SCREEN, THE PARAGRAPH ONE TAP BEHIND IT.
+     Not a heading — "Safety" would be a word to read before the thing. This
+     line is the thing: the one sentence that stops the scam it was written
+     for, in the order somebody does it. */
+  "note.safetyShort":  ["Agree terms in writing before any money.",
+                        "先把条件写清楚，再谈钱。"],
   "note.safety": [
     "Money only after you have both agreed terms in writing, and only to the person you agreed them with. Nobody here needs photographs of your documents. Report anybody who asks.",
     "先把条件白纸黑字说定，再谈钱，而且只付给你谈定的那个人。这里没有人需要你证件的照片，有人要就举报。",
