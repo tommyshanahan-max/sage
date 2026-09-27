@@ -17265,6 +17265,22 @@ app.post("/api/group/leave", notesOff, express.json({ limit: "2kb" }), async (re
     }
     if (!g || !g.members.includes(me)) return { error: "gone" };
     g.members = g.members.filter((m) => m !== me);
+    /* THE MAKER CAN LEAVE, AND THE ROOM GETS A NEW ONE.
+     *
+     * cleanGroup puts `by` back at the head of `members` on every save —
+     * "the maker is always in it", which is the right rule for a file edited
+     * by hand and was silently undoing this line for the one person most
+     * likely to press it. The route answered ok, the room came back on the
+     * next load, and there was no way at all for somebody to get rid of a
+     * room they had started. That is what Tom hit: "There is no way to delete
+     * roms from my chat."
+     *
+     * So the room is handed on rather than the rule being bent. Whoever has
+     * been in it longest takes it over and can add and remove people, which
+     * is the only thing being the maker means here. A room with nobody left
+     * is deleted two lines down and never reaches this.
+     */
+    if (g.by === me && g.members.length) g.by = g.members[0];
     /* A member walking out is named. A guest is not — they never said who they
        were, so there is no name to say, and "somebody left" is a sentence that
        makes a room of four look over its shoulder for no reason. */

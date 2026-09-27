@@ -114,11 +114,12 @@
   /* A GROUP'S ROW IS A LINK, and a link arrives underlined and blue. Said
      here rather than inline so the two kinds of row cannot drift apart. */
   a.trow{text-decoration:none;color:var(--ink)}
-  /* The rule between rows lives on .swipe, which a group row does not have —
-     it cannot be swiped away, because leaving a group is a different act with
-     a different warning on it. So it carries its own. */
-  #list > a.trow{border-bottom:1px solid var(--hair)}
-  #list > a.trow:last-child{border-bottom:0}
+  /* THE RULE BETWEEN ROWS LIVES ON .swipe, AND NOW EVERY ROW HAS ONE.
+     A group row used to carry its own border because it could not be swiped
+     away — "leaving a group is a different act" — which was true about the
+     act and wrong about the list: it left the one kind of row on this screen
+     with no way to take it off the screen. Both kinds swipe now and the two
+     rules that stood in for it are gone. */
   .swipe.open .trow{width:calc(100% - 6.4rem)}
   @media (prefers-reduced-motion:reduce){.trow{transition:none}}
   .trow:hover{background:var(--raise)}
@@ -1910,6 +1911,93 @@ function lastAt(g) {
   return (says.length ? says[says.length - 1].at : g.at) || "";
 }
 
+/** DRAG A ROW LEFT, AND DELETE IS UNDERNEATH IT — on both kinds of row.
+ *
+ *  "There is no way to delete roms from my chat either, grouops or 1-1 chats."
+ *  He was right twice over. A group row could not be dragged at all, so a room
+ *  he was finished with sat on the list for ever. And the button a 1-1 row did
+ *  reveal was Leave — which closes the conversation for BOTH of you and cannot
+ *  be undone — while the gentle one, the one everybody means by deleting a
+ *  chat, was three taps down inside the thread behind the ⋯.
+ *
+ *  So the easy gesture now does the mild thing and the severe one keeps its
+ *  three taps, which is the way round it should always have been:
+ *    a conversation — your copy goes, they keep theirs, nobody is told;
+ *    a room         — you walk out, and what you said stays where it is.
+ *  One word on the button either way. The sentence in the confirm is where the
+ *  difference is said, because that is the screen somebody actually reads.
+ *
+ *  IT REVEALS A BUTTON AND DOES NOT DO IT. A gesture that deletes on release
+ *  is a gesture that deletes by accident in a pocket.
+ */
+function swipeRow(row, ask, run) {
+  const wrap = el("div", "swipe");
+  const out = el("button", "wipe", T("note.delShort"));
+  out.type = "button";
+  out.addEventListener("click", async (e) => {
+    e.stopPropagation();
+    if (!window.confirm(ask)) return;
+    out.disabled = true;
+    try { await run(); await load(); } catch { out.disabled = false; }
+  });
+  wrap.append(out);
+
+  /* THE DRAG. Pointer events, so a mouse on a laptop behaves like a thumb.
+     Horizontal only: a list is scrolled vertically far more often than a row
+     is swiped, and stealing that is the way to make a list feel broken. */
+  /* AND THE BROWSER'S OWN DRAG IS TURNED OFF FIRST. A group's row is an <a>,
+     and dragging a link is a thing the browser already does — it picks the
+     link up, fires pointercancel, and the swipe ends before it has begun.
+     Caught on a laptop, where it made the gesture do nothing at all. */
+  row.draggable = false;
+  let x0 = 0, y0 = 0, decided = "", dragged = false;
+  /* CAPTURE, AND THIS IS WHY. A group row is an <a>, and a link navigates on
+     its own — a listener that runs after the tap has already been handled
+     cannot stop it. On the way down it can, so the drag that ends on the row
+     opens the room only when it was a tap. The same listener does the other
+     half: a row already open is put back rather than opened, which is what a
+     thumb expects. */
+  row.addEventListener("click", (e) => {
+    if (dragged) { dragged = false; e.preventDefault(); e.stopPropagation(); return; }
+    if (wrap.classList.contains("open")) {
+      wrap.classList.remove("open");
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  }, true);
+  row.addEventListener("pointerdown", (e) => {
+    x0 = e.clientX; y0 = e.clientY; decided = ""; dragged = false;
+  });
+  row.addEventListener("pointermove", (e) => {
+    if (!x0) return;
+    const dx = e.clientX - x0, dy = e.clientY - y0;
+    if (!decided) {
+      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+      decided = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
+    }
+    if (decided !== "x") return;
+    e.preventDefault();
+    const on = dx < -34;
+    /* ONE ROW OPEN AT A TIME, which is what every messenger does and what the
+       list looks wrong without: dragging a second row left the first one open
+       too, and a screen with two red panels down the side of it reads as the
+       app having lost track of what you were doing. */
+    if (on) for (const o of document.querySelectorAll(".swipe.open")) {
+      if (o !== wrap) o.classList.remove("open");
+    }
+    wrap.classList.toggle("open", on);
+  });
+  /* A DRAG THAT STARTS AND ENDS ON THE SAME ELEMENT STILL FIRES A CLICK. So
+     the row opened and the click that ended the drag immediately closed it
+     again — the swipe looked like it did nothing at all. The flag survives
+     until the next press, which is the only thing it has to outlive. */
+  const done = () => { dragged = decided === "x"; x0 = 0; decided = ""; };
+  row.addEventListener("pointerup", done);
+  row.addEventListener("pointercancel", done);
+  wrap.append(row);
+  return wrap;
+}
+
 /** One group, one row. The same shape as a person's row so the list reads as
  *  one list — what differs is the face, which is the people in it rather than
  *  one of them, and the name, which is theirs or the names themselves. */
@@ -1973,39 +2061,31 @@ function groupRow(g) {
 
   mid.append(nm, prev);
   a.append(wrap2, mid);
-  return a;
+  /* AND IT CAN BE TAKEN OFF THE LIST NOW. Leaving is the only "remove" a room
+     has — there is no copy of a room to keep — so that is what the button
+     does, and grp.leaveSure is the sentence that says so. */
+  return swipeRow(a, T("grp.leaveSure"), () =>
+    fetch("/api/group/leave", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ device, group: g.id }),
+    }).then((r) => { if (!r.ok) throw new Error("no"); }));
 }
 
 /** One person, one row.
  *
- *  DRAG IT LEFT TO LEAVE THE CONVERSATION. The way out was three taps down
- *  inside the thread, behind the ⋯ — which is where it belongs for something
- *  permanent, and is also where nobody looks when they are clearing a list.
- *  Every messenger on this phone does it with a swipe, so this does too.
+ *  DRAG IT LEFT TO DELETE IT. The way out was three taps down inside the
+ *  thread, behind the ⋯ — which is where it belongs for something permanent,
+ *  and is also where nobody looks when they are clearing a list. Every
+ *  messenger on this phone does it with a swipe, so this does too.
  *
- *  It is the same act as "Leave this chat" and just as permanent: both sides
- *  lose it, and neither is told who left. So the swipe reveals a button and
- *  does not do it — a gesture that deletes on release is a gesture that
- *  deletes by accident in a pocket.
+ *  AND IT IS THE MILD ONE NOW. This button used to be Leave, which closes the
+ *  conversation for both of you for ever; that is the wrong act to hang on
+ *  the easiest gesture on the screen, and it is still there, in the ⋯, where
+ *  something that cannot be undone belongs. What the swipe does is the thing
+ *  people mean by deleting a chat: your copy goes, they keep theirs, and they
+ *  are not told. See swipeRow.
  */
 function listRow(t) {
-  const wrap = el("div", "swipe");
-  const out = el("button", "wipe", T("note.leaveShort"));
-  out.type = "button";
-  out.addEventListener("click", async () => {
-    if (!window.confirm(T("note.leaveSure", { who: t.handle || "—" }))) return;
-    out.disabled = true;
-    try {
-      const r = await fetch("/api/note/shut", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ device, who: t.who }),
-      });
-      if (!r.ok) throw new Error("no");
-      await load();
-    } catch { out.disabled = false; }
-  });
-  wrap.append(out);
-
   const b = el("button", "trow");
   b.type = "button";
   const wrap2 = el("div", "avwrap");
@@ -2034,41 +2114,14 @@ function listRow(t) {
   prev.append(document.createTextNode(saidShort(t.last)));
   mid.append(nm, prev);
   b.append(wrap2, mid);
-  b.addEventListener("click", () => {
-    if (dragged) { dragged = false; return; }
-    // A row that is open is a row somebody dragged. Tapping it puts it back
-    // rather than opening the conversation, which is what a thumb expects.
-    if (wrap.classList.contains("open")) { wrap.classList.remove("open"); return; }
-    openThread(t.who);
-  });
+  b.addEventListener("click", () => openThread(t.who));
 
-  /* THE DRAG. Pointer events, so a mouse on a laptop behaves like a thumb.
-     Horizontal only: a list is scrolled vertically far more often than a row
-     is swiped, and stealing that is the way to make a list feel broken. */
-  let x0 = 0, y0 = 0, decided = "", dragged = false;
-  b.addEventListener("pointerdown", (e) => {
-    x0 = e.clientX; y0 = e.clientY; decided = ""; dragged = false;
-  });
-  b.addEventListener("pointermove", (e) => {
-    if (!x0) return;
-    const dx = e.clientX - x0, dy = e.clientY - y0;
-    if (!decided) {
-      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
-      decided = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
-    }
-    if (decided !== "x") return;
-    e.preventDefault();
-    wrap.classList.toggle("open", dx < -34);
-  });
-  /* A DRAG THAT STARTS AND ENDS ON THE SAME ELEMENT STILL FIRES A CLICK. So
-     the row opened and the click that ended the drag immediately closed it
-     again — the swipe looked like it did nothing at all. The flag survives
-     until the next press, which is the only thing it has to outlive. */
-  const done = () => { dragged = decided === "x"; x0 = 0; decided = ""; };
-  b.addEventListener("pointerup", done);
-  b.addEventListener("pointercancel", done);
-  wrap.append(b);
-  return wrap;
+  return swipeRow(b, T("note.clearSure"), () =>
+    fetch("/api/note/hide", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      // A waiting person's thread is addressed by their row — see blank().
+      body: JSON.stringify({ device, who: String(t.who || "").replace(/^w:/, "") }),
+    }).then((r) => { if (!r.ok) throw new Error("no"); }));
 }
 
 function openThread(who) {

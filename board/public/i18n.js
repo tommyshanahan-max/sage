@@ -5221,7 +5221,13 @@ export const STRINGS = {
   "note.leave":        ["Leave this chat", "退出这个对话"],
   // On the button a swipe uncovers, where there is room for two words and the
   // name is already on the row it belongs to.
-  "note.leaveShort":   ["Leave", "退出"],
+  /* THE WORD ON THE BUTTON A SWIPE REVEALS, on a conversation and on a room
+     alike. One word for both, because the list is one list and a row that
+     said "Leave" beside a row that said "Delete" would be asking somebody
+     clearing their chats to work out which was which. What each one actually
+     does is in the sentence that comes up next — note.clearSure for a
+     conversation, grp.leaveSure for a room. */
+  "note.delShort":     ["Delete", "删除"],
   "note.leaveSure": [
     "Leave the chat with {who}? Neither of you can write again. {who} is not told.",
     "退出和 {who} 的对话？之后你们都不能再写了。{who} 不会收到通知。",
