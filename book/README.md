@@ -39,7 +39,8 @@ make book-live-off ID=…
 ```
 
 Prints her link (goes live) and one link for the group (watches). Without
-`WHEN` it is open now; either way, until three hours after the start.
+`WHEN` it is open now; either way, until twelve hours after the start.
+`MAX=100` for a live more than ten may watch (a market stall).
 
 ## Not yet
 

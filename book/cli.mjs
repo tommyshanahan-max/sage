@@ -19,7 +19,7 @@
  */
 import { load, save, newId, cleanTeacher, cleanBooking, cleanTeam, DAYS, slotsFor, HOUSE_CUT } from "./lib/store.mjs";
 import { teamView } from "./lib/team.mjs";
-import { cleanLive, MAX as LIVE_MAX } from "./lib/live.mjs";
+import { cleanLive } from "./lib/live.mjs";
 
 const E = process.env;
 // Where the booking service is reached from outside, for printing room links.
@@ -151,7 +151,7 @@ if (cmd === "teacher") {
 } else if (cmd === "live") {
   /* A LIVE CLASS: two links. NAME is the teacher, as the group will see it.
      WHEN is Beijing time and optional — without it the class is open now,
-     for the next three hours. TITLE is optional too. */
+     for the next twelve hours. TITLE is optional too. */
   if (!E.NAME) { console.error('Needs NAME="…" — the teacher, as the group sees it.'); process.exit(1); }
   let start = new Date(Date.now() + 8 * 3600e3).toISOString().slice(0, 16) + ":00+08:00";
   if (E.WHEN) {
@@ -160,13 +160,13 @@ if (cmd === "teacher") {
     start = w + ":00+08:00";
   }
   const db = load();
-  const l = cleanLive({ id: newId(), host: E.NAME, title: E.TITLE, start });
+  const l = cleanLive({ id: newId(), host: E.NAME, title: E.TITLE, start, max: E.MAX });
   db.lives.push(l);
   save(db);
-  console.log(`Live class — ${l.host}${l.title ? ", " + l.title : ""}, ${when(l.start.slice(0, 16) + "+08:00")}. Up to ${LIVE_MAX} watching.\n`);
+  console.log(`Live class — ${l.host}${l.title ? ", " + l.title : ""}, ${when(l.start.slice(0, 16) + "+08:00")}. Up to ${l.max} watching.\n`);
   console.log(`  ${l.host} goes live here (send only to ${l.host}):\n  ${PUBLIC}/live/${l.id}#${l.hKey}\n`);
   console.log(`  Everybody else watches here (send to the group):\n  ${PUBLIC}/live/${l.id}#${l.vKey}\n`);
-  console.log(`Open until three hours after it starts. Done early: make book-live-off ID=${l.id}`);
+  console.log(`Open until twelve hours after it starts. Done early: make book-live-off ID=${l.id}`);
 } else if (cmd === "live-off") {
   const db = load();
   const l = db.lives.find((x) => x.id === E.ID);

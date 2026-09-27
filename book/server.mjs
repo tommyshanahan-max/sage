@@ -35,7 +35,8 @@ import { load, save, newId, slotsFor, shown, cleanBooking, splitFor } from "./li
 import * as room from "./lib/room.mjs";
 import { teamView, tutorView } from "./lib/team.mjs";
 import * as notify from "./lib/notify.mjs";
-import { liveSetup, ticket, liveOpen, watching, MAX as LIVE_MAX } from "./lib/live.mjs";
+import { liveSetup } from "./lib/live.mjs";
+import * as market from "./lib/market.mjs";
 
 // Where the service is reached from outside — for links put in messages.
 const PUBLIC = (process.env.BOOK_PUBLIC || "https://thexchange.app/book").replace(/\/$/, "");
@@ -207,26 +208,10 @@ const server = http.createServer(async (req, res) => {
     try { return send(res, 200, readFileSync(path.join(HERE, "public/live.html")), "text/html; charset=utf-8"); }
     catch { return send(res, 404, { error: "missing" }); }
   }
-  m = p.match(/^\/api\/live\/([a-f0-9]{16})\/(info|join)$/);
-  if (req.method === "POST" && m) {
-    const b = await readBody(req);
-    const key = String((b && b.key) || "");
-    const l = load().lives.find((x) => x.id === m[1]);
-    const host = Boolean(l && key === l.hKey);
-    if (!l || (!host && key !== l.vKey)) return send(res, 403, { error: "key" });
-    if (!liveOpen(l)) return send(res, 410, { error: "over" });
-    const about = { host, name: l.host, title: l.title, start: l.start };
-    if (m[2] === "info") return send(res, 200, about);
-    // Full is said here, in words; LiveKit would only drop the connection.
-    // The teacher is never turned away from their own class.
-    if (!host && (await watching("live-" + l.id)) >= LIVE_MAX) return send(res, 409, { error: "full" });
-    /* Every viewer is somebody new to LiveKit — a name it has seen before
-       would push the earlier one out. The teacher is always "host", so a
-       teacher whose phone reconnects replaces themself instead of appearing
-       twice. */
-    const t = ticket("live-" + l.id, host ? "host" : "v-" + newId(), host ? l.host : "", host);
-    if (!t) return send(res, 503, { error: "off" });
-    return send(res, 200, { ...about, ...t });
+  // Everything else a live does — joining, the stall, gifts, chat: lib/market.mjs.
+  if (p.startsWith("/api/live/")) {
+    const ip = String(req.headers["x-forwarded-for"] || req.socket.remoteAddress || "").split(",")[0].trim();
+    if (await market.routes(req, res, p, { send, readBody, allowed, ip })) return;
   }
 
   /* ---- THE LESSON ROOM — see lib/room.mjs ---------------------------------

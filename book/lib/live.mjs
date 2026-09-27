@@ -30,10 +30,12 @@ const PUBLIC = (process.env.BOOK_PUBLIC || "https://thexchange.app/book").replac
 // What the browser connects to. Worked out from the public address; set only
 // to point a test at a LiveKit running somewhere else.
 const URL_WS = (process.env.BOOK_LIVE_URL || PUBLIC.replace(/^http/, "ws") + "/lk").replace(/\/$/, "");
-/* Ten watching, Tom's number. It is a setting on LiveKit, not a count kept
-   here, because LiveKit is what actually knows who is in the room — +1 for
-   the teacher. */
-export const MAX = Math.min(100, Math.max(1, Number.parseInt(process.env.BOOK_LIVE_MAX, 10) || 10));
+/* Ten watching unless the live says otherwise — Tom's number for a class.
+   A market stall is free to watch and says MAX=100 or so. CEIL is the most
+   any one live may have, whatever it says: every viewer is 1–2 Mbps out of
+   this box, and the box runs other things. */
+export const MAX = Math.min(200, Math.max(1, Number.parseInt(process.env.BOOK_LIVE_MAX, 10) || 10));
+export const CEIL = 200;
 
 const KEY = "book";
 let SECRET = "";
@@ -67,8 +69,10 @@ export function liveSetup() {
       `    - {host: ${IP}, port: 3478, protocol: udp, secret: ${turn}}`,
       `    - {host: ${IP}, port: 3478, protocol: tcp, secret: ${turn}}`,
     ] : []),
+    // A backstop only: each live's own limit is set when its room is made
+    // (see `ensureRoom`) and checked before a viewer is let in.
     "room:",
-    `  max_participants: ${MAX + 1}`,
+    `  max_participants: ${CEIL + 1}`,
     "  empty_timeout: 600",
     "keys:",
     `  ${KEY}: ${SECRET}`,
@@ -99,26 +103,52 @@ export function ticket(room, identity, name, host) {
   return { url: URL_WS, token: body + "." + createHmac("sha256", SECRET).update(body).digest("base64url") };
 }
 
-/** How many are watching, asked of LiveKit — or null if it cannot say.
- *  Asked before handing a viewer a ticket, because when LiveKit turns the
- *  eleventh away itself, the browser is told only that the connection failed,
- *  and "check your network" is the wrong thing to tell somebody who is fine. */
-export async function watching(room) {
-  if (!SECRET) return null;
+/* LIVEKIT'S OWN API, for the three things only the server may do: make a
+   room with its limit, count who is in it, and say something into it. A
+   minute-long admin ticket per call, signed with the same key. */
+async function twirp(method, room, body) {
+  if (!SECRET) throw new Error("live is off");
   const now = Math.floor(Date.now() / 1000);
-  const body = b64({ alg: "HS256", typ: "JWT" }) + "." + b64({ iss: KEY, nbf: now - 10, exp: now + 60, video: { room, roomAdmin: true } });
+  const t = b64({ alg: "HS256", typ: "JWT" }) + "." + b64({ iss: KEY, nbf: now - 10, exp: now + 60,
+    video: { room, roomAdmin: true, roomCreate: true } });
+  const r = await fetch(API + "/twirp/livekit.RoomService/" + method, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: "Bearer " + t + "." + createHmac("sha256", SECRET).update(t).digest("base64url") },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(3000),
+  });
+  if (!r.ok) { const e = new Error(method + " " + r.status); e.status = r.status; throw e; }
+  return r.json();
+}
+
+/** The room, made with this live's limit before anybody is let in. Making a
+ *  room that exists already changes nothing, so it is asked every time. */
+export async function ensureRoom(room, max) {
+  try { await twirp("CreateRoom", room, { name: room, max_participants: Math.min(max, CEIL) + 1, empty_timeout: 600 }); }
+  catch { /* LiveKit's backstop still holds */ }
+}
+
+/** How many are watching, asked of LiveKit — or null if it cannot say.
+ *  Asked before handing a viewer a ticket, because when LiveKit turns one
+ *  away itself, the browser is told only that the connection failed, and
+ *  "check your network" is the wrong thing to tell somebody who is fine. */
+export async function watching(room) {
   try {
-    const r = await fetch(API + "/twirp/livekit.RoomService/ListParticipants", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: "Bearer " + body + "." + createHmac("sha256", SECRET).update(body).digest("base64url") },
-      body: JSON.stringify({ room }),
-      signal: AbortSignal.timeout(3000),
-    });
-    // No room yet is nobody watching; anything else odd is "don't know".
-    if (!r.ok) return r.status === 404 ? 0 : null;
-    const j = await r.json();
+    const j = await twirp("ListParticipants", room, { room });
     return (j.participants || []).filter((x) => x.identity !== "host").length;
-  } catch { return null; }
+  } catch (e) {
+    // No room yet is nobody watching; anything else is "don't know".
+    return e.status === 404 ? 0 : null;
+  }
+}
+
+/** Something said into the room by the server — a sale, a gift, a message,
+ *  the item now pinned. Viewers cannot send into the room themselves: every
+ *  line goes through here, where it can be limited and kept. */
+export async function tell(room, msg) {
+  try {
+    await twirp("SendData", room, { room, data: Buffer.from(JSON.stringify(msg)).toString("base64"), kind: "RELIABLE", topic: "live" });
+  } catch { /* nobody there, or LiveKit away — the page asks again on join */ }
 }
 
 /** A class row, or null. `hKey` opens it as the teacher, `vKey` as a viewer —
@@ -133,10 +163,26 @@ export function cleanLive(r) {
     hKey: /^[a-f0-9]{24}$/.test(r.hKey) ? r.hKey : randomBytes(12).toString("hex"),
     vKey: /^[a-f0-9]{24}$/.test(r.vKey) ? r.vKey : randomBytes(12).toString("hex"),
     off: Boolean(r.off),
+    max: Math.min(CEIL, Math.max(1, Number.parseInt(r.max, 10) || MAX)),
+    // WHAT IS FOR SALE, added from the seller's phone mid-live. The photo is
+    // a file beside book.json, not in it — see /photo in server.mjs.
+    items: (Array.isArray(r.items) ? r.items : []).map((i) => i && /^[a-f0-9]{8}$/.test(i.id) && {
+      id: i.id, name: s(i.name, 40), price: Math.max(1, Math.min(100000, Math.round(Number(i.price) || 0))),
+    }).filter((i) => i && i.name && i.price),
+    pinned: /^[a-f0-9]{8}$/.test(r.pinned || "") ? r.pinned : "",
+    /* EVERY SALE AND GIFT, paid or still waiting. `session` is Stripe's, and
+       what `settle` asks about; `paid` flips once and is never unset. The
+       phone is only for handing over what was bought, and only the seller's
+       screen ever shows it. */
+    sales: (Array.isArray(r.sales) ? r.sales : []).map((x) => x && /^[a-f0-9]{16}$/.test(x.id) && {
+      id: x.id, kind: x.kind === "gift" ? "gift" : "item", item: s(x.item, 40), yuan: Math.max(0, Math.round(Number(x.yuan) || 0)),
+      name: s(x.name, 30), phone: s(x.phone, 30), at: s(x.at, 40), session: s(x.session, 200),
+      paid: Boolean(x.paid), gone: Boolean(x.gone),
+    }).filter(Boolean),
   };
 }
 
-/* Open from the moment it is made until three hours after it starts — so the
-   teacher can try the camera the day before, and a class that runs long is
-   not cut off. */
-export const liveOpen = (l, now = Date.now()) => !l.off && now < Date.parse(l.start) + 3 * 3600e3;
+/* Open from the moment it is made until twelve hours after it starts — so the
+   teacher can try the camera the day before, and a market day is one link
+   from setting up to packing away. */
+export const liveOpen = (l, now = Date.now()) => !l.off && now < Date.parse(l.start) + 12 * 3600e3;
