@@ -1700,6 +1700,16 @@
     font-size:.88rem;white-space:nowrap;border:1px solid var(--accent);
     border-radius:99px;padding:.35rem .8rem}
   .hint{margin:0 0 .9rem;font-size:.86rem;line-height:1.55;color:var(--muted)}
+  /* THE REST OF THE TRUTH, UNDER THE BOX. Quieter than the promise above the
+     field on purpose: it is what somebody reads if they want to, and it is
+     where the letters about who has joined are declared. Nobody should have
+     to open a policy page to find out what an address is used for. */
+  /* NO NEGATIVE MARGIN. It was -.4rem to sit closer under the field, and the
+     field's own box is taller than its border — so the line printed straight
+     through the input. Pulling text upward next to something whose real
+     height you have not measured is how that always ends. */
+  .hint.small{margin:.55rem 0 .9rem;font-size:.78rem;line-height:1.5;
+    color:var(--muted);opacity:.85}
   .reasons{display:flex;gap:.4rem;flex-wrap:wrap;margin:0 0 .8rem}
   .reasons button{border:1px solid var(--line);background:var(--raise);color:var(--ink);
     border-radius:99px;padding:.45rem .9rem;font-size:.88rem;line-height:1}
@@ -3224,6 +3234,13 @@
       <input id="mailin" type="email" inputmode="email" autocomplete="email"
              spellcheck="false" autocapitalize="off">
     </div>
+    <!-- EVERYTHING ELSE THE ADDRESS IS FOR, UNDER THE BOX AND QUIET.
+         The headline is the one reason worth acting on; this is the rest of
+         the truth, including the occasional letter about who has joined.
+         Under the box rather than above it because somebody has already
+         decided by the time they are typing, and a second paragraph before
+         the field is a second thing to read before the one thing to do. -->
+    <p class="hint small" id="mailalso"></p>
     <div class="row">
       <button class="ghost" type="button" id="backshut"></button>
       <button class="go" type="submit" id="backgo"></button>
@@ -10061,6 +10078,7 @@ $("keycopy").addEventListener("click", () => {
 function openBack() {
   $("mailtitle").textContent = T("mail.title");
   $("mailbody").textContent = T("mail.body");
+  $("mailalso").textContent = T("mail.also");
   $("mailin").placeholder = T("mail.ph");
   $("backshut").textContent = T("key.cancel");
   $("backgo").textContent = T("mail.keep");

@@ -2509,21 +2509,43 @@ export const STRINGS = {
    * The address is never shown to anybody, which is said here rather than
    * assumed: on a board that asks for no phone number and no documents, a box
    * wanting an email needs to say in the same breath where it goes. */
-  "mail.title":        ["The way back in", "换手机之后怎么回来"],
+  /* IT SOLD THE WRONG THING, and that is why most people skip the box.
+     "The way back in" is insurance against something that has not happened
+     — losing a phone — and nobody acts on insurance. What an address
+     actually buys is the thing that brings anybody back to this board at
+     all: somebody wrote to you and you were not looking. That is the
+     headline; the phone is a second reason and goes below the fold. */
+  "mail.title":        ["Know when somebody writes",
+                        "有人给你留言，你会知道"],
   /* The tray row. It reports rather than asks — see drawSetts — so the label
      is the address itself when there is one. */
-  "set.mailNo":        ["No way back in", "还没有回来的路"],
+  "set.mailNo":        ["No address", "还没留邮箱"],
   "set.mailNoWhy": [
-    "Change phone and you would lose this page. An address fixes that.",
-    "换手机就找不回这个主页了。留个邮箱就不会。",
+    "Somebody could be writing to you and you would not know.",
+    "现在有人给你留言，你也不会知道。",
   ],
-  "set.mailYesWhy":    ["Six digits here gets you back in on any phone.",
-                        "任何手机上，六位数字就能回来。"],
+  "set.mailYesWhy":    ["Unread messages come here, and six digits gets you back in.",
+                        "没看的留言会发到这里，六位数字也能让你回来。"],
   "set.mailAdd":       ["Add", "去留"],
   "set.mailChange":    ["Change", "改"],
+  /* ONE SENTENCE, AND IT IS THE PROMISE. The three-clause version explained
+     six digits and new phones to somebody who had not agreed to care yet.
+     What they need before typing an address into anything is where it goes,
+     and the answer is nowhere. */
   "mail.body": [
-    "Leave an address and you can get back in from any phone: we send six digits, and that is the whole of it. Nobody on the board ever sees it.",
-    "留个邮箱。以后换手机，我们发你六位数字，你就能回来。板上没有人看得到这个地址。",
+    "Nobody on the board ever sees it.",
+    "板上没有人看得到这个地址。",
+  ],
+  /* AND EVERYTHING ELSE IT IS FOR, QUIETLY, UNDER THE BOX.
+     This line exists because of the letter to everybody — see
+     /api/admin/mailout. An address given for one purpose and used for a
+     second is the thing people are right to be angry about, and the fix is
+     not a policy page nobody opens: it is saying so in the same breath as
+     the asking. It also carries the phone, which used to be the headline
+     and is a perfectly good second reason. */
+  "mail.also": [
+    "It also gets you back in on a new phone — six digits, and that is the whole of it. Now and then we write about who has joined. One tap stops those.",
+    "换手机也靠它回来——六位数字，就这么简单。偶尔我们会写信告诉你板上来了什么人，不想收点一下就行。",
   ],
   "mail.ph":           ["your@email", "你的邮箱"],
   /* The waiting room's version of the same question. Written for somebody who
@@ -4381,11 +4403,12 @@ export const STRINGS = {
      rooms" — rooms are derived from what somebody says now. */
   "todo.say":          ["Say what you are looking for.", "写清楚你在找什么。"],
   "todo.goal":         ["Write a short bio.", "写一段简短介绍。"],
-  /* The row that stops somebody losing everything they are about to write.
-     Worded as the thing it buys rather than the thing it asks for: "Add an
-     email address" is a chore, "so you can get back in" is a reason. */
-  "todo.mail":         ["Add a way back in, for a new phone.",
-                        "留个回来的方式，换手机能用。"],
+  /* Worded as the thing it buys rather than the thing it asks for. It bought
+     the wrong thing: a spare key for a phone nobody has lost yet. What an
+     address is actually for here is knowing that somebody wrote — see
+     mail.title, which had the same fault and for the same reason. */
+  "todo.mail":         ["Get told when somebody writes to you.",
+                        "有人给你留言时收个提醒。"],
   "todo.level":        ["Take the level test.", "做一下水平测试。"],
   "todo.card":         ["Answer today’s card.", "答一下今天的卡片。"],
   "todo.post":         ["Post something.", "发一条内容。"],
