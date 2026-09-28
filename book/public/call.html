@@ -48,6 +48,7 @@
   .bar button{width:60px;height:60px;border-radius:50%;border:0;background:rgba(255,255,255,.18);color:#fff;display:grid;place-items:center;cursor:pointer;backdrop-filter:blur(8px)}
   .bar button.off{background:#fff;color:#111}
   .bar button.end{background:#d93025}
+  .bar #lng{font-size:19px;font-weight:800}
   .bar svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
   [hidden]{display:none!important}
 </style>
@@ -72,6 +73,7 @@
   <div class="bar">
     <button id="mic" aria-label="Microphone"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
     <button id="cam" aria-label="Camera"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="13" height="10" rx="2"/><path d="M16 11l5-3v8l-5-3"/></svg></button>
+    <button id="lng" aria-label="Language"></button>
     <button id="end" class="end" aria-label="Leave"><svg viewBox="0 0 24 24"><path d="M3 15c5-5 13-5 18 0l-3 3-3-2v-3c-2-1-4-1-6 0v3l-3 2z"/></svg></button>
   </div>
 </div>
@@ -164,8 +166,10 @@
   };
 
   // ---- SUBTITLES ----------------------------------------------------------
-  /* The other person's line: their words as they speak (in their language,
-     dimmed), then the translation in mine once the sentence is finished. */
+  /* The other person's line, in MY language only. While they talk: their
+     words if they are already in my language, otherwise "…" — the first
+     phone test showed English and then Chinese stacked on one screen, which
+     read as broken. Then the translation once the sentence is finished. */
   let fade = 0;
   function showSub(big, small, live) {
     const s = document.createElement("div");
@@ -181,16 +185,16 @@
     fade = setTimeout(() => box.replaceChildren(), 9000);
   }
   function hear(msg, fromServer) {
-    if (msg.t === "live" && !fromServer) showSub(msg.text, "", true);
+    if (msg.t === "live" && !fromServer) showSub(!msg.lang || msg.lang === lang ? msg.text : "…", "", true);
     if (msg.t === "cap" && fromServer && msg.who !== me) {
-      const mine = msg.lang === lang ? msg.text : (msg.tr && msg.tr[lang]) || msg.text;
-      showSub(mine, mine === msg.text ? "" : msg.text, false);
+      showSub(msg.lang === lang ? msg.text : (msg.tr && msg.tr[lang]) || msg.text, "", false);
     }
   }
 
   /* MY OWN WORDS, as the phone heard them, small in the corner — so a
      speaker can see it is listening, and catch it mishearing. */
   let lastLive = 0;
+  const HAN = /[\u3400-\u9fff\uf900-\ufaff]/; // same test as lib/calls.mjs
   const enc = new TextEncoder();
   function heard(text, final) {
     text = String(text || "").trim();
@@ -201,7 +205,7 @@
       // At most five a second: the other phone only needs to see it moving.
       if (Date.now() - lastLive < 200) return;
       lastLive = Date.now();
-      room.localParticipant.publishData(enc.encode(JSON.stringify({ t: "live", text })), { reliable: false, topic: "call" }).catch(() => {});
+      room.localParticipant.publishData(enc.encode(JSON.stringify({ t: "live", text, lang: HAN.test(text) ? "zh" : "en" })), { reliable: false, topic: "call" }).catch(() => {});
       return;
     }
     api("say", { me, text, lang }).catch(() => {});
@@ -244,6 +248,21 @@
     try { rec.start(); listening = true; } catch { /* already started */ }
   }
   $("mine").onclick = () => { if (blocked) { blocked = false; listening = false; listen(); } };
+  /* THE LANGUAGE, CHANGEABLE IN THE CALL. The first phone test had the wrong
+     one picked on one side, and the only way out was to hang up. One tap
+     swaps it: my dictation listens for the other language and the server
+     sends me translations into it. */
+  const drawLng = () => { $("lng").textContent = lang === "zh" ? "中" : "EN"; };
+  drawLng();
+  $("lng").onclick = () => {
+    lang = lang === "zh" ? "en" : "zh";
+    store.set("call:lang", lang); drawLangs(); drawLng();
+    if (me) api("say", { me, text: "", lang }).catch(() => {});
+    // Stopped, it restarts by itself in the new language (rec.onend); and
+    // this is a tap, so a phone that had refused will accept it now.
+    if (blocked) { blocked = false; listening = false; listen(); }
+    else try { rec && rec.stop(); } catch { /* not running */ }
+  };
   const micOn = () => { const a = tracks.find((t) => t.kind === "audio"); return !a || !a.isMuted; };
 
   // ---- THE CALL -----------------------------------------------------------
@@ -251,6 +270,7 @@
   async function start() {
     $("err").textContent = "";
     ended = false;
+    drawLng();
     listen(); // now, inside the tap — see THE DICTATION above
     try {
       if (!tracks.length) tracks = await LK.createLocalTracks({ audio: true, video: { facingMode: "user", resolution: LK.VideoPresets.h540.resolution } });

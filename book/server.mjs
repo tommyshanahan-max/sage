@@ -85,7 +85,10 @@ function send(res, code, body, type = "application/json; charset=utf-8") {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
-    "Cache-Control": type.startsWith("application/json") ? "no-store" : "public, max-age=300",
+    // Pages are re-checked every time: two phones on one call once ran two
+    // different versions of call.html for five minutes after a deploy, and
+    // the call looked broken on one side only. Scripts and images keep 300s.
+    "Cache-Control": type.startsWith("application/json") ? "no-store" : type.startsWith("text/html") ? "no-cache" : "public, max-age=300",
     "X-Content-Type-Options": "nosniff",
   });
   res.end(typeof body === "string" || Buffer.isBuffer(body) ? body : JSON.stringify(body));

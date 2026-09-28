@@ -72,9 +72,17 @@ export async function routes(req, res, p, { send, readBody, allowed, ip }) {
   // SAY: one finished sentence, as the speaker's phone heard it.
   const text = String(b.text || "").replace(/[\u0000-\u001f]/g, " ").trim().slice(0, 300);
   const who = String(b.me || "");
-  if (!text || !/^p-[a-f0-9]{16}$/.test(who)) return send(res, 400, { error: "empty" }), true;
-  const from = langOf(b.lang);
-  if (people.has(who)) people.get(who).lang = from; else people.set(who, { lang: from, name: "" });
+  if (!/^p-[a-f0-9]{16}$/.test(who)) return send(res, 400, { error: "empty" }), true;
+  /* WHAT WAS SAID IS READ FROM THE WORDS, not from the button. The button is
+     what this person reads (and what their dictation listens for); picked
+     wrong, it used to label English as Chinese, and the other phone was sent
+     English "translated" into English — nothing, as far as anybody could see.
+     Han characters mean Chinese; anything else is English. */
+  const reads = langOf(b.lang);
+  if (people.has(who)) people.get(who).lang = reads; else people.set(who, { lang: reads, name: "" });
+  // A language changed mid-call arrives with no words: noted, nothing said.
+  if (!text) return send(res, b.lang ? 200 : 400, b.lang ? { ok: true } : { error: "empty" }), true;
+  const from = /[\u3400-\u9fff\uf900-\ufaff]/.test(text) ? "zh" : "en";
   // Into every language somebody else in the call speaks; when nobody else
   // has said, into the other one of the two.
   const others = [...people.entries()].filter(([k]) => k !== who).map(([, v]) => v.lang);
