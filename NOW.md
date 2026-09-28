@@ -2008,7 +2008,13 @@ dictation is blocked). Translation is Claude on the box's ANTHROPIC_API_KEY.
 Tested here with two browsers and simulated speech + fake translation: video
 both ways, live words, translated subtitles, third person refused. **Tom
 reported it working on his phone** after the fix that starts dictation
-inside the Join tap (iOS refuses it otherwise). Book now
+inside the Join tap (iOS refuses it otherwise).
+**NOT YET DEPLOYED (29 Sep):** 786918c (中/EN button in the call, spoken
+language read from the words, one subtitle line) and 59ebf9e (send on a
+pause — iPhone withholds "final"; logs `subtitle en 812ms`). Tom's first
+tests were two phones in one room: BOTH dictated his voice, one set to 中,
+so each showed a different "translation". Mute the phone not being spoken
+into. Real test with his wife next. Haiku for speed offered, not chosen. Book now
 has one npm dependency (the Anthropic SDK), installed from its lockfile.
 
 ## Book — lessons widget and video room, live 26 Sep, watched working
