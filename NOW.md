@@ -1969,6 +1969,26 @@ for it, and the authorise screen settles it.
 sheets are separate files and unskinned. One tap deep and it is the board
 again.
 
+## 28 Sep — disk was full; Book and Laonei's key are live
+
+- **The box's disk filled up** (95%, 3.7G free) and the board's writes were
+  failing: `waiting room lift failed: ENOSPC`. Cause: `make save` runs
+  before every deploy and never deleted a copy — 572 of them, 29G in
+  `~/tc/backups`. Cleared to the newest 10 (disk 50%, 37G free), and
+  `make save` now keeps ten. If ENOSPC is ever seen again, `du -xh /
+  --max-depth=3 | sort -h | tail` before anything else.
+- **The box is on `claude/messenger-device-improvement-azbdmn`**, which
+  contains all of `claude/coding-platform-vpn-alternative-i06xoc` as of
+  28 Sep. Deploying that branch without merging this one takes Book — and
+  Laonei's live API — off the box; it happened after 26 Sep.
+- `POST https://thexchange.app/book/api/lives` answers 401 (watched, 28 Sep).
+  livekit and `book-turn` (3479) are up.
+- **Laonei's key is installed**: `BOOK_APP_KEY` in
+  `/root/fern/deploy/fern/.env` on 45.32.58.178 (Laonei's own box, `fern`
+  service), piped there from this box so it was never on a screen. Rotate
+  with the same piped command (in this session's history / book/README).
+- Square not yet set up — no Buy or gift buttons until `make book-square`.
+
 ## Book — lessons widget and video room, live 26 Sep, watched working
 
 A shelf of teachers, their free hours, bookings, and a video room per lesson,
