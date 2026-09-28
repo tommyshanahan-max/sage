@@ -23,6 +23,7 @@
 import { createHmac, randomBytes } from "node:crypto";
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import path from "node:path";
+import { TURN_PORT } from "./room.mjs";
 
 const DIR = process.env.BOOK_DIR || "/data";
 const IP = (process.env.BOOK_TURN_IP || "").trim();
@@ -66,8 +67,8 @@ export function liveSetup() {
     `  node_ip: ${IP}`,
     ...(turn ? [
       "  turn_servers:",
-      `    - {host: ${IP}, port: 3478, protocol: udp, secret: ${turn}}`,
-      `    - {host: ${IP}, port: 3478, protocol: tcp, secret: ${turn}}`,
+      `    - {host: ${IP}, port: ${TURN_PORT}, protocol: udp, secret: ${turn}}`,
+      `    - {host: ${IP}, port: ${TURN_PORT}, protocol: tcp, secret: ${turn}}`,
     ] : []),
     // A backstop only: each live's own limit is set when its room is made
     // (see `ensureRoom`) and checked before a viewer is let in.

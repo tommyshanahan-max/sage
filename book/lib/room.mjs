@@ -30,6 +30,13 @@ import path from "node:path";
 const DIR = process.env.BOOK_DIR || "/data";
 const TURN_IP = (process.env.BOOK_TURN_IP || "").trim();
 const TURN_HOST = (process.env.BOOK_TURN_HOST || TURN_IP).trim();
+/* 3479, NOT THE USUAL 3478. The board's calls in Chat got a relay of their
+   own (board/lib/call.js) on 3478, on the same box, with host networking —
+   two relays cannot answer on one port, and the second to start simply
+   exits. Each keeps its own password and its own media ports (this one
+   49160–49200, the board's 49210–49250), so neither can reach into the
+   other's calls. Exported: LiveKit is told about this relay too. */
+export const TURN_PORT = Number(process.env.BOOK_TURN_PORT) || 3479;
 
 /* The relay's password, and the config file the relay container reads. Made
    once and kept; rewritten on every start so a changed address takes effect. */
@@ -44,7 +51,7 @@ export function turnSetup() {
     writeFileSync(f, SECRET, { mode: 0o600 });
   }
   writeFileSync(path.join(DIR, "turnserver.conf"), [
-    "listening-port=3478",
+    `listening-port=${TURN_PORT}`,
     "min-port=49160",
     "max-port=49200",
     `external-ip=${TURN_IP}`,
@@ -72,8 +79,8 @@ export function iceServers() {
   const user = `${Math.floor(Date.now() / 1000) + 86400}:book`;
   const cred = createHmac("sha1", SECRET).update(user).digest("base64");
   return [
-    { urls: [`stun:${TURN_HOST}:3478`] },
-    { urls: [`turn:${TURN_HOST}:3478?transport=udp`, `turn:${TURN_HOST}:3478?transport=tcp`], username: user, credential: cred },
+    { urls: [`stun:${TURN_HOST}:${TURN_PORT}`] },
+    { urls: [`turn:${TURN_HOST}:${TURN_PORT}?transport=udp`, `turn:${TURN_HOST}:${TURN_PORT}?transport=tcp`], username: user, credential: cred },
   ];
 }
 

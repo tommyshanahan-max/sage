@@ -922,6 +922,12 @@ services:
     logging: *logs
     build:
       context: ./board
+      # WHICH COMMIT THIS IMAGE HOLDS — see the note in board/Dockerfile
+      # and `make version`. BUILT comes from the environment, which the
+      # Makefile fills from git; a build run any other way gets "unknown",
+      # which is honest rather than a claim about what is deployed.
+      args:
+        BUILT: ${BUILT:-unknown}
     image: tomscoding-board:latest
     container_name: tomscoding-board
     restart: unless-stopped
@@ -1102,6 +1108,23 @@ services:
       # existed. "read" is what people mean by invite only; "post" lets anybody
       # read and only members write.
       BOARD_INVITE: ${TOMSCODING_BOARD_INVITE:-}
+      # THE PUBLIC DOOR. "on" and anybody who fills in the form gets a
+      # profile, browses everybody, and can write to everybody who arrived the
+      # same way. What they cannot do is open with somebody a member brought
+      # in — see pairState. Anything else, including unset, and the board is
+      # what it was: a code or nothing.
+      # It is here because BOARD_PUBLIC without this line is a variable the
+      # container never sees, which is the trap this file exists to close.
+      BOARD_PUBLIC: ${TOMSCODING_PUBLIC:-}
+      # THE DAILY REPORT CARD, OFF UNLESS SOMEBODY MEANS IT. Named here or
+      # the container never sees it, whatever .env says — the trap this file
+      # exists to avoid and one this box has fallen into before.
+      BOARD_CARD: ${TOMSCODING_CARD:-}
+      BOARD_CARD_HOUR: ${TOMSCODING_CARD_HOUR:-}
+      # WHOSE PHONE GETS THE WHOLE-BOARD REPORT INSTEAD OF A MEMBER'S CARD.
+      # A handle, the way BOARD_DEALIO_OWNER names one. Unset, nobody gets it
+      # and everybody including him gets the ordinary member card.
+      BOARD_BOSS: ${TOMSCODING_BOSS:-}
       # THE STANDING WAY BACK IN — one code, chosen, never spent, that puts
       # one named person's page onto whatever browser types it. Set both or
       # there is no such code. See the note over BACK_CODE in server.js for
@@ -1174,8 +1197,16 @@ services:
       # that "this is too tight" is a line in .env and a restart, which is the
       # difference between tuning a rule during a test week and shipping to
       # change a number. See standing() in board/server.js.
-      BOARD_BRING_DAYS: ${TOMSCODING_BOARD_BRING_DAYS:-1}
-      BOARD_BRING_SAID: ${TOMSCODING_BOARD_BRING_SAID:-2}
+      #
+      # A PAGE, AND NOTHING ELSE. "create profile to invite someone." These
+      # were a day old and two posts this week ON TOP of having a page, so a
+      # member who made their page an hour ago and had nothing to post about
+      # was told to come back tomorrow — with no way to tell, from the screen,
+      # that a page had not been the thing missing. The face test inside
+      # standing() is the rule now and it is the one Tom said out loud.
+      # Both are still numbers: a line in .env puts either back.
+      BOARD_BRING_DAYS: ${TOMSCODING_BOARD_BRING_DAYS:-0}
+      BOARD_BRING_SAID: ${TOMSCODING_BOARD_BRING_SAID:-0}
       BOARD_BRING_WEEK: ${TOMSCODING_BOARD_BRING_WEEK:-7}
       BOARD_GUEST_ROOM: ${TOMSCODING_BOARD_GUEST_ROOM:-3}
       # Handles that skip the standing rule entirely. Whoever runs the board is
@@ -1288,6 +1319,15 @@ services:
       BOARD_GOOGLE_SECRET: ${TOMSCODING_BOARD_GOOGLE_SECRET:-}
       BOARD_DEMO_CODE: ${TOMSCODING_BOARD_DEMO_CODE:-}
       BOARD_DEMO_URL: ${TOMSCODING_BOARD_DEMO_URL:-}
+      # THE BOX'S PUBLIC ADDRESS, for the video relay below. Not a secret — it
+      # is the address every site here already answers on. Unset it and calls
+      # in Chat work on one network and nowhere else, which the call screen
+      # says out loud rather than spinning. See board/lib/call.js.
+      BOARD_TURN_HOST: ${TOMSCODING_TURN_IP:-45.77.8.166}
+      # The relay's password, and it is meant to be empty. The board mints one
+      # on first start and writes it where the relay reads it; a value here
+      # overrides that, which is only useful when one relay serves two boards.
+      BOARD_TURN_SECRET: ${TOMSCODING_TURN_SECRET:-}
     volumes:
       - board_data:/data
     expose:
@@ -1308,6 +1348,36 @@ services:
         limits:
           memory: ${TOMSCODING_BOARD_MEMORY:-256m}
     cpu_shares: ${TOMSCODING_BOARD_CPU_SHARES:-128}
+
+  # THE VIDEO RELAY for calls in Chat (TURN). Most calls go phone to phone and
+  # never touch it; it carries the ones where a network — Chinese mobile
+  # networks especially — will not let two phones reach each other at all.
+  #
+  # HOST NETWORKING, because a relay has to answer on the box's own address, on
+  # 3478 and on a range of UDP ports for the media itself. Its settings,
+  # password included, are written by the board container on start (see
+  # board/lib/call.js) into the volume mounted here read-only, so there is
+  # nothing to put in .env and nothing for anybody to do once per machine.
+  #
+  # IT STARTS BEFORE THAT FILE EXISTS, on a box that has never run this, and
+  # exits. `restart: unless-stopped` brings it back a second later and by then
+  # the board has written it. Worth knowing when reading `make ps` on a fresh
+  # box: a turn container that has restarted twice is this, not a fault.
+  #
+  # NOT A GENERAL-PURPOSE RELAY. It will not reach the containers on this box,
+  # it will not reach the cloud's metadata address, it relays no TCP, and each
+  # login is capped — see the conf written in board/lib/call.js.
+  turn:
+    profiles: ["board"]
+    image: coturn/coturn:4.6
+    container_name: tomscoding-turn
+    restart: unless-stopped
+    network_mode: host
+    depends_on:
+      - board
+    volumes:
+      - board_data:/board:ro
+    command: ["-c", "/board/turnserver.conf"]
 
   # ---------------------------------------------------------------------------
   # The demo board: the same app, with nobody real in it.
@@ -1381,19 +1451,21 @@ services:
     networks:
       - tomscoding
 
-  # THE VIDEO RELAY for Book's lesson rooms (TURN). Most calls go phone to
-  # phone and never touch it; it carries the ones where a network — Chinese
-  # mobile networks especially — will not let two phones reach each other.
+  # THE VIDEO RELAY for Book's lesson rooms and lives (TURN). Most calls go
+  # phone to phone and never touch it; it carries the ones where a network —
+  # Chinese mobile networks especially — will not let two phones reach each
+  # other.
   #
   # HOST NETWORKING, because a relay has to answer on the box's own address,
-  # on 3478 and on a range of UDP ports (49160–49200) for the media itself.
-  # Its settings, password included, are written by the book container on
-  # start (see book/lib/room.mjs) into the volume mounted here read-only, so
-  # there is nothing to put in .env. It never relays into private addresses.
-  turn:
+  # on 3479 and on a range of UDP ports (49160–49200) for the media itself.
+  # 3479 because the board's own relay (`turn`, above) has 3478 — see
+  # book/lib/room.mjs. Its settings, password included, are written by the
+  # book container on start into the volume mounted here read-only, so there
+  # is nothing to put in .env. It never relays into private addresses.
+  book-turn:
     profiles: ["board"]
     image: coturn/coturn:4.6
-    container_name: tomscoding-turn
+    container_name: tomscoding-book-turn
     restart: unless-stopped
     network_mode: host
     depends_on:
@@ -1524,6 +1596,9 @@ services:
       # that are meant to know nothing about each other.
       BOARD_SALT: ${TOMSCODING_WL_SALT:-}
       BOARD_INVITE: ${TOMSCODING_WL_INVITE:-}
+      # ITS OWN SWITCH, AND NOT THE MAIN BOARD'S. A partner's board opening
+      # its door because ours did is a decision nobody made.
+      BOARD_PUBLIC: ${TOMSCODING_WL_PUBLIC:-}
       BOARD_CONTACT: ${TOMSCODING_BOARD_CONTACT:-}
       # HIS KEY, AND THE WHOLE REASON THIS SERVICE EXISTS. Never ours: a
       # partner's box charging on our account would put his clients' money in
@@ -1589,6 +1664,11 @@ services:
       # are the seeded member: matches, cards, two conversations. See DEMO_TAG
       # in board/server.js, and `make demo-board`, which seeds against exactly
       # this value.
+      # THE SECOND SWITCH, AND THE ONLY PLACE IT IS SET. BOARD_DEMO_DEVICE
+      # alone does nothing now: a board that is not this one ignores it and
+      # says so at boot. It cost two people seeing Tom's whole inbox —
+      # see the note over DEMO_BOARD in board/server.js.
+      BOARD_DEMO: "1"
       BOARD_DEMO_DEVICE: ${TOMSCODING_BOARD_DEMO_DEVICE:-demoreviewer00000000000000000001}
       BOARD_NOTES: "on"
       # Apple asks for a person a reader can reach on any app carrying other

@@ -169,9 +169,34 @@
     color:var(--ink);border-radius:99px;padding:.65rem 1rem;font-size:.9rem}
   .pfacts button.warn{color:var(--t5);border-color:var(--line)}
 
+  /* THE WARNING, COARSE FIRST AND FINER ON A TAP.
+   *
+   * It was the four-line paragraph now behind the summary, sitting under
+   * every conversation on the board — the heaviest block on a screen whose
+   * whole job is the two lines above it. Nothing is lost by moving it one tap
+   * deeper; it was not being read where it was.
+   *
+   * WHAT STAYS ON THE SCREEN IS THE RULE ITSELF, not a label saying there is
+   * a warning here. "Safety" would be a heading to read before the thing;
+   * this line IS the thing, and the paragraph behind it is the detail for
+   * whoever wants it. <details> rather than a script, so it works before any
+   * JavaScript has run and a keyboard opens it the way a keyboard expects. */
   .safety{margin:2rem 0 0;padding:.95rem 1.05rem;background:var(--raise);
     border:1px solid var(--line);border-left:3px solid var(--t3);border-radius:.6rem;
     font-size:.86rem;line-height:1.6;color:var(--ink-2)}
+  .safety summary{cursor:pointer;list-style:none;display:flex;gap:.5rem;
+    align-items:flex-start;font-weight:600;color:var(--ink)}
+  /* Safari draws its own triangle through list-style:none. */
+  .safety summary::-webkit-details-marker{display:none}
+  /* OUR OWN MARKER, because the browser's sits on the first line of a wrapped
+     sentence at a size nobody can see. A chevron that turns. */
+  .safety summary::before{content:"";flex:0 0 auto;width:.5rem;height:.5rem;
+    margin:.42rem .1rem 0 0;border-right:2px solid var(--t3);
+    border-bottom:2px solid var(--t3);transform:rotate(-45deg);
+    transition:transform .15s ease}
+  .safety[open] summary::before{transform:rotate(45deg);margin-top:.3rem}
+  .safety p{margin:.7rem 0 0}
+  @media (prefers-reduced-motion:reduce){ .safety summary::before{transition:none} }
 </style>
 </head>
 <body>
@@ -193,7 +218,10 @@
   <div id="list"></div>
   <div class="none" id="none" hidden></div>
 
-  <p class="safety" id="safety"></p>
+  <details class="safety" id="safety">
+    <summary id="safetyk"></summary>
+    <p id="safetyfull"></p>
+  </details>
 </main>
 
 <div class="sheet" id="sheet" hidden>
@@ -240,7 +268,8 @@ async function setLooking(on) {
 function paint() {
   $("title").textContent = T("bud.title");
   $("rulelabel").textContent = T("bud.title");
-  $("safety").textContent = T("bud.safety");
+  $("safetyk").textContent = T("bud.safetyShort");
+  $("safetyfull").textContent = T("bud.safety");
   $("back").setAttribute("aria-label", T("bud.back"));
 
   const n = PEOPLE.length;

@@ -6,6 +6,11 @@
      browser to the one seeded identity. See BOARD_DEMO_DEVICE in server.js. -->
 {{DEMO}}
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<!-- FIRST, AND NOT A MODULE. A page that dies in the browser said nothing to
+     anybody — see public/oops.js. It has to run before the module below so it
+     can report the module failing to parse, which is what a blank screen with
+     a working bar under it actually is. -->
+<script src="/oops.js"></script>
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" href="/favicon.png" sizes="192x192">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -203,6 +208,15 @@
 
   .menote{margin:.5rem 0 0;font-size:.82rem;color:var(--muted);text-align:center;
     max-width:24rem;line-height:1.5}
+  /* The rest of what an address is for, quieter, under the first line. Two
+     short lines rather than one long one: the promise is what somebody needs
+     before typing, the rest is what they are owed. */
+  .menote.small{font-size:.76rem;opacity:.85;margin-top:.35rem}
+  /* A RULE BEFORE THE ADDRESS. Everything above it is the page other people
+     read; this is not, and without the break the two run together under one
+     heading — which is how an email box ended up three lines under "no
+     email" looking like a contradiction. */
+  .meline{border:0;border-top:1px solid var(--hair);margin:1.5rem 0 1.1rem}
 
   /* ---- the key ------------------------------------------------------------
      Shut by default. It is the one string here that is worth stealing, and a
@@ -293,10 +307,21 @@
      than inside a form, so it needs air on both sides and a line to say the
      picking landed. */
   .saysay{margin:1.4rem 0 0}
+  /* Until there is something to put in it. visibility rather than display, so
+     the row is already the height it will be — that is the whole point. */
+  .saysay.waiting{visibility:hidden}
+  /* Held, not hidden: the page keeps its scroll position and the tab bar
+     stays where it is. Reversed by settled(), and by a timer that cannot be
+     beaten by a network that never answers — a blank screen because
+     /api/me 500ed is a worse failure than the jump this is fixing. */
+  #vbrowse.settling{visibility:hidden}
   /* THE SHUT ROW. Deliberately not a card: a second bordered box between the
      deck and the waiting list is a third thing to read on a screen that has
      two. Just the icon, the sentence in the reader's own words, and a caret. */
-  .sayhead{display:flex;width:100%;align-items:center;gap:.7rem;
+  /* min-height so the EMPTY button is the same height as the filled one.
+     Without it the reserved row is 0 and reserving it achieves nothing —
+     measured at 44px with the icon, one line of text and the caret in it. */
+  .sayhead{display:flex;width:100%;align-items:center;gap:.7rem;min-height:2.75rem;
     background:none;border:0;padding:.55rem 0;font:inherit;color:var(--ink);
     text-align:left;cursor:pointer}
   .sayhead .sayicon{flex:0 0 auto;margin:0}
@@ -754,6 +779,14 @@
   .sendbtn{display:block;width:100%;margin:.85rem 0 0;padding:.7rem 1rem;
     border:0;background:var(--accent);color:var(--accent-ink);
     border-radius:99px;font-size:1rem;font-weight:500}
+  /* THE SECOND NAMED ROUTE IS NOT A SECOND PRIMARY. Two filled buttons of the
+     same colour, one above the other, is a screen asking somebody to choose
+     between two identical things — and on this board the first one is the
+     answer far more often than the second. Same size and same shape, outlined
+     rather than filled: it is the same kind of action, not the same weight.
+     Tighter to the one above it, so the pair reads as one choice. */
+  .sendbtn.alt{margin-top:.5rem;background:transparent;color:var(--accent);
+    border:1px solid var(--accent)}
   .sendbtn:hover{opacity:.92}
   .feedbtn{display:block;width:100%;margin:.5rem 0 0;padding:.5rem 1rem;border:0;
     background:none;color:var(--accent);font-size:.88rem}
@@ -1681,6 +1714,16 @@
     font-size:.88rem;white-space:nowrap;border:1px solid var(--accent);
     border-radius:99px;padding:.35rem .8rem}
   .hint{margin:0 0 .9rem;font-size:.86rem;line-height:1.55;color:var(--muted)}
+  /* THE REST OF THE TRUTH, UNDER THE BOX. Quieter than the promise above the
+     field on purpose: it is what somebody reads if they want to, and it is
+     where the letters about who has joined are declared. Nobody should have
+     to open a policy page to find out what an address is used for. */
+  /* NO NEGATIVE MARGIN. It was -.4rem to sit closer under the field, and the
+     field's own box is taller than its border — so the line printed straight
+     through the input. Pulling text upward next to something whose real
+     height you have not measured is how that always ends. */
+  .hint.small{margin:.55rem 0 .9rem;font-size:.78rem;line-height:1.5;
+    color:var(--muted);opacity:.85}
   .reasons{display:flex;gap:.4rem;flex-wrap:wrap;margin:0 0 .8rem}
   .reasons button{border:1px solid var(--line);background:var(--raise);color:var(--ink);
     border-radius:99px;padding:.45rem .9rem;font-size:.88rem;line-height:1}
@@ -1791,6 +1834,14 @@
   .pc .type.fol::before{content:"\2713\00a0"}
   .pc .type.fol:hover{background:rgba(255,255,255,.42)}
   .pc .type.fol:focus-visible{outline:2px solid #fff;outline-offset:2px}
+  /* STILL WAITING FOR A VOUCH, and this badge is on nobody's card but the one
+     a member is looking at — the flag behind it is not sent to anybody else.
+     Quieter than the other two on purpose: it is a fact a member can act on,
+     not a mark against the person wearing it, and the loudest badge on
+     somebody's face should never be the one about what they are not yet.
+     Outlined rather than filled, so it reads as a note and not a rank. */
+  .pc .type.wait{background:transparent;border:1px solid rgba(255,255,255,.45);
+    color:rgba(255,255,255,.88);letter-spacing:.06em}
   /* THE MARK, on the photograph beside the name. Same badge family as the four
      letters — it is one more thing about this person, not a decoration on
      them — but it carries its own name in words, because a shape nobody can
@@ -1811,12 +1862,53 @@
     font-size:.7rem;font-weight:500;background:rgba(255,255,255,.16);color:rgba(255,255,255,.6)}
   .pc .pdays b.on{background:#fff;color:#14203a}
 
-  /* The peek — see the function of that name. Dark enough that serif text on
-     any photograph reads, and it fills the card rather than the screen. */
+  /* The peek — see the function of that name. It fills the card rather than
+     the screen, and the face stays visible through it.
+     .9 AND A 3px BLUR WAS A BLACK MODAL. Ninety per cent of #080b12 over a
+     photograph leaves a photograph nobody can see, so tapping a face to read
+     about that person took the face away — and the card underneath still
+     showed its own name faintly through the last tenth, so the screen carried
+     the same name twice, once solid and once as a ghost.
+     The legibility is the blur's job, not the ink's. 14px of blur makes serif
+     text read against anything, including a white studio wall, and at .62 the
+     person is still recognisably there behind their own words. A backdrop
+     filter is the one thing that lets those two be true at once.
+     The floor is there because a browser with no backdrop-filter gets nothing
+     from the blur, and .62 over a bright photograph is unreadable — so those
+     get the old opaque wash instead of an unreadable one. */
   .pc .peek{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;
     justify-content:center;padding:1.2rem;border-radius:1.3rem;
-    background:rgba(8,11,18,.9);-webkit-backdrop-filter:blur(3px);
-    backdrop-filter:blur(3px);animation:peekin .16s ease}
+    background:rgba(8,11,18,.88);animation:peekin .16s ease}
+  @supports ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+    .pc .peek{background:rgba(8,11,18,.62);
+      -webkit-backdrop-filter:blur(14px) saturate(.9);
+      backdrop-filter:blur(14px) saturate(.9)}
+  }
+  /* WHILE IT IS OPEN, THE PHOTOGRAPH IS THE WHOLE CARD.
+   *
+   * The peek fills the card, and the bottom two fifths of the card is
+   * .scrim — a SOLID #0a0e16 panel. A backdrop blur over a solid colour is
+   * that colour, so the panel came out as a photograph on top and a flat
+   * black slab underneath, with the button floating on the line between
+   * them and dead space below it. That is what "the button is not fitted to
+   * the space" was: the space was two different spaces.
+   *
+   * So the picture is stretched over the whole card for as long as the peek
+   * is up, and the scrim goes with it — its name and sentence are both
+   * repeated inside the panel anyway, which is the duplication that was
+   * ghosting through before. One surface, one blur, content centred in it.
+   *
+   * THE PICTURE MOVES TO THE CARD, IT DOES NOT MOVE ITSELF. The first try
+   * made the <img> position:absolute so it would cover the scrim, and an
+   * absolute child is out of flow — so the card had nothing setting its
+   * height any more and collapsed from 554px to 193. The photograph is
+   * painted as the CARD's own background instead (see peek(), which has the
+   * id and the crop already), and the img and the scrim are only hidden:
+   * hidden, so both keep their boxes and the card is exactly the height it
+   * was a moment ago. Nothing moves when it opens. */
+  .pc.peeking img,.pc.peeking .noshot,.pc.peeking .scrim{visibility:hidden}
+  /* The share button belongs to the card, not to what is over it. */
+  .pc.peeking .share{display:none}
   @keyframes peekin{from{opacity:0}to{opacity:1}}
   @media (prefers-reduced-motion:reduce){.pc .peek{animation:none}}
   .pc .peekx{position:absolute;top:.55rem;right:.6rem;width:2.1rem;height:2.1rem;
@@ -1830,8 +1922,12 @@
     line-height:1.55;color:rgba(255,255,255,.92);white-space:pre-wrap}
   .pc .peekgo{width:100%;padding:.8rem 1rem;border:0;border-radius:99px;
     background:var(--accent);color:var(--accent-ink);font:inherit;font-size:1rem;
-    cursor:pointer}
+    font-weight:600;cursor:pointer}
   .pc .peekgo:focus-visible{outline:2px solid #fff;outline-offset:2px}
+  /* The panel itself takes focus when it opens — see peek(). It is not a
+     control, so it does not wear a ring for it. */
+  .pc .peek:focus{outline:none}
+  .pc .peek:focus-visible{outline:none}
   .pacts{display:flex;gap:.6rem;width:100%}
   /* Flex hands a child its longest word before it takes space from a sibling,
      so both need telling they may be narrower than their content. */
@@ -1867,6 +1963,20 @@
      the membership after it in the quieter voice. A tinted band rather than a
      line of grey, because it is the one thing on this screen that is about
      the place and not about a person. */
+  /* MEMBERS / EVERYONE, over the deck. A member's board holds two kinds of
+     person now and this is the only control that says so — so it is drawn as
+     two halves of one object rather than as a button that changes its own
+     label, which never tells you what the other state is.
+     It sits directly above the faces because it decides which faces, and it
+     is absent entirely for a reader with nobody to filter out. */
+  .tiertog{display:flex;gap:.25rem;margin:0 0 .9rem;padding:.25rem;
+    border-radius:99px;background:var(--raise)}
+  .tiertog button{flex:1 1 0;border:0;background:transparent;font:inherit;
+    font-size:.86rem;font-weight:600;color:var(--muted);padding:.5rem .6rem;
+    border-radius:99px;cursor:pointer}
+  .tiertog button[aria-pressed="true"]{background:var(--card);color:var(--ink);
+    box-shadow:0 1px 2px rgba(0,0,0,.14)}
+  .tiertog button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   .atdoor{margin:0 0 .9rem;padding:.6rem .9rem;border-radius:.7rem;
     background:var(--raise);text-align:center;font-size:.86rem;color:var(--muted);
     font-variant-numeric:tabular-nums}
@@ -2123,13 +2233,13 @@
            Putting something up moved to the top right of the screen, which is
            where WeChat keeps its own plus. -->
       <a href="/notes" id="navnotes">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v12H4z M4 7l8 6 8-6"/></svg>
-        <span id="navnoteslabel">Messages</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.8-.8L3 21l1.9-5A8.4 8.4 0 0 1 12 3.1a8.4 8.4 0 0 1 9 8.4z"/></svg>
+        <span id="navnoteslabel">Chat</span>
         <i class="badge" id="navnotesn" hidden></i>
       </a>
       <a href="/cards" id="navcards">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18v12H3z M3 10h18"/></svg>
-        <span id="navcardslabel">Cards</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.6 13.4a4 4 0 0 0 5.7 0l2.4-2.4a4 4 0 0 0-5.7-5.7l-1.4 1.4 M13.4 10.6a4 4 0 0 0-5.7 0l-2.4 2.4a4 4 0 0 0 5.7 5.7l1.4-1.4"/></svg>
+        <span id="navcardslabel">Connects</span>
         <i class="badge" id="navcardsn" hidden></i>
       </a>
       <a href="/browse" id="navbrowse">
@@ -2206,7 +2316,7 @@
          one line in it. -->
     <div class="plusmenu" id="plusmenu" hidden role="menu">
       <a href="/notes" id="plusnotes" role="menuitem">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v12H4z M4 7l8 6 8-6"/></svg>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.8-.8L3 21l1.9-5A8.4 8.4 0 0 1 12 3.1a8.4 8.4 0 0 1 9 8.4z"/></svg>
         <span></span>
       </a>
       <button type="button" id="plusinv" role="menuitem">
@@ -2366,8 +2476,33 @@
            somebody reading their own header should see both. -->
       <span class="url" id="myinvurl"></span>
       <span class="tap" id="myinvtap"></span>
-      <button class="sendbtn" type="button" id="myinvsend"></button>
-      <button class="feedbtn" type="button" id="myinvfeed"></button>
+      <!-- TWO WAYS TO SEND IT, AND NOTHING ELSE.
+           This was "Send the invite" and "Put it on the feed", and the second
+           one published a password to everybody two lines under the sentence
+           saying "One person, then it changes". Said plainly: it does not
+           make sense. What belongs in a sheet called Bring somebody in is
+           how to get it to them, so that is what the two buttons are now —
+           the phone's own share sheet, and the clipboard for everywhere the
+           share sheet is not offered, which inside WeChat is everywhere. -->
+      <!-- NAMED ROUTES, NOT A VERB.
+           "Send the invite" hands the job to the phone's share sheet and
+           hopes. WhatsApp itself is the model here: it does not say "share",
+           it says INVITE TO WHATSAPP, because the useful button names where
+           the person you are thinking of actually is. Two names cover
+           everybody this board is for — the Chinese side is on WeChat and
+           the other side is on WhatsApp — and the clipboard is underneath
+           for everything else.
+           WeChat first: it is the one this product is built around, and a
+           page inside WeChat cannot open a share sheet at all. -->
+      <button class="sendbtn" type="button" id="myinvwx"></button>
+      <!-- THREE, AND THESE THREE. WeChat is where the Chinese half of this
+           board already is; a phone number and an email address are the two
+           things everybody else has. WhatsApp was here for a moment and is
+           not: it is one more app to be on, and the two below it reach
+           somebody whether they are on it or not. -->
+      <button class="sendbtn alt" type="button" id="myinvsms"></button>
+      <button class="sendbtn alt" type="button" id="myinvmail"></button>
+      <button class="feedbtn" type="button" id="myinvsend"></button>
       <!-- THE OTHER HALF OF INVITING SOMEBODY. The code above lets one person
            through the door, which is right for the one you would vouch for by
            name and useless for the twenty you would happily tell. This is a
@@ -2488,7 +2623,20 @@
        They are separate now. Browse is people; the Feed is words; the bar
        switches between them and the addresses stay real, so /browse and
        /feed are still two places you can send somebody. See showView. -->
-  <div id="vbrowse">
+  <!-- SETTLING: nothing above the deck is painted until /api/me has said
+       which blocks exist.
+       The rows up here are conditional on a person the page does not have
+       yet — "Add your photo" is 96px and appears only for somebody without
+       one; the way-back row, the door count and the sentence fold are the
+       same shape of question. So the page painted one layout, held it for as
+       long as the network took, and then dropped a block in above the deck
+       and shoved everything down. Measured at 0.21 of layout shift in that
+       one move, on a page whose whole budget is 0.1, and it is what "jumping
+       between two different builds" is.
+       A conditional block cannot be reserved — a gap held for a row most
+       people never see is the same fault upside down. The only honest answer
+       is not to draw a layout that is about to be wrong. See settled(). -->
+  <div id="vbrowse" class="settling">
   <!-- "BROWSE PEOPLE" is what the tab under this screen says. A heading that
        repeats the tab that opened it is a line of the screen spent saying
        where you already know you are. Hidden rather than removed: drawStrings
@@ -2545,7 +2693,17 @@
        "1 of 6", off the bottom of a phone. A filter under its own results
        reads as a footer. It is the reason these six and not others, so it goes
        where a reason goes: first. -->
-  <section class="saysay" id="saysay" hidden>
+  <!-- NOT `hidden`. It used to be, and drawSays unhid it when /api/me came
+       back — so the page painted without this fold, then dropped it in above
+       the deck and shoved the whole card down. Measured as a layout shift of
+       0.129 on its own, which is most of a page that scored 0.194 against a
+       0.1 budget, and it is what "jumping between two different builds"
+       looks like from a phone.
+       It holds its row from the first paint instead and only its CONTENTS
+       wait. The wall branch further down still sets .hidden on it outright,
+       which is right: somebody at the door never gets this fold at all, so
+       they should not get a gap where it would have been. -->
+  <section class="saysay waiting" id="saysay">
     <!-- SHUT, IT IS THE ICON AND THE SENTENCE. Two dropdowns and a save
          line, open all the time, for a thing somebody changes about twice a
          year. Closed it is one row: the sliders, what they currently say,
@@ -2559,6 +2717,12 @@
       <p class="saysaid" id="saysaid" hidden></p>
     </div>
   </section>
+  <!-- WHO IS IN THE DECK, for a member. Between the sentence and the faces:
+       the sentence is what you are looking for and this is who you are
+       willing to look at, which is the coarser of the two and so the nearer
+       to the results. Filled and unhidden by drawTier, and never shown to
+       anybody who was not sent a `waiting` flag to filter on. -->
+  <div class="tiertog" id="tiertog" hidden></div>
   <div class="deck" id="deck"></div>
   <div class="pacts" id="pacts" hidden></div>
   <!-- THE END OF THE PREVIEW, for somebody still at the door. Five members and
@@ -2968,6 +3132,27 @@
       <div class="field"><input id="mehere" maxlength="40"></div>
     </div>
 
+    <!-- THE ADDRESS, ASKED WHERE THE PROFILE IS MADE.
+         "They shoudl be asked an email on sprofile set up." It was moved out
+         of this form once, on the grounds that "add a way back in" and "edit
+         your page" are not the same act — which was right about the act and
+         wrong about the consequence: behind a to-do row that nobody taps, it
+         is a box almost nobody fills in, and an address nobody has is the
+         reason the letters have nowhere to go.
+         OUTSIDE THE "more" SECTION AND ABOVE THE BUTTON. A question folded
+         away is a question skipped, and this is the one that decides whether
+         anybody ever hears from this board again. Still optional: the form
+         saves without it, because a profile held hostage to an address is a
+         profile nobody finishes. -->
+    <hr class="meline">
+    <p class="seglabel" id="memaillab"></p>
+    <div class="field">
+      <input id="memail" type="email" inputmode="email" autocomplete="email"
+             spellcheck="false" autocapitalize="off" maxlength="120">
+    </div>
+    <p class="menote" id="memailwhy"></p>
+    <p class="menote small" id="memailalso"></p>
+
     <div class="row">
       <button class="ghost" type="button" id="meshut"></button>
       <button class="go" type="submit" id="mesave"></button>
@@ -3084,6 +3269,13 @@
       <input id="mailin" type="email" inputmode="email" autocomplete="email"
              spellcheck="false" autocapitalize="off">
     </div>
+    <!-- EVERYTHING ELSE THE ADDRESS IS FOR, UNDER THE BOX AND QUIET.
+         The headline is the one reason worth acting on; this is the rest of
+         the truth, including the occasional letter about who has joined.
+         Under the box rather than above it because somebody has already
+         decided by the time they are typing, and a second paragraph before
+         the field is a second thing to read before the one thing to do. -->
+    <p class="hint small" id="mailalso"></p>
     <div class="row">
       <button class="ghost" type="button" id="backshut"></button>
       <button class="go" type="submit" id="backgo"></button>
@@ -3449,12 +3641,22 @@ function fitDeck() {
    * two lines of bio. Guessing that from here would be a number to keep in
    * step with the CSS for ever; the card already knows.
    *
-   * Falls back to the picture alone before the first card exists — fitDeck
-   * runs once in drawDeck before anything is appended, and again after. */
+   * WITH NO CARD TO MEASURE IT LEAVES THE HEIGHT ALONE. It used to guess —
+   * the picture's own 4:5 off the width — and that guess is the glitch
+   * somebody watched on a phone: the deck loads at the CSS height, the
+   * observer fires while the rows above are still arriving and writes the
+   * guess over it, fires again at a slightly different width and writes a
+   * different guess, and only then does a card arrive and get measured.
+   * Four heights, three of them wrong, all of them painted. Recorded on a
+   * 400x900 window with the API held for 700ms: 543 -> 451 -> 487 -> 554.
+   *
+   * The guess was never needed. .deck has a height in CSS whose whole job is
+   * to hold that space until there is something in it, and it is closer to
+   * the answer than the guess was. So: measure a card or change nothing. */
   const top = deck.lastElementChild;
   const shot = top && top.querySelector("img, .noshot");
   const panel = top && top.querySelector(".scrim");
-  if (!shot || !panel) { deck.style.height = Math.round(w * 1.25) + "px"; return; }
+  if (!shot || !panel) return;
   /* THE PICTURE TAKES WHAT IS LEFT, AND NEVER MORE THAN 4:5.
    *
    * The words are a panel under the photograph now, so the card is taller
@@ -3495,21 +3697,30 @@ function fitDeck() {
 window.addEventListener("resize", fitDeck);
 window.addEventListener("orientationchange", fitDeck);
 
-/* AND AGAIN WHEN THE ROWS ABOVE HAVE FINISHED ARRIVING. Measuring at the end
-   of the card's own draw measured a page that was not built yet: the sentence
-   filter is drawn after it, so the first answer was 188px too generous and the
-   buttons stayed under the bar. The observer asks again whenever anything
-   changes height. It cannot loop — a second run on an unchanged page computes
-   the same number and writes the same string. */
-if (window.ResizeObserver) {
-  const ro = new ResizeObserver(() => fitDeck());
-  const watch = () => {
-    const box = document.getElementById("vbrowse");
-    if (box) ro.observe(box);
-  };
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", watch);
-  else watch();
-}
+/* THE OBSERVER IS GONE, AND THIS IS WHY.
+ *
+ * It watched #vbrowse and re-ran fitDeck on any height change in it. The
+ * reason it existed is in the note it replaced: measuring at the end of the
+ * card's own draw measured a page that was not built yet, so the first answer
+ * was 188px too generous and the buttons stayed under the tab bar.
+ *
+ * What it also did: fitDeck sets the PHOTOGRAPH's height — min(4:5, what is
+ * left after the words) — so every tick could resize the picture. And the
+ * things above the deck arrive on their own separate fetches, long after the
+ * page has been shown: the bell tray, the Professor's fold, the matches, the
+ * followers. Each one changes the deck's top offset, which changes what is
+ * left, which resizes the face somebody is already looking at. Reported from
+ * a phone as "the photos in browse seem to move at the last moment", which is
+ * exactly what it is.
+ *
+ * The reason for it no longer holds. #vbrowse is not shown until settled(),
+ * which is the moment the page knows what it is — so a measurement taken then
+ * is taken on a page that IS built. That is where it is taken, once, and
+ * after that only a real change to the window moves it.
+ *
+ * One frame later than settled(), because settled() only removes a class and
+ * the layout it uncovers has not been done yet. */
+const fitSoon = () => requestAnimationFrame(() => requestAnimationFrame(fitDeck));
 
 /** The line icons on each post. Drawn here rather than pulled from anywhere:
  *  four paths are cheaper than a request that would not answer in the mainland. */
@@ -3730,6 +3941,27 @@ const MAKE_OFFERS = false;
 const learned = (key) => (LEARNING ? readLocal(key) : null);
 
 let ME = null;
+
+/* THE PAGE IS SHOWN ONCE IT KNOWS WHAT IT IS SHOWING — see #vbrowse.settling.
+ *
+ * Called when /api/me lands, which is what decides every conditional row
+ * above the deck. Idempotent, because it is also called by the timer below
+ * and by the door branch, and a second call on a revealed page does nothing.
+ *
+ * THE TIMER IS NOT BELT AND BRACES. /api/me can 500, or answer 403 on a
+ * board that has shut its door, or never answer at all on a phone that has
+ * lost its network halfway — and a page left blank for ever because one
+ * request failed is a far worse failure than the shift this is fixing. Two
+ * seconds, which is longer than the request takes on any connection this is
+ * used on and short enough that nobody reads it as broken. */
+function settled() {
+  const box = document.getElementById("vbrowse");
+  if (!box || !box.classList.contains("settling")) return;
+  box.classList.remove("settling");
+  // The one measurement, on a page that is finally built — see fitSoon.
+  if (typeof fitSoon === "function") fitSoon();
+}
+setTimeout(settled, 2000);
 /* WHETHER /api/me HAS ANSWERED. Until it has, "no handle" means "not asked
    yet", not "not a member" — and the Money tab was hidden on that, then put
    back a moment later: four tabs, then five, on every open. See navmoney. */
@@ -5812,14 +6044,19 @@ function drawMyInvite() {
   if (!MYCODE && MYNEED.length) { drawNeed(b); return; }
   if (!MYCODE) { b.hidden = true; return; }
   b.hidden = false;
-  for (const id of ["myinvcode", "myinvurl", "myinvtap", "myinvsend", "myinvfeed",
+  for (const id of ["myinvcode", "myinvurl", "myinvtap", "myinvsend", "myinvsms",
                     "myinvshare"]) {
     $(id).hidden = false;
   }
   // myinvmore and myinvextra decide for themselves below: both are about an
   // allowance most members do not have.
   $("myinvneed").hidden = true;
-  $("myinvlab").textContent = T("inv.head");
+  /* NOT A SECOND HEADING. The sheet is already titled "Bring somebody in"
+     and this said "Bring someone in" directly under it — the same sentence
+     twice, in two wordings, which reads as a panel that has been pasted
+     inside another one. The sheet keeps the title; this row says what the
+     thing under it IS. */
+  $("myinvlab").textContent = T("inv.todayIs");
   $("myinvcode").textContent = MYCODE;
   $("myinvcode").title = T("inv.codeTap");
   /* THE REST OF THEM, under the first. Drawn into the label slot rather than
@@ -5834,8 +6071,15 @@ function drawMyInvite() {
   $("myinvmore").textContent = T("inv.more", { n: MYLEFT });
   $("myinvurl").textContent = location.host + "/enter";
   $("myinvtap").textContent = T("inv.tap");
+  $("myinvwx").textContent = T("inv.toWeChat");
+  $("myinvsms").textContent = T("inv.toSMS");
+  $("myinvmail").textContent = T("inv.toMail");
+  /* The phone's own sheet stays, under the two named ones, for a person on
+     Telegram or Line or a plain text message. Not offered inside WeChat,
+     where it cannot open. */
+  $("myinvsend").hidden = IN_WECHAT || !navigator.share;
   $("myinvsend").textContent = T("inv.send");
-  $("myinvfeed").textContent = T("inv.toFeed");
+
   /* Only once there is a page to credit. The link carries an id and the server
      checks it against the roll, so one sent before the profile exists would
      quietly credit nobody — better no button than a button doing half of what
@@ -6001,11 +6245,17 @@ function todoList() {
     ["say", Boolean(ME && ME.handle) && !(ME && Array.isArray(ME.say) && ME.say.length),
       () => { showView("browse"); $("saysay").scrollIntoView({ behavior: "smooth" }); }],
     ["goal", Boolean(ME && ME.handle) && !has(ME && ME.goal), () => openMe()],
-    /* THE WAY BACK, ASKED ONCE AND THEN NEVER AGAIN. It is the only row here
-       that is not about being found: everything else makes somebody easier to
-       match, and this one stops them losing all of it on a new phone. Last,
-       because nothing is worth keeping until there is something to keep. */
-    ["mail", Boolean(ME && ME.handle) && !has(ME && ME.mail), () => openBack()],
+    /* THE ADDRESS IS NOT A ROW HERE ANY MORE.
+     *
+     * "you are givng the user wrok." This asked for it, the tray asked for
+     * it, and a screen of its own asked for it — three standing requests for
+     * one box, sitting on the profile of anybody who had not answered, for
+     * ever. That is not a to-do list, it is nagging.
+     *
+     * It is a field in the profile form now, beside the name and the
+     * sentence, where somebody is already filling things in. Asked once,
+     * while they are there, and never again. The screen that changes it is
+     * still one tap away in the tray for anybody who wants it. */
     ["browse", Boolean(ME && ME.handle) && !(ME && ME.looking), () => openMe()],
   ];
   return all.filter((r) => r[1]).map((r) => ({ key: r[0], go: r[2] }));
@@ -6045,7 +6295,7 @@ function drawTodo() {
  *  what a member does here, which is also the answer to what this place is. */
 function drawNeed(b) {
   b.hidden = false;
-  for (const id of ["myinvcode", "myinvurl", "myinvtap", "myinvsend", "myinvfeed",
+  for (const id of ["myinvcode", "myinvurl", "myinvtap", "myinvsend", "myinvsms",
                     "myinvmore", "myinvextra"]) {
     $(id).hidden = true;
   }
@@ -6192,37 +6442,55 @@ $("myinvshare").hidden = true;
  * today finds a spare — and how a member with nobody to invite gives theirs
  * to whoever does.
  */
-$("myinvfeed").addEventListener("click", async () => {
-  if (!MYCODE) return;
-  const b = $("myinvfeed");
-  let who = "";
-  try { who = localStorage.getItem("board:who") || ""; } catch { /* private window */ }
-  if (!who) who = (prompt(T("act.answerAs")) || "").trim();
-  if (!who) return;
-  try { localStorage.setItem("board:who", who); } catch { /* fine */ }
+/* THE CLIPBOARD, WHICH IS THE ONLY ROUTE INSIDE WECHAT.
+ *
+ * A page inside WeChat may not open a share sheet — the ⋯ menu is the only
+ * way — so the button that says "share" there is a button that does nothing.
+ * This copies the whole message, link and code together, ready to paste into
+ * the conversation the person is already in.
+ *
+ * The same words the share sheet sends, from the same key, so the two routes
+ * cannot drift into saying different things. */
+/* The one sentence both routes send, built once so they cannot drift. */
+function inviteWords() {
+  const url = location.origin + "/enter";
+  return T(IN_WECHAT ? "inv.sharedWx" : "inv.shared", { url, code: MYCODE });
+}
 
-  b.disabled = true;
-  b.textContent = T("act.sending");
-  try {
-    const r = await fetch("/api/post", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        note: T("inv.feedWords", { url: location.origin + "/enter", code: MYCODE }),
-        handle: who, topic: "Getting in", device,
-      }),
-    });
-    const d = await r.json().catch(() => ({}));
-    if (toDoorIf(d, r.status)) return;
-    if (!r.ok) throw new Error("no");
-    // The feed is on this page, so it should show what just landed on it —
-    // and the confirmation goes on AFTER that, because the redraw rewrites
-    // every label in the tray including this one.
-    await load();
-    b.textContent = T("inv.onFeed");
-  } catch {
-    b.disabled = false;
-    b.textContent = T("act.again");
-  }
+/* WECHAT HAS NO LINK THAT OPENS A CHAT WITH TEXT IN IT, and every scheme that
+   claims to either needs the app's own SDK or opens the app at whatever screen
+   it was last on, losing the message. So this is honest about what it does:
+   it copies, says so, and the person pastes into the conversation they are
+   already in. That is the gesture a Chinese user makes a hundred times a day
+   and it needs no explaining — see the note about writing for fluency in
+   CLAUDE.md. */
+$("myinvwx").addEventListener("click", () => {
+  if (!MYCODE) return;
+  $("myinvwx").textContent = copyText(inviteWords())
+    ? T("inv.wxCopied") : T("act.again");
+  setTimeout(drawMyInvite, 3000);
+});
+
+/* AN EMAIL, PREFILLED. Same shape as the text message below: the phone opens
+   its own composer with no recipient on it, so the member picks the person
+   and nothing here ever sees an address.
+   The subject is its own line rather than the first line of the body — an
+   invitation arriving with no subject reads as spam, which is the one thing
+   an invitation must not. */
+$("myinvmail").addEventListener("click", () => {
+  if (!MYCODE) return;
+  location.href = "mailto:?subject=" + encodeURIComponent(T("inv.mailSubject"))
+    + "&body=" + encodeURIComponent(inviteWords());
+});
+
+/* A TEXT MESSAGE, PREFILLED. sms: takes the body after a "?&", which is the
+   one spelling both iOS and Android accept — iOS wants "&body=", Android
+   wants "?body=", and "?&body=" satisfies each of them. The phone opens its
+   own composer with no recipient, so the member picks the person; nothing
+   here ever sees a number. */
+$("myinvsms").addEventListener("click", () => {
+  if (!MYCODE) return;
+  location.href = "sms:?&body=" + encodeURIComponent(inviteWords());
 });
 
 /* THE TRAY, AND THE COUNT ON THE BELL.
@@ -6271,6 +6539,64 @@ $("profhead").addEventListener("click", () => {
     else localStorage.setItem(PROFSHUT, dayStamp());
   } catch { /* private window */ }
 });
+
+/* THE WAY IN FROM THE LOCK SCREEN.
+ *
+ * The report card that arrives as a notification is drawn by drawProf, inside
+ * the Professor's fold, inside the tray behind the bell — two closed things
+ * deep. Tapping "4 people opened your page today" and landing on Browse with
+ * both of them shut is the app showing somebody nothing and asking them to go
+ * and find it, which is the exact failure the notification existed to fix.
+ *
+ * So the notification carries /#card (see the sw), and this opens both. A
+ * hash rather than a page because the card is not a page — it is a fold on
+ * this one — and a second address for it would be a second thing to keep in
+ * step with the first.
+ *
+ * The hash is cleared afterwards so that a reload, or somebody pressing back
+ * later in the day, does not re-open a panel they have already shut. */
+function openTray() {
+  const box = $("notif");
+  if (!box) return false;
+  box.hidden = false;
+  $("bell").setAttribute("aria-expanded", "true");
+  TRAYSEEN = true; drawTray();
+  return true;
+}
+
+function openCard() {
+  openTray();
+  PROFOPEN = true;
+  const body = $("profbody"), head = $("profhead");
+  if (body) body.hidden = false;
+  if (head) head.setAttribute("aria-expanded", "true");
+  const prof = $("prof");
+  if (prof) prof.scrollIntoView({ block: "center" });
+}
+
+/* WHO IS FOLLOWING YOU, WHICH WAS BUILT AND UNREACHABLE.
+ *
+ * drawFollowers has drawn the whole list — face, name, when — since the tray
+ * existed. It lives inside the bell, on this screen. And the one line in the
+ * app that names that number, "12 following you" on your own page, is a grey
+ * sentence on a different page with nothing to press. Asked out loud: "why
+ * can't I see who is following me". You could; there was no door.
+ *
+ * Same mechanism as #card, one hash along. */
+function openFollowers() {
+  if (!openTray()) return;
+  const box = $("notiffol");
+  if (box) box.scrollIntoView({ block: "center" });
+}
+
+const HASHDOOR = { "#card": openCard, "#followers": openFollowers };
+if (HASHDOOR[location.hash]) {
+  const go = HASHDOOR[location.hash];
+  history.replaceState(null, "", location.pathname + location.search);
+  /* After the first draw, or there is nothing to scroll to and drawProf will
+     overwrite aria-expanded from PROFOPEN a moment later anyway. */
+  setTimeout(go, 0);
+}
 
 $("bell").addEventListener("click", () => {
   const box = $("notif");
@@ -6986,6 +7312,18 @@ async function countNotes() {
  * between this and the app it borrows its shape from.
  */
 let PEOPLE = [], AT = 0;
+/* EVERYBODY THE SERVER SENT, AND THE CUT OF THEM THAT IS ON SCREEN.
+ *
+ * PEOPLE is what the deck draws and AT indexes into it, in about nine places.
+ * Filtering it in place would have meant reloading from the server to get
+ * anybody back, so the full list is held beside it and the toggle re-cuts it
+ * — see cutDeck. Nothing above this line knows the difference. */
+let ALL = [];
+/* "mem" or "all". All of them by default: a member who has been using this
+   board sees exactly what they saw yesterday, and Members is the tap somebody
+   takes when they want the room narrowed rather than a narrowing done to them
+   on the way in. */
+let TIER = "all";
 /* What the deck is not showing, when the reader is still at the door. Null for
    a member, who is shown everybody. See the peek branch in /api/people. */
 let WALL = null;
@@ -7061,7 +7399,8 @@ async function loadPeople() {
     WALL = (d && d.wall) || null;
     const all = shuffled((d && d.people) || []);
     const fits = (q) => Array.isArray(q.shared) && q.shared.length > 0;
-    PEOPLE = [...all.filter(fits), ...all.filter((q) => !fits(q))];
+    ALL = [...all.filter(fits), ...all.filter((q) => !fits(q))];
+    cutDeck();
     /* OPENED AT ONE PERSON, when the address asked for one.
      *
      * A face in a door room is a link for somebody still outside — the few
@@ -7079,7 +7418,7 @@ async function loadPeople() {
         String(q.handle || "").toLowerCase() === decodeURIComponent(want).toLowerCase());
       if (at >= 0) AT = at;
     }
-  } catch { PEOPLE = []; WALL = null; }
+  } catch { ALL = []; PEOPLE = []; WALL = null; }
   drawDeck();
   /* Here because it needs the deck: the old list holds handles and the rows
      hold ids, so the names can only be matched once there is somebody to match
@@ -7103,12 +7442,88 @@ const needsFace = () => !(ME && ME.photo);
  * here yet. Never you on your own — "that is everyone" is a strange thing to
  * say about nobody, and an empty list already has its own block that says so
  * and offers the right thing to do about it. */
+/* Apply the Members/Everyone toggle. Called on load and on every press, and
+   it is the ONLY place PEOPLE is set from ALL, so the two can never drift. */
+function cutDeck() {
+  PEOPLE = TIER === "mem" ? ALL.filter((q) => !q.waiting) : ALL.slice();
+}
+
+/* MEMBERS / EVERYONE, and the control exists only when it would do something.
+ *
+ * Not gated on the reader's own tier: `waiting` is only ever sent to a member,
+ * so a board with somebody waiting on it is by definition being read by one.
+ * That also means the toggle disappears on a board where everybody was
+ * vouched for, which is right — it would filter nothing and press to no
+ * visible effect, which is how somebody learns the app does not respond.
+ *
+ * It reads ALL rather than PEOPLE on purpose: once Members is pressed there is
+ * nothing waiting left in PEOPLE, and a toggle that hides itself the moment it
+ * is used is a trap with no way back. */
+function drawTier() {
+  const box = $("tiertog");
+  const any = ALL.some((q) => q.waiting);
+  box.hidden = !any;
+  if (!any) { if (TIER !== "all") { TIER = "all"; cutDeck(); } return; }
+  const pair = [["mem", "brw.tierMem"], ["all", "brw.tierAll"]];
+  /* BUILT ONCE, THEN WRITTEN INTO. drawDeck runs on every single flick, and a
+     fill() here would tear both buttons down and put new ones back forty times
+     in a minute — which loses keyboard focus the moment anybody tabs to it and
+     was the exact bug the door bar had (see the note about #bar above). */
+  let bs = [...box.querySelectorAll("button")];
+  if (bs.length !== pair.length) {
+    fill(box);
+    bs = pair.map(([val]) => {
+      const b = el("button", null, "");
+      b.type = "button";
+      b.addEventListener("click", () => {
+        if (TIER === val) return;
+        TIER = val;
+        // Back to the first card: the person at AT is very likely the one the
+        // press just filtered out, and landing three cards into a shorter deck
+        // reads as the app having lost your place.
+        AT = 0;
+        cutDeck();
+        drawDeck();
+      });
+      box.append(b);
+      return b;
+    });
+  }
+  // The label follows the language button, so it is written on every draw.
+  pair.forEach(([val, key], i) => {
+    bs[i].textContent = T(key);
+    bs[i].setAttribute("aria-pressed", String(TIER === val));
+  });
+}
+
 const deckLen = () => PEOPLE.length + (needsFace() && PEOPLE.length ? 1 : 0);
+
+/* WHETHER THE NEXT DRAW IS SOMEBODY MOVING ON, or the page arriving.
+ *
+ * The card behind is drawn at scale(.96) as a depth cue. When the front one
+ * goes, drawDeck rebuilds the deck and that same person is drawn again as the
+ * new front — at full size, as a NEW element, so there is nothing for a
+ * transition to run from. Described exactly: "the front card doesn't move,
+ * but the back card jumps a little becoming bigger when the front card is
+ * fully off the screen." It is a four per cent pop with nothing easing it.
+ *
+ * So the new front card starts where the old back card was standing and rises
+ * from there. Only when somebody actually moved on — a card that eased up on
+ * every load would be the page animating at somebody who has not touched it
+ * yet. */
+let RISE = false;
+/* Somebody who has asked their phone to stop animating things has asked for
+   this too. Read once: the setting does not change mid-session, and asking
+   the browser on every card flick is a match that costs more than the query
+   is worth. */
+const MOTIONLESS = window.matchMedia
+  ? window.matchMedia("(prefers-reduced-motion: reduce)").matches : false;
 
 function nextPerson() {
   const n = deckLen();
   if (!n) return;
   AT = (AT + 1) % n;
+  RISE = true;
   drawDeck();
 }
 
@@ -7967,6 +8382,12 @@ function personCard(q, live) {
      row below is left with the one button that does something. Only when it is
      already true; not following is a decision, and that keeps its button. */
   if (!q.mine && q.following) line.append(el("b", "type fol", T("brw.connected")));
+  /* WAITING ON A VOUCH. `q.waiting` is only on the row when the reader is a
+     member — see /api/people — so there is nothing to guard here: a reader who
+     came through the door is sent no such field and this line never fires for
+     them. Deliberately not `q.via === "door"`, which is not on the row at all
+     any more, for the same reason. */
+  if (!q.mine && q.waiting) line.append(el("b", "type wait", T("brw.waiting")));
   if (q.type) line.append(el("b", "type", q.type));
   /* Only if they put their level on their page. The mark is the level worn,
      so somebody who kept the number keeps the number. */
@@ -8223,7 +8644,14 @@ function drawPairs(pairs) {
   box.append(el("b", null, T("brw.qpfor")));
   for (const p of rows) {
     const line = el("p", "qp");
-    const n = el("b", null, T("brw.qpn", { n: p.waiting, who: many(p.want) }));
+    /* "1 DIRECTORS WAITING" was on a live screen. One key for one and one for
+       the rest, the same as board.inRoom1 and cards.n1 — English needs the
+       singular and the Chinese line is the same sentence either way, which is
+       why this is a key and not a count check. `one` is the role word with
+       its article, which is what the rest of the app says out loud. */
+    const n = el("b", null, p.waiting === 1
+      ? T("brw.qpn1", { who: T("role.a." + p.want) })
+      : T("brw.qpn", { n: p.waiting, who: many(p.want) }));
     line.append(n);
     /* The second number is the stronger one and needs the difference said:
        these are the ones whose own sentence points back at this member. */
@@ -8509,6 +8937,8 @@ function drawDeck() {
   drawMine();
   // The sentence sits above the deck it decides — see the note in the markup.
   drawSays();
+  // And who is in it, which is the coarser of the two filters over it.
+  drawTier();
 
   const deck = $("deck");
   /* THE BUTTON ROW GOES HOME BEFORE THE DECK IS EMPTIED.
@@ -8560,7 +8990,8 @@ function drawDeck() {
      *
      * So the furniture goes and the bar becomes theirs — see door.html, which
      * is where the same three destinations live. */
-    for (const id of ["mine", "saysay", "invite", "brwrule", "todo", "backline"]) {
+    for (const id of ["mine", "saysay", "invite", "brwrule", "todo", "backline",
+                      "tiertog"]) {
       const n = $(id);
       if (n) n.hidden = true;
     }
@@ -8659,6 +9090,23 @@ function drawDeck() {
   }
   const top = at(AT, true);
   deck.append(top);
+  /* THE CARD BEHIND RISES INTO PLACE — see RISE. It is the same transform the
+     card behind is wearing, released on the next frame so the browser has a
+     start and an end to interpolate between; set in the same frame it would
+     have nothing to run from and would pop exactly as before.
+     The transition is cleared afterwards because dragCard writes to this same
+     property on every pointer move, and a flick through an easing curve
+     lags the thumb. */
+  if (RISE && !MOTIONLESS) {
+    top.style.transition = "none";
+    top.style.transform = "scale(.96) translateY(10px)";
+    requestAnimationFrame(() => {
+      top.style.transition = "transform .18s ease-out";
+      top.style.transform = "";
+      setTimeout(() => { top.style.transition = ""; }, 220);
+    });
+  }
+  RISE = false;
   /* A TAP PEEKS; IT DOES NOT LEAVE.
    *
    * It used to go straight to their page, and on a deck that is the wrong
@@ -8859,7 +9307,35 @@ function drawDeck() {
 function peek(card, q, bio, goPage) {
   if (card.querySelector(".peek")) return;
   const wrap = el("div", "peek");
-  const shut = () => { wrap.remove(); document.removeEventListener("keydown", esc); };
+  /* The card becomes one surface for as long as this is up — see .peeking.
+     Taken off in the same place it goes on, so a card that is flicked away
+     while open cannot be left stretched. */
+  card.classList.add("peeking");
+  /* The card wears the photograph for as long as the panel is up, so the
+     blur has one surface under it for the card's whole height rather than a
+     picture on top and a solid panel below. No photograph is the accent, the
+     same flat colour .noshot was already showing. */
+  const shot = q.photo
+    ? "url(\"/api/public-media?id=" + encodeURIComponent(q.photo) + "\")"
+    : "";
+  card.style.backgroundImage = shot;
+  card.style.backgroundSize = "cover";
+  card.style.backgroundPosition = "50% "
+    + (Number.isFinite(Number(q.photoAt)) ? Number(q.photoAt) : 50) + "%";
+  if (!shot) card.style.backgroundColor = "var(--accent)";
+  const shut = () => {
+    card.classList.remove("peeking");
+    // Put the card back exactly as it was. personCard builds a fresh element
+    // on every draw, but a card that is peeked and closed without a redraw is
+    // the same node — and one left wearing a background is a card with
+    // somebody's face behind their own photograph.
+    card.style.backgroundImage = "";
+    card.style.backgroundSize = "";
+    card.style.backgroundPosition = "";
+    card.style.backgroundColor = "";
+    wrap.remove();
+    document.removeEventListener("keydown", esc);
+  };
   const esc = (e) => { if (e.key === "Escape") shut(); };
 
   const x = el("button", "peekx", "\u00d7");
@@ -8882,7 +9358,24 @@ function peek(card, q, bio, goPage) {
   wrap.addEventListener("pointerdown", (e) => e.stopPropagation());
   document.addEventListener("keydown", esc);
   card.append(wrap);
-  go.focus({ preventScroll: true });
+  /* FOCUS GOES TO THE PANEL, NOT TO THE BUTTON.
+   *
+   * This was go.focus(), which is the right instinct — opening something over
+   * the screen should move focus into it, or Escape and a screen reader both
+   * land nowhere — and the wrong element. Chrome treats a programmatic focus
+   * as keyboard focus, so :focus-visible matched on every tap and drew a 2px
+   * white ring with a 2px gap around the button. On a phone, where nobody is
+   * using a keyboard at all, that read as the button being badly fitted to
+   * its space: a fat double border with the panel's edge crowding it.
+   *
+   * The panel takes the focus instead. Escape still works, the dialog is
+   * still announced, and the ring on the button is back to meaning what it
+   * means everywhere else — somebody tabbed to it. */
+  wrap.setAttribute("role", "dialog");
+  wrap.setAttribute("aria-modal", "true");
+  wrap.setAttribute("aria-label", q.handle || "");
+  wrap.tabIndex = -1;
+  wrap.focus({ preventScroll: true });
 }
 
 function dragCard(box, onTap) {
@@ -9476,6 +9969,16 @@ function openMe(joining) {
   $("meig").value = ME && ME.ig ? "@" + ME.ig : "";
   $("meli").value = (ME && ME.li) || "";
   $("megoal").value = (ME && ME.goal) || "";
+  /* THE ADDRESS, PREFILLED AND LABELLED HERE. Same three strings the sheet
+     uses, so the two cannot drift into saying different things about what
+     the address is for — including the sentence about the occasional letter,
+     which has to appear wherever it is collected and this is now the place
+     it is collected. */
+  $("memaillab").textContent = T("me.mailLab");
+  $("memail").placeholder = T("mail.ph");
+  $("memail").value = (ME && ME.mail) || "";
+  $("memailwhy").textContent = T("mail.body");
+  $("memailalso").textContent = T("mail.also");
   /* Open if there is already something in it, shut otherwise. Somebody who
    * filled these in once should not have to find them again to change one. */
   showMore(Boolean(joining) ||
@@ -9626,6 +10129,7 @@ $("keycopy").addEventListener("click", () => {
 function openBack() {
   $("mailtitle").textContent = T("mail.title");
   $("mailbody").textContent = T("mail.body");
+  $("mailalso").textContent = T("mail.also");
   $("mailin").placeholder = T("mail.ph");
   $("backshut").textContent = T("key.cancel");
   $("backgo").textContent = T("mail.keep");
@@ -10263,7 +10767,9 @@ function drawSays() {
   const more = $("mesaymore");
   more.hidden = true;
   const sec = $("saysay");
-  if (sec) sec.hidden = false;
+  // Its row has been there since the first paint — see the note in the
+  // markup. This only lets the words into it.
+  if (sec) sec.classList.remove("waiting");
   drawSayHead();
 }
 /* THE ROW WHEN IT IS SHUT: the icon, what they currently say, and a caret.
@@ -10496,6 +11002,10 @@ $("meform").addEventListener("submit", async (e) => {
     here: $("mehere").value.trim(), goal: $("megoal").value.trim(),
     ig: $("meig").value.trim(),
     li: $("meli").value.trim(),
+    /* TRIMMED AND SENT WHETHER OR NOT IT CHANGED, like every other field
+       here. An empty box means no address, which is the same thing the
+       server already does with one — see cleanPerson. */
+    mail: $("memail").value.trim(),
   });
   if (out.error) {
     said.hidden = false; said.classList.add("bad");
@@ -10522,6 +11032,14 @@ fetch("/api/me", { headers: device ? { "x-board-device": device } : {} })
   .then((d) => {
     ME = d.person;
     ME_KNOWN = true;
+    /* THE PAGE IS SHOWN HERE, because THIS is the request that decides which
+       rows exist above the deck — see #vbrowse.settling.
+       It was put in saveMe(), which runs when somebody saves their profile
+       and never on a load, so every visit waited out the two-second fallback
+       instead: the screen sat blank and then arrived all at once, which is
+       the jump moved to the end rather than removed. Measured as a reveal at
+       t=2173ms when everything had settled by t=958. */
+    settled();
     /* THE FIXED HALF, and it arrives before anything draws the sentence. A
        string when they answered it on the way in, "" when nobody asked. */
     SAYME = typeof d.sayMe === "string" ? d.sayMe : "";

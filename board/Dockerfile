@@ -24,6 +24,27 @@ COPY public ./public
 # drawing of a payment provider.
 COPY china ./china
 
+# WHICH COMMIT THIS IMAGE WAS BUILT FROM.
+#
+# board/ is COPYed in, so a git reset on the box with no rebuild leaves the
+# container serving the old code with the new commit sitting on disk beside
+# it — and nothing anywhere says so. That gap cost most of a night: a fix
+# pushed, a deploy run, the fault still there, and no way to tell whether the
+# box had the fix. `make version` reads this file and compares it with git.
+#
+# An ARG rather than a RUN git, because there is no git in the image and no
+# .git in the build context. The Makefile passes it; absent, it is "unknown",
+# which `make version` reports as "no stamp" rather than as old code — the
+# two are different and telling them apart is the whole point of the file.
+#
+# LAST, AFTER THE COPIES, AND THAT IS NOT TIDINESS. BUILT changes on every
+# single commit, and a changed ARG invalidates its own layer and everything
+# below it — so up here it threw away the cache for every COPY in the image,
+# on every deploy, for a file containing seven characters. At the bottom it
+# is the only layer that rebuilds.
+ARG BUILT=unknown
+RUN echo "$BUILT" > /app/BUILT
+
 # The data directory, owned by the user the container runs as.
 #
 # A named volume starts root-owned and Docker carries the image's ownership

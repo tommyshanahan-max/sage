@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- NO DEMO TAG ON THIS PAGE, AND THAT IS NOT AN OVERSIGHT. Every other page
+     carries it; it pins the browser to one device number for the demo board.
+     This is the page whose whole job is which device number this browser is,
+     and a screen that hands somebody their account back must not be able to
+     hand them somebody else's. See DEMO_BOARD in server.js. -->
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#EEF0F4">
+<meta name="theme-color" content="#0B0E15" media="(prefers-color-scheme: dark)">
+<title>交换 · The Exchange</title>
+<!-- Nothing for a crawler to make a card out of, because a link to this is
+     never shared with anybody but the person it is for. -->
+<meta name="robots" content="noindex">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="/site.css">
+<style>
+  /* ONE SCREEN, THREE THINGS: what this is, what happens, and the button.
+     Somebody tapping this is standing up, on a phone, mid-something. */
+  .kwrap {
+    min-height: 100svh; display: flex; flex-direction: column;
+    justify-content: center; gap: 22px;
+    padding: 32px 24px calc(32px + env(safe-area-inset-bottom, 0px));
+    max-width: 30rem; margin: 0 auto;
+  }
+  .kt { font-size: 2.1rem; line-height: 1.1; font-weight: 700; margin: 0; text-wrap: balance; }
+  .kl { font-size: 1.05rem; line-height: 1.5; margin: 0; opacity: .78; }
+  .kgo {
+    font: inherit; font-size: 1.1rem; font-weight: 600; cursor: pointer;
+    padding: 18px 20px; border: 0; border-radius: 14px; width: 100%;
+    background: var(--ink, #12151c); color: var(--paper, #fff);
+  }
+  .kgo[disabled] { opacity: .5; cursor: default; }
+  .kbad { color: #b3261e; margin: 0; font-size: 1.05rem; }
+  .kopen { font-size: 1.05rem; font-weight: 600; }
+  .klang { position: fixed; top: calc(10px + env(safe-area-inset-top, 0px)); right: 12px; }
+</style>
+</head>
+<body>
+<div class="klang" id="langslot"></div>
+<main class="kwrap">
+  <h1 class="kt" id="kt"></h1>
+  <p class="kl" id="kl"></p>
+  <button class="kgo" id="kgo" type="button"></button>
+  <p class="kbad" id="kbad" hidden></p>
+  <a class="kopen" id="kopen" href="/board" hidden></a>
+</main>
+<script type="module">
+import { T, setLang, pickLang, langButton } from "/i18n.js";
+const $ = (id) => document.getElementById(id);
+
+/* The token is in the address and nowhere else — it is not the key, and it is
+   spent by the first tap. See /api/handover in server.js. */
+const TOKEN = decodeURIComponent(location.pathname.split("/").filter(Boolean)[1] || "");
+let DONE = "";
+
+function draw() {
+  $("kt").textContent = DONE ? T("k.done", { who: DONE }) : T("k.title");
+  $("kl").textContent = DONE ? "" : T("k.line");
+  $("kl").hidden = Boolean(DONE);
+  $("kgo").textContent = T("k.go");
+  $("kgo").hidden = Boolean(DONE);
+  $("kopen").textContent = T("k.open");
+}
+
+setLang(pickLang());
+$("langslot").append(langButton(() => draw()));
+draw();
+
+$("kgo").addEventListener("click", async () => {
+  $("kgo").disabled = true;
+  $("kbad").hidden = true;
+  let r, d;
+  try {
+    r = await fetch("/api/handover", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: TOKEN }),
+    });
+    d = await r.json().catch(() => ({}));
+  } catch {
+    $("kgo").disabled = false;
+    $("kbad").hidden = false; $("kbad").textContent = T("err.general");
+    return;
+  }
+  if (!r.ok) {
+    $("kbad").hidden = false;
+    $("kbad").textContent = r.status === 410 ? T("k.old") : T("k.no");
+    return;
+  }
+  /* THE KEY, AND THIS IS THE ONLY PLACE IT WILL EVER EXIST — the server keeps
+     a salted hash of it and never the line. Written before anything is said on
+     screen, for that reason: a browser that drops it here is in the position
+     of somebody who has lost their key. */
+  try { localStorage.setItem("board:device", d.key); } catch { /* private window */ }
+  try { if (d.handle) localStorage.setItem("board:who", d.handle); } catch { /* fine */ }
+  DONE = d.handle || "";
+  draw();
+  $("kopen").hidden = false;
+  setTimeout(() => location.replace("/board"), 1200);
+});
+</script>
+</body>
+</html>

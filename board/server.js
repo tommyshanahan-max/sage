@@ -31,11 +31,17 @@ import { timingSafeEqual, randomUUID, createHmac } from "node:crypto";
 import { AsyncLocalStorage } from "node:async_hooks";
 import path from "node:path";
 import * as store from "./lib/store.js";
+import * as assets from "./lib/assets.js";
 import * as memo from "./lib/memo.js";
 import * as request from "./lib/request.js";
 import * as fapiao from "./lib/fapiao.js";
 import * as books from "./lib/books.js";
 import * as shop from "./lib/shop.js";
+import * as call from "./lib/call.js";
+/* The video relay's password and configuration, written before anything else
+   starts — the coturn container mounts this volume and reads that file, and it
+   is watching for it. See lib/call.js. */
+call.relaySetup();
 import * as sealed from "./lib/sealed.js";
 import * as terms from "./lib/terms.js";
 import { translate, configured as translateReady } from "./lib/translate.js";
@@ -43,6 +49,7 @@ import { ask as askHostess, configured as hostessReady } from "./lib/hostess.js"
 import { send as sendMail, configured as mailReady } from "./lib/mail.js";
 import * as intake from "./lib/intake.js";
 import * as butler from "./lib/butler.js";
+import * as epai from "./lib/epai.js";
 import * as say from "./lib/say.js";
 import * as hear from "./lib/hear.js";
 import * as push from "./lib/push.js";
@@ -353,9 +360,40 @@ const DEMO_URL = (() => {
   return /^https?:\/\/[a-z0-9.-]+(?::\d{2,5})?$/i.test(want) ? want : "";
 })();
 
-const DEMO_DEVICE = String(process.env.BOARD_DEMO_DEVICE || "").replace(/[^A-Za-z0-9_-]/g, "").slice(0, 64);
+/* THE ONE BOARD WHERE EVERY BROWSER IS ALLOWED TO BE THE SAME PERSON.
+ *
+ * THE NIGHT THIS EXISTS FOR. Two people opened a chat link Tom had sent
+ * them, made a profile, went back to the same link — and arrived as Tom,
+ * with every conversation he has ever had on the screen in front of them.
+ * One of them was his daughter; one of them sent a screenshot.
+ *
+ * BOARD_DEMO_DEVICE is why. It pins every browser that loads a page to one
+ * device number, so an App Store reviewer opening the demo arrives as the
+ * seeded member rather than as nobody with an empty inbox. On the demo board
+ * that is the whole point. On the real one it hands whoever opens a link
+ * somebody else's account, and NOTHING ON ANY SCREEN SAYS SO — not the
+ * person's, not Tom's.
+ *
+ * So the pin now needs two switches, the way DOOR_IN needs a code before it
+ * can be turned on: the device number, and BOARD_DEMO=1 saying this whole
+ * container is the demo. One name in .env can no longer do it, and a name
+ * typed into the wrong block is ignored and said out loud at boot rather
+ * than silently obeyed. See the board-demo service in docker-compose.yml,
+ * which is the only place BOARD_DEMO is set. */
+const DEMO_BOARD = process.env.BOARD_DEMO === "1";
+const DEMO_WANT = String(process.env.BOARD_DEMO_DEVICE || "").replace(/[^A-Za-z0-9_-]/g, "").slice(0, 64);
+const DEMO_DEVICE = DEMO_BOARD ? DEMO_WANT : "";
+if (DEMO_WANT && !DEMO_BOARD) {
+  console.log("BOARD_DEMO_DEVICE is set on a board that is not the demo (BOARD_DEMO is not 1). IGNORED — it would have made every browser the same person.");
+}
+/* AND IT NEVER TAKES AN IDENTITY THAT IS ALREADY THERE. A reviewer arrives
+ * with an empty browser and gets the seeded member, which is what this is
+ * for. Somebody who has been here before, or who made a profile a minute
+ * ago on this same phone, keeps their own — the old line overwrote it on
+ * every page load, so answering an invite and then reopening the link
+ * replaced the person who had just answered with the person in the pin. */
 const DEMO_TAG = DEMO_DEVICE
-  ? '<script>try{localStorage.setItem("board:device",'
+  ? '<script>try{if(!localStorage.getItem("board:device"))localStorage.setItem("board:device",'
     + JSON.stringify(DEMO_DEVICE) + ')}catch(e){}</script>'
   : "";
 
@@ -484,7 +522,7 @@ const LABEL_CSS = LABEL_INK
   ? `html[data-skin="whitelabel"]{`
     + `--bg:${LABEL_PAPER || "#EEF0F4"};--card:#F7F8FB;`
     + `--ink:#151B28;--ink2:#4E5968;--mut:#8A939F;`
-    + `--line:#E3E6EC;--hair:#EAECF1;--ok:#2A9D63;`
+    + `--line:#E3E6EC;--hair:#EAECF1;--ok:#2A9D63;--warn:#C0392B;`
     + `--acc:${LABEL_INK};--accink:#FFFFFF;`
     + `--top:${LABEL_INK};--topBtnInk:${LABEL_INK};`
     + `--topInk:#EEF1F7;--topDim:#93A0B8;--topBtn:#FFFFFF;`
@@ -499,9 +537,74 @@ const LABEL_TAG = LABEL_NAME
   .replace(/&/g, "&amp;").replace(/</g, "&lt;")
   .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
+/* THE HASHED, COMMENT-FREE COPIES OF public/*.js — see lib/assets.js.
+ *
+ * Built once at startup. If it throws, the board still serves: `ASSETS` stays
+ * null, no import specifier is rewritten, and express.static answers /i18n.js
+ * exactly as it did before. A caching change must never be the reason a board
+ * will not start. */
+let ASSETS = null;
+try {
+  ASSETS = await assets.build("public");
+  console.log("assets: " + ASSETS.files.size + " files at build " + ASSETS.id);
+} catch (err) {
+  console.error("assets: not built (" + err.message + ") — serving the plain files");
+}
+
+/* WHICH COMMIT THIS CONTAINER WAS BUILT FROM, for the one question a phone
+ * asks about itself: am I running the code that is on the box.
+ *
+ * NOT ASSETS.id, AND THAT IS THE WHOLE POINT OF THIS LINE. That id is a hash
+ * over public/*.js and nothing else — so a deploy that changes notes.html,
+ * which is most of them, produces the SAME id, and a page that checks it
+ * decides it is up to date while serving a screen that is days old. The
+ * symptom was "the messages are there now but didn't arrive in real time",
+ * said about a fix that was already on the box; the page in his hand had no
+ * way to find out.
+ *
+ * board/Dockerfile writes it, last, after the COPYs, so it changes on every
+ * deploy and invalidates nothing above it. Empty off the box — `make try`, a
+ * laptop — where ASSETS.id goes on standing in. */
+let BUILT_AT = "";
+try {
+  BUILT_AT = (await readFile("/app/BUILT", "utf8")).trim().slice(0, 40);
+} catch { BUILT_AT = ""; /* not in a container. ASSETS.id below is the fallback */ }
+
+/* Immutable, because the address contains a hash of the content: a changed
+   file is a different address, so this copy can never be stale.
+ *
+ * AND A BUILD THAT NO LONGER EXISTS IS STILL ANSWERED. Pages are no-cache so
+ * a reload always asks for the current build — but a tab left open across a
+ * deploy holds the old HTML, and the moment it imports anything lazily it
+ * asks for an address that has just stopped existing. A 404 on an import is
+ * a screen that throws rather than a screen that is a version behind. So an
+ * unknown hash on a KNOWN name gets the current file, with no-cache on it:
+ * helpful, and it cannot poison a cache, because the one thing that must
+ * never be cached under the wrong address is the wrong bytes. */
+app.get(/^\/([a-z0-9-]+)\.([a-f0-9]{12})\.js$/, (req, res, next) => {
+  if (!ASSETS) return next();
+  const want = req.params[0] + "." + req.params[1] + ".js";
+  const now = req.params[0] + "." + ASSETS.id + ".js";
+  const body = ASSETS.files.get(want) ?? ASSETS.files.get(now);
+  if (body === undefined) return next();
+  res.set("Content-Type", "text/javascript; charset=utf-8");
+  res.set("Cache-Control", want === now
+    ? "public, max-age=31536000, immutable" : "no-cache");
+  res.set("X-Content-Type-Options", "nosniff");
+  res.send(body);
+});
+
 async function page(file, req, res, next, extra = null) {
   try {
-    if (!PAGES.has(file)) PAGES.set(file, await readFile("public/" + file, "utf8"));
+    if (!PAGES.has(file)) {
+      let html = await readFile("public/" + file, "utf8");
+      /* ONCE, HERE, AND NOT PER REQUEST. Every page imports /i18n.js and
+         index.html is half a megabyte — running the rewrite on every load
+         would spend more than the caching saves. PAGES already exists to
+         read each file once; this rides on it. */
+      if (ASSETS) html = ASSETS.rewrite(html);
+      PAGES.set(file, html);
+    }
     const proto = String(req.get("x-forwarded-proto") || req.protocol || "https").split(",")[0];
     const host = String(req.get("host") || "").replace(/[^A-Za-z0-9.:-]/g, "").slice(0, 253);
     const origin = host ? proto + "://" + host : "";
@@ -638,7 +741,7 @@ const ROOT_IS_BOARD = process.env.BOARD_AT_ROOT === "1";
    the button was never on the screen. The POST to /china/api/connect came
    back as door.html too, and an HTML page from a JSON fetch fails silently.
    `china` and not `china\/`: /china itself is the fork. */
-const OPEN_PATHS = /^\/(china|enter|auth\/google|i\/|w\/|r\/|s\/|d\/|pay\/|demo(?:\.png)?$|api\/demo\/ask$|sell$|api\/sell$|dealio|api\/pay\/onboard$|api\/dealio\/try\/qr$|shop\/|order\/|orders$|api\/shop\/|api\/shop-media$|api\/order\/|api\/orders$|api\/product\/|api\/memo\/|api\/request(?:s|\/|$)|api\/say\/|api\/snap|api\/door$|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.(?:html|pdf)|g\/|share-exchange\.png|share-square\.png|about|rules|terms|privacy|rewards|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/offer|api\/wait|api\/butler$|api\/butler-voice$|api\/butler-hear$|api\/write\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
+const OPEN_PATHS = /^\/(china|enter|auth\/google|i\/|w\/|r\/|s\/|d\/|pay\/|demo(?:\.png)?$|api\/demo\/ask$|sell$|api\/sell$|dealio|europay-[a-z]+\.html|api\/pay\/onboard$|api\/dealio\/try\/qr$|shop\/|order\/|orders$|api\/shop\/|api\/shop-media$|api\/order\/|api\/orders$|api\/product\/|api\/memo\/|api\/request(?:s|\/|$)|api\/say\/|api\/snap|api\/door$|o(?:\/|$)|a\/|api\/announce\/|api\/announce-media|join|agents|a-browse(?:-zh)?\.png|a-say(?:-zh)?\.png|d-[a-z0-9]+\.(?:html|pdf)|g\/|share-exchange\.png|share-square\.png|about|rules|terms|privacy|rewards|level|type|room|voice\/|api\/enter|api\/signin|api\/admitted|api\/hello|api\/wake|api\/front(?:-face)?|api\/offer|api\/wait|api\/butler$|api\/ep\/ask$|api\/butler-voice$|api\/butler-hear$|api\/write\/|hi\/|k\/|api\/handover$|api\/oops$|oops\.js$|rooms|api\/chat-door\/|api\/ask|api\/tally|api\/counts|doors|waiting|favicon|apple-touch-icon|manifest|share\.png|robots\.txt)/;
 
 /* ---- BEING SOMEBODY YOU SPEAK FOR ----------------------------------------
  *
@@ -941,13 +1044,24 @@ app.post("/api/hook/fee", express.raw({ type: "application/json", limit: "64kb" 
  * money screen rather than an error, which is both friendlier and says
  * nothing about what does exist here. A fetch gets a 404, because a redirect
  * to an HTML page is a JSON parse error three frames later. */
-const WL_PAGES = new Set(["/", "/wallet", "/dealio", "/start"]);
+const WL_PAGES = new Set([
+  "/", "/wallet", "/dealio", "/start",
+  /* The four europay pages. This list is the gate on a partner hostname and
+     it is not the sign-in one: a path that is not here is sent to the front
+     page whether or not anybody is signed in, which is why the set-up
+     instructions bounced home while /start, already on the list, worked.
+     Get started opens the first of these, so leaving it off meant the one
+     button on the page led back to the page. */
+  "/europay-setup.html", "/europay-sell.html",
+  "/europay-home.html", "/europay-desk.html",
+]);
 const WL_PREFIX = [
   /* BOTH SPELLINGS. wallet.html asks /api/wallet for its state and
      /api/wallet/<something> for everything else, and a prefix with the
      slash on it misses the first — which 404s the one call every screen
      there makes before it draws anything. Caught by curling the list rather
      than by reading it back. */
+  "/api/ep/ask",            // the assistant on the set-up page
   "/api/wallet",            // every screen in wallet.html
   "/api/request",           // asking to be paid, and reading one back
   "/api/books",             // the two sides of a deal, and the CSV
@@ -1154,9 +1268,40 @@ app.use(async (req, res, next) => {
    */
   const listRow = await onTheList(req);
   if (listRow) {
-    if (req.path === "/api/door" || req.path === "/api/group/say") return next();
-    if (req.method === "GET") return next();
-    return res.status(403).json({ error: "soon" });
+    /* EVERYBODY WHO IS HERE CAN USE ALL OF IT.
+     *
+     * "I want veryone to HAVE FULL ACESS TO ALL BUTTONS." / "they enter via
+     * the chat link, into a chat, and see the buttopns."
+     *
+     * They do see them — every screen in this app is readable from the list,
+     * which was the old rule: read everything, change nothing. So somebody
+     * arrived in a conversation, saw a call button and a money button and a
+     * ＋, and every one of them answered `soon`. A button you can see and
+     * cannot press is worse than one that is not there, and there were forty
+     * of them.
+     *
+     * WHAT THIS COSTS, said plainly because it is a door and not a setting:
+     * somebody holding a link is now a member in everything but the word.
+     * They can post, write to any member, and raise a money request. The
+     * waiting list still exists and vouching still decides who is IN — what
+     * it no longer decides is what the app lets them touch.
+     *
+     * WHAT IT DOES NOT TOUCH. A block still holds, both ways. Every route
+     * still works out who is asking and answers about them alone. The rules
+     * INSIDE a conversation are unchanged — threadState still refuses any
+     * pair that has not matched, followed each way, or written to each other,
+     * and somebody on the list has no person row, so most of Browse simply
+     * has nothing to say about them. This opens the door; it does not make
+     * anybody a match.
+     *
+     * ONE LINE TO PUT BACK. BOARD_OPEN=off in .env restores the old rule
+     * without a deploy — see OPEN_LIST. */
+    if (!OPEN_LIST) {
+      if (req.path === "/api/door" || req.path === "/api/group/say") return next();
+      if (req.method === "GET") return next();
+      return res.status(403).json({ error: "soon" });
+    }
+    return next();
   }
   if (await admittedReq(req)) return next();
   if (req.path.startsWith("/api/")) {
@@ -1187,15 +1332,22 @@ app.use(async (req, res, next) => {
     const q = board.people.find((x) =>
       x.state === "published" && String(x.handle || "").toLowerCase() === want);
     if (q && q.id) {
-      /* Their own room, chosen the way the Share button chooses it, so a
-         visitor lands among the people the member is actually among. */
-      const rooms = Array.isArray(q.rooms) ? q.rooms : [];
-      const door = rooms.includes("talent") || rooms.includes("agent") ? "/r/film"
-        : rooms.includes("invest") ? "/r/invest"
-        : rooms.includes("raise") ? "/r/raise"
-        : rooms.includes("buy") || rooms.includes("sell") ? "/r/trade"
-        : "/about";
-      return res.redirect(302, door + "?via=" + encodeURIComponent(q.id));
+      /* A CHAT WITH THEM, NOT A ROOM AND NOT THE PROFILE.
+       *
+       * "he said it took him to my profile!!! HES HOULD GOTO CHAT." /
+       * "ANYONE I SEND THE LINK TO ISNT A STRANGER ITS AN INVITE VIA
+       * MESSENGER INTO MESSENGER AND THEN THEY GO INTO THE APP."
+       *
+       * This used to pick one of four public rooms out of the member's own
+       * sentence and send the visitor there — which is a place, and what
+       * somebody who was sent a link by a friend wants is the friend. It is
+       * the same answer /join/chat gives, so it is the same road: /hi mints
+       * a one-person code for this member and hands over to the door that
+       * already works.
+       *
+       * EVERY LINK OF THEIRS NOW LANDS IN THE SAME PLACE, which is the point:
+       * there is no longer a wrong one of their links to send. */
+      return res.redirect(302, "/hi/" + encodeURIComponent(q.handle));
     }
     /* No such member. The waiting list rather than the door: somebody who
        followed a link to a person who is not here still came from somewhere,
@@ -1228,7 +1380,15 @@ app.use(async (req, res, next) => {
  * was at least a page. */
 app.get("/start", (req, res) => {
   const d = String(process.env.BOARD_DEALIO_DOMAIN || "").trim().toLowerCase();
-  if (!d) return res.redirect(302, "/dealio");
+  if (!d) {
+    /* NOT /dealio. Unset, this sent the one button on the partner's landing
+       page to a route that is not in this build, and the partner got a line
+       of raw JSON — {"error":"not in this version"} — as their first
+       experience of the product. The set-up instructions are the right next
+       screen for somebody who has just read the pitch anyway: the record to
+       add, what it does and does not connect, and somebody to ask. */
+    return res.redirect(302, "/europay-setup.html");
+  }
   return res.redirect(302, "https://" + d + "/china/connect");
 });
 
@@ -1369,6 +1529,22 @@ app.get("/q/:id", (req, res, next) => page("waiting-person.html", req, res, next
 /* The wallet's pages and API, behind the door like the rest of the board. */
 app.use(WALLET.routes);
 if (WALLET.on) app.get(["/wallet", "/wallet/"], (req, res, next) => page("wallet.html", req, res, next));
+
+/* THE SIX DOORS, AT AN ADDRESS THAT CAN BE PASTED ANYWHERE.
+ *
+ * Seventy-two people opened a door in a week and one began the form — and
+ * every one of the seventy-two arrived at the landing page, which tally()
+ * files under "other" because it names no room. The row of rooms is ON that
+ * page, under the pitch, the frames, the feed and the sentence: four screens
+ * down on a phone. The one thing that would have told somebody they were in
+ * the right building was the one thing they never reached.
+ *
+ * So: that row, alone, with nothing above it. Somebody who tapped a link
+ * about factories does not need the idea of a board sold to them first.
+ *
+ * Outside the door, like /r/ itself — it names rooms and says nothing about
+ * anybody in them. */
+app.get(["/rooms", "/rooms/"], (req, res, next) => page("rooms.html", req, res, next));
 
 app.get("/r/:room", (req, res, next) => {
   if (!store.WAITROOMS_CHAT.includes(String(req.params.room || ""))) {
@@ -1559,8 +1735,34 @@ async function wroteTo(req) {
   } catch { return false; }
 }
 
+/* THE PUBLIC DOOR, AND IT IS OFF UNTIL SOMEBODY TURNS IT ON.
+ *
+ * With this on, anybody can make a profile and browse — they arrive through
+ * the link rather than through a member's code, and their row is stamped
+ * via:"door". What they cannot do is write to an invited member first; see
+ * pairState.
+ *
+ * Behind a variable because the board already has members who joined
+ * something that said INVITE ONLY, and opening their board to strangers is
+ * not a change to make by deploying. Same call as the money panel.
+ */
+const PUBLIC_DOOR = String(process.env.BOARD_PUBLIC || "").trim().toLowerCase() === "on";
+
+/** Which side of the boundary a device is on, from the rows rather than from
+ *  the browser: the person row carries the answer, and it was stamped once.
+ *  An old row with no stamp reads as invited — that is what everybody here
+ *  was before the public door existed. */
+function tierOf(board, me) {
+  const q = board.people.find((x) => x.by === me);
+  if (!q) return null;
+  return q.via === "door" ? "door" : "invite";
+}
+
 const gate = async (req, res, next) => {
   if (INVITE !== "post" && INVITE !== "read") return next();
+  // The public door lets anybody past this gate. The boundary it opens is not
+  // enforced here — it is enforced on who may write to whom.
+  if (PUBLIC_DOOR) return next();
   const device = req.body?.device || req.get("x-board-device");
   if (await admitted(device)) return next();
   // 403 and a word the page can act on, rather than a sentence to display: the
@@ -1580,6 +1782,17 @@ const gate = async (req, res, next) => {
  * file into a 404 without a deploy, which is the thing you want within reach
  * on the one surface here that two people can use to reach each other.
  */
+/* WHETHER SOMEBODY ON THE LIST MAY PRESS THINGS, AND NOT ONLY READ THEM.
+ *
+ * On, because that is what was asked for — see the long note in the door.
+ * BOARD_OPEN=off in .env puts back the old rule, where the list could read
+ * every screen and write nothing, and it takes a restart rather than a
+ * deploy. It is a switch rather than plain code for the same reason
+ * BOARD_NOTES is: it is the kind of decision somebody may want to reverse at
+ * eleven at night without waiting for a build.
+ */
+const OPEN_LIST = String(process.env.BOARD_OPEN || "on").toLowerCase() !== "off";
+
 const NOTES_ON = String(process.env.BOARD_NOTES || "on").toLowerCase() !== "off";
 const notesOff = (req, res, next) =>
   (NOTES_ON ? next() : res.status(404).json({ error: "not in this version" }));
@@ -1587,8 +1800,77 @@ const notesOff = (req, res, next) =>
 app.get(["/notes", "/notes/"], notesOff,
   (req, res, next) => page("notes.html", req, res, next));
 
-app.get(["/groups", "/groups/"], notesOff,
-  (req, res, next) => page("groups.html", req, res, next));
+/* WHAT HAPPENED. The only list on this board that is not a list of people.
+ *
+ * "i dont want the memo in the chat. lets have it goto notications." Behind
+ * the door with the rest of it: the rows name people the reader deals with,
+ * and the page is useless and unreadable to anybody else anyway — /api/bells
+ * answers a device and nothing else. */
+/* AN OPEN DOOR INTO A CHAT WITH ONE MEMBER.
+ *
+ * The one-person link from ＋ is minted by the member and spent once. This is
+ * the other half: their own address, the one they hand out, the one a friend
+ * forwards. It mints a code on arrival and hands over to the door — so there
+ * is exactly one arrival screen in this app and it is the one that already
+ * works, rather than a second one to keep in step.
+ *
+ * NOT RATIONED BY standing(). That rations how many people a member may BRING
+ * IN; this is somebody who already has the member's address and is knocking
+ * on it. What it is rationed by is a plain per-hour cap, which is about the
+ * door and not about the member.
+ *
+ * NO NAME AND NO LINE. Same as the ＋ link — the name that matters is the one
+ * the arriving person types, and it is asked for on the door.
+ */
+const HI_MAX = 30;                         // codes one member's link may mint an hour
+app.get("/hi/:handle", notesOff, async (req, res) => {
+  const want = String(req.params.handle || "").trim().toLowerCase();
+  const out = await change((board) => {
+    const q = board.people.find((x) => onBoard(x)
+      && String(x.handle || "").toLowerCase() === want);
+    if (!q) return null;
+    const hour = Date.now() - 3600_000;
+    const mine = board.writes.filter((w) => w.by === q.by && !w.to && !w.line
+      && Date.parse(w.at || "") > hour);
+    if (mine.length >= HI_MAX) return null;
+    const taken = codesTaken(board);
+    let code = store.newCode();
+    for (let i = 0; i < 50 && taken.has(code); i++) code = store.newCode();
+    if (taken.has(code)) return null;
+    const row = store.cleanWrite({
+      id: store.newId(), code, by: q.by, to: "", line: "",
+      till: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+    });
+    if (!row) return null;
+    board.writes.push(row);
+    return { code: row.code };
+  });
+  /* No such member, or the door is being knocked on faster than anybody
+     knocks: the page that says what this place is, which is the honest thing
+     to show somebody holding a link that leads nowhere. */
+  if (!out) return res.redirect(302, "/about");
+  return res.redirect(302, "/join/chat/" + out.code);
+});
+
+app.get(["/bells", "/bells/"], notesOff,
+  (req, res, next) => page("bells.html", req, res, next));
+
+/* /groups IS A ROOM, AND ONLY A ROOM.
+ *
+ * "you can start a group already buy adding someone to a chat so the entrie
+ * page is reduandant." It was. Without ?g= this served an index: a list of
+ * rooms that were already rows in Chat, and a picker for starting one. The
+ * list was a second inbox for the same conversations; the picker is now a
+ * sheet inside the conversation that prompted it, which is where somebody
+ * decides to add a third person. Neither has a page any more.
+ *
+ * A REDIRECT AND NOT A 404, because this address is in links, in histories
+ * and on somebody's home screen. /notes is where the rooms are, so it is
+ * where an old /groups link should land. */
+app.get(["/groups", "/groups/"], notesOff, (req, res, next) => {
+  if (!req.query.g && !req.query.with) return res.redirect(302, "/notes");
+  return page("groups.html", req, res, next);
+});
 
 /* The switcher, the roster and the folder drop. Behind the door like the rest
    of the board — it is nothing but somebody's own roster — and not in
@@ -1850,6 +2132,80 @@ app.get(["/o", "/o/", "/o/:code"], (req, res, next) => page("offer.html", req, r
  * for an inbox until they have answered and have one. */
 app.get(["/w/:code"], (req, res, next) => page("notes.html", req, res, next));
 
+/* AN INVITE TO A CONVERSATION, AND THE ADDRESS SAYS WHICH.
+ *
+ * The link a member shares out of Chat was /w/<code> for one person and
+ * /enter?for=... for a room — two shapes, neither of which says what is on the
+ * other end of it. "its shared as join. i dont want it to be join", and then
+ * the shape he wanted, written out: thexchange.app/join/chat/<room>. An
+ * address is the first thing anybody reads of an invitation, and this one now
+ * says the two things worth saying — you are being let in, and it is a chat.
+ *
+ * ONE SHAPE, TWO TARGETS, because there is no third thing a conversation can
+ * be. What follows /join/chat/ decides which:
+ *
+ *   six characters   a note written to one person — the same code /w/ takes,
+ *                    and the line they were written is the first bubble.
+ *   twenty hex       a room. The code travels beside the link, as it does for
+ *                    every invite on this board, and the page asks for it.
+ *
+ * /w/<code> and /enter?for=... both keep working and always will: a link
+ * pasted into WeChat last week is somebody deciding to come in, and breaking
+ * it to tidy up an address would be the most expensive kind of tidying.
+ *
+ * Outside the door, like /w/ and /enter — the whole point is that it opens for
+ * a person this board has never heard of. OPEN_PATHS already lets /join past
+ * as a prefix, which is why there is nothing to add there.
+ */
+app.get(["/join/chat/:key"], (req, res, next) => page("notes.html", req, res, next));
+
+/* THE ONE TAP THAT MOVES AN ACCOUNT ONTO A NEW KEY.
+ *
+ * Outside the door, like /w/ and /join — the browser tapping it is not
+ * anybody yet, which is the whole situation. It gives nothing away on its
+ * own: the page shows a name and a button, and the token behind it is spent
+ * by the first tap and dead after fifteen minutes. See /api/handover. */
+app.get(["/k/:token"], (req, res, next) => page("key.html", req, res, next));
+
+/* WHAT ROOM THE LINK IS FOR, TO WHOEVER IS STANDING OUTSIDE IT.
+ *
+ * Read by the door above, before anybody has a code or a name. It answers the
+ * one question that decides whether a person types six characters into a phone
+ * in a taxi: whose conversation is this. So: the room's name and the handles
+ * of the people in it.
+ *
+ * NOT A WORD ANYBODY SAID IN IT. The link is in a chat window and a chat
+ * window is a public place; what is inside the room stays inside until they
+ * are in it. A room's name was written to be read by the people being invited
+ * into it, and a handle is what somebody chose to be called.
+ *
+ * AND NOT THE FACES. /api/public-media is behind the door on purpose — the
+ * long note over OPEN_PATHS says why — so a face on this page would mean a
+ * third open media route, and every one of those is a member's photograph
+ * fetchable by anybody holding an id. The door shows initials, which is what
+ * the rest of this app shows whenever there is no picture.
+ *
+ * A ROOM WITH NO LIVE CODE ANSWERS NOTHING, which is what makes the id in the
+ * address safe to have in a chat window: it is a label on an invitation, not a
+ * way to enumerate the board's rooms. Somebody pasting twenty hex characters
+ * they guessed gets the same 404 as somebody pasting nonsense.
+ */
+app.get("/api/chat-door/:id", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const id = String(req.params.id || "");
+  if (!/^[a-f0-9]{20}$/.test(id)) return res.status(404).json({ error: "no" });
+  const board = await store.load(FILE);
+  const g = board.groups.find((x) => x.id === id);
+  if (!g) return res.status(404).json({ error: "no" });
+  const live = board.invites.some((v) => v.grp === id && !v.off && !v.usedBy
+    && !store.inviteOver(v));
+  if (!live) return res.status(404).json({ error: "no" });
+  const who = (g.members || []).map((h) => board.people.find((q) => q.by === h))
+    .filter((q) => q && q.handle && q.state === "published")
+    .map((q) => q.handle);
+  res.json({ kind: "room", name: g.name || "", who, n: who.length });
+});
+
 app.get(["/enter", "/enter/", "/i/:code"], (req, res, next) =>
   page("enter.html", req, res, next));
 
@@ -1866,6 +2222,32 @@ setInterval(() => {
   for (const [k, v] of tries) if (v.at < hour) tries.delete(k);
 }, 600_000).unref?.();
 
+/** PUTTING SOMEBODY INTO THE ROOM A CODE WAS FOR.
+ *
+ * Its own function because /api/enter reaches this from two directions now —
+ * somebody arriving for the first time, and a member who is already through
+ * the door being invited into a conversation — and a rule written twice is a
+ * rule that will one day disagree with itself.
+ *
+ * THE ROOM MAY HAVE FILLED UP while the code sat in a chat window. The code
+ * still worked and they are still in; being turned away at this point over
+ * somebody else's timing would be the worst version of this. Minting checks
+ * the cap, this is the race, and false here means the room is simply not
+ * mentioned.
+ */
+async function intoRoom(me, grp) {
+  return change((board) => {
+    const g = board.groups.find((x) => x.id === grp);
+    if (!g) return false;
+    // Already in it, which is not a failure: the answer is still that room.
+    if (g.members.includes(me) || (g.guests || []).includes(me)) return true;
+    if (store.groupRoom(g) < 1) return false;
+    g.guests = [...(g.guests || []), me];
+    Object.assign(g, store.cleanGroup(g));
+    return true;
+  });
+}
+
 app.post("/api/enter", express.json({ limit: "8kb" }), async (req, res) => {
   const me = hashDevice(String(req.body?.device || ""), SALT);
   if (!me) return res.status(400).json({ error: "no device" });
@@ -1877,6 +2259,47 @@ app.post("/api/enter", express.json({ limit: "8kb" }), async (req, res) => {
     // somebody who pasted their key. Give it to them now, or "read" mode
     // would keep turning away a person it has already let in.
     setCookie(res, me);
+    /* AND A MEMBER INVITED INTO A CONVERSATION IS STILL BEING INVITED.
+     *
+     * This answered {already:true} and stopped, which was right while every
+     * code was a way on to the board: somebody already on it has nothing left
+     * to spend one for. A chat invite is not that — it is a seat in one room,
+     * and the person most likely to be handed one is somebody already here.
+     * They typed the six characters, watched the door say "you are already in",
+     * and were left exactly where they started, with no way into the room the
+     * link was for.
+     *
+     * So the code is spent and they are put in it, on the same terms as
+     * anybody else. Only a room code does anything here; every other kind is
+     * still nothing to somebody who is in.
+     */
+    const want = store.cleanCode(req.body?.code);
+    if (want) {
+      /* FIVE AN HOUR HERE TOO, and this is the whole reason the counter is
+         read before the code is looked up rather than after the refusal.
+         Everything below this block is behind it; this branch is not, because
+         it returns first — so without these lines a member already through the
+         door could walk the alphabet at a room's code as fast as their phone
+         could ask, and a guessed code is a seat in somebody's conversation.
+         Thirty characters to the power of six against five tries an hour is
+         the same hopeless sum the front door runs on. */
+      const t2 = tries.get(me) || { n: 0, at: Date.now() };
+      if (t2.at < Date.now() - 3600_000) { t2.n = 0; t2.at = Date.now(); }
+      if (t2.n >= 5) return res.status(429).json({ error: "slow-down", left: 0 });
+      const roomFor = await change((board) => {
+        const v = board.invites.find((x) => x.code === want);
+        if (!v || v.off || !v.grp || v.usedBy || store.inviteOver(v)) return null;
+        v.usedBy = me;
+        v.usedAt = new Date().toISOString();
+        return { grp: v.grp, who: v.who || "" };
+      });
+      if (roomFor && await intoRoom(me, roomFor.grp)) {
+        tries.delete(me);
+        return res.json({ ok: true, already: true, by: roomFor.who,
+          where: "/groups?g=" + roomFor.grp });
+      }
+      t2.n += 1; t2.at = Date.now(); tries.set(me, t2);
+    }
     return res.json({ ok: true, already: true });
   }
 
@@ -2064,19 +2487,11 @@ app.post("/api/enter", express.json({ limit: "8kb" }), async (req, res) => {
      * and the composer asks for a name and a sentence. See `guests` on
      * cleanGroup.
      *
-     * THE ROOM MAY HAVE FILLED UP while the code sat in a chat window. The
-     * code still worked and they are still in — being turned away at this
-     * point over somebody else's timing would be the worst version of this —
-     * so they land on Browse like anybody else and the room is simply not
-     * mentioned. Minting checks the cap; this is the race, not the rule. */
+     * The cap, and the race against it, are in intoRoom — read the note there.
+     * False means they land on Browse like anybody else and the room is simply
+     * not mentioned. */
     if (got && got.grp) {
-      const landed = await change((board) => {
-        const g = board.groups.find((x) => x.id === got.grp);
-        if (!g || g.members.includes(me) || store.groupRoom(g) < 1) return false;
-        g.guests = [...(g.guests || []), me];
-        Object.assign(g, store.cleanGroup(g));
-        return true;
-      });
+      const landed = await intoRoom(me, got.grp);
       if (landed) {
         return res.json({ ok: true, by: got.who || "", where: "/groups?g=" + got.grp });
       }
@@ -2931,6 +3346,99 @@ app.get("/api/rooms", admin, async (_req, res) => {
  * Not a reader — this app has no way to know about those, and would not want
  * one.
  */
+/* EVERYBODY ALREADY STANDING AT THE DOOR BECOMES TIER TWO.
+ *
+ * There is no queue any more, so sixty-three people are waiting for something
+ * that no longer exists. They are also the only reason an arrival from a link
+ * does not land on an empty board — the first person through the door has to
+ * find somebody to do business with, and these are them.
+ *
+ * ONE WAY, AND IT DOES NOT RUN TWICE. A browser that already has a person row
+ * is skipped rather than overwritten: a row made here and then filled in by
+ * the person themselves must not be flattened back to what the form said.
+ *
+ * The wait row is left alone and not marked done. They are still standing at
+ * whichever door they chose — that is what the rooms and the vouch read — and
+ * what has changed is that the board now shows them.
+ */
+app.post("/api/tier-two", express.json({ limit: "1kb" }), admin, async (req, res) => {
+  /* FILL BACKFILLS THE ROWS AN EARLIER RUN ALREADY MADE.
+   *
+   * The first version of this carried a name and a line and dropped the
+   * photograph and the sentence, so fifty people became fifty initials. They
+   * cannot be made again — they have profiles now — and re-running skips
+   * them, which is right for a migration and useless for fixing one.
+   *
+   * So: fill in what is EMPTY and never touch what is not. Somebody who has
+   * since written their own line, chosen their own sentence or uploaded their
+   * own face keeps all three; a row that has been sitting blank since the
+   * migration gets what the door already had. A backfill that overwrites is
+   * not a backfill, it is a restore, and nobody asked for one.
+   */
+  const fill = req.body?.fill === true;
+  const out = await change((board) => {
+    const mine = new Map();
+    for (const q of board.people) if (q.by && !mine.has(q.by)) mine.set(q.by, q);
+    let made = 0, already = 0, nameless = 0, filled = 0;
+    for (const w of board.waits) {
+      if (!w.by) { nameless++; continue; }
+      if (mine.has(w.by)) {
+        already++;
+        if (!fill) continue;
+        const q = mine.get(w.by);
+        let touched = false;
+        const put = (k, v) => { if (v && !q[k]) { q[k] = v; touched = true; } };
+        put("goal", String(w.why || "").trim() && !store.contactShaped(String(w.why))
+          ? String(w.why).trim() : "");
+        put("levelBand", w.levelBand || "");
+        put("type", w.type || "");
+        /* The photograph and its state move together or not at all. A photo id
+           without the state it was reviewed in would either hide a picture
+           somebody approved or show one nobody has looked at. */
+        if (w.photo && !q.photo) {
+          q.photo = w.photo; q.photoState = w.photoState || ""; touched = true;
+        }
+        if (w.me && w.want && !(Array.isArray(q.say) && q.say.length)) {
+          q.say = [{ me: w.me, want: w.want }]; touched = true;
+        }
+        if (touched) filled++;
+        continue;
+      }
+      const name = String(w.name || "").trim();
+      if (!name) { nameless++; continue; }
+      const why = String(w.why || "").trim();
+      board.people.push(store.cleanPerson({
+        id: store.newId(), at: w.at || new Date().toISOString(), by: w.by,
+        handle: name.slice(0, 40),
+        // Their own words where they are safe to show, and nothing where they
+        // are not — same rule as the door itself.
+        goal: why && !store.contactShaped(why) ? why : "",
+        /* THEIR FACE AND THEIR SENTENCE, WHICH THE ROW ALREADY HAD.
+         *
+         * A wait row holds a photograph, the state somebody reviewed it in,
+         * and the two halves of "I am a ___ looking for a ___" — because the
+         * door asked for all of it. Dropping them would have turned fifty
+         * people into fifty grey initials with a name under each, on the one
+         * screen whose whole job is to look like somewhere worth joining.
+         *
+         * photoState comes across UNCHANGED and is not promoted: a picture
+         * nobody has looked at yet stays held here exactly as it was there,
+         * and /api/front only ever publishes a "published" one. Carrying the
+         * state rather than the permission is the difference between moving
+         * a row and approving it. */
+        photo: w.photo || "", photoState: w.photoState || "",
+        ...(w.me && w.want ? { say: [{ me: w.me, want: w.want }] } : {}),
+        levelBand: w.levelBand || "", type: w.type || "",
+        state: "published", looking: true, via: "door",
+      }));
+      mine.set(w.by, board.people[board.people.length - 1]);
+      made++;
+    }
+    return { ok: true, made, already, filled, nameless };
+  });
+  res.json(out);
+});
+
 app.post("/api/admit-existing", admin, async (_req, res) => {
   const now = new Date().toISOString();
   let added = 0, already = 0;
@@ -3563,6 +4071,21 @@ const shownPerson = (q, mine) => ({
      own. Dropped here for the reason given above: a route added later must not
      be able to publish it by forgetting to. */
   mail: mine ? q.mail : undefined,
+  /* WHICH DOOR SOMEBODY CAME THROUGH, AND IT IS NOT PUBLISHED.
+   *
+   * `...q` above means every field on a person row leaves the building unless
+   * this object takes it off again, and these two arrived by that route: the
+   * tier stamp was readable by every reader of /api/people, which makes the
+   * boundary a thing the PAGE chooses to draw rather than a thing the server
+   * decides. A member is shown who is waiting; somebody who came through the
+   * door must not be able to read the same fact out of the response and draw
+   * it themselves. See the `waiting` line in /api/people, which is the only
+   * way this leaves at all, and only to a member.
+   *
+   * `vouchedBy` goes to NOBODY, owner included: it is another person's id, so
+   * publishing it on a row would hand out the map of who brought whom in. */
+  via: mine ? q.via : undefined,
+  vouchedBy: undefined,
   /* THE LAYER, AND NOT THE NUMBER UNDERNEATH IT.
    *
    * `seq` is where somebody stands in arrival order and it stays on the
@@ -4446,7 +4969,7 @@ const num = (name, fallback) => {
   const v = Number(process.env[name]);
   return Number.isFinite(v) && v >= 0 ? v : fallback;
 };
-const BRING_DAYS = num("BOARD_BRING_DAYS", 1);
+const BRING_DAYS = num("BOARD_BRING_DAYS", 0);
 /* POSTING TWICE A WEEK WAS THE PRICE OF AN INVITE, and it stopped being the
  * right one. It was written when the board was a feed and what a member did
  * here was write on it; what a member does here now is say what they are
@@ -4632,6 +5155,12 @@ app.get("/api/people", async (req, res) => {
    * does not have, and a card that offered a button which the door would
    * refuse is a worse screen than one that does not.
    */
+  /* THE WALL IS ABOUT BROWSING AND IT ONLY EVER APPLIED TO SOMEBODY WITH NO
+     PROFILE. Five faces and "43 more inside" exists to make a form worth
+     filling in. Once the public door is open the form IS a profile, so
+     anybody who has made one browses the board like everybody else and the
+     wall has nothing left to do — the boundary moved to who they may write
+     to first, which lives in pairState. */
   const w = board.waits.find((x) => x.by === me && !x.done);
   if (w && !board.people.some((q) => q.by === me && q.state === "published")) {
     const live = board.people.filter((q) =>
@@ -4666,22 +5195,57 @@ app.get("/api/people", async (req, res) => {
      localStorage, and had quietly stopped being applied at all — see
      cleanBlock in store.js. */
   const iBlocked = new Set(board.blocks.filter((x) => x.by === me).map((x) => x.who));
+  /* WHO IS WAITING, AND ONLY A MEMBER IS TOLD.
+   *
+   * Somebody a member vouched for and somebody who tapped a link on Instagram
+   * are the same card on this screen, which leaves a member with no way to
+   * tell the room from the queue standing in it — and vouching is the one
+   * thing only a member can do, so the one person who can act on the fact was
+   * the one person not being told it.
+   *
+   * ASYMMETRIC, LIKE THE BOUNDARY ITSELF. A mark saying "still waiting" is
+   * useful to the member who could end the waiting and humiliating to the
+   * person wearing it, so it goes out to members and to nobody else — which
+   * is a decision made HERE, in the response, not in the page. shownPerson
+   * takes `via` off every row for the same reason: a flag the browser is
+   * never sent is a flag no page can accidentally draw.
+   *
+   * Blank counts as a member. Everybody who was here before the public door
+   * existed has no stamp at all — same rule as tierOf. */
+  const mineRow = myRow(board, me);
+  const iAmMember = Boolean(mineRow) && mineRow.via !== "door";
   const live = board.people.filter((q) => (
     q.state === "published" && q.looking && q.handle && !iBlocked.has(q.id)));
   res.json({
     // Whether this reader already follows them, so the deck's one button can
     // say which of the two things it is about to do. A fact about the reader,
     // which is why this response is never cached.
-    people: live.map((q) => ({
-      ...shownPerson(q, q.by === me),
-      mine: q.by === me,
-      speaksFor: speaksFor(board, q),
-      following: Boolean(me) && board.follows.some((f) => f.by === me && f.who === q.id),
-      // What the two of you have in common, so the deck can say it before
-      // anybody presses anything. Both sides of this are already on both
-      // pages: it tells the reader nothing they could not work out.
-      shared: pairState(board, me, q).shared,
-    })),
+    // One pairState per person, not one per field. It walks follows and
+    // grants, and this runs over the whole board on every load of Browse.
+    people: live.map((q) => {
+      const st = pairState(board, me, q);
+      return {
+        ...shownPerson(q, q.by === me),
+        mine: q.by === me,
+        speaksFor: speaksFor(board, q),
+        following: Boolean(me) && board.follows.some((f) => f.by === me && f.who === q.id),
+        // What the two of you have in common, so the deck can say it before
+        // anybody presses anything. Both sides of this are already on both
+        // pages: it tells the reader nothing they could not work out.
+        shared: st.shared,
+        /* WHETHER THIS IS SOMEBODY THE READER CANNOT OPEN WITH, because they
+           came through the public door and this person was vouched for.
+           THEY STAY ON THE SCREEN. Hiding them would make the two tiers two
+           boards that never meet, and then nobody has a reason to climb — the
+           card names what it is and why the button is not there, which is the
+           only thing that makes an invite worth wanting. */
+        upTier: st.upTier,
+        /* Undefined rather than false for a reader who is not a member, so the
+           field is absent from the response instead of present and negative —
+           there is nothing there to be flipped by anybody reading it. */
+        waiting: iAmMember && q.by !== me && q.via === "door" ? true : undefined,
+      };
+    }),
   });
 });
 
@@ -4751,10 +5315,25 @@ app.post("/api/tally", express.json({ limit: "1kb" }), async (req, res) => {
   TALLY.set("all", n);
   if (n > TALLY_BURST) return res.json({ ok: true });
 
-  const day = new Date().toISOString().slice(0, 10);
+  const now = new Date().toISOString();
+  const day = now.slice(0, 10);
+  /* AND THE HOUR, IN A SECOND BUCKET RATHER THAN A FINER FIRST ONE.
+   *
+   * The day key is what `make doors` has always read and what answers "did
+   * that post work" a week later; changing its shape would have thrown away
+   * every figure this board has. So the hour is written beside it, keyed the
+   * same way with the hour on the end, and kept for three days — see
+   * cleanHours.
+   *
+   * It exists because the question asked ten minutes after a link goes up is
+   * "is anybody arriving now", and a UTC day cannot answer it: at two in the
+   * morning in Tokyo that day is already seventeen hours old. */
+  const hour = now.slice(0, 13);
   await change((board) => {
-    const key = day + "|" + room + "|" + what;
-    board.counts[key] = (board.counts[key] || 0) + 1;
+    const tail = "|" + room + "|" + what;
+    board.counts[day + tail] = (board.counts[day + tail] || 0) + 1;
+    if (!board.hours) board.hours = {};
+    board.hours[hour + tail] = (board.hours[hour + tail] || 0) + 1;
     return { ok: true };
   });
   res.json({ ok: true });
@@ -4764,7 +5343,77 @@ app.post("/api/tally", express.json({ limit: "1kb" }), async (req, res) => {
 app.get("/api/counts", admin, async (_req, res) => {
   const board = await store.load(FILE);
   res.set("Cache-Control", "no-store");
-  res.json({ counts: board.counts || {} });
+  res.json({ counts: board.counts || {}, hours: board.hours || {} });
+});
+
+/* WHAT THE FRONT DOOR SHOWS SOMEBODY WHO HAS NEVER BEEN HERE.
+ *
+ * /api/people is for a reader: it knows who they are, what they follow, who
+ * they have blocked, and which people they may write to. None of that exists
+ * for a stranger off an Instagram link, and a route that tried to serve both
+ * would sooner or later answer one of those questions to somebody outside the
+ * door. So this is its own endpoint and it takes no device at all.
+ *
+ * It sends three things, because the page is three things: the rooms with a
+ * number on each, the members (who a new arrival can look at and not write
+ * to), and the people who came in the way they are about to (who they can).
+ * The split IS the product, and it is done here rather than on the page so
+ * that a page cannot get it wrong.
+ *
+ * NO `reach`, NO `mail`, NO relationship. shownPerson(q, false) is the same
+ * shape the peek wall already used, and it drops those.
+ */
+/* THE FACES ON THE FRONT DOOR, AND NOTHING ELSE.
+ *
+ * /api/public-media is behind the door on purpose — the note over OPEN_PATHS
+ * says why and it is right — so the front page cannot use it, and a card with
+ * a broken square where a face should be is worse than a letter.
+ *
+ * So: its own route, open, and it will serve an id ONLY if that id is the
+ * published photograph of somebody /api/front already puts on the page. It
+ * cannot be used to fish for anything else on this box, because an id that is
+ * not on a live person's row is a 404 whether the file exists or not.
+ */
+app.get("/api/front-face", async (req, res) => {
+  const id = String(req.query.id || "");
+  if (!/^[a-f0-9]{20}$/.test(id)) return res.status(404).end();
+  const board = await store.load(FILE);
+  const ok = board.people.some((q) => q.state === "published" && q.looking
+    && q.handle && q.photoState === "published" && q.photo === id);
+  if (!ok) return res.status(404).end();
+  const found = await findMedia(id);
+  if (!found) return res.status(404).end();
+  res.set("Content-Type", found.type);
+  res.set("X-Content-Type-Options", "nosniff");
+  res.set("Cache-Control", "public, max-age=86400, immutable");
+  res.sendFile(found.file);
+});
+
+app.get("/api/front", async (_req, res) => {
+  const board = await store.load(FILE);
+  res.set("Cache-Control", "no-store");
+  const live = board.people.filter((q) =>
+    q.state === "published" && q.looking && q.handle);
+  /* Tier from the stamp, and an unstamped row reads as a member — that is what
+     everybody here was before the public door existed. Same rule as tierOf. */
+  const shown = (q) => {
+    const o = shownPerson(q, false);
+    return { id: o.id, handle: o.handle, campus: o.campus, here: o.here,
+             goal: o.goal, goalAlt: o.goalAlt, goalLang: o.goalLang,
+             photo: o.photoState === "published" ? o.photo : "",
+             photoAt: Number.isFinite(Number(o.photoAt)) ? Number(o.photoAt) : 50,
+             say: Array.isArray(o.say) ? o.say.map((r) => ({ me: r.me, want: r.want })) : [] };
+  };
+  res.json({
+    /* The count on a door is the people standing at it, which is what the
+       doors panel counts and what the room itself shows. */
+    rooms: store.WAITROOMS_CHAT.map((key) => ({
+      key, n: board.waits.filter((w) => w.room === key && !w.done).length,
+    })),
+    members: live.filter((q) => q.via !== "door").map(shown),
+    open: live.filter((q) => q.via === "door").map(shown),
+    total: live.length,
+  });
 });
 
 app.get("/api/hello", async (req, res) => {
@@ -5043,6 +5692,51 @@ app.post("/api/wait", express.json({ limit: "4kb" }), async (req, res) => {
         whyAlt2: row.why === was.why ? (was.whyAlt2 || "") : "",
         whyLang: row.why === was.why ? (was.whyLang || "") : "" };
     } else board.waits.push(row);
+
+    /* AND THEY ARE SOMEBODY ON THE BOARD, NOT SOMEBODY OUTSIDE IT.
+     *
+     * There is no queue any more. Tier two is the queue, and it is one people
+     * can work in: they browse everybody, they are browsable, and they can
+     * write to anyone who arrived the way they did. What they are waiting for
+     * is a member's vouch into the invite-only rooms — not permission to
+     * exist.
+     *
+     * THE WAIT ROW STAYS. The doors, the room greetings, Mo, the panel and
+     * the vouch all read `waits`, and tearing that out to make a person is a
+     * night's work and a month of finding what broke. So the row goes on
+     * meaning "standing at this door" and the person row is what the board
+     * shows — two lists, one meaning each, which is the rule this file
+     * already keeps for members and guests in a group.
+     *
+     * Their `reach` is deliberately NOT copied across. The form promises it
+     * is shown to nobody, and the person row is the thing everybody reads.
+     */
+    if (PUBLIC_DOOR && me && !board.people.some((q) => q.by === me)) {
+      /* The same rule /api/me enforces, checked here because this is now a
+         second door onto the same table: a line with a phone number in it is
+         somebody routing around the board, and it must not get in by coming
+         through the form instead. The person is still made — only the line
+         is dropped, because a profile with no sentence is fixable and a
+         refused arrival is not. */
+      const why = String(req.body?.why || "").trim();
+      const clean = why && !store.contactShaped(why) ? why : "";
+      /* The row this form just wrote, which may already carry a face and a
+         sentence from a door they filled in earlier. Same reasoning as the
+         migration: the board should show what somebody gave it. */
+      const w = board.waits.find((x) => x.by === me && !x.done) || {};
+      board.people.push(store.cleanPerson({
+        id: store.newId(), at: new Date().toISOString(), by: me,
+        handle: name.slice(0, 40),
+        goal: clean,
+        photo: w.photo || "", photoState: w.photoState || "",
+        ...(w.me && w.want ? { say: [{ me: w.me, want: w.want }] } : {}),
+        levelBand: w.levelBand || "", type: w.type || "",
+        state: "published",
+        looking: true,
+        via: "door",
+      }));
+    }
+
     const live = at >= 0 ? board.waits[at] : row;
     if (String(live.why || "").trim() && !live.whyAlt) {
       whyFor = live.id; whyText = live.why;
@@ -5089,8 +5783,23 @@ app.post("/api/write", express.json({ limit: "4kb" }), gate, async (req, res) =>
   if (!me) return res.status(400).json({ error: "no" });
   const to = String(req.body?.to || "").trim().slice(0, 40);
   const line = String(req.body?.line || "").trim().slice(0, 600);
-  if (!to) return res.status(400).json({ error: "name" });
-  if (!line) return res.status(400).json({ error: "line" });
+  /* A NAME AND A LINE ARE BOTH OPTIONAL NOW.
+   *
+   * "Dont worry about adding text just make it possible to share the link
+   * immediately, why would you need invite someone in the aop anyway? You can
+   * message your connects directly."
+   *
+   * Right on both counts. The people already here are one tap away in Chat,
+   * so the only thing this path is for is getting a link to somebody who is
+   * NOT here — and the link is the whole of it. A screen that made somebody
+   * name a person and compose a sentence before it would hand over a URL was
+   * three steps in front of one.
+   *
+   * NOTHING DOWNSTREAM NEEDED THEM. `to` was only ever the greeting on the
+   * door page, and `line` became the first message of the thread. The name
+   * that matters is the one the ARRIVING person types — see /api/write/reply,
+   * which is where the waiting row gets its name — and that was always true.
+   */
   /* THE PROFILE RULE APPLIES TO A LINE WRITTEN TO A STRANGER exactly as it
      applies to one written on a profile: no contact details in it. The link
      itself is the way to answer, and a WeChat id in the text is a way to take
@@ -5099,11 +5808,30 @@ app.post("/api/write", express.json({ limit: "4kb" }), gate, async (req, res) =>
   if (shaped) return res.status(400).json({ error: "contact", what: shaped });
 
   let why = "";
+  let need = [];
   const out = await change((board) => {
     const mine = board.people.find((q) => q.by === me);
     if (!mine || !mine.handle) { why = "nopage"; return null; }
     const rank = standing(board, me);
-    if (!rank.can) { why = "standing"; return null; }
+    /* WHICH OF THE THREE, not just that one of them failed. The screen used
+       to answer "your profile page says what is left", which is a dead end
+       from a screen with a written message still in the box — and standing()
+       has worked the answer out already. See sendNew in notes.html. */
+    if (!rank.can) { why = "standing"; need = rank.need || []; return null; }
+    /* THE LIVE ONE THEY ALREADY HAVE, rather than a second. The screen mints
+       on opening, so without this every look at it leaves another way in
+       lying about — each good for a day and each spendable by whoever ends up
+       with it. A bare link with no name and no line on it is interchangeable
+       with any other, so there is never a reason to hold two: the newest
+       unspent one is handed back.
+       A link written TO somebody, with a line in it, is not interchangeable
+       and is never reused. */
+    if (!to && !line) {
+      const now = Date.now();
+      const had = board.writes.filter((w) => w.by === me && !w.wait && !w.to
+        && !w.line && w.till && new Date(w.till) > now).slice(-1)[0];
+      if (had) return { code: had.code, till: had.till, to: "", from: mine.handle };
+    }
     const taken = codesTaken(board);
     let code = store.newCode();
     for (let i = 0; i < 50 && taken.has(code); i++) code = store.newCode();
@@ -5116,13 +5844,54 @@ app.post("/api/write", express.json({ limit: "4kb" }), gate, async (req, res) =>
     board.writes.push(row);
     return { code: row.code, till: row.till, to: row.to, from: mine.handle };
   });
-  if (!out) return res.status(400).json({ error: why || "no" });
+  if (!out) {
+    /* SAID OUT LOUD, so `make logs` answers it too. A refusal somebody is
+       looking at on a phone in another country is a refusal nobody here can
+       see, and the screen and the log disagreeing is worse than either — so
+       it is the same word in both. No device hash and no name: which member
+       it was is not what anybody is trying to find out. */
+    console.log("write refused: " + (why || "no")
+      + (need.length ? " (" + need.join(",") + ")" : ""));
+    return res.status(400).json({ error: why || "no", ...(need.length ? { need } : {}) });
+  }
   res.json({ ok: true, ...out });
 });
 
 /** What the person who opened the link is looking at. No device needed and
  *  nothing about the board given away: the name they were called, who wrote
  *  it, their face, and the line. */
+/* A SCREEN THAT DIED, IN ONE LINE, IN THE BOARD'S OWN LOG.
+ *
+ * See public/oops.js for what sends it and why. "Crashed" was the whole of a
+ * bug report from a phone in another country, and there was nothing on this
+ * side to put beside it.
+ *
+ * OUTSIDE THE DOOR, because the screens most likely to break in front of
+ * somebody are the ones they meet before they are anybody. Nothing is stored
+ * and nothing is answered: it is a line in the log and a 204.
+ *
+ * A CEILING PER MINUTE ACROSS THE WHOLE BOARD. A bad deploy is every phone
+ * reporting at once, and a log nobody can read is the same as no log. The
+ * count is dropped and started again each minute rather than kept per device
+ * — a device number in here would be the one identifying thing this route
+ * was written not to carry. */
+let OOPS_MIN = 0;
+let OOPS_N = 0;
+app.post("/api/oops", express.json({ limit: "2kb", type: ["application/json", "text/plain"] }),
+  (req, res) => {
+    const min = Math.floor(Date.now() / 60000);
+    if (min !== OOPS_MIN) { OOPS_MIN = min; OOPS_N = 0; }
+    if (OOPS_N >= 60) return res.status(204).end();
+    OOPS_N += 1;
+    const one = (v, n) => String(v ?? "").replace(/[\r\n]+/g, " ").slice(0, n);
+    const what = one(req.body?.what, 300);
+    if (what) {
+      console.log("screen broke on " + one(req.body?.at, 80) + ": " + what
+        + (req.body?.where ? " (" + one(req.body.where, 120) + ")" : ""));
+    }
+    res.status(204).end();
+  });
+
 app.get("/api/write/:code", async (req, res) => {
   res.set("Cache-Control", "no-store");
   const code = String(req.params.code || "").trim().toUpperCase();
@@ -5213,10 +5982,18 @@ app.post("/api/write/reply", express.json({ limit: "8kb" }), async (req, res) =>
      * address the first message to.
      */
     if (w.by) {
-      board.notes.push(store.cleanNote({
-        id: store.newId(), at: w.at || new Date().toISOString(),
-        by: w.by, to: me, text: w.line,
-      }));
+      /* THE FIRST ONE ONLY IF SOMETHING WAS WRITTEN. A link sent on its own
+         is the ordinary case now — see the note over /api/write — and a note
+         with no text in it draws as an empty grey bubble at the top of the
+         thread, which reads as a message that failed to load rather than as
+         one that was never written. The conversation starts with their
+         answer, which is the honest first line of it. */
+      if (w.line) {
+        board.notes.push(store.cleanNote({
+          id: store.newId(), at: w.at || new Date().toISOString(),
+          by: w.by, to: me, text: w.line,
+        }));
+      }
       board.notes.push(store.cleanNote({
         id: store.newId(), at: new Date().toISOString(),
         by: me, to: w.by, text: reply,
@@ -5854,6 +6631,25 @@ function screenFacts(board, me, mine, where) {
 
   return [];
 }
+
+/* EP AI, the assistant on the partner set-up page. Public and
+ * unauthenticated on purpose: the reader is somebody at a partner company who
+ * has agreed to nothing yet, which is exactly who the page is for. The cap
+ * lives in lib/epai.js, per caller and per day, because a public route that
+ * calls a model is otherwise a bill anybody can run up.
+ *
+ * The page prefers the reader's own Claude when it is inside a viewer and only
+ * falls back to here. Both read the same brief, so the two answers agree. */
+app.post("/api/ep/ask", express.json({ limit: "16kb" }), async (req, res) => {
+  if (!epai.configured()) return res.status(503).json({ error: "unconfigured" });
+  const who = String(req.headers["x-forwarded-for"] || req.ip || "anon").split(",")[0].trim();
+  const out = await epai.ask(req.body && req.body.turns, who);
+  if (out.error) {
+    console.error("ep/ask: " + out.error);
+    return res.status(out.error === "upstream" ? 502 : 429).json({ error: out.error });
+  }
+  res.json({ text: out.text });
+});
 
 app.post("/api/butler", express.json({ limit: "16kb" }), async (req, res) => {
   /* EVERY REFUSAL SAYS WHICH ONE IT WAS.
@@ -7047,9 +7843,33 @@ const myRow = (board, me) => (me ? board.people.find((x) => x.by === me) : null)
  *  whether two people may swap anything. */
 function pairState(board, me, q) {
   const out = { mutual: false, shared: [], can: false, gave: false, given: false,
-                card: null, note: "" };
+                card: null, note: "", upTier: false };
   const mine = myRow(board, me);
   if (!mine || !q || !q.id || q.by === me) return out;
+
+  /* THE BOUNDARY, AND IT IS THE ONLY DIFFERENCE BETWEEN THE TWO TIERS.
+   *
+   * Somebody who came through the public door may not open with somebody a
+   * member brought in. Everything else on this board is identical for both —
+   * same screens, same browse, same matching — so this one line is the whole
+   * of what an invite buys, and the whole of what there is to climb towards.
+   *
+   * IT IS NOT SYMMETRIC, on purpose. An invited member may always reach down;
+   * that is how somebody gets found, vouched for, and moved up. And once they
+   * have reached down, the pair is open in both directions — answering
+   * somebody who wrote to you is not opening with them.
+   *
+   * `upTier` goes out with the row rather than the row being hidden, because
+   * a ladder nobody can see is a ladder nobody climbs: the card says who this
+   * is and why the button is not there. */
+  const iCameThroughTheDoor = mine.via === "door";
+  const theyWereVouchedFor = q.via !== "door";
+  if (iCameThroughTheDoor && theyWereVouchedFor) {
+    // Unless they opened it. Checked on THEIR follow of me, which is the
+    // reaching-down move — not on mine of them, which anybody may make.
+    const theyReachedDown = board.follows.some((f) => f.by === q.by && f.who === mine.id);
+    if (!theyReachedDown) { out.upTier = true; return out; }
+  }
 
   out.mutual = board.follows.some((f) => f.by === me && f.who === q.id)
     && board.follows.some((f) => f.by === q.by && f.who === mine.id);
@@ -7599,7 +8419,7 @@ app.post("/api/card/give", express.json({ limit: "4kb" }), gate, async (req, res
   if (!me || !/^[a-f0-9]{20}$/.test(who)) return res.status(400).json({ error: "no" });
 
   const out = await change((board) => {
-    const q = board.people.find((x) => x.id === who && x.state === "published");
+    const q = board.people.find((x) => x.id === who && onBoard(x));
     if (!q) return { error: "gone" };
     const st = pairState(board, me, q);
     // Checked on the way in as well as on the way out. The screen will not
@@ -7861,6 +8681,74 @@ app.post("/api/admin/back", admin, express.json({ limit: "2kb" }), async (req, r
   });
   if (out?.error) return res.status(404).json(out);
   res.status(201).json(out);
+});
+
+/* A NEW KEY FOR A MEMBER, AND EVERY COPY OF THE OLD ONE STOPS BEING THEM.
+ *
+ * WHY IT EXISTS. Two people opened a chat link, and ended up holding Tom's
+ * device number — his whole inbox on their phone. Switching off what put it
+ * there (see DEMO_BOARD above) stops the next one; it does nothing about the
+ * number already sitting in two browsers, which goes on being him for ever,
+ * because a device number IS the account on this board.
+ *
+ * So: mint a new one and move the person onto it. Every other browser is
+ * holding a number that now belongs to nobody — not signed out with a
+ * message, simply not him any more.
+ *
+ * THE TOKEN IS NOT THE KEY. `make evict` prints a link to paste to himself;
+ * a link that carried the key would leave the key in a chat log for ever.
+ * The token is good for one tap and fifteen minutes, and the key is made on
+ * the server and handed to exactly one browser — the one that taps.
+ *
+ * IN MEMORY, DELIBERATELY. It lives for a quarter of an hour and nothing is
+ * gained by writing it to disk; a restart in that window costs one more
+ * `make evict` and an unread token is a token that never existed. */
+const HANDOVER = new Map();
+const HANDOVER_MINS = 15;
+
+app.post("/api/admin/handover", admin, express.json({ limit: "2kb" }), async (req, res) => {
+  const who = String(req.body?.who || "").trim().toLowerCase();
+  if (!who) return res.status(400).json({ error: "who" });
+  const board = await store.load(FILE);
+  const q = board.people.find((x) => String(x.handle || "").toLowerCase() === who);
+  if (!q) return res.status(404).json({ error: "nobody" });
+  const now = Date.now();
+  for (const [t, v] of HANDOVER) if (v.till < now) HANDOVER.delete(t);
+  const token = randomUUID().replace(/-/g, "").slice(0, 24);
+  HANDOVER.set(token, { id: q.id, till: now + HANDOVER_MINS * 60 * 1000 });
+  res.status(201).json({ token, handle: q.handle || "", mins: HANDOVER_MINS });
+});
+
+/** The tap. One-time: the token is taken out of the map before anything else
+ *  can go wrong, so a double tap on a slow phone cannot mint two keys and
+ *  leave the second browser holding the account. */
+app.post("/api/handover", express.json({ limit: "1kb" }), async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const token = String(req.body?.token || "").replace(/[^a-f0-9]/g, "").slice(0, 24);
+  const row = token ? HANDOVER.get(token) : null;
+  if (!row) return res.status(404).json({ error: "no" });
+  HANDOVER.delete(token);
+  if (row.till < Date.now()) return res.status(410).json({ error: "old" });
+  /* The key exists in this response and in the browser that receives it, and
+     nowhere else — the server keeps the salted hash, as it does for every
+     other identity here. Same shape as the one the sign-in flow makes. */
+  const key = randomUUID() + randomUUID().slice(0, 8);
+  const to = store.hashDevice(key, SALT);
+  const out = await change((board) => {
+    const q = board.people.find((x) => x.id === row.id);
+    if (!q) return { error: "nobody" };
+    if (q.by === to) return { handle: q.handle || "" };
+    /* rebind rather than an assignment: it is the one function that knows
+       every table keyed on a device, and it MOVES rather than copies — which
+       is the point. The old number is left owning nothing. */
+    store.rebind(board, q.by, to);
+    return { handle: q.handle || "" };
+  });
+  if (out?.error) return res.status(404).json(out);
+  // The member's own cookie, as the sign-in flow sets: this browser has just
+  // become somebody who is through the door.
+  setCookie(res, to);
+  res.json({ ok: true, key, handle: out.handle });
 });
 
 /* THE SAME THING FROM THE BOX.
@@ -8422,7 +9310,12 @@ const OFFER_LINES = Math.max(1, Number(process.env.BOARD_OFFER_LINES || 6));
  */
 function followKey(board, h) {
   if (!h) return "";
-  const q = board.people.find((x) => x.by === h && x.handle && x.state === "published");
+  /* onBoard, NOT published — the last place the two questions were still one.
+     A follow each way is how two people who met in a room open a conversation,
+     and it was silently worth nothing while either of their profiles sat in
+     the review queue. So the pair followed each other, the thread read closed,
+     and every button on it was grey. See onBoard. */
+  const q = board.people.find((x) => x.by === h && onBoard(x));
   if (q) return q.id;
   const w = board.waits.find((x) => x.by === h && !x.done);
   return w ? "w:" + w.id : "";
@@ -8480,6 +9373,37 @@ function writePair(board, me, them) {
   return false;
 }
 
+/** ON THIS BOARD AT ALL — which is a different question from being in Browse,
+ *  and treating them as one question is what made half a dozen people
+ *  uncallable.
+ *
+ *  "every persopn shoild have access to all the function at least for now."
+ *
+ *  `held` is the review queue, and `make hide` sets it too. Both are about
+ *  the DIRECTORY: whether a stranger scrolling Browse is shown this person.
+ *  Neither says anything about whether somebody already in a conversation
+ *  with them may call them, pay them or pin terms with them — and the gate on
+ *  every one of those buttons was reading it as if it did. Eight people sat
+ *  in a queue nobody had been told about, and their friends' screens said
+ *  nothing at all: "when i press video for Axel there is no reaction".
+ *
+ *  WHAT STILL CLOSES A DOOR, because these are decisions about the person
+ *  rather than about a listing:
+ *    removed   the row is deleted
+ *    refused   whoever runs the board said no
+ *  and, separately and always, a block either way — see threadState, which is
+ *  the check that actually protects anybody and is untouched by this.
+ *
+ *  A handle is still required. A row with no name on it is not somebody you
+ *  can be introduced to; there is nothing to say back.
+ *
+ *  NOT THE VIEW COUNTER, and that is the line this rule stops at. A page view
+ *  is a fact about Browse, so it keeps asking about Browse.
+ */
+function onBoard(q) {
+  return Boolean(q && q.handle && q.state !== "removed" && q.state !== "refused");
+}
+
 function threadState(board, me, them) {
   /* BLOCKED EITHER WAY CLOSES THE THREAD, and the two readings differ.
      Reading this as the blocker, the conversation is gone. Reading it as the
@@ -8517,8 +9441,11 @@ function threadState(board, me, them) {
    * refused by the route: an introduction from a name that does not exist is
    * not one. Two ways past it, both of them the other person having agreed —
    * a member who wrote to them first, or a follow each way. */
-  const hasPage = board.people.some((q) => q.by === me && q.handle
-    && q.state === "published");
+  /* AND THE SAME RULE ABOUT YOUR OWN. Somebody whose profile was still in
+     the queue could not write to anybody at all — the board took their words,
+     held them for review, and silently made them unable to use the thing they
+     had just joined. See onBoard. */
+  const hasPage = board.people.some((q) => q.by === me && onBoard(q));
   if (!hasPage && !writePair(board, me, them) && !bothFollow(board, me, them)) {
     return { can: false, why: "profile", open: false };
   }
@@ -8858,7 +9785,7 @@ function notePermit(board, me, who) {
         // without an id: there is no page and nothing to open.
         return { id: "", by: w.by, handle: w.name, state: "published" };
       })()
-    : board.people.find((x) => x.id === who && x.state === "published");
+    : board.people.find((x) => x.id === who && onBoard(x));
   // The same answer for a person who does not exist and one who has taken
   // themselves down, so this cannot be used to ask which ids are real.
   if (!target) return { error: "gone" };
@@ -8968,8 +9895,13 @@ app.post("/api/note", notesOff, express.json({ limit: "16kb" }), async (req, res
   /* And the inbox, which is the one most of them will actually see. The
      link is built here because this runs after the response, when the
      request is gone. */
-  mailThem(out.note.to, out.from, backHere(req, "/notes#" + encodeURIComponent(out.from)))
-    .catch((err) => console.error("note mail:", err.message));
+  /* NO EMAIL FROM HERE ANY MORE — see mailUnread below. Sending it now told
+     somebody about a message they were about to read, or had already read by
+     the time it arrived: the person the email is for is the one who is NOT
+     in the app. The sweep picks it up in a few minutes if it is still unread.
+     The link it will carry is built there, from the same `key`. */
+  noteLink.set(out.note.id,
+    backHere(req, out.key ? "/notes#" + encodeURIComponent(out.key) : "/notes"));
 });
 
 /* SOMETHING SAID INTO A THREAD, RATHER THAN TYPED.
@@ -9026,7 +9958,9 @@ app.post("/api/note/voice", notesOff, express.json({ limit: "12mb" }), async (re
     if (!note) return { error: "no" };
     board.notes.push(note);
     const waiting = mine?.handle ? null : board.waits.find((w) => w.by === me && w.name);
+    // The thread's key, not the name — see the note in /api/note.
     return { note, from: mine?.handle || waiting?.name || "",
+             key: mine?.id || (waiting ? "w:" + waiting.id : ""),
              answering: Boolean(state.answering) };
   });
 
@@ -9037,8 +9971,9 @@ app.post("/api/note/voice", notesOff, express.json({ limit: "12mb" }), async (re
   res.status(201).json({ ok: true, id: out.note.id, answering: out.answering });
   // The same two nudges a typed note sends, for the same reasons — see above.
   tellThem(out.note.to).catch(() => { /* a push that failed is a push that did not arrive */ });
-  mailThem(out.note.to, out.from, backHere(req, "/notes#" + encodeURIComponent(out.from)))
-    .catch((err) => console.error("note mail:", err.message));
+  // Same as /api/note: the sweep sends it, if it is still unread.
+  noteLink.set(out.note.id,
+    backHere(req, out.key ? "/notes#" + encodeURIComponent(out.key) : "/notes"));
 });
 
 /* THE AUDIO ON A LINE IN A THREAD. The two people in it and nobody else.
@@ -9095,6 +10030,88 @@ app.get("/api/note/:id/voice", notesOff, async (req, res) => {
  */
 const mailedAt = new Map();
 
+/* THE PATH BACK TO A CONVERSATION, held between the write and the sweep.
+ *
+ * The link is "/notes#<the sender's key>", and the key is resolved inside the
+ * write, where the sender's row is already in hand. The sweep runs minutes
+ * later with no request and no sender row, so rather than resolve it twice —
+ * two places computing one address is how the two drift — it is kept here.
+ *
+ * A MISS IS NOT A FAILURE. Lost to a restart, the sweep falls back to the
+ * inbox, which is where every one of these landed until tonight. A worse link
+ * is a far better outcome than no email. */
+const noteLink = new Map();
+
+/* EVERY MESSAGE NOBODY READ, ONCE, A FEW MINUTES LATE.
+ *
+ * The email exists for the person who is not in the app. Sending it the
+ * instant a note is written told people about messages they were already
+ * reading — so a note waits, and is mailed only if it is still unseen when
+ * the sweep reaches it.
+ *
+ * Every minute, because the delay is minutes and a sweep coarser than the
+ * thing it is waiting for would make the wait meaningless. It walks notes
+ * from the end, where the new ones are, and stops at the first one too old to
+ * matter — so a board with a year of messages on it does not read all of them
+ * every minute.
+ *
+ * `mailed` is written whatever the send returns. A provider having a bad
+ * afternoon is not a reason to try the same message every minute for ever,
+ * and a notification that is an hour late is not worth having.
+ */
+const MAIL_WAIT = num("BOARD_MAIL_WAIT_MIN", 4);
+
+async function mailUnread() {
+  if (!mailReady()) return;
+  try {
+    const now = Date.now();
+    const ripe = now - MAIL_WAIT * 60_000;
+    // Old enough that nothing under it can still be waiting: one sweep's
+    // worth of slack past the wait, so a minute lost to a slow tick does not
+    // strand a note for ever.
+    const stale = now - (MAIL_WAIT + 30) * 60_000;
+    const board = await store.load(FILE);
+    const due = [];
+    for (let i = board.notes.length - 1; i >= 0; i--) {
+      const n = board.notes[i];
+      const at = Date.parse(n.at || "") || 0;
+      if (at < stale) break;
+      if (n.seen || n.mailed || n.report) continue;
+      if (at > ripe) continue;                  // still inside its grace
+      due.push(n);
+    }
+    if (!due.length) return;
+    /* STAMPED BEFORE ANY OF THEM IS SENT. The send is a network call that
+       takes seconds; a second tick landing in the middle of it would find the
+       same rows unstamped and send them again. */
+    const ids = new Set(due.map((n) => n.id));
+    await change((b) => {
+      for (const n of b.notes) if (ids.has(n.id)) n.mailed = true;
+      return { ok: true };
+    });
+    for (const n of due) {
+      const from = board.people.find((q) => q.by === n.by);
+      const wait = from ? null : board.waits.find((w) => w.by === n.by && w.name);
+      const name = from?.handle || wait?.name || "";
+      if (!name) continue;                      // nobody to say it is from
+      /* THE WHOLE ADDRESS, kept from the write, because only the request
+         knows which hostname this board is being read on — liuxuesheng.io and
+         thexchange.app are both real doors to it. A link built here would
+         have to guess one, and guessing sends half the members to a name they
+         have never seen.
+         Nothing to hand back but the inbox if the map lost it to a restart. */
+      const link = noteLink.get(n.id);
+      noteLink.delete(n.id);
+      if (!link) continue;
+      await mailThem(n.to, name, link).catch(() => { /* one is not all */ });
+    }
+    console.log("note mail: sent " + due.length);
+  } catch (err) {
+    console.error("note mail:", err.message);
+  }
+}
+setInterval(() => { mailUnread(); }, 60_000).unref?.();
+
 async function mailThem(to, from, link) {
   if (!mailReady() || !to || !from) return;
   const board = await store.load(FILE);
@@ -9128,12 +10145,41 @@ async function mailThem(to, from, link) {
 
 /** Buzz every device a member has turned this on for, and drop the ones the
  *  browser has thrown away. Never throws. */
-async function tellThem(to) {
-  if (!push.configured() || !to) return;
+/** ONE THING THAT HAPPENED, WRITTEN DOWN FOR THE PERSON IT HAPPENED TO.
+ *
+ *  The twin of tellThem and its opposite in one respect: a push arrives once
+ *  and is gone, so a phone that was off, or asleep, or had never been asked
+ *  for permission, was told nothing and there was no record it had ever rung.
+ *  The answer up to now had been to make a ROOM for the memo so at least it
+ *  turned up somewhere — which put a conversation in Chat nobody had asked to
+ *  have. This is where it turns up instead.
+ *
+ *  CALLED INSIDE change(), NEVER AFTER IT. The row is part of the same write
+ *  as the thing it is about: a bell saved separately is a bell that can exist
+ *  for terms that failed to save, or be missing for terms that did.
+ *
+ *  Nothing of what happened is stored — see cleanBell. A kind, a reference,
+ *  and who did it.
+ */
+function ring(board, to, kind, ref, who) {
+  if (!to || !ref) return;
+  board.bells = Array.isArray(board.bells) ? board.bells : [];
+  const b = store.cleanBell({ id: store.newId(), to, kind, ref, who,
+    at: new Date().toISOString() });
+  if (b) board.bells.push(b);
+}
+
+async function tellThem(to, words) {
+  /* THE GATE WAS THE WRONG ONE. push.configured() is the VAPID pair and
+     nothing else, so a board holding an APNs key and no VAPID pair told
+     nobody anything and said nothing about why — which is the exact bug
+     push.tell already guards against per row (see the note there) and this
+     defeated by refusing before it was ever called. */
+  if (!to || (!push.configured() && !push.apnsOn())) return;
   const board = await store.load(FILE);
   const subs = (board.pushes || []).filter((x) => x.by === to);
   if (!subs.length) return;
-  const dead = await push.tell(subs);
+  const dead = await push.tell(subs, words);
   if (!dead.length) return;
   /* A SEPARATE WRITE, AND ONLY WHEN THERE IS SOMETHING TO FORGET. An
      uninstalled app or a cleared site leaves an endpoint that will 410 for
@@ -9145,10 +10191,564 @@ async function tellThem(to) {
   });
 }
 
+
+/* ---------------------------------------------------------------------------
+ * THE DAILY REPORT CARD
+ *
+ * WHAT IT IS FOR. Everything this board tells a member is about somebody
+ * ELSE's move: a message arrived, a follow happened, a match opened. Nothing
+ * ever told them the thing they actually want to know, which is whether being
+ * here is working — whether anybody is looking. That number existed already
+ * (views has been counted per day for a month) and lived behind a tap on a
+ * panel, which means it was read by whoever went looking for it.
+ *
+ * WHY IT IS NOT THE GRADE. The grade on the phone is half things only that
+ * phone knows — a card answered, a streak, which matches are new — and the
+ * comment over the vouch tests says why that stays there: a number a client
+ * computes is a number a client can claim. This is the other half, the half
+ * the server already holds and nobody can claim: who opened your page, who
+ * followed you, who answered something you put up. Those are facts about
+ * other people's behaviour, which is exactly why they are worth a buzz and
+ * exactly why they cannot be computed on the reader's own phone.
+ *
+ * WHAT IS DELIBERATELY NOT IN IT. Messages. A note already buzzes the moment
+ * it arrives, and counting it again in the evening is the same event buzzing
+ * twice. The card is about the interest nothing else reports: the people who
+ * looked and said nothing.
+ *
+ * NO NAMES, EVER. It is four numbers. Who looked at your page is a fact about
+ * them as much as about you, and this board does not keep a reading history
+ * to draw one from — see the note over `views` in store.js, which is a date
+ * to a number and holds no identity at all.
+ * ------------------------------------------------------------------------ */
+
+/* The hour it goes out, UTC. Noon UTC is eight in the evening in Beijing and
+   nine in Tokyo — the end of a working day, when somebody has a minute, and
+   not the middle of one. An env var because a board somewhere else wants a
+   different evening. */
+const CARD_HOUR = num("BOARD_CARD_HOUR", 12);
+/* Off by default. A product that starts buzzing everybody nightly because a
+   deploy went out is a product that gets its notifications turned off, once,
+   for ever. Somebody has to mean this. */
+const CARD_ON = String(process.env.BOARD_CARD || "").trim().toLowerCase() === "on";
+
+/* WHOSE PHONE GETS THE OPERATOR'S CARD.
+ *
+ * A handle, the same way BOARD_DEALIO_OWNER names one — not the admin key,
+ * because a key is a credential and this is a person with a phone, and not a
+ * device hash, because those are not things anybody can type into .env. */
+const BOSS = String(process.env.BOARD_BOSS || "").trim().toLowerCase();
+
+/* HOW FAR APART TWO SPELLINGS OF A NAME ARE. Plain Levenshtein, two rows,
+   because the alternative is asking the operator to type a name exactly as
+   somebody else chose to spell it — and Lisa/Liza, Mei/May and Christopher/
+   Kristofer are the ordinary case here, not the edge one. Bounded: names on
+   this board are forty characters at most (cleanPerson), so the quadratic
+   does not matter. */
+function edits(a, b) {
+  if (a === b) return 0;
+  if (!a.length || !b.length) return Math.max(a.length, b.length);
+  let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i++) {
+    const row = [i];
+    for (let j = 1; j <= b.length; j++) {
+      row[j] = Math.min(prev[j] + 1, row[j - 1] + 1,
+        prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    }
+    prev = row;
+  }
+  return prev[b.length];
+}
+
+/* THE WHOLE BOARD IN THE LAST DAY, for whoever runs it.
+ *
+ * A ROLLING DAY AND NOT A CALENDAR ONE, for the same reason /api/snap gives:
+ * he opens it at midnight or at noon, and "since 00:00" is a screen that says
+ * nothing every morning and everything every evening. The member card is a
+ * calendar day because it is sent at a fixed hour and reads as "today"; this
+ * is read whenever he picks the phone up.
+ *
+ * ARRIVALS ARE DISTINCT HUMANS. A wait row and the person row made from it
+ * share a device — see the note over isPerson in /api/public, and the two
+ * wrong numbers make traffic printed before that join existed. Counting both
+ * doubles the one figure this whole thing is for.
+ */
+function boardDay(board) {
+  const cut = Date.now() - 86400_000;
+  const fresh = (x) => (Date.parse(String(x || "")) || 0) > cut;
+  const isPerson = new Set(board.people.map((q) => q.by).filter(Boolean));
+  const waitBy = new Set(board.waits.map((w) => w.by).filter(Boolean));
+
+  const newPeople = board.people.filter((q) => fresh(q.at));
+  // Only the ones who are not also a person: the same human, twice.
+  const newWaits = board.waits.filter((w) => fresh(w.at) && !(w.by && isPerson.has(w.by)));
+
+  /* The door funnel, out of the hour buckets — which is the only counter here
+     with a clock finer than a day on it. See cleanHours. */
+  const keys = [];
+  for (let i = 0; i < 24; i++) keys.push(new Date(Date.now() - i * 3600_000).toISOString().slice(0, 13));
+  /* WAITROOMS already ends in "other" — adding it again on the side counted
+     every doorless arrival twice, which on a board whose commonest room IS
+     "other" is most of the number. */
+  const hr = (what) => keys.reduce((a, h) => a + store.WAITROOMS.reduce(
+    (b, r) => b + Number((board.hours || {})[h + "|" + r + "|" + what] || 0), 0), 0);
+
+  return {
+    arrived: newPeople.length + newWaits.length,
+    madePage: newPeople.filter((q) => q.state === "published" && q.handle).length,
+    /* Straight in through the link, as opposed to carried across from the
+       list — the distinction make traffic had to learn the hard way. */
+    throughLink: newPeople.filter((q) => q.via === "door" && !(q.by && waitBy.has(q.by))).length,
+    opened: hr("door"), began: hr("form"), joined: hr("joined"),
+    inBrowse: board.people.filter((q) => q.state === "published" && q.looking && q.handle).length,
+    outside: board.waits.filter((w) => !w.done).length,
+    /* What was actually SAID, which is the difference between a board people
+       joined and a board people use. Mo's own welcomes do not count — he
+       announces every arrival, and counting them would have the house be the
+       busiest member every night. */
+    said: board.says.filter((m) => fresh(m.at) && m.by !== store.MO && m.text && !m.evt).length,
+  };
+}
+
+/* HIS ONE LINE. Three numbers at most and never a paragraph — it is a lock
+ * screen, and the page behind it has everything.
+ *
+ * A QUIET DAY IS STILL SENT, which is the opposite of the rule for members
+ * and right for the same reason. A member hearing "nobody looked at you" is
+ * being told they are failing; the operator asking "any traffic?" is asking a
+ * question, and "none" is the answer to it. The whole point is not having to
+ * open a laptop to find out. */
+function bossWords(b) {
+  if (!b.arrived && !b.opened && !b.said) {
+    return { title: "交换 · The Exchange", body: "Quiet day. Nobody came." };
+  }
+  const bits = [];
+  if (b.opened) bits.push(b.opened + " opened the door");
+  if (b.arrived) bits.push(b.arrived + " arrived");
+  if (b.madePage) bits.push(b.madePage + " made a page");
+  if (!bits.length && b.said) bits.push(b.said + " things said");
+  return { title: "交换 · The Exchange", body: bits.slice(0, 3).join(" · ") };
+}
+
+/** What happened to one person today, in numbers and nothing else. */
+function cardFor(board, q, day) {
+  const on = (x) => String(x || "").slice(0, 10) === day;
+  const mine = String(q.handle || "").toLowerCase();
+  /* Their own posts, so replies can be counted against them. isOwnPost drops
+     replies, likes and reports — a like on your post is not somebody
+     answering you, and a report certainly is not. */
+  const myPosts = new Set(board.posts
+    .filter((p) => store.isOwnPost(p) && String(p.handle || "").toLowerCase() === mine && mine)
+    .map((p) => p.id));
+  return {
+    opened: Number((q.views || {})[day] || 0),
+    followed: board.follows.filter((f) => f.who === q.id && on(f.at)).length,
+    replied: board.posts.filter((p) => p.re && myPosts.has(p.re) && on(p.at)
+      && String(p.handle || "").toLowerCase() !== mine).length,
+    /* Counted for the panel and never for the buzz — see the note above about
+       the same event buzzing twice. */
+    wrote: board.notes.filter((n) => n.to === q.by && on(n.at) && !n.report).length,
+  };
+}
+
+/* THE SENTENCE, AND THERE IS ONLY ONE OF THEM.
+ *
+ * A lock screen gets one glance. Three clauses joined by dots is a paragraph
+ * at the size it is read at, and the second and third are never read — so the
+ * card leads with the one fact that matters most and stops. A follow is worth
+ * more than a look and an answer is worth more than a follow, because each is
+ * further through the thing the board is for; the number of looks is the
+ * fallback and the commonest case.
+ *
+ * WRITTEN HERE AND NOT IN i18n.js. This is built in this process, for a phone
+ * that may never open the app — the alert travels with the push. The same
+ * argument as the notification email above, which is also bilingual inline.
+ * The in-app panel reads its own strings from i18n.js as everything else
+ * does; these two must be kept saying the same thing.
+ *
+ * `lang` is what the browser said when it subscribed, "" for a row stored
+ * before that field existed. Both languages on one line for those, which is
+ * what this board's own name looks like anyway.
+ */
+function cardWords(c, lang) {
+  const en = c.replied ? (c.replied === 1 ? "1 person answered something you put up"
+                                          : c.replied + " people answered something you put up")
+    : c.followed ? (c.followed === 1 ? "1 person followed you today"
+                                     : c.followed + " people followed you today")
+    : (c.opened === 1 ? "1 person opened your page today"
+                      : c.opened + " people opened your page today");
+  const zh = c.replied ? "有 " + c.replied + " 个人回复了你发的内容"
+    : c.followed ? "今天有 " + c.followed + " 个人关注了你"
+    : "今天有 " + c.opened + " 个人打开了你的主页";
+  if (lang === "zh") return { title: "交换", body: zh };
+  if (lang === "en") return { title: "The Exchange", body: en };
+  return { title: "交换 · The Exchange", body: zh + " · " + en };
+}
+
+/* Whether there is anything to say at all.
+ *
+ * A NOTIFICATION THAT SAYS NOBODY LOOKED AT YOU IS A REASON TO DELETE THE
+ * APP. It is also the commonest case on a board this size, which would make
+ * "nothing happened" the thing most members hear from us most evenings. So a
+ * quiet day is silent, and the panel is still there for anybody who wants to
+ * go and check. Messages are excluded here for the reason given above: they
+ * have already buzzed, and a card sent only because of them is the same event
+ * arriving twice. */
+const cardWorth = (c) => c.opened > 0 || c.followed > 0 || c.replied > 0;
+
+/** Today's report card for whoever is asking, for the panel in the app.
+ *
+ *  NOT /api/card. That address was already taken by the OTHER card on this
+ *  board — the WeChat id somebody swaps with a match — and Express answers
+ *  with whichever was registered first, silently. Two routes on one path is a
+ *  bug that looks like an empty feature: this returned {"card":null,"out":0},
+ *  which is the contact card's own shape, and read as "you have no card
+ *  today" rather than as "you are talking to the wrong route". */
+app.get("/api/today", async (req, res) => {
+  const me = hashDevice(String(req.get("x-board-device") || ""), SALT);
+  res.set("Cache-Control", "no-store");
+  if (!me) return res.json({ card: null });
+  const board = await store.load(FILE);
+  const q = board.people.find((x) => x.by === me);
+  if (!q) return res.json({ card: null });
+  const day = new Date().toISOString().slice(0, 10);
+  res.json({ card: { ...cardFor(board, q, day), day } });
+});
+
+/* WHAT TO PUT ON THE LOCK SCREEN, for a browser that has just been woken.
+ *
+ * A web push from this board carries no body — see the note over one() in
+ * lib/push.js, which posts zero bytes so that there is nothing to encrypt.
+ * That was fine while every push meant one thing. It is not fine now: the
+ * service worker wakes for a message and for a report card and cannot tell
+ * them apart, and a card whose text is "somebody wrote to you" is a lie.
+ *
+ * So the worker asks. It has no device header — a service worker cannot read
+ * localStorage, it wakes with no page at all — so this is the one route that
+ * is authenticated by the sign-in cookie alone, which is the only credential
+ * a worker carries. That cookie is already how somebody who cleared their
+ * storage gets back in; see inCookie.
+ *
+ * It answers with the same fixed sentence as before whenever there is no card
+ * to report, so a message push is unchanged in every case, including when
+ * this route fails and the worker falls back.
+ */
+app.get("/api/wake", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const me = inCookie(req);
+  const lang = ["en", "zh"].includes(String(req.query.lang || "")) ? String(req.query.lang) : "";
+  const said = (lang === "zh") ? { title: "交换", body: "有人给你留言了" }
+    : (lang === "en") ? { title: "The Exchange", body: "Somebody wrote to you" }
+    : { title: "交换 · The Exchange", body: "有人给你留言了 · Somebody wrote to you" };
+  if (!me) return res.json({ ...said, to: "/notes" });
+  const board = await store.load(FILE);
+  const q = board.people.find((x) => x.by === me);
+  const day = new Date().toISOString().slice(0, 10);
+  /* ONLY WHEN THE CARD IS WHY THIS PHONE WAS WOKEN. `cardAt` is stamped the
+     moment the card is sent, so a wake in the same day as the stamp is the
+     card and anything else is a message. Without that test every message
+     after eight in the evening would arrive wearing the card's sentence. */
+  if (!q || q.cardAt !== day) return res.json({ ...said, to: "/notes" });
+  /* THE OPERATOR GETS A DIFFERENT CARD, and it is the only one he gets.
+   *
+   * His own page views are not what he is asking about at eight in the
+   * evening; whether anybody came to the board is. So the whole-app report
+   * REPLACES his member card rather than arriving beside it — two cards a
+   * night to one person is one too many, and the one he would ignore is the
+   * one about himself.
+   *
+   * It taps to the snapshot page, which is the only place on this board that
+   * holds the operator's whole view and needs no key typed into it. The token
+   * is a secret in a URL, which is why it is answered only to a signed cookie
+   * that resolves to the handle named in BOARD_BOSS — and not at all when
+   * BOARD_SNAP is unset, where there is no such page to send anybody to. */
+  if (BOSS && String(q.handle || "").toLowerCase() === BOSS) {
+    const b = boardDay(board);
+    return res.json({ ...bossWords(b), to: SNAP ? "/s/" + SNAP : "/#card" });
+  }
+  const c = cardFor(board, q, day);
+  if (!cardWorth(c)) return res.json({ ...said, to: "/notes" });
+  /* /browse, NOT "/". The app is served at /browse, /feed and /cards; "/" is
+     the landing page — the one an investor or a stranger finds on the web,
+     with no #notif on it and nothing to open. A notification pointing there
+     would have tapped through to marketing copy. Caught by following the
+     same link from the profile page, which had it too. */
+  return res.json({ ...cardWords(c, lang), to: "/browse#card" });
+});
+
+/* THE SEND, ONCE A DAY, COUNTED THE SAME WAY THE LIFT IS.
+ *
+ * Hourly rather than at the hour, for the reason given over liftSome: a box
+ * that happened to be asleep at the appointed minute would skip a day in
+ * silence. This runs every hour, does nothing for twenty-three of them, and
+ * catches up the moment the box is back.
+ *
+ * ONE WRITE FOR EVERYBODY, not one per person. Fifty members is fifty stamps,
+ * and fifty separate saves of a file this size is how an evening's
+ * notifications become a minute of thrashing. The buzzes go out after the
+ * stamp is written: a push that fails is somebody missing one evening, and a
+ * stamp that fails to write is everybody buzzed twice.
+ */
+async function sendCards(now = false) {
+  if (!CARD_ON) return;
+  // `now` is the hand run from make cards SEND=1. It skips the hour and
+  // nothing else — see the note over the admin route.
+  if (!now && new Date().getUTCHours() !== CARD_HOUR) return;
+  if (!push.configured() && !push.apnsOn()) return;
+  try {
+    const day = new Date().toISOString().slice(0, 10);
+    const board = await store.load(FILE);
+    const subbed = new Set((board.pushes || []).map((x) => x.by).filter(Boolean));
+    const send = [];
+    const b = boardDay(board);
+    for (const q of board.people) {
+      if (q.cardAt === day) continue;             // already had tonight's
+      if (!q.by || !subbed.has(q.by)) continue;   // nothing to buzz
+      if (q.state !== "published" || !q.handle) continue;
+      /* THE OPERATOR IS ALWAYS SENT ONE, which is the opposite of the rule
+         for everybody else and right for the same reason. A member hearing
+         "nobody looked at you" is being told they are failing; the person who
+         asked "any traffic?" is asking a question, and "none" is the answer
+         to it. The whole point of this is not having to open a laptop. */
+      if (BOSS && String(q.handle).toLowerCase() === BOSS) {
+        send.push({ by: q.by, id: q.id, boss: true, words: bossWords(b) });
+        continue;
+      }
+      const c = cardFor(board, q, day);
+      if (!cardWorth(c)) continue;
+      send.push({ by: q.by, id: q.id, c });
+    }
+    if (!send.length) return;
+    const ids = new Set(send.map((x) => x.id));
+    await change((b) => {
+      for (const q of b.people) if (ids.has(q.id)) q.cardAt = day;
+      return { ok: true };
+    });
+    for (const row of send) {
+      /* Per row, because the language is per row: two people on this board
+         read different languages and the sentence is built for each. */
+      const subs = (board.pushes || []).filter((x) => x.by === row.by);
+      for (const s of subs) {
+        // His line is one sentence in one language: it is numbers and the
+        // board's own name, and there is nothing in it to translate.
+        await push.tell([s], row.boss ? row.words : cardWords(row.c, s.lang || ""))
+          .catch(() => {});
+      }
+    }
+    console.log("cards: sent " + send.length);
+  } catch (err) {
+    // Never worth taking the box down over. It will try again in an hour.
+    console.error("cards:", err.message);
+  }
+}
+setInterval(() => { sendCards(); }, 3600_000).unref?.();
+
+/* WHAT TONIGHT'S CARDS SAY, WITHOUT WAITING FOR TONIGHT.
+ *
+ * The send is hourly and fires in one hour of the day, which makes "is this
+ * thing on, and what will it say" a question you can only answer by waiting
+ * until the evening and asking somebody to look at their phone. That is not a
+ * way to check anything.
+ *
+ * Read-only by default: it prints the sentence every member would get, in
+ * their own row's language, and sends nothing. `send: true` runs the real
+ * thing now, ignoring the hour but NOT the once-a-day stamp — so a hand run
+ * followed by the evening's tick does not buzz anybody twice.
+ */
+app.post("/api/admin/cards", admin, express.json({ limit: "1kb" }), async (req, res) => {
+  const board = await store.load(FILE);
+  const day = new Date().toISOString().slice(0, 10);
+  const subbed = new Map();
+  for (const x of (board.pushes || [])) {
+    if (!x.by) continue;
+    if (!subbed.has(x.by)) subbed.set(x.by, []);
+    subbed.get(x.by).push(x.lang || "");
+  }
+  const rows = board.people
+    .filter((q) => q.state === "published" && q.handle && q.by)
+    .map((q) => {
+      const c = cardFor(board, q, day);
+      const langs = subbed.get(q.by) || [];
+      return {
+        who: q.handle, ...c,
+        worth: cardWorth(c),
+        phones: langs.length,
+        sentToday: q.cardAt === day,
+        /* One sentence per language the person's own devices asked for, so
+           what is printed here is literally what leaves. */
+        says: [...new Set(langs)].map((l) => cardWords(c, l).body),
+      };
+    });
+  const out = { day, hour: CARD_HOUR, on: CARD_ON,
+                push: push.configured() || push.apnsOn(), rows,
+                /* The operator's own line, printed beside everybody else's so
+                   that "is my nightly report on" is answered by the same
+                   command as "what will the members get". Null when nobody is
+                   named — which is not the same as an empty report, and the
+                   script says which. */
+                boss: BOSS || "",
+                bossSays: BOSS ? bossWords(boardDay(board)).body : "",
+                snap: Boolean(SNAP) };
+  if (req.body?.send === true) {
+    /* The hour is the only thing skipped. Everything else — the stamp, the
+       quiet-day test, whether they have a phone at all — is the real path,
+       because a preview that takes a different path is a preview of nothing. */
+    const was = new Date().getUTCHours();
+    await sendCards(true);
+    out.sent = true;
+    out.hourWas = was;
+  }
+  res.json(out);
+});
+
 /* Mine, both directions.
  *
  * The device id travels in a header rather than the query, because a query
  * string is the part of a request that ends up in logs and referrers. */
+/* ---------------------------------------------------------------------------
+ * A VIDEO CALL, BETWEEN TWO PEOPLE ALREADY IN A CONVERSATION
+ *
+ * THE RULE IS THE ONE THAT ALREADY EXISTS: you can call whoever you can write
+ * to. Every route here goes through notePermit, which is the same function the
+ * composer uses — so a person who may not be messaged may not be rung, a
+ * closed thread cannot be rung, and somebody who left a conversation is out of
+ * both at once. A second permission model for calls would be a second place
+ * for the answer to drift.
+ *
+ * NOTHING HERE TOUCHES THE BOARD FILE. A call is two queues in memory (see
+ * lib/call.js); what is left behind afterwards is whatever the two of them say
+ * in the thread, which is where a record of a conversation belongs.
+ *
+ * THE ADDRESS IS THE PERSON, not a room id: /api/call/<their id>/ring, the
+ * same id the thread is addressed by. There is nothing to mint and nothing to
+ * send anybody — both of them are already here, which is the difference
+ * between this and the lesson rooms next door.
+ * ------------------------------------------------------------------------- */
+
+/** Who is asking and who they mean, or the reason it is nobody. One function
+ *  because six routes need exactly this and a rule written six times is a rule
+ *  that will one day disagree with itself. */
+async function callPair(req) {
+  const me = hashDevice(String(req.body?.device || req.get("x-board-device") || ""), SALT);
+  const who = String(req.params.who || "");
+  if (!me) return { error: "no", code: 400 };
+  if (!/^(?:[a-f0-9]{20}|w:[a-f0-9]{20})$/.test(who)) return { error: "gone", code: 404 };
+  const board = await store.load(FILE);
+  const got = notePermit(board, me, who);
+  if (got.error) {
+    /* "enough" IS THE DAILY COUNT ON INTRODUCTIONS and it has nothing to say
+       about a call: you cannot ring somebody you have never written to, so by
+       the time this route is reached the thread is open and that count does
+       not apply. Everything else notePermit refuses, this refuses. */
+    if (got.error !== "enough") {
+      return { error: got.error, code: got.error === "gone" ? 404 : 403 };
+    }
+  }
+  const target = got.target || board.people.find((x) => x.id === who);
+  if (!target || !target.by) return { error: "gone", code: 404 };
+  return { me, them: target.by, handle: target.handle || "", board };
+}
+
+/* A REFUSED CALL, IN THE LOG, BY HANDLE.
+ *
+ * "Video call fail" was the whole of what could be known: the screen said
+ * "Again?" and the board said nothing at all, so there was no way to find out
+ * which of six rules had refused it without guessing.
+ *
+ * The handle and the reason, and nothing else — no device hash, no id. It is
+ * one line per refusal and none per call that works, so it is readable in
+ * `make logs` rather than being something to grep for. */
+function callRefused(req, p) {
+  // The action is the last piece of the path — these routes spell it out
+  // rather than taking it as a parameter, so there is nothing in req.params.
+  const what = String(req.path || "").split("/").filter(Boolean).pop() || "call";
+  console.log("call refused: " + p.error + " (" + what + ")");
+}
+
+/* THE BUZZ IN A POCKET, in whatever language each phone said it reads.
+ *
+ * NO NAME IN IT, like every other push this board sends — see the note at the
+ * top of apns.js. What it adds to the fixed pair is the one thing that makes
+ * it worth waking a phone for: that this is a call, which will not still be
+ * ringing in ten minutes. Same per-row shape the daily card uses, because the
+ * language belongs to the phone and not to the board. */
+async function ringPhone(to) {
+  if (!to || (!push.configured() && !push.apnsOn())) return;
+  const board = await store.load(FILE);
+  const subs = (board.pushes || []).filter((x) => x.by === to);
+  if (!subs.length) return;
+  const words = (lang) => {
+    const zh = "有人打视频给你";
+    const en = "Someone is calling you";
+    if (lang === "zh") return { title: "交换", body: zh };
+    if (lang === "en") return { title: "The Exchange", body: en };
+    return { title: "交换 · The Exchange", body: zh + " · " + en };
+  };
+  const dead = (await Promise.all(subs.map((sub) =>
+    push.tell([sub], words(sub.lang || "")).catch(() => [])))).flat();
+  if (!dead.length) return;
+  const gone = new Set(dead);
+  await change((b) => {
+    b.pushes = (b.pushes || []).filter((x) => !gone.has(x.endpoint));
+    return { ok: true };
+  });
+}
+
+/** STARTING ONE. The only route that wakes a phone. */
+app.post("/api/call/:who/ring", notesOff, express.json({ limit: "2kb" }), async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const p = await callPair(req);
+  if (p.error) { callRefused(req, p); return res.status(p.code).json({ error: p.error }); }
+  if (!call.ring(p.me, p.them)) {
+    /* THEY PRESSED CALL AT THE SAME MOMENT. The earlier ring stands and this
+       screen becomes the one being called, rather than both of them ending up
+       in a call neither of them started. */
+    return res.status(409).json({ error: "crossed" });
+  }
+  ringPhone(p.them).catch(() => { /* a buzz that failed did not arrive */ });
+  const st = call.state(p.me, p.them);
+  res.json({ ok: true, ...st, ice: call.iceServers(), relay: call.relay(),
+    handle: p.handle, ring: call.RING_MS });
+});
+
+/** PICKING UP. */
+app.post("/api/call/:who/answer", notesOff, express.json({ limit: "2kb" }), async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const p = await callPair(req);
+  if (p.error) { callRefused(req, p); return res.status(p.code).json({ error: p.error }); }
+  if (!call.answer(p.me, p.them)) return res.status(409).json({ error: "over" });
+  const st = call.state(p.me, p.them);
+  res.json({ ok: true, ...st, ice: call.iceServers(), relay: call.relay(), handle: p.handle });
+});
+
+/** HANGING UP, AND TURNING ONE DOWN. The same press to the server; the screen
+ *  on the other end knows which of the two it was watching. */
+app.post("/api/call/:who/bye", notesOff, express.json({ limit: "2kb" }), async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const p = await callPair(req);
+  if (p.error) { callRefused(req, p); return res.status(p.code).json({ error: p.error }); }
+  call.bye(p.me, p.them);
+  res.json({ ok: true });
+});
+
+/** An offer, an answer, or an address to try. */
+app.post("/api/call/:who/send", notesOff, express.json({ limit: "16kb" }), async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const p = await callPair(req);
+  if (p.error) { callRefused(req, p); return res.status(p.code).json({ error: p.error }); }
+  call.send(p.me, p.them, req.body?.m);
+  res.json({ ok: true });
+});
+
+/** THE HELD-OPEN QUESTION. Twenty seconds at a time — see lib/call.js. */
+app.get("/api/call/:who/poll", notesOff, async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const p = await callPair(req);
+  if (p.error) return res.status(p.code).json({ error: p.error });
+  const since = Number(req.query.since) || 0;
+  res.json(await call.poll(p.me, p.them, since));
+});
+
 app.get("/api/notes", notesOff, async (req, res) => {
   const board = await store.load(FILE);
   const me = hashDevice(String(req.get("x-board-device") || ""), SALT);
@@ -9187,6 +10787,13 @@ app.get("/api/notes", notesOff, async (req, res) => {
 
   const rows0 = store.notesFor(board.notes, me);
   const other = (n) => (n.by === me ? n.to : n.by);
+  /* WHO notePermit WILL ACTUALLY ACT ON. Built once here so every row can
+     say so — see canDo below — and read through onBoard rather than testing a
+     state again here, because a screen that disagrees with the route is
+     exactly the grey button with no reason this was written to stop. */
+  const live = new Set(board.people
+    .filter((q) => onBoard(q) && q.by)
+    .map((q) => q.by));
   /* A CONVERSATION YOU LEFT IS OFF YOUR LIST.
    *
    * Leaving has always meant the thread closes for both of you and what was
@@ -9257,6 +10864,37 @@ app.get("/api/notes", notesOff, async (req, res) => {
          than discovered: a box that refuses the seventh message without ever
          having said there were six is a bug the person blames on themselves. */
       left: st.cap ? st.left : undefined,
+      /* AND WHETHER ANYTHING CAN BE DONE WITH THIS PERSON AT ALL.
+       *
+       * "IT WORKS FOR KEITH" — and not for the others, and the ＋ was missing
+       * from some chats and not others, "usualyl when their is duplicate
+       * accounbts for the same persn". That is one bug and this is it.
+       *
+       * A thread row is built from whoever is on the other end of the
+       * messages, and never asked whether that row is still in Browse.
+       * notePermit does ask — it looks for a PUBLISHED person and answers
+       * "gone" otherwise — so a thread with somebody's abandoned second
+       * account looked completely normal and refused every call, every
+       * payment request and every message with a 404 the screen turned into
+       * a flash.
+       *
+       * Same rule as the box two fields up, for the same stated reason: the
+       * page must not offer what the server will refuse. */
+      /* AND A WAITING PERSON IS NOT IN `live`, BECAUSE THEY HAVE NO ROW.
+       *
+       * `live` is built from board.people, and being on the list is exactly
+       * the state of having no page — so every thread with somebody who came
+       * through a link answered canDo:false, and the screen greyed all five
+       * tiles with "Not until they are on the board." The routes disagreed:
+       * callPair takes a w:<id>, notePermit answers about a waiting person
+       * the same way it answers about a member, and /api/request keeps the
+       * name when the target is not one.
+       *
+       * threadState has already decided whether these two may deal with each
+       * other at all, and for a waiting person it is the only thing that can.
+       * So `live` is asked about members and nothing else. */
+      canDo: Boolean(st.can)
+        && (String(them.who || "").startsWith("w:") || live.has(other(n))),
       cap: st.cap || undefined,
       /* WHAT WAS AGREED, ABOVE THE TALK. The reason to type in here at all
          rather than in WeChat — the terms sit over the conversation and cannot
@@ -9378,6 +11016,40 @@ app.get("/api/notes", notesOff, async (req, res) => {
        would rather ask than guess at — what to write, whether to write at
        all — so it is the last place he should be missing from. */
     butler: butler.configured(),
+    /* WHICH BUILD THIS IS, SO A PHONE CAN NOTICE IT IS OUT OF DATE.
+     *
+     * The cost of not having it, on one evening: a fix went out, the box said
+     * `running 5e0c28a`, and the phone went on drawing the screen from before
+     * it — so the button was still grey and the sentence under it was one the
+     * deployed code no longer contains. Twenty minutes went into deciding
+     * whether the bug was in the code or in the deploy, and it was in
+     * neither.
+     *
+     * ON THIS RESPONSE RATHER THAN A ROUTE OF ITS OWN. Every screen in the
+     * app already asks for this one, often; a second request whose only job
+     * is to say "still the same" is a request nobody should be paying for.
+     *
+     * It is the asset build id, which changes when anything under public/
+     * changes — see ASSETS. Not the commit: a deploy that touches only the
+     * server has nothing for a phone to re-read. */
+    build: BUILT_AT || (ASSETS && ASSETS.id) || "",
+    /* SOMEBODY RINGING, RIGHT NOW, IN ONE OF THESE THREADS.
+     *
+     * The other half of the push. A buzz in a pocket says "someone is calling
+     * you" and nothing else, so opening the app has to show the call or the
+     * buzz was a dead end — and a call is over in forty-five seconds, which is
+     * no time to go looking through an inbox for it. Nothing stored: see
+     * lib/call.js, where a call is two queues in memory. */
+    ring: (() => {
+      /* THE HASHES STAY IN HERE. `rows` is the raw notes and carries both
+         ends as device hashes; what goes out is the person id the thread is
+         already addressed by, which is what the screen needs and all it gets.
+         See the note over `name` at the top of this route. */
+      const r = call.ringingFrom(me, rows.map(other));
+      if (!r) return undefined;
+      const who = name(r.by);
+      return who.who ? { ...who, at: r.at } : undefined;
+    })(),
   });
 });
 
@@ -9477,7 +11149,7 @@ function groupable(board, me) {
      refuses, which is the bug this kind of change ships with. */
   const all = isStaff(board, me);
   return board.people
-    .filter((q) => q.state === "published" && q.handle && q.by !== me
+    .filter((q) => onBoard(q) && q.by !== me
       && (all || matched(board, me, q.by)))
     .map((q) => ({ who: q.id, handle: q.handle,
       photo: q.photoState === "published" ? q.photo : "" }));
@@ -9733,6 +11405,77 @@ function dealOut(deal, handle) {
   if (!party) return rest;
   return { ...rest, share: { t: share.t, code: share.code, to: share.to, until: share.until } };
 }
+
+/* ---------------------------------------------------------------------------
+ * WHAT HAPPENED — the screen behind the bell on Chat
+ *
+ * Every other screen on this board is a list of PEOPLE. This is the only list
+ * of THINGS, and it exists because the things had nowhere else to be: terms
+ * written, terms agreed, a payment claimed or confirmed, a reminder. Each of
+ * those buzzed a phone once and then existed only inside a room, which is why
+ * a room was being made for two people who already had a conversation.
+ *
+ * THE ROW IS A FACT, THE SENTENCE IS THE SCREEN'S. Nothing of what happened
+ * is stored or sent — see cleanBell. What goes down the wire is the kind, the
+ * person who did it, and where it goes: a list a shoulder can read holds no
+ * fee, no name of a job and no terms.
+ * ------------------------------------------------------------------------ */
+app.get("/api/bells", notesOff, async (req, res) => {
+  const me = hashDevice(String(req.get("x-board-device") || ""), SALT);
+  res.set("Cache-Control", "no-store");
+  if (!me) return res.json({ bells: [], unseen: 0 });
+  const board = await store.load(FILE);
+  const mine = (board.bells || []).filter((b) => b.to === me);
+  /* THE DEAL IS READ NOW RATHER THAN STORED THEN. A row saying "terms" from
+     three weeks ago should open terms as they are today, and say whose they
+     are from the memo rather than from a copy of it taken at the time — two
+     copies of one fact is how a list ends up disagreeing with the thing it
+     points at. A row whose memo has since gone is dropped rather than shown
+     as a tap that lands on nothing. */
+  const out = [];
+  for (const b of mine.slice().reverse()) {
+    const g = board.groups.find((x) => x.id === b.ref);
+    if (!g || !g.deal || !g.members.includes(me)) continue;
+    const q = b.who ? board.people.find((x) => x.id === b.who) : null;
+    out.push({
+      id: b.id, kind: b.kind, at: b.at, seen: b.seen,
+      /* Where it opens. The memo, on its own page, which is the whole reason
+         this exists: a thing to read rather than a room to be put in. */
+      to: "/groups?g=" + g.id,
+      who: q ? q.id : "", handle: q ? q.handle : "",
+      photo: q && q.photoState === "published" ? q.photo : "",
+      /* WHETHER IT STILL WANTS ANYTHING, AND ONLY WHERE THAT IS ONE THING.
+       *
+       * It is the reader not having agreed to these terms, and nothing else.
+       * The first version asked only that and hung the label on every row,
+       * money included — six rows all saying "Needs you", which is a label
+       * that has stopped saying anything. Whether a payment needs the reader
+       * next depends on which side of it they are and what the other one just
+       * said; that is a sentence, and the sentence is already the row.
+       *
+       * So the badge means one thing: these terms are unsigned by you. */
+      open: (b.kind === "terms" || b.kind === "agreed")
+        && !(g.deal.agreed || []).some((a) => a.who ===
+          (board.people.find((x) => x.by === me) || {}).handle),
+    });
+    if (out.length >= 60) break;
+  }
+  res.json({ bells: out, unseen: mine.filter((b) => !b.seen).length });
+});
+
+/** Opening the screen marks the lot. See the note in cleanBell on why this is
+ *  seen rather than read: a per-row receipt is a second thing to keep in step
+ *  and the difference is invisible to the person holding the phone. */
+app.post("/api/bells/seen", notesOff, express.json({ limit: "1kb" }), async (req, res) => {
+  const me = hashDevice(String(req.body?.device || ""), SALT);
+  if (!me) return res.status(400).json({ error: "no" });
+  await change((board) => {
+    board.bells = Array.isArray(board.bells) ? board.bells : [];
+    for (const b of board.bells) if (b.to === me) b.seen = true;
+    return { ok: true };
+  });
+  res.json({ ok: true });
+});
 
 app.get("/api/groups", notesOff, async (req, res) => {
   const me = hashDevice(String(req.get("x-board-device") || ""), SALT);
@@ -10012,7 +11755,9 @@ app.post("/api/group/deal", notesOff, express.json({ limit: "8kb" }), async (req
 
     g.deal = deal;
     Object.assign(g, store.cleanGroup(g));
-    return { ok: true, tell: otherSide(board, g, mine.handle) };
+    const tell = otherSide(board, g, mine.handle);
+    ring(board, tell, "terms", g.id, mine.id);
+    return { ok: true, tell };
   });
   if (out?.error) return res.status(400).json(out);
   res.json({ ok: true });
@@ -10055,7 +11800,9 @@ app.post("/api/group/deal/agree", notesOff, express.json({ limit: "2kb" }), asyn
     if (fee && !(fee.paid || []).some((r) => r.kind === "confirmed")) return { error: "fee" };
     g.deal.agreed.push({ who: mine.handle, at: new Date().toISOString() });
     Object.assign(g, store.cleanGroup(g));
-    return { ok: true, tell: otherSide(board, g, mine.handle) };
+    const tell = otherSide(board, g, mine.handle);
+    ring(board, tell, "agreed", g.id, mine.id);
+    return { ok: true, tell };
   });
   if (out?.error) return res.status(400).json(out);
   res.json({ ok: true });
@@ -14867,7 +16614,11 @@ app.post("/api/group/deal/paid", notesOff, express.json({ limit: "2kb" }), async
     if (kind !== "claimed" && !d.paid.some((r) => r.i === i && r.kind === "claimed")) return { error: "unclaimed" };
     d.paid.push({ i, kind, who: mine.handle, at: new Date().toISOString() });
     Object.assign(g, store.cleanGroup(g));
-    return { ok: true, tell: otherSide(board, g, mine.handle) };
+    const tell = otherSide(board, g, mine.handle);
+    /* The kind travels as it is: claimed, confirmed and denied are three
+       different sentences to read on a list. */
+    ring(board, tell, kind, g.id, mine.id);
+    return { ok: true, tell };
   });
   if (out?.error) return res.status(400).json(out);
   res.json({ ok: true });
@@ -14931,6 +16682,8 @@ app.post("/api/group/deal/fee", notesOff, express.json({ limit: "2kb" }), async 
        who is reading it rather than waiting for it. */
     const payer = kind === "claimed" ? "" :
       (board.people.find((x) => g.members.includes(x.by) && x.handle === d.hires) || {}).by || "";
+    /* Only ever reached on confirm or deny — a claim tells nobody, see above. */
+    ring(board, payer, kind, g.id, mine.id);
     return { ok: true, tell: payer };
   });
   if (out?.error) return res.status(400).json(out);
@@ -14959,7 +16712,9 @@ app.post("/api/group/deal/nudge", notesOff, express.json({ limit: "2kb" }), asyn
     if (last && Date.now() - Date.parse(last.at) < 20 * 3600 * 1000) return { error: "soon" };
     d.nudges.push({ i, at: new Date().toISOString() });
     Object.assign(g, store.cleanGroup(g));
-    return { ok: true, tell: otherSide(board, g, mine.handle) };
+    const tell = otherSide(board, g, mine.handle);
+    ring(board, tell, "nudge", g.id, mine.id);
+    return { ok: true, tell };
   });
   if (out?.error) return res.status(400).json(out);
   res.json({ ok: true });
@@ -16039,6 +17794,22 @@ app.post("/api/group/leave", notesOff, express.json({ limit: "2kb" }), async (re
     }
     if (!g || !g.members.includes(me)) return { error: "gone" };
     g.members = g.members.filter((m) => m !== me);
+    /* THE MAKER CAN LEAVE, AND THE ROOM GETS A NEW ONE.
+     *
+     * cleanGroup puts `by` back at the head of `members` on every save —
+     * "the maker is always in it", which is the right rule for a file edited
+     * by hand and was silently undoing this line for the one person most
+     * likely to press it. The route answered ok, the room came back on the
+     * next load, and there was no way at all for somebody to get rid of a
+     * room they had started. That is what Tom hit: "There is no way to delete
+     * roms from my chat."
+     *
+     * So the room is handed on rather than the rule being bent. Whoever has
+     * been in it longest takes it over and can add and remove people, which
+     * is the only thing being the maker means here. A room with nobody left
+     * is deleted two lines down and never reaches this.
+     */
+    if (g.by === me && g.members.length) g.by = g.members[0];
     /* A member walking out is named. A guest is not — they never said who they
        were, so there is no name to say, and "somebody left" is a sentence that
        makes a room of four look over its shoulder for no reason. */
@@ -16337,10 +18108,12 @@ app.post("/api/follow", express.json({ limit: "8kb" }), async (req, res) => {
           return w && w.by ? { id: "", by: w.by, handle: w.name, state: "published",
                                wait: w } : null;
         })()
-      : board.people.find((x) => x.id === who && x.state === "published");
+      : board.people.find((x) => x.id === who && onBoard(x));
     if (!target) return null;
     // Following yourself is not a thing anybody means to do.
-    if (target.by === me) return { count: store.followersOf(board.follows, who), following: false };
+    if (target.by === me) {
+      return { count: store.followersOf(board.follows, who, board.people), following: false };
+    }
 
     /* YOU CANNOT REACH FOR SOMEBODY WHILE YOU ARE A GHOST.
      *
@@ -16420,7 +18193,7 @@ app.post("/api/follow", express.json({ limit: "8kb" }), async (req, res) => {
     if (!on && had >= 0) board.follows.splice(had, 1);
     /* AND WHETHER THAT WAS THE SECOND HALF OF IT. The page says "you can
        write to them now" rather than leaving somebody to discover it. */
-    return { count: store.followersOf(board.follows, who), following: on,
+    return { count: store.followersOf(board.follows, who, board.people), following: on,
              both: on && bothFollow(board, me, target.by) };
   });
   // Told apart, because they are different things to do next: one is a toggle
@@ -16467,7 +18240,9 @@ app.get("/api/person", async (req, res) => {
       mine: q.by === me,
       speaksFor: speaksFor(board, q),
       roster: rosterOf(board, q),
-      followers: store.followersOf(board.follows, q.id),
+      // The people you can actually open, which is what the list behind this
+      // number shows — see followersOf.
+      followers: store.followersOf(board.follows, q.id, board.people),
       // Whether YOU follow them. Never who else does — a count is a fact about
       // a person, a list is a social graph.
       following: Boolean(me) && board.follows.some((f) => f.by === me && f.who === q.id),
@@ -16728,7 +18503,21 @@ app.put("/api/me", express.json({ limit: "36mb" }), gate, async (req, res) => {
   const out = await change((board) => {
     let q = board.people.find((x) => x.by === me);
     if (!q) {
-      q = store.cleanPerson({ id: store.newId(), at: new Date().toISOString(), by: me });
+      /* STAMPED HERE, WHICH IS THE ONE LINE ON THE SERVER WHERE A PERSON IS
+         BORN. Anywhere else would be a guess made later from a browser, and
+         a browser is not a person — see the note on `via` in cleanPerson.
+         The invite row holds the minter's DEVICE, so the member's person id
+         is resolved now, while both rows are in front of us, and written
+         down as the thing that will still be true in a year. */
+      const code = board.invites.find((v) => v.usedBy === me && !v.off) || null;
+      const by = code && code.by
+        ? (board.people.find((x) => x.by === code.by) || null)
+        : null;
+      q = store.cleanPerson({
+        id: store.newId(), at: new Date().toISOString(), by: me,
+        via: code ? "invite" : "door",
+        vouchedBy: by ? by.id : "",
+      });
       board.people.push(q);
     }
     // Whether this save is somebody joining the list, rather than editing a
@@ -17962,6 +19751,22 @@ app.get("/api/public", admin, async (req, res) => {
     if (!c) return "";
     return c.wechat ? "wechat " + c.wechat : String(c.line || "").trim();
   };
+  /* THE SAME HUMAN ON TWO ROWS, JOINED HERE BECAUSE THE JOIN KEY MAY NOT
+   * LEAVE THE BOX.
+   *
+   * A wait row and a person row both carry `by` — the device hash — and
+   * /api/tier-two makes a person FROM a wait row and leaves the wait row
+   * standing. So the two rows are one person, and anything counting both
+   * counts them twice. `make traffic` did exactly that on its first real run:
+   * it printed the same two names under "made a page" and "on the list" in
+   * the same week, and doubled the all-time figure.
+   *
+   * It cannot be joined on the far side. `by` is a device hash and has no
+   * business leaving this box — which is why it is resolved to a boolean
+   * here, the same way fromWait resolves the invite chain rather than
+   * publishing the middle of it. */
+  const isPerson = new Set(board.people.map((q) => q.by).filter(Boolean));
+  const waitBy = new Set(board.waits.map((w) => w.by).filter(Boolean));
   const byName = new Map(board.waits.map((w) => [String(w.name).toLowerCase(), w]));
   const waitOf = (q) => {
     if (!q.by) return null;
@@ -18022,7 +19827,39 @@ app.get("/api/public", admin, async (req, res) => {
          which six were worth the command. A boolean answers it and carries
          nothing out of here that the panel does not already show. */
       hasCard: Boolean(q.goal || (Array.isArray(q.say) && q.say.length)),
+      /* WHICH DOOR. Admin-only, and the only place the tier stamp leaves the
+         box at all — shownPerson takes it off every public row (see the note
+         there). Without it there is no way to answer "did the link bring
+         anybody", which is the whole question behind putting a link on
+         Instagram: the queue and the members are one undifferentiated list of
+         names and dates. Blank means they were here before the door existed,
+         which counts as vouched — same rule as tierOf. */
+      via: q.via,
+      /* WHETHER THEY JOINED THE LIST FIRST, which is the difference between
+         somebody the public link brought in and somebody who was already
+         waiting when tier two was created. Both are stamped `via: "door"` —
+         correctly, they are both tier two — so `via` alone cannot tell a
+         migration of fifty people from fifty arrivals, and `make traffic`
+         reported the first as the second. */
+      fromList: Boolean(q.by && waitBy.has(q.by)),
     })),
+    /* EVERYBODY WHO JOINED THE LIST AND STOPPED THERE. They are not people
+       rows — no page, so nothing above counts them — and they are half of
+       what arriving looks like: somebody who tapped the link, typed a name
+       and did not finish. A traffic report that leaves them out says the link
+       brought fewer people than it did. Dates only, and the name, which is
+       all `make traffic` prints. */
+    waits: board.waits.map((w) => ({
+      at: w.at, name: w.name,
+      // They already have a page, so they are not a separate arrival — see
+      // the join above.
+      became: Boolean(w.by && isPerson.has(w.by)),
+    })),
+    /* WHETHER THE PUBLIC DOOR IS EVEN OPEN. With it shut, "nobody came
+       through the link" is not a fact about the link — it is a fact about
+       this flag, and a report that cannot tell those apart is the same trap
+       as grepping .env for a name nobody set. */
+    publicDoor: PUBLIC_DOOR,
   });
 });
 
@@ -18384,6 +20221,13 @@ app.get("/api/snap", snapGate, async (_req, res) => {
       }),
     rooms,
     waiting: { held, faces },
+    /* THE NUMBERS HE WAS SSHING IN FOR. make traffic and make doors answer
+       these from a terminal, which means they get asked on the days somebody
+       is at a desk — and "did anybody come" is a question asked from a phone,
+       ten minutes after posting a link. Same rolling day as everything else
+       on this page; the same function the nightly buzz reads, so the line on
+       the lock screen and the figures behind it cannot disagree. */
+    day: boardDay(board),
     /* AND THE SHAPE OF THE PLACE, last, because it changes slowly. */
     board: {
       inBrowse: board.people.filter((q) =>
@@ -18394,6 +20238,403 @@ app.get("/api/snap", snapGate, async (_req, res) => {
       outside: open.length,
     },
   });
+});
+
+/* WHY SOMEBODY'S PHOTOGRAPH IS NOT SHOWING, AND WHAT WOULD PUT IT BACK.
+ *
+ * WHAT HAPPENED. A picture uploaded at the door goes onto the WAIT row as
+ * "held" — nobody has looked at it yet — and when that row becomes a person
+ * the state comes across unchanged, deliberately: carrying the state rather
+ * than the permission is the difference between moving a row and approving
+ * it. The consequence nobody thought about is that the photograph then
+ * vanishes from every screen at the moment the person is let in, because
+ * shownPerson publishes a face only when photoState is "published". From the
+ * outside that is indistinguishable from the upload having failed, and it was
+ * reported as "her photo got removed when she was put on the waiting list".
+ *
+ * It is not removed. There are three different places it can be and they want
+ * three different answers, which is the whole reason this route exists:
+ *
+ *   held    the photograph is on their row, waiting to be looked at.
+ *           Releasing it is the fix.
+ *   behind  their row has none and the waiting row they came in on still has
+ *           one. It never came across. Copying it over is the fix.
+ *   gone    there is no photograph anywhere, and the honest answer is that
+ *           they have to put one up again.
+ *
+ * Telling those apart by hand meant a screen, and the person who has to do it
+ * cannot use one — see the note about screens in CLAUDE.md. Read-only.
+ */
+/* ---------------------------------------------------------------------------
+ * A LETTER TO EVERYBODY
+ *
+ * "we shoiudl emial eveyroen to come to platform."
+ *
+ * The one-to-one mail already works: somebody writes to you, you do not read
+ * it, an hour later it is in your inbox with a link to the conversation. This
+ * is the other kind, and they are not the same thing — which is most of what
+ * these routes are careful about.
+ *
+ * THREE RULES, AND THEY ARE WHAT KEEP THE FIRST KIND ARRIVING.
+ *
+ *   It says something true and personal, or it is not worth sending. Every
+ *   letter carries the one number that belongs to the person reading it: how
+ *   many people on this board are the thing their own sentence says they are
+ *   looking for. A letter that says "come back" and nothing else is a letter
+ *   that teaches somebody to ignore the next one.
+ *
+ *   Once per person per mailout, stamped before anything is sent. A list that
+ *   sends twice is a list that gets reported, and a report on a young sending
+ *   domain takes the login mail and the message mail down with it.
+ *
+ *   A way out, in every one, honoured for ever, and it stops THESE and
+ *   nothing else. Somebody who never wants another letter to everybody still
+ *   gets told when a person writes to them, because that is the thing they
+ *   left an address for.
+ *
+ * DRY BY DEFAULT. It prints who would get it and exactly what they would
+ * read; nothing leaves the box until SEND=1. The same shape as `make cards`,
+ * for the same reason: a send you cannot rehearse is a send you find out
+ * about afterwards.
+ * ------------------------------------------------------------------------- */
+
+/** How many people are on this board, and how many of them can be reached.
+ *
+ *  ASKED FIRST, ALWAYS. "Email everybody" is a different job depending on
+ *  whether everybody is four people or four hundred, and the answer is not
+ *  visible from any screen. */
+app.get("/api/admin/reach", admin, async (_req, res) => {
+  res.set("Cache-Control", "no-store");
+  const board = await store.load(FILE);
+  const live = board.people.filter((q) => q.state === "published" && q.handle);
+  const withMail = live.filter((q) => q.mail);
+  const today = dayKey(Date.now());
+  res.json({
+    configured: mailReady(),
+    people: live.length,
+    reachable: withMail.length,
+    optedOut: withMail.filter((q) => q.noMail).length,
+    hadToday: withMail.filter((q) => q.mailedAt === today).length,
+    /* AND THE PEOPLE ON THE LIST, counted separately. They are not members
+       and this letter is not for them — a letter saying "come back to the
+       board" to somebody who was never let in is the worst mail this board
+       could send. Counted so the number is not a surprise later. */
+    waiting: board.waits.filter((w) => !w.done && w.reach).length,
+  });
+});
+
+/** WHAT EACH PERSON WOULD READ, and — only when told — the send.
+ *
+ *  The words are built here rather than on a page, because they have to be
+ *  identical in the rehearsal and in the send. Two copies of a sentence is
+ *  one sentence that will one day be wrong in the version nobody looks at.
+ */
+function mailoutWords(board, q, origin) {
+  /* THE ONE NUMBER THAT IS THEIRS. Their own sentence says what they are
+     looking for; this counts the people here who are that. Same rule the
+     panel uses — see /api/admin/queue — so the two can never disagree. */
+  const wants = (Array.isArray(q.say) ? q.say : [])
+    .map((r) => r && r.want).filter(Boolean);
+  const saysIt = (p, role) => (Array.isArray(p.say) ? p.say : [])
+    .some((r) => r && r.me && (role === store.ANYONE || r.me === role));
+  const live = board.people.filter((p) => p.by !== q.by
+    && p.state === "published" && p.handle);
+  let n = 0;
+  let role = "";
+  for (const w of wants) {
+    const c = live.filter((p) => saysIt(p, w)).length;
+    if (c > n) { n = c; role = w; }
+  }
+  const zh = /[一-鿿]/.test(String(q.handle || ""));
+  const site = process.env.BOARD_SITE_NAME || "The Exchange";
+  const link = origin + "/browse";
+  const off = origin + "/m/off/" + q.id + "." + sign("nomail:" + q.id);
+
+  /* THE HOOK IS A NUMBER AND A NOUN, and it is the first thing on the line.
+     "There are people you should meet" is a sentence about nothing; "14
+     investors" is a reason to open the app.
+     TWO IS THE FLOOR, and that is a judgement rather than a rounding. "1
+     founder on The Exchange" is a true sentence and a worse reason to come
+     back than not being written to at all — it says the board is empty in
+     the voice of a board that is full. Under two it says the plain count,
+     which is honest and does not pretend to be a match. */
+  const enough = n >= 2 && role;
+  const head = enough
+    ? (zh ? `${site} 上有 ${n} 个${roleZh(role)}` : `${n} ${roleWord(role, n)} on ${site}`)
+    : (zh ? `${site} 上现在有 ${live.length} 个人` : `${live.length} people on ${site} now`);
+  const why = enough
+    ? (zh ? "这正是你说你在找的。" : "That is what you said you were looking for.")
+    : (zh ? "看看有没有你要找的人。" : "Have a look and see who is here.");
+
+  return {
+    to: q.mail,
+    subject: zh ? head : head,
+    text: (zh
+      ? `${q.handle}——\n\n${head}。\n${why}\n\n${link}\n`
+      : `${q.handle} —\n\n${head}.\n${why}\n\n${link}\n`)
+      + (zh
+        ? `\n\n—\n你收到这封信，是因为你在${site}留过邮箱。\n不想再收到这种信：${off}\n（别人给你留言时，我们还是会通知你。）\n`
+        : `\n\n—\nYou are getting this because you left an address on ${site}.\nNo more letters like this: ${off}\n(You will still be told when somebody writes to you.)\n`),
+    n, role,
+  };
+}
+
+/* THE ROLE, AS A WORD IN A SENTENCE. The board stores a key; a letter needs
+   a noun, and a plural one in English. Anything not named here falls back to
+   the key itself, which is a word somebody chose and is never nonsense. */
+const ROLE_WORDS = {
+  investor: ["investors", "投资人"], founder: ["founders", "创始人"],
+  buyer: ["buyers", "买家"], seller: ["sellers", "卖家"],
+  agent: ["agents", "经纪人"], producer: ["producers", "制片人"],
+  talent: ["people in front of camera", "演员"], director: ["directors", "导演"],
+  supplier: ["suppliers", "供应商"], student: ["students", "学生"],
+  teacher: ["teachers", "老师"], lawyer: ["lawyers", "律师"],
+};
+/* A NOUN THAT AGREES WITH ITS NUMBER. "1 founders" is the sort of thing that
+   tells a reader a machine wrote to them, which is the one impression a
+   letter meant to bring somebody back cannot afford. The plural is what is
+   stored, because it is the common case; the singular is that with its s
+   taken off, which is right for every word in the table. */
+const roleWord = (r, n) => {
+  const many = (ROLE_WORDS[r] || [String(r) + "s"])[0];
+  return n === 1 ? many.replace(/s$/, "") : many;
+};
+const roleZh = (r) => (ROLE_WORDS[r] || [null, String(r)])[1] || String(r);
+
+app.post("/api/admin/mailout", admin, express.json({ limit: "2kb" }), async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const send = Boolean(req.body?.send);
+  const again = Boolean(req.body?.again);
+  if (send && !mailReady()) return res.status(503).json({ error: "unconfigured" });
+
+  const origin = String(req.body?.origin || PUBLIC || "").replace(/\/+$/, "");
+  if (!origin) return res.status(400).json({ error: "origin" });
+
+  const board = await store.load(FILE);
+  const today = dayKey(Date.now());
+  const due = board.people.filter((q) => q.state === "published" && q.handle
+    && q.mail && !q.noMail && (again || q.mailedAt !== today));
+  const skipped = {
+    noAddress: board.people.filter((q) => q.state === "published" && q.handle && !q.mail).length,
+    optedOut: board.people.filter((q) => q.mail && q.noMail).length,
+    already: board.people.filter((q) => q.mail && !q.noMail && q.mailedAt === today).length,
+  };
+
+  const letters = due.map((q) => ({ handle: q.handle, ...mailoutWords(board, q, origin) }));
+  if (!send) return res.json({ dry: true, n: letters.length, skipped, letters });
+
+  /* STAMPED BEFORE A SINGLE ONE GOES. The send is a network call per person
+     and takes minutes; a second run landing in the middle of it would find
+     the same rows unstamped and send the whole list again. */
+  const ids = new Set(due.map((q) => q.id));
+  await change((b) => {
+    for (const q of b.people) if (ids.has(q.id)) q.mailedAt = today;
+    return { ok: true };
+  });
+
+  /* A TRICKLE, NOT A BLAST. Two hundred letters leaving one young domain in
+     one second is the single fastest way to be classified as bulk and have
+     the whole domain throttled — after which the login mail and the message
+     mail stop arriving too, and nobody connects the two events. One a second
+     is slow enough to look like an application and fast enough to finish. */
+  let sent = 0;
+  const bad = [];
+  for (const m of letters) {
+    const ok = await sendMail({ to: m.to, subject: m.subject, text: m.text })
+      .catch(() => false);
+    if (ok === false) bad.push(m.handle); else sent += 1;
+    await new Promise((r) => setTimeout(r, 1000));
+  }
+  console.log("mailout: sent " + sent + " of " + letters.length);
+  res.json({ dry: false, n: letters.length, sent, bad, skipped });
+});
+
+/* THE WAY OUT, AND IT IS ONE PRESS FROM THE LETTER ITSELF.
+ *
+ * No login, no form, no "are you sure": somebody who wants out of a mailing
+ * list and is asked to sign in first is somebody who marks it as spam
+ * instead, which costs this board every other kind of mail it sends.
+ *
+ * Signed, so the link works for exactly one person and cannot be walked. It
+ * is open like the other doors — the whole point is that it works for
+ * somebody who is not on this browser and may never come back.
+ */
+app.get("/m/off/:id.:sig", async (req, res) => {
+  const id = String(req.params.id || "");
+  const sig = String(req.params.sig || "");
+  const site = process.env.BOARD_SITE_NAME || "The Exchange";
+  const page = (line) => res.status(200).type("html").send(
+    `<!doctype html><meta charset="utf-8">`
+    + `<meta name="viewport" content="width=device-width,initial-scale=1">`
+    + `<title>${site}</title>`
+    + `<body style="margin:0;min-height:100vh;display:grid;place-items:center;`
+    + `background:#EEF0F4;color:#1c1917;font:400 17px/1.5 -apple-system,`
+    + `BlinkMacSystemFont,'PingFang SC',Segoe UI,Helvetica,Arial,sans-serif">`
+    + `<p style="max-width:22rem;padding:0 1.2rem;text-align:center">${line}</p>`);
+  if (!/^[a-f0-9]{20}$/.test(id) || !safeEqual(sig, sign("nomail:" + id))) {
+    return page("That link does not open anything.<br>这个链接打不开。");
+  }
+  await change((b) => {
+    const q = b.people.find((x) => x.id === id);
+    if (q) q.noMail = true;
+    return { ok: true };
+  });
+  page("Done — no more letters like that one.<br>"
+    + "You will still be told when somebody writes to you."
+    + "<br><br>好了，这种信不会再发给你了。<br>别人给你留言时还是会通知你。");
+});
+
+/* WHETHER A NAMED MEMBER CAN BRING ANYBODY IN, AND WHAT IS STOPPING THEM.
+ *
+ * "i just tried to add someone new from the chat page ... it doesnt seem to
+ * work." Three different things wear that sentence: the screen was three taps
+ * deep, the refusal named no fix, and underneath both of those a member with
+ * no photograph on their row simply cannot bring anybody in and there was no
+ * way to find that out from here. The first two are fixed on the screen; this
+ * is the third, answered from the terminal in one line rather than by opening
+ * somebody's profile and reading it.
+ *
+ * Read-only, and it says nothing about anybody else. */
+app.get("/api/admin/can-invite", admin, async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const want = String(req.query.who || "").trim().toLowerCase();
+  const board = await store.load(FILE);
+  const rows = board.people.filter((q) => q.handle);
+  const hit = want
+    ? rows.filter((q) => {
+        const h = q.handle.toLowerCase();
+        return h === want || h.split(/\s+/)[0] === want;
+      })
+    : rows;
+  if (want && !hit.length) {
+    return res.json({ error: "nobody", near: rows.map((q) => q.handle).slice(0, 8) });
+  }
+  if (want && hit.length > 1) {
+    return res.json({ error: "two", n: hit.length, who: hit.map((q) => q.handle) });
+  }
+  res.json({
+    people: hit.map((q) => {
+      const r = standing(board, q.by);
+      return { handle: q.handle, can: Boolean(r.can), staff: Boolean(r.staff),
+        need: r.need || [], guests: r.guests || 0 };
+    }),
+  });
+});
+
+app.get("/api/admin/faces-why", admin, async (_req, res) => {
+  const board = await store.load(FILE);
+  res.set("Cache-Control", "no-store");
+  /* Their waiting row, found by device rather than by name: a handle is what
+     somebody chose to be called and the name on the join form is what they
+     typed, and matching those two finds almost nobody — the same chain
+     /api/public resolves, and the same reason. */
+  const waitOf = (q) => (q.by ? board.waits.find((w) => w.by === q.by) : null) || null;
+  res.json({
+    people: board.people.filter((q) => q.handle).map((q) => {
+      const w = waitOf(q);
+      const showing = q.photoState === "published" && Boolean(q.photo);
+      const why = showing ? ""
+        : q.photo ? "held"
+        : (w && w.photo) ? "behind"
+        : "gone";
+      /* WHETHER THEY ARE IN BROWSE AT ALL, which is the question underneath
+         the question. "Her photo is missing" and "she is not on the board"
+         look identical from the outside — both are an absence — and this
+         command answered only the first, so releasing a face would have been
+         reported as fixed while the screen went on showing nothing.
+         The three tests, in the order they bite, same as make who. */
+      const out2 = !q.handle ? "no name yet"
+        : q.state !== "published" ? "profile is " + (q.state || "not published")
+        : !q.looking ? "Show me in Browse is off"
+        : "";
+      return {
+        handle: q.handle, id: q.id,
+        showing, why,
+        inBrowse: !out2, notThere: out2,
+        /* Whether letting the face out would also let the PERSON out. The
+           release route publishes both — a face on a held profile shows
+           nowhere, so publishing one without the other fixes nothing — and
+           that is a bigger thing than a photograph, so it is said out loud
+           before it happens rather than discovered after. */
+        alsoAdmits: q.state !== "published",
+      };
+    }).sort((a, b) => a.handle.localeCompare(b.handle)),
+  });
+});
+
+/* PUT ONE BACK, whichever of the three it is.
+ *
+ * By handle, because a handle is what the operator types at every other
+ * target on this box and a person id is not a thing anybody has in their
+ * hand.
+ *
+ * EXACT FIRST, THEN THE FIRST NAME, AND NEVER A GUESS BETWEEN TWO PEOPLE.
+ * Some handles on this board are a first name ("Christopher") and some are a
+ * whole one ("Ray Chen"), so exact-only refuses half the names the operator
+ * actually says out loud — and "Not on this board" reads as the person being
+ * missing when they are not, which is the failure CLAUDE.md warns about by
+ * name. So a single person whose first name matches is taken, and TWO are
+ * refused with both names printed: publishing the wrong person's face is not
+ * a mistake that can be taken back once somebody has seen it.
+ */
+app.post("/api/admin/face-fix", admin, express.json({ limit: "1kb" }), async (req, res) => {
+  const want = String(req.body?.who || "").trim().toLowerCase();
+  if (!want) return res.status(400).json({ error: "who" });
+  const out = await change((board) => {
+    const low = (x) => String(x.handle || "").toLowerCase();
+    const first = (x) => low(x).split(/\s+/)[0];
+    let same = board.people.filter((x) => low(x) === want);
+    // Only when nothing matched outright, so an exact "Ray" is never dragged
+    // off by a "Ray Chen" standing next to him.
+    if (!same.length) same = board.people.filter((x) => x.handle && first(x) === want);
+    /* A NAME SPELLED THE WAY IT SOUNDS, which is how the operator has it.
+     *
+     * He asked for "Lisa"; the handle she chose is "Liza". One letter, and
+     * without this the answer is "nobody here is called that" — which is the
+     * failure CLAUDE.md names: a wrong handle reads as the person being
+     * missing when they are standing right there. He then has to go and run
+     * make who, read a list, and come back, which is three commands for a
+     * typo.
+     *
+     * SUGGESTED, NEVER ACTED ON. Close is not the same as right, and the
+     * thing on the other end of this is publishing somebody's face. So the
+     * near ones are printed as commands to run and nothing is changed. */
+    if (!same.length) {
+      const near = board.people.filter((x) => x.handle).filter((x) => {
+        const f = first(x);
+        return f.startsWith(want) || want.startsWith(f) || edits(f, want) <= 2;
+      }).map((x) => x.handle).slice(0, 5);
+      return { error: "nobody", near };
+    }
+    if (same.length > 1) {
+      return { error: "two", n: same.length, who: same.map((x) => x.handle).slice(0, 6) };
+    }
+    const q = same[0];
+    const w = q.by ? board.waits.find((x) => x.by === q.by) : null;
+    /* WHERE IT CAME FROM, RECORDED BEFORE ANYTHING MOVES.
+     *
+     * It cannot be read off the row afterwards, and the first run of this got
+     * it wrong in exactly that way: cleanPerson defaults photoState to "held"
+     * when there is none, so somebody whose picture had never come across at
+     * all was reported as having had one "on her row the whole time". The two
+     * are different failures and the operator is owed the right one. */
+    const from = q.photo ? "row" : (w && w.photo ? "wait" : "");
+    if (from === "wait") {
+      // It never came across. The picture itself was never deleted — only the
+      // row that pointed at it changed hands.
+      q.photo = w.photo;
+      if (w.cover) q.cover = w.cover;
+    }
+    if (!q.photo) return { error: "gone", handle: q.handle };
+    const was = { from, photoState: from === "row" ? (q.photoState || "") : "",
+                  state: q.state || "" };
+    q.photoState = "published";
+    if (q.state !== "published") q.state = "published";
+    Object.assign(q, store.cleanPerson(q));
+    return { ok: true, handle: q.handle, was, admitted: was.state !== "published" };
+  });
+  if (out?.error) return res.status(out.error === "nobody" ? 404 : 400).json(out);
+  res.json(out);
 });
 
 app.get("/api/faces", admin, async (_req, res) => {
@@ -18623,6 +20864,30 @@ await mkdir(DIR, { recursive: true });
     }
   }
 }
+
+/* WHEN A ROUTE THROWS, SAY SO IN JSON AND WRITE IT DOWN.
+ *
+ * Express has no error handler here, so anything a route throws became its
+ * default HTML page — a stack trace in a <pre>, with a 500. Every screen in
+ * this app reads its answers with r.json(), which then throws in its own
+ * turn, and the page says whatever it says for "no answer at all". That is
+ * how a real crash came out as "No answer from the board. Check the signal",
+ * on a phone with four bars, with the stack sitting in a log nobody had a
+ * reason to open.
+ *
+ * Two lines, and the two of them are the whole of it: the stack goes to the
+ * log where it can be read, and the browser gets JSON with a 500 so the
+ * screen can tell a crash from a refusal and from being offline.
+ *
+ * LAST, after every route. An error handler is the four-argument middleware
+ * and it only catches what is registered above it.
+ */
+app.use((err, req, res, next) => {
+  console.error("route threw on " + req.method + " " + req.path + ":",
+    err && err.stack ? err.stack : err);
+  if (res.headersSent) return next(err);
+  res.status(500).json({ error: "broke" });
+});
 
 app.listen(PORT, () => {
   console.log(`board on :${PORT}, data in ${DIR}`);

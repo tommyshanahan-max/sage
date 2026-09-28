@@ -81,6 +81,15 @@ export const STRINGS = {
     "To keep this on your home screen: tap \u22ef top right, open in the browser.",
     "想放到主屏幕：点右上角 \u22ef，用浏览器打开。",
   ],
+  /* Instagram cannot install either, and its way out is not WeChat's. On iOS
+     the menu is ⋯ bottom right and the row says "Open in external browser";
+     on Android it is ⋮ top right. Named rather than described, same rule as
+     ins.ios above — a paraphrase sends somebody hunting for a row that is not
+     there. */
+  "ins.ig": [
+    "To keep this on your home screen: tap \u22ef, then Open in external browser.",
+    "想放到主屏幕：点 \u22ef，选「在浏览器中打开」。",
+  ],
   "ins.no":  ["Not now", "以后再说"],
 
   /* THE OTHER PICTURES. Said as a state, not as an apology — a person who has
@@ -506,6 +515,20 @@ export const STRINGS = {
     "People sourcing from China, and the factories and trading companies supplying them — with the agents, the distributors and the lawyers who sit in between. All on the same board, which is the point of it.",
     "从中国采购的人，和给他们供货的工厂与外贸公司——还有夹在中间的代理、经销商和律师。都在同一个板子上，这正是它的意义所在。",
   ],
+  /* THE ROOM THAT NEEDS NOBODY TO BE IN BUSINESS YET. Every other door asks
+     what you do; this one asks what you are trying to say. It is also the
+     only door on the board that gives somebody something in the first two
+     minutes rather than asking them for something. */
+  "door.learn.head": [
+    "What do I say when the bottle comes out?",
+    "酒瓶子一开，该说什么？",
+  ],
+  "door.learn.under": ["The part that is not in the textbook.", "课本上没有的那部分。"],
+  "door.learn.say": [
+    "People learning Chinese, and learning how things are actually done here — with the ones who have been doing both for twenty years. Same building as the film, the money and the factories, which is the point of it.",
+    "在学中文、也在学这儿的事到底怎么办的人——还有已经学了二十年的那几位。跟影视、资金、工厂在同一栋楼里，这才是重点。",
+  ],
+
   "door.other.head": [
     "Who would you ring, if you knew them yet?",
     "如果你认识那个人，你会给谁打电话？",
@@ -1178,6 +1201,29 @@ export const STRINGS = {
   "land.inside":       ["Go to the board", "回到板子"],
   "land.invite":       ["Invite only — a member has to bring you.", "邀请制——得有成员带你进来。"],
   "land.doors":        ["Which one are you here for", "你是为哪一件来的"],
+
+  /* THE SAME SIX DOORS, ON A PAGE OF THEIR OWN — see public/rooms.html.
+     NOT "which one are you here for". On the landing page that question sits
+     under the pitch and reads as a filter; alone on a screen it reads as a
+     test, and somebody who has not decided anything yet is being asked to
+     commit before they have seen a word anybody said.
+     So the headline names the place and the line under it takes the weight
+     off: you may read any room without being anybody. That is not a promise
+     being invented here — it is what the door already does, twelve lines of
+     it, before it asks for a thing. */
+  /* "ROOMS" ON ITS OWN READS AS CATEGORIES. A row of six named things with
+     arrows on them is what every directory on the internet looks like, and
+     somebody who thinks this is a list of topics has no reason to open one.
+     They are conversations with people in them, and the headline has to say
+     that before the arrows do.
+     六个群 rather than 聊天室: a WeChat user knows what a 群 is without
+     being told, and 聊天室 carries a decade nobody wants. */
+  "rooms.head":        ["Six chat rooms, one building.", "六个群，一栋楼。"],
+  "rooms.sub": [
+    "Go in and read what people are saying. You do not have to give a name.",
+    "进去看看大家在聊什么。不用留名字。",
+  ],
+  "rooms.whatis":      ["What is this place?", "这是个什么地方？"],
   /* THE OTHER PRODUCT ON THIS DOMAIN, ADMITTED AT THE FOOT.
      A payment provider assessing a platform application types the domain on
      the form, arrives here, and finds an invite-only board for doing business
@@ -1217,11 +1263,21 @@ export const STRINGS = {
   "land.queue":        ["Waiting", "门外"],
 
   "peek.head":         ["Inside, right now", "里面此刻的样子"],
-  "wait.only":         ["Invite only", "仅限邀请"],
-  "wait.waiting":      ["waiting to get in", "个人在等着进来"],
+  /* NOT "INVITE ONLY", WHICH IS A CLOSED DOOR.
+     It was true of the whole board and is not true any more: anybody can put
+     their name down, walk into the open rooms and write to the people who
+     arrived the same way. What an invite buys is narrower than it used to be
+     — the rooms members keep to themselves — so the eyebrow says the narrow
+     thing rather than the wide one.
+     It also turns the line from a refusal into a next step. "Invite only"
+     tells somebody to go away; "you need a vouch" tells them what to get,
+     and there is somebody inside who can give it to them. */
+  "wait.only":         ["Invite-only rooms need a vouch",
+                        "邀请制房间需要引荐"],
+  "wait.waiting":      ["already on it", "个人已经在上面了"],
   /* Said only when the server sent a number that really is about that room —
      below the floor it sends the whole board's figure instead. */
-  "wait.waitingIn":    ["in {room}\nare waiting", "个 {room} 的人在等"],
+  "wait.waitingIn":    ["in {room}\nalready on it", "个 {room} 的人已经在上面了"],
   /* WHICH ROOM, in four words a stranger can read. Not the board's thirteen —
      those are the vocabulary of somebody already inside. See WAITROOMS. */
   /* The one line worth adding back to a box everything else came off. */
@@ -1382,7 +1438,11 @@ export const STRINGS = {
   /* The last row under the name box on Messages, and the one that admits what
      an invite-only board is: the person you want is often not in it yet. */
   "wn.notHere":        ["Not on here yet?", "还不在这儿？"],
-  "wn.notHereSub":     ["Send them an invite", "发个邀请给他们"],
+  /* WHAT THE ROW DOES NOW, said plainly. It used to send somebody to the
+     board's own invite on another tab; it keeps the name typed above and puts
+     the cursor in the message box, so the next press invites them into this
+     conversation. See inviteRow in notes.html. */
+  "wn.notHereSub":     ["Invite them into this chat", "邀请他进这个对话"],
   "g.byMail":          ["Send me six digits by email", "用邮箱收六位数字"],
   "g.or":              ["or", "或者"],
   "g.ok":              ["Signed in. Everything is back.", "好了，都回来了。"],
@@ -1431,6 +1491,7 @@ export const STRINGS = {
   "waitroom.invest":   ["Investing", "投资"],
   "waitroom.raise":    ["Raising", "融资"],
   "waitroom.trade":    ["Factories & buyers", "工厂与买家"],
+  "waitroom.learn":    ["Chinese & culture", "中文与文化"],
   "waitroom.other":    ["Something else", "别的"],
   /* THE SIXTH DOOR, AND THE ONLY ONE THAT IS NOT ABOUT WHAT SOMEBODY DOES.
      Everybody can stand in it whatever they came for, because where you are in
@@ -1444,7 +1505,8 @@ export const STRINGS = {
      examples and a clause, and the clause was the half that got truncated. */
   "wait.reach":        ["WeChat or email", "微信或邮箱"],
   "wait.why":          ["One line about you (optional)", "一句话介绍自己（选填）"],
-  "wait.go":           ["Join the list", "加入名单"],
+  "wait.go":           ["Create a profile and enter a room",
+                        "创建资料，进入房间"],
   /* On a room door, where the room is the point and the list is only how
      the room is kept small. One field, and the button says what happens. */
   "wait.goRoom":       ["Join this room", "进这个房间"],
@@ -1476,8 +1538,8 @@ export const STRINGS = {
      that says the first while quietly doing the second is the kind of thing
      this board exists not to be. One clause, on the line people read. */
   "wait.note": [
-    "Members and the others waiting see your name and your line — that is how somebody brings you in. Your WeChat or email is shown to nobody; if it is an email, it is also how you get your place back on a new phone. Deleted either way.",
-    "成员和其他在等的人能看到你的名字和这句话——你就是这样被带进来的。微信或邮箱不给任何人看；要是填的是邮箱，换手机的时候也靠它把你的位置找回来。无论结果如何都会删掉。",
+    "Everybody on the board sees your name and your line — that is how a member decides to vouch you into the invite-only rooms. Your WeChat or email is shown to nobody; if it is an email, it is also how you get your place back on a new phone.",
+    "板子上的人都能看到你的名字和这句话——成员就是照着这个，决定把你引荐进邀请制房间的。微信或邮箱不给任何人看；要是填的是邮箱，换手机的时候也靠它把你的位置找回来。",
   ],
   /* THE SAME PROMISE WITH ONE AUDIENCE TAKEN OUT. On a door sent to people who
      compete with each other, the other names in the queue are the reason not
@@ -1918,7 +1980,7 @@ export const STRINGS = {
      TO EACH OTHER AND NOBODY ELSE, so what that does and does not mean is
      spelled out rather than implied — including the part people assume and we
      will not claim. */
-  "pv.hchat":          ["Messages", "私信"],
+  "pv.hchat":          ["Chat", "聊天"],
   "pv.pchat1": [
     "A message holds what you wrote, who it was to, and when. It is kept on the same server as everything else. Nobody but the two of you reads it — not other members, not us — with one exception, and the exception is the point: if the person who received a message reports it, that is when somebody reads it. That is the whole reason these are not built so that we cannot read them. A room nobody can read is a room nobody can be removed from.",
     "一条私信保存的是：你写的内容、写给谁、什么时候写的，和其他内容存在同一台服务器上。除了你们两个人，没有别人会读——其他成员不会，我们也不会——只有一个例外，而这个例外正是关键：如果收信的人举报了这条消息，那时才会有人来读。这也正是我们没有把私信做成「连我们自己都读不了」的原因——一个没有人能读的房间，也就没有人能被请出去。",
@@ -2485,23 +2547,54 @@ export const STRINGS = {
    * The address is never shown to anybody, which is said here rather than
    * assumed: on a board that asks for no phone number and no documents, a box
    * wanting an email needs to say in the same breath where it goes. */
-  "mail.title":        ["The way back in", "换手机之后怎么回来"],
+  /* IT SOLD THE WRONG THING, and that is why most people skip the box.
+     "The way back in" is insurance against something that has not happened
+     — losing a phone — and nobody acts on insurance. What an address
+     actually buys is the thing that brings anybody back to this board at
+     all: somebody wrote to you and you were not looking. That is the
+     headline; the phone is a second reason and goes below the fold. */
+  "mail.title":        ["Know when somebody writes",
+                        "有人给你留言，你会知道"],
   /* The tray row. It reports rather than asks — see drawSetts — so the label
      is the address itself when there is one. */
-  "set.mailNo":        ["No way back in", "还没有回来的路"],
+  "set.mailNo":        ["No address", "还没留邮箱"],
   "set.mailNoWhy": [
-    "Change phone and you would lose this page. An address fixes that.",
-    "换手机就找不回这个主页了。留个邮箱就不会。",
+    "Somebody could be writing to you and you would not know.",
+    "现在有人给你留言，你也不会知道。",
   ],
-  "set.mailYesWhy":    ["Six digits here gets you back in on any phone.",
-                        "任何手机上，六位数字就能回来。"],
+  "set.mailYesWhy":    ["Unread messages come here, and six digits gets you back in.",
+                        "没看的留言会发到这里，六位数字也能让你回来。"],
   "set.mailAdd":       ["Add", "去留"],
   "set.mailChange":    ["Change", "改"],
+  /* ONE SENTENCE, AND IT IS THE PROMISE. The three-clause version explained
+     six digits and new phones to somebody who had not agreed to care yet.
+     What they need before typing an address into anything is where it goes,
+     and the answer is nowhere. */
+  /* "NOT ON YOUR PAGE" COMES FIRST, and that is not belt and braces. In the
+     profile form this box sits three lines under "No phone, no WeChat, no
+     email" — which is about what a profile shows, and is still true — and an
+     email box directly beneath it reads as the app contradicting itself
+     within one screen. Naming the difference is the whole fix. */
   "mail.body": [
-    "Leave an address and you can get back in from any phone: we send six digits, and that is the whole of it. Nobody on the board ever sees it.",
-    "留个邮箱。以后换手机，我们发你六位数字，你就能回来。板上没有人看得到这个地址。",
+    "Not on your page. Nobody on the board ever sees it.",
+    "不会出现在你的主页上，板上也没有人看得到。",
+  ],
+  /* AND EVERYTHING ELSE IT IS FOR, QUIETLY, UNDER THE BOX.
+     This line exists because of the letter to everybody — see
+     /api/admin/mailout. An address given for one purpose and used for a
+     second is the thing people are right to be angry about, and the fix is
+     not a policy page nobody opens: it is saying so in the same breath as
+     the asking. It also carries the phone, which used to be the headline
+     and is a perfectly good second reason. */
+  "mail.also": [
+    "It also gets you back in on a new phone — six digits, and that is the whole of it. Now and then we write about who has joined. One tap stops those.",
+    "换手机也靠它回来——六位数字，就这么简单。偶尔我们会写信告诉你板上来了什么人，不想收点一下就行。",
   ],
   "mail.ph":           ["your@email", "你的邮箱"],
+  /* THE LABEL IN THE PROFILE FORM. The reason lives under the box — see
+     mail.body and mail.also, which the form and the sheet both use so there
+     is one account of what an address is for. */
+  "me.mailLab":        ["Email", "邮箱"],
   /* The waiting room's version of the same question. Written for somebody who
      has not been let in yet: what they stand to lose is a place in a queue,
      not a page. See the note beside it in room.html — the box is write-only,
@@ -2564,6 +2657,21 @@ export const STRINGS = {
     "这块板还没开邮箱登录。用钥匙进吧。",
   ],
 
+  /* THE ONE TAP THAT TAKES AN ACCOUNT BACK. Written for the phone it is
+     tapped on, in the tense it happens in: somebody else is you right now,
+     and after this they are not. No explaining of how it works — see /k/ in
+     server.js for that. */
+  "k.title":           ["Only this phone", "只有这台手机"],
+  "k.line": [
+    "Tap once. Anywhere else signed in as you stops being you.",
+    "点一下。别处用你身份登录的，全部作废。",
+  ],
+  "k.go":              ["This is my phone", "这是我的手机"],
+  "k.done":            ["Done. Only this phone is {who}.", "好了。现在只有这台手机是 {who}。"],
+  "k.open":            ["Open the board", "进入交换"],
+  "k.old":             ["That link is used up. Ask for another.", "这个链接用过了，再要一个。"],
+  "k.no":              ["That link is no good.", "这个链接无效。"],
+
   /* LEAVING FOR GOOD. It lists what goes before it goes, because a plain
      "are you sure?" makes somebody guess, and the guess is always smaller
      than the truth — most people think this hides a profile. */
@@ -2615,7 +2723,15 @@ export const STRINGS = {
   // The arrow that just goes back, wherever back was.
   "nav.back":          ["Back", "返回"],
   "nav.feed":          ["Feed", "动态"],
-  "nav.cards":         ["Cards", "名片"],
+  /* NOT "CARDS". A shelf of cards is a wallet, and a wallet is a thing you
+     keep — which is the wrong idea about the one screen on this board that is
+     about other people. What is on it is who you have connected with, and the
+     buttons that fill it have said "Connect" for months (cards.give,
+     cards.giveGo, cards.swapDone), so the tab was the last thing still
+     calling it by the object rather than by what it is for.
+     人脉 is the word a Chinese business reader already uses for exactly this
+     and 名片夹 is, literally, the card wallet. */
+  "nav.cards":         ["Connects", "人脉"],
   "nav.profile":       ["Profile", "我的"],
   /* THE FIFTH TAB. 收款 rather than 钱包: nothing is held here, and a wallet
      that holds nothing is a promise the product does not keep. It is the same
@@ -2970,7 +3086,7 @@ export const STRINGS = {
     "你可以先在这里跟{who}聊——一个只有你们两个人看得见的房间。任何一方随时都可以退出，退出时也不会通知对方。",
   ],
   "match.chatGo":      ["Message {who}", "给{who}发消息"],
-  "match.chatSent":    ["Sent. It is in Messages.", "已发送，可以在私信里看到。"],
+  "match.chatSent":    ["Sent. It is in Chat.", "已发送，在聊天里。"],
 
   "match.why":         ["Why this is a match", "为什么算匹配"],
   "match.becauseOne": [
@@ -3113,7 +3229,7 @@ export const STRINGS = {
   "off.gone":          ["There is no offer at this address.", "这个地址上没有邀约。"],
   "off.nocode":        ["That link is missing its code.", "这个链接少了邀约码。"],
 
-  "cards.head":        ["Your cards", "你的名片夹"],
+  "cards.head":        ["Connects", "人脉"],
   /* Two strings, because "1 people you have matched with" is the product
      miscounting the one thing on the screen. */
   "cards.n1":          ["1 match", "1 个匹配"],
@@ -3136,7 +3252,7 @@ export const STRINGS = {
      actually asking about. */
   "cards.paid1":       ["{amount} paid · 1 job", "已付 {amount} · 1 单"],
   "cards.paid":        ["{amount} paid · {n} jobs", "已付 {amount} · {n} 单"],
-  "cards.none":        ["No cards yet.", "还没有名片。"],
+  "cards.none":        ["Nobody yet.", "还没有人。"],
   "cards.noneWhy": [
     "A card lands here when you and somebody else follow each other and want the same kind of thing. Nothing arrives on its own — go and look at who is here.",
     "当你和某个人互相关注、而且想找的东西对得上时，这里就会多一张名片。名片不会自己出现，先去看看这里都有谁。"],
@@ -3258,6 +3374,8 @@ export const STRINGS = {
    * above it was already breaking. The true version is narrower and still
    * worth saying: nothing is ever asked of you, and the one thing that can be
    * swapped is swapped by two people who each pressed a button for it. */
+  "bud.safetyShort":   ["Nobody here needs your number or your documents.",
+                        "这里不需要你的电话或证件。"],
   "bud.safety": [
     "Nothing here needs your phone number or your documents, and nobody should be asking you for them. A WeChat id is only ever swapped by two people who each chose to. You never have to meet anyone to use this.",
     "这里不需要你的电话或者证件，也不该有人向你要。微信号只在两个人都主动选择的情况下才会交换。你完全不用见面就能用这个应用。",
@@ -3423,6 +3541,11 @@ export const STRINGS = {
      member reads the same word in both places. */
   "brw.qpfor":         ["Waiting for you", "在等你"],
   "brw.qpn":           ["{n} {who} waiting", "{n} 位{who}在等"],
+  /* "1 directors waiting" was on a live screen. English needs the singular,
+     and it needs the ARTICLE with it — "1 director waiting" reads as a tally
+     and "a director is waiting" reads as a person, which is what it is. The
+     Chinese line is the same sentence either way. */
+  "brw.qpn1":          ["{who} is waiting", "有 1 位{who}在等"],
   /* The stronger half: they are what you are after AND you are what they are
      after. One line, because two numbers that mean different things need the
      difference said out loud. */
@@ -3628,7 +3751,9 @@ export const STRINGS = {
      whole point of the second one: one is a member you matched with, the
      other is somebody you know who is not here. */
   "plus.write":        ["Message a member", "给成员发消息"],
-  "plus.reach":        ["Write to somebody new", "写给还没进来的人"],
+  /* IT HANDS OVER A LINK, so it says so. "Write to somebody new" promised a
+     screen with a message on it, which is exactly what this stopped being. */
+  "plus.reach":        ["Send somebody a link", "\u53d1\u4e2a\u94fe\u63a5\u7ed9\u4eba"],
 
   /* ---- AND THE MEMBER'S HALF: writing one. -------------------------------
      The output is a whole block to paste, not six characters. This is the one
@@ -3659,13 +3784,54 @@ export const STRINGS = {
   /* wn.mkGo ("Make the note") is retired with the sheet it was on: making and
      sending are one press now, and the press is the send arrow in the
      messenger. */
+  /* ---- THE SCREEN IS THE LINK NOW. ------------------------------------
+     "just make it possible to share the link immediately." The name and the
+     message that used to come first are gone: the people already here are one
+     tap away in Chat, so this path is only ever about somebody who is not,
+     and the link is the whole of what is being handed over. */
+  "wn.linkTitle":      ["Send somebody a link", "\u53d1\u4e2a\u94fe\u63a5\u7ed9\u4eba"],
+  "wn.linkMaking":     ["Making a link\u2026", "\u6b63\u5728\u751f\u6210\u94fe\u63a5\u2026"],
+  /* WHAT IT DOES FOR THE PERSON SENDING IT, which is not the same thing as
+     what it does for the board.
+     "why is putting htem on the list, it brings them into the chat doesnt
+     it" — it does, and that is the half that matters here. Answering the
+     link writes both sides as the first messages of a thread, so the moment
+     they reply the two of them are in a conversation (see /api/write/reply).
+     The waiting list is real and it is how they eventually become a member,
+     but it is the board's business and it is already explained on the screen
+     they land on. Saying it here described the filing rather than the thing
+     that happens. */
+  "wn.linkLab":        ["They write back, and you are in a chat with them.",
+                        "\u4ed6\u56de\u4f60\u4e00\u53e5\uff0c\u4f60\u4eec\u5c31\u5728\u4e00\u4e2a\u5bf9\u8bdd\u91cc\u4e86\u3002"],
   "wn.mkTo":           ["To", "写给"],
+  /* A SEND THAT REFUSES SAYS WHICH HALF IS MISSING. Both of these were a
+     cursor moving and nothing else — see sendNew. The message box shows the
+     example as a placeholder, so the screen looks like it already holds a
+     message: pressing send on what you can see and getting silence is the
+     commonest way this screen was failing. */
+  "wn.needName":       ["Who is it going to? Put their name at the top.",
+                        "\u53d1\u7ed9\u8c01\uff1f\u5728\u4e0a\u9762\u5199\u4e0a\u4ed6\u7684\u540d\u5b57\u3002"],
+  "wn.needLine":       ["Write the message. The grey text is an example.",
+                        "\u5199\u4e0a\u4f60\u8981\u8bf4\u7684\u3002\u7070\u5b57\u53ea\u662f\u4e2a\u4f8b\u5b50\u3002"],
   /* THE PHONE'S OWN SHEET, which is how this actually reaches WeChat. The
      first version offered Copy and nothing else, and left somebody holding a
      block of text with no idea what to do with it. */
   "wn.mkShare":        ["Send it", "发出去"],
   "wn.mkDone":         ["Done", "完成"],
   "wn.mkTill":         ["Good for a day. One person, once.", "一天内有效，只给一个人，只能用一次。"],
+  /* WHICH ONE IS MISSING, AND NOTHING ELSE.
+     A refusal that says "your profile page says what is left" is a refusal
+     that sends somebody to another screen to find out what they did wrong,
+     with the message they wrote still sitting in the box. The board knows
+     which of the three tests failed — standing() computes it — so it says
+     the one thing to do and stops. Same order the tests run in, so somebody
+     missing two of them is told the one to do first. */
+  "wn.needFace":       ["Put a photo on your profile first — then you can bring people in.",
+                        "先给你的资料上传张照片，就能带人进来了。"],
+  "wn.needDays":       ["You can bring people in from tomorrow.",
+                        "明天就可以带人进来了。"],
+  "wn.needSaid":       ["Post something on the feed this week first.",
+                        "本周先在动态里发一条。"],
   "wn.mkStanding": [
     "You cannot bring people to the door yet — same as an invite. Your profile page says what is left.",
     "你还不能带人到门口——和邀请码一样的条件。你的资料页上写着还差什么。",
@@ -3682,6 +3848,108 @@ export const STRINGS = {
     "{who}——\n\n{line}\n\n那边是邀请制。在这里回我一句，我帮你担保：\n{url}",
   ],
 
+  /* ---------------------------------------------------------------------
+     THE DOOR OF ONE CONVERSATION.
+     /join/chat/<room> opens the chat page with the room at the top of it and
+     six characters where the first message will be — see drawChatDoor in
+     notes.html. Named cd.* and not door.*, which is the board's own front
+     door: that one is about whether to join a board, this one about whether
+     to come into a conversation, and they are different questions.
+     THE VOICE IS A PERSON'S. "You have been invited" is a system talking.
+     Somebody wanted them in a chat, and that is what the line says.
+     --------------------------------------------------------------------- */
+  "cd.title":          ["A room", "一个群"],
+  "cd.lede":           ["Somebody here wants you in this chat.",
+                        "这边有人想拉你进这个对话。"],
+  "cd.ledeName":       ["{name} — somebody here wants you in this chat.",
+                        "{name}——这边有人想拉你进这个对话。"],
+  "cd.ledeFrom":       ["{who} wants you in this chat.",
+                        "{who} 想拉你进这个对话。"],
+  "cd.ledeBoth":       ["{name} — {who} wants you in this chat.",
+                        "{name}——{who} 想拉你进这个对话。"],
+  "cd.ask":            ["The six characters that came with the link",
+                        "跟链接一起发来的那六位口令"],
+  "cd.ph":             ["Code", "口令"],
+  "cd.go":             ["Come in", "进来"],
+  /* ONE FACT, NOT THREE. It said the code came with the link, that it is for
+     one person, and that it works once — two of which are reassurance, which
+     is the thing to leave out of a screen somebody is reading in a taxi. What
+     is left is the only one they need in order to act. */
+  "cd.note":           ["The code came with the link.",
+                        "口令跟链接一起发的。"],
+  "cd.trying":         ["Opening…", "正在打开…"],
+  /* DEAD IS DEAD AND IT SAYS SO ONCE. A room that never existed, one whose
+     last code is spent, and a mistyped address are the same answer on
+     purpose — telling them apart would be the page saying which rooms exist. */
+  "cd.goneHead":       ["This link is closed", "这个链接已经失效"],
+  "cd.goneBody":       ["Ask whoever sent it for a new one — it takes them a second.",
+                        "找发给你的人再要一个，他那边一秒钟的事。"],
+
+  /* ---------------------------------------------------------------------
+     A VIDEO CALL INSIDE THE CONVERSATION.
+     Everything here is read in one second, by somebody holding a ringing
+     phone or watching a black screen. One line each, no explaining.
+     --------------------------------------------------------------------- */
+  /* ---------------------------------------------------------------------
+     THE ＋ IN A CONVERSATION.
+     Two words a tile, under a drawing, read at a glance. Verbs, because
+     every one of them is a thing you are about to do — "Payment request" is
+     a noun somebody has to work out; "Request money" is the press. */
+  "pl.add":            ["Add person", "拉人进来"],
+  /* ---- adding a third person, from inside the conversation ----------------
+     The page that used to do this is gone: a room needs three, there are two
+     of you, so this is one choice and then the three of you are talking. */
+  "ac.head":           ["Who else should be in this?", "还想拉谁进来？"],
+  "ac.nobody": [
+    "Nobody to add yet. You can put somebody in a group once you have matched — you follow each other and you are after the same thing.",
+    "现在没人可拉。要先和对方匹配上——互相关注，而且找的是同一件事。",
+  ],
+  "ac.few":            ["A group needs three people.", "一个群至少要三个人。"],
+  "pl.call":           ["Video call", "视频通话"],
+  "pl.pay":            ["Send money", "我要付款"],
+  "pl.ask":            ["Request money", "收款"],
+  "pl.terms":          ["Write terms", "写下条件"],
+  /* MONEY HERE ONLY EVER MOVES THROUGH A REQUEST — one person raises it with
+     an amount and what it is for, the other opens a page and pays. That is
+     what stops anybody being asked to send money to a name in a chat window.
+     So "send money" puts this in the box, ready to send, and they raise it. */
+  "pl.payLine":        ["I want to pay you — send me a request.",
+                        "我要付款，你发个收款给我。"],
+  "pl.notYet":         ["Not until they are on the board.",
+                        "等他进了板子再说。"],
+  "pl.closed":         ["This conversation is closed.", "这个对话已经关了。"],
+  /* THE OTHER PERSON'S PAGE IS NOT IN BROWSE ANY MORE — taken down, held, or
+     an abandoned second account, which is the common one. The conversation
+     still reads; nothing can be sent to it. Said plainly rather than left as
+     a grey tile, because from the outside it looks like the app is broken. */
+  "pl.away":           ["Their page is not up. Nothing can be sent.",
+                        "他的主页不在了，发不了东西。"],
+  "cv.call":           ["Video call", "视频通话"],
+  "cv.ringing":        ["Ringing {who}…", "正在呼叫 {who}…"],
+  "cv.incoming":       ["{who} is calling", "{who} 打来视频"],
+  "cv.conn":           ["Connecting…", "正在连接…"],
+  "cv.lost":           ["Connection dropped — reconnecting…", "连接断了，正在重连…"],
+  "cv.ended":          ["Call ended", "通话结束"],
+  "cv.noAnswer":       ["{who} did not pick up", "{who} 没接"],
+  "cv.noCam":          ["Allow the camera and microphone, then try again.",
+                        "请允许使用摄像头和麦克风，再试一次。"],
+  /* TWO DIFFERENT FAILURES AND THEY ARE NOT THE SAME SENTENCE. One is a
+     network between two people; the other is this board having no relay
+     configured at all, which no amount of trying again will fix. A call that
+     cannot connect looks exactly like one about to, so it has to say which. */
+  "cv.noConn":         ["Couldn't connect. Try again, or send a message.",
+                        "没连上。再试一次，或者发消息。"],
+  "cv.noRelay":        ["Couldn't connect on this network.",
+                        "当前网络下连不上。"],
+  /* WHY A CALL WOULD NOT START. It used to be "Again?" for every one of
+     these, which told the person nothing and told whoever was trying to fix
+     it less. The last one carries a status code on purpose: ugly and
+     readable beats tidy and useless. */
+  "cv.gone":           ["You cannot call them from here.", "这里打不了给他。"],
+  "cv.self":           ["That is you.", "那是你自己。"],
+  "cv.noDevice":       ["This browser is not signed in.", "这个浏览器没有登录。"],
+  "cv.noGo":           ["The call would not start ({n}).", "电话没能接通（{n}）。"],
+
 
   /* ---------------------------------------------------------------------
      A NOTE WRITTEN TO SOMEBODY WHO IS NOT HERE YET.
@@ -3693,6 +3961,10 @@ export const STRINGS = {
      --------------------------------------------------------------------- */
   "wn.title":          ["A note for you", "有人写给你"],
   "wn.wrote":          ["{who} wrote to you", "{who} 写给你"],
+  /* WHEN THERE IS NO MESSAGE, which is the ordinary case now — a link sent on
+     its own. "wrote to you" over nothing is the page claiming a note that is
+     not there. */
+  "wn.sentYou":        ["{who} sent you this", "{who} \u53d1\u4e86\u8fd9\u4e2a\u7ed9\u4f60"],
   "wn.onThe":          ["on The Exchange", "在 The Exchange 上"],
   "wn.answerHead":     ["Write back", "回他一句"],
   "wn.answerLede": [
@@ -3700,6 +3972,31 @@ export const STRINGS = {
     "你的回复会发给 {who}，同时把你放进等候名单。说说你是谁、在找什么——别人就是看这个来决定的。",
   ],
   "wn.yourName":       ["Your name", "你的名字"],
+  /* A refusal that names the missing half, rather than "Again?" — see
+     sendInvited. */
+  "wn.needYourName":   ["Put your name in first.", "\u5148\u5199\u4e0a\u4f60\u7684\u540d\u5b57\u3002"],
+  /* THE OTHER TWO WAYS BRINGING SOMEBODY IN IS RATIONED — see standing() in
+     server.js. The screen knew about three of the five and gave everybody
+     else the vague sentence. */
+  "wn.needGuests":     ["The people you brought in have not posted yet. One of them saying something opens this again.",
+                        "\u4f60\u5e26\u8fdb\u6765\u7684\u4eba\u8fd8\u6ca1\u53d1\u8fc7\u4e1c\u897f\u3002\u4ed6\u4eec\u4e2d\u6709\u4eba\u53d1\u4e00\u6761\uff0c\u8fd9\u91cc\u5c31\u53c8\u5f00\u4e86\u3002"],
+  "wn.needRoom":       ["That is all the links for today. Tomorrow there are more.",
+                        "\u4eca\u5929\u7684\u94fe\u63a5\u7528\u5b8c\u4e86\u3002\u660e\u5929\u8fd8\u6709\u3002"],
+  /* AND THE FIVE THINGS THAT USED TO COME OUT AS "Again?" — see getLink. */
+  "wn.linkDoor":       ["This phone is not through the door yet.",
+                        "\u8fd9\u90e8\u624b\u673a\u8fd8\u6ca1\u8fdb\u95e8\u3002"],
+  "wn.linkNoDevice":   ["The board does not recognise this phone. Open Chat and come back.",
+                        "\u677f\u5b50\u8ba4\u4e0d\u51fa\u8fd9\u90e8\u624b\u673a\u3002\u5148\u56de\u804a\u5929\u518d\u8fc7\u6765\u3002"],
+  "wn.linkFailed":     ["The board could not make a link just now.",
+                        "\u73b0\u5728\u751f\u6210\u4e0d\u4e86\u94fe\u63a5\u3002"],
+  /* THE BOARD FELL OVER, which is not the same as the board saying no and
+     not the same as the phone being offline — see the error handler at the
+     foot of server.js. It is worth its own sentence because it is the only
+     one of the three that is nobody's fault but mine. */
+  "wn.linkBroke":      ["Something went wrong on the board. It has been written down.",
+                        "\u677f\u5b50\u90a3\u8fb9\u51fa\u4e86\u70b9\u95ee\u9898\uff0c\u5df2\u7ecf\u8bb0\u4e0b\u6765\u4e86\u3002"],
+  "wn.linkOffline":    ["No answer from the board. Check the signal and try again.",
+                        "\u677f\u5b50\u6ca1\u6709\u56de\u5e94\u3002\u770b\u770b\u4fe1\u53f7\uff0c\u518d\u8bd5\u4e00\u6b21\u3002"],
   "wn.yourReply":      ["Your answer", "你的回复"],
   "wn.replyPh": [
     "Performer, Sydney, free from March. Two features and a series.",
@@ -4185,7 +4482,32 @@ export const STRINGS = {
   /* AND ONTO THE FEED, on its own. Everybody who can read the feed is already
      in, so this is not how strangers arrive — it is how somebody who has spent
      their own code today finds a spare to pass on. */
+  /* inv.toFeed is retired — the button is gone. It published the day's
+     password to everybody, two lines under the sentence saying "One person,
+     then it changes", which is the feature arguing with itself. The key stays
+     so that a board still serving an older page does not print a blank. */
   "inv.toFeed":        ["Put it on the feed", "发到动态里"],
+  /* The second way to send it, and inside WeChat the only one: a page there
+     may not open a share sheet, so a button offering to share is a button
+     that does nothing. */
+  "inv.copyIt":        ["Copy the message", "复制邀请内容"],
+  /* NAMED, THE WAY WHATSAPP NAMES IT. Not "share" — the useful button says
+     where the person you are thinking of actually is. */
+  "inv.toWeChat":      ["Send on WeChat", "用微信发给他"],
+  "inv.toMail":        ["Send by email", "用邮件发"],
+  /* An invitation with no subject line reads as spam, which is the one thing
+     an invitation must not. */
+  "inv.mailSubject":   ["An invitation to The Exchange", "交换的邀请"],
+  /* For somebody on neither. WhatsApp's own invite does exactly this: not on
+     WhatsApp, so it opens a text message with the words already in it. */
+  "inv.toSMS":         ["Send as a text", "发短信"],
+  /* WeChat has no link that opens a chat with text in it, so this says what
+     it did rather than pretending. The paste is a gesture every WeChat user
+     already makes; it does not need teaching. */
+  "inv.wxCopied":      ["Copied — paste it in WeChat", "已复制，粘贴到微信"],
+  /* Under the sheet's own title rather than repeating it. What the six
+     characters ARE, which is the one thing the row has to say. */
+  "inv.todayIs":       ["Today's way in", "今天的进门口令"],
   /* AN ALLOWANCE, which most members do not have — see BOARD_CODES in the
      server. Said as codes in hand rather than as a rank: nobody needs to know
      who is on the list, least of all the people who are not. */
@@ -4225,11 +4547,12 @@ export const STRINGS = {
      rooms" — rooms are derived from what somebody says now. */
   "todo.say":          ["Say what you are looking for.", "写清楚你在找什么。"],
   "todo.goal":         ["Write a short bio.", "写一段简短介绍。"],
-  /* The row that stops somebody losing everything they are about to write.
-     Worded as the thing it buys rather than the thing it asks for: "Add an
-     email address" is a chore, "so you can get back in" is a reason. */
-  "todo.mail":         ["Add a way back in, for a new phone.",
-                        "留个回来的方式，换手机能用。"],
+  /* Worded as the thing it buys rather than the thing it asks for. It bought
+     the wrong thing: a spare key for a phone nobody has lost yet. What an
+     address is actually for here is knowing that somebody wrote — see
+     mail.title, which had the same fault and for the same reason. */
+  "todo.mail":         ["Get told when somebody writes to you.",
+                        "有人给你留言时收个提醒。"],
   "todo.level":        ["Take the level test.", "做一下水平测试。"],
   "todo.card":         ["Answer today’s card.", "答一下今天的卡片。"],
   "todo.post":         ["Post something.", "发一条内容。"],
@@ -4298,13 +4621,18 @@ export const STRINGS = {
   "inv.countShut":     ["{n} posts up. Invite only.", "已发布 {n} 条。邀请制。"],
   /* The line under the name, for somebody already inside. It counted posts —
      see the note where it is set. */
-  "board.inRoom":      ["{n} people in the room. Invite only.",
-                        "房间里有 {n} 个人。邀请制。"],
+  /* "INVITE ONLY" CAME OFF THIS LINE, because it stopped being true. The
+     public door is open: a member reading Browse is looking at a room that
+     anybody with the link can now be standing in, and the app telling them
+     otherwise on the line above the faces is the app lying to the people it
+     most needs to trust it. What separates the two kinds of person is a
+     control directly under this line — see .tiertog — which says it better
+     than a claim does, because it does something. */
+  "board.inRoom":      ["{n} people in the room.", "房间里有 {n} 个人。"],
   /* ONE IS NOT "1 people". English needs the second string; the Chinese line
      is the same sentence either way, which is why this is a key and not a
      count check in the page. */
-  "board.inRoom1":     ["One person in the room. Invite only.",
-                        "房间里有 1 个人。邀请制。"],
+  "board.inRoom1":     ["One person in the room.", "房间里有 1 个人。"],
   "inv.one":           ["One person each, and a new one tomorrow.",
                         "一个口令进一个人，明天再给你一个新的。"],
   "door.sub":          ["Not open to everybody yet", "还没有对所有人开放"],
@@ -4325,11 +4653,57 @@ export const STRINGS = {
   /* /join — the link for a group. One screen, one thing on it. */
   "join.tab":          ["交换 · The Exchange — ask to join", "交换 · 申请加入"],
   "join.lede": [
-    "Ask to join The Exchange.",
-    "申请加入交换。"],
+    "Put yourself on The Exchange.",
+    "把自己放到交换上。"],
   "join.sub": [
-    "A private board for people connecting in China, and with China. Put your name down and somebody already inside decides. Your WeChat or email is shown to nobody.",
-    "一个私密板子，给在中国、和跟中国打交道的人。留个名字，由已经在里面的人来定。你的微信或邮箱谁都看不到。"],
+    "Cross-border trade, both directions.",
+    "跨境生意，两个方向。"],
+  /* THE BOARD DRAWN ABOVE THE FORM, for somebody off a link who has never
+     heard of this and will not fill anything in to find out what is behind
+     it. Three labels and two lines, and they carry the whole difference
+     between the tiers by saying what each group is rather than explaining a
+     tier system to a stranger. */
+  "front.rooms":       ["Rooms", "房间"],
+  "front.roomsSub":    ["· walk into any of these", "· 随便进"],
+  /* "Members" and not "Tier one". Nobody outside knows what a tier is, and a
+     word invented for the database is a word the reader has to be taught. */
+  "front.members":     ["Members", "成员"],
+  "front.membersSub":  ["· brought in by somebody", "· 有人带进来的"],
+  "front.open":        ["Open to anyone", "所有人都能聊"],
+  "front.openSub":     ["· you can write to these", "· 这些人你能直接联系"],
+  "front.of":          ["{n} of {all}", "第 {n} 个，共 {all} 个"],
+  /* On the room card, under its name. "in" rather than "waiting" — nobody is
+     waiting at a door any more, they are standing in the room. */
+  "front.inRoom":      ["{n} in", "{n} 人在"],
+  /* On the two arrows over a member's photograph. Read out, never shown. */
+  /* THE OTHER REASON TO BE HERE. Everything else on this page is people;
+     this is the thing the people are trying to do. Said in the payer's terms
+     — 收款 is the word on every merchant's code in China and the word the
+     board already uses on the money tab, so the promise and the product
+     agree.
+     "Coming soon" is carried in its own chip rather than buried in the
+     sentence, because it is the part that makes the line honest and the part
+     somebody skimming would otherwise miss. */
+  /* On a member's photograph. "Vouched" and not "Member": member is what the
+     heading above the deck already calls them, and this has to add the thing
+     the heading does not — that somebody already here put their name to it.
+     引荐 is the same word the door uses for the vouch, so the badge and the
+     thing you have to get are called the same thing. */
+  "front.vouched":     ["Vouched", "有人引荐"],
+  "front.paidHead":    ["Get paid across the border", "跨境收款"],
+  "front.paidSub":     ["Your client pays in yuan from WeChat or Alipay; it lands in your own bank.",
+                        "客户用微信或支付宝付人民币，钱进你自己的银行账户。"],
+  "front.paidTag":     ["Coming soon", "即将上线"],
+  "front.back":        ["Back", "上一个"],
+  "front.next":        ["Next", "下一个"],
+  /* Said when nobody has come through the public door yet, which is true on
+     the first day and stops being true quickly. Not "no results" — this is
+     a board with nobody on one side of it, and saying so is better than an
+     empty space somebody reads as broken. */
+  "front.noneOpen":    ["Nobody yet. You would be the first.",
+                        "还没有人，你会是第一个。"],
+
+  "join.signin":       ["Sign in", "登录"],
   "join.has":          ["Already have a password?", "已经有口令了？"],
 
   /* /agents — one page for one WeChat group of film agents. Its own keys
@@ -4790,6 +5164,20 @@ export const STRINGS = {
   // The row under the deck, and the card at the end of it. Both only exist
   // while there is no face on this phone, and both go the moment there is.
   "brw.you":           ["You", "你"],
+  /* THE MARK ON SOMEBODY WHO CAME IN THROUGH THE LINK, and only a member is
+     ever sent the fact — see the `waiting` line in /api/people. One word,
+     because it is a badge beside a name and not a status line: what it means
+     is on the toggle directly above the deck.
+     The Chinese says what the English implies. "等候中" is waiting in a queue
+     at a bank; 待引荐 is waiting for somebody to vouch, which is the only
+     thing this is waiting for and the only thing the reader can do about it. */
+  "brw.waiting":       ["Waiting", "待引荐"],
+  /* THE TOGGLE OVER THE DECK, for members. Two words, one each side.
+     "Everyone" rather than "All": all of WHAT is a question, everyone is not.
+     It is only drawn when there is somebody waiting to be filtered out — a
+     control with nothing behind it teaches people not to press things. */
+  "brw.tierAll":       ["Everyone", "所有人"],
+  "brw.tierMem":       ["Members", "会员"],
   "brw.mine":          ["Add your photo", "加上你的照片"],
   "brw.mineWhy":       ["Nobody here can see who you are yet.", "这里还没人知道你是谁。"],
   // Your own card is not in the deck — browsing your own photograph is not a
@@ -4945,7 +5333,13 @@ export const STRINGS = {
   "note.leave":        ["Leave this chat", "退出这个对话"],
   // On the button a swipe uncovers, where there is room for two words and the
   // name is already on the row it belongs to.
-  "note.leaveShort":   ["Leave", "退出"],
+  /* THE WORD ON THE BUTTON A SWIPE REVEALS, on a conversation and on a room
+     alike. One word for both, because the list is one list and a row that
+     said "Leave" beside a row that said "Delete" would be asking somebody
+     clearing their chats to work out which was which. What each one actually
+     does is in the sentence that comes up next — note.clearSure for a
+     conversation, grp.leaveSure for a room. */
+  "note.delShort":     ["Delete", "删除"],
   "note.leaveSure": [
     "Leave the chat with {who}? Neither of you can write again. {who} is not told.",
     "退出和 {who} 的对话？之后你们都不能再写了。{who} 不会收到通知。",
@@ -4957,6 +5351,13 @@ export const STRINGS = {
   "note.clear":        ["Delete this conversation", "\u5220\u6389\u8fd9\u6bb5\u5bf9\u8bdd"],
   "note.clearSure":    ["Delete it from your phone? They keep theirs, and are not told.",
                         "\u4ece\u4f60\u8fd9\u8fb9\u5220\u6389\uff1f\u5bf9\u65b9\u90a3\u8fb9\u8fd8\u5728\uff0c\u4e5f\u4e0d\u4f1a\u77e5\u9053\u3002"],
+  /* THE SAME ROW WHEN A ROOM OF TWO IS RIDING ON IT — see listRow. Deleting
+     it takes the room with it, and a room of two that one of you leaves is
+     gone for both of you, messages and all. That is a different thing to do
+     to somebody than putting your own copy away, so it is the first clause
+     rather than a reassurance at the end. */
+  "note.clearBoth":    ["The room you two pinned terms in goes for both of you. Delete it?",
+                        "\u4f60\u4eec\u4fe9\u5b9a\u6761\u6b3e\u7684\u90a3\u4e2a\u623f\u95f4\u4f1a\u4e00\u8d77\u6d88\u5931\u3002\u786e\u5b9a\u5220\uff1f"],
   "note.shut":         ["This conversation is closed.", "这个对话已经结束了。"],
   "note.needProfile":  ["Fill in your own profile first — an introduction from nobody is not one.",
                         "先填好自己的资料——没有名字的自我介绍不算自我介绍。"],
@@ -4970,6 +5371,29 @@ export const STRINGS = {
     "这里能聊的已经聊完了。直接联系对方吧——名片已经给你了。"],
   "note.enough":       ["That is enough messages for one day.", "今天发得够多了。"],
   "note.gone":         ["That person is not on the list any more.", "这个人已经不在名单上了。"],
+  /* THE REFUSALS THAT HAD NO WORDS, and so wore "It did not send. Try again."
+   *
+   * Every one of these is PERMANENT. Telling somebody to try again about a
+   * thing that will refuse identically for ever is the worst sentence a
+   * screen can say: they press it twice more, decide the app is broken, and
+   * the real reason — which two of these three could act on — is never shown
+   * to anybody. Seen on a live phone: "Hi how are you?" to a member, three
+   * red lines, no idea which rule it was.
+   *
+   * `shut` says nothing about WHICH of the two closed it. Whether somebody
+   * blocked you is theirs to know and not yours, and a message that let the
+   * blocked person work it out would make blocking useless. So it says the
+   * conversation is closed, which is the true part and the part that is
+   * anybody's business. */
+  /* note.shut is NOT redeclared here — it already exists above, and a second
+     copy of a key is the thing the duplicate check in CLAUDE.md is for. It
+     says "This conversation is closed", which is right for this too: whether
+     somebody blocked you is theirs to know, not yours, and a message that let
+     the blocked person work it out would make blocking useless. */
+  "note.self":         ["That is your own page.", "这是你自己的主页。"],
+  /* Notes are not built on this board at all. Nothing the reader can do, so
+     it does not pretend there is — and it does not say "try again". */
+  "note.off":          ["Messages are not switched on here.", "这里没有开启私信功能。"],
   "note.failed":       ["It did not send. Try again.", "没有发出去，再试一次。"],
 
   /* MO WRITES THE FIRST ONE. The blank box in front of a stranger's card is
@@ -5359,7 +5783,7 @@ export const STRINGS = {
      which is everything somebody had to read four hundred words to learn. */
   "dl.spec1":          ["3.5% when you get paid, all in", "收到钱时收 3.5%，就这一项"],
   "dl.spec2":          ["Lands in your bank abroad", "直接进国外的银行卡"],
-  "dl.spec3":          ["Invitation only, for now", "现在要有人邀请"],
+  "dl.spec3":          ["Free to join, rooms need a vouch", "免费加入，房间需要引荐"],
   /* The paragraph each one replaced, one tap behind it. */
   /* ONE NUMBER, AND NOTHING UNDER IT. It said 2% and named Stripe, and both
      have changed: the money comes in through a wallet now, and 2% was the
@@ -5371,8 +5795,8 @@ export const STRINGS = {
                         "从款里扣 3.5%，就这一项——收款、换汇、加上我们的，都在里面。不收入会费，不收月费，没人付你就一分不收。"],
   "dl.spec2.p":        ["They pay in yuan from WeChat or Alipay; it arrives in your own bank account abroad. This board never holds it, never moves it, and has no balance of anybody's money.",
                         "对方用微信或支付宝付人民币，钱到你在国外的银行账户。这个板子不代收、不代转，也没有任何人的资金池。"],
-  "dl.spec3.p":        ["Somebody already here has to let you in. Paying is different — if somebody sent you a link, open it and pay. You need no account for that, ever.",
-                        "要进来得有人邀请你。付钱是另一回事：别人发了链接给你，打开付就行，永远不需要账号。"],
+  "dl.spec3.p":        ["Put yourself on it and you can browse everybody and write to everybody who arrived the same way. The invite-only rooms need somebody already here to vouch for you. Paying is different — if somebody sent you a link, open it and pay. You need no account for that, ever.",
+                        "把自己放上去，就能看所有人，也能跟同样进来的人聊。邀请制的房间要有人引荐。付钱是另一回事：别人发了链接给你，打开付就行，永远不需要账号。"],
   "dl.demoWho":        ["{who} is asking for", "{who} 请你付"],
   "dl.demoWhat":       ["12 lessons", "12 节课"],
   "dl.demoPay":        ["Pay {amount}", "付 {amount}"],
@@ -6102,7 +6526,12 @@ export const STRINGS = {
      every sentence: a room that asks you about every message is not a room
      anybody relaxes in. */
   "grp.flag":          ["Report", "举报"],
-  "grp.placeholder":   ["Say something to the group.", "跟群里说点什么。"],
+  /* SHORT ENOUGH TO FIT THE BOX IT IS IN. "Say something to the group." wrapped
+     to two lines in a 195px composer and was cut off after "to the" — a
+     placeholder that does not finish its own sentence reads as a broken box.
+     You are in the room; it does not need saying that the room is who hears
+     you. */
+  "grp.placeholder":   ["Say something", "说点什么"],
   /* SOMEBODY INVITED STRAIGHT INTO THE ROOM, READING IT WITH NO NAME.
      One sentence where the composer goes. Not "welcome", not an explanation of
      what a profile is, and no reassurance: they can see the conversation, they
@@ -6307,8 +6736,37 @@ export const STRINGS = {
     "确定退群？之后你就看不到它了，你说过的话会留在原处。",
   ],
 
-  "note.inbox":        ["Messages", "私信"],
-  "note.inboxSub":     ["Introductions to you, and the ones you sent.", "别人写给你的，和你写出去的。"],
+  /* ---------------------------------------------------------------------
+   * WHAT HAPPENED — the screen behind the bell on Chat.
+   *
+   * ONE SENTENCE PER ROW AND THE NAME FIRST, because the list is read running
+   * a thumb down it and the name is the half that decides whether the rest is
+   * worth reading. No kind printed beside it, no second line: the sentence IS
+   * the row.
+   *
+   * THE CHINESE IS WRITTEN, NOT TRANSLATED. "{who} 说钱到了" is what somebody
+   * says about a payment landing; a translation of "confirms receipt of the
+   * payment" would be a sentence out of a bank letter.
+   * ------------------------------------------------------------------- */
+  "bell.title":        ["What happened", "\u6709\u4ec0\u4e48\u52a8\u9759"],
+  "bell.none":         ["Nothing yet", "\u8fd8\u6ca1\u6709"],
+  "bell.noneBody":     ["Terms and payments turn up here.",
+                        "\u6761\u6b3e\u548c\u4ed8\u6b3e\u4f1a\u51fa\u73b0\u5728\u8fd9\u91cc\u3002"],
+  /* Two words, and it is the only thing on this screen that asks for
+     anything. "Needs you" rather than a dot: a dot is a thing to learn. */
+  "bell.needs":        ["Needs you", "\u7b49\u4f60"],
+  "bell.terms":        ["{who} wrote the terms.", "{who} \u5199\u597d\u4e86\u6761\u6b3e\u3002"],
+  "bell.agreed":       ["{who} agreed.", "{who} \u540c\u610f\u4e86\u3002"],
+  "bell.claimed":      ["{who} says they paid.", "{who} \u8bf4\u94b1\u5df2\u7ecf\u4ed8\u4e86\u3002"],
+  "bell.confirmed":    ["{who} says it arrived.", "{who} \u8bf4\u94b1\u5230\u4e86\u3002"],
+  "bell.denied":       ["{who} says it has not arrived.", "{who} \u8bf4\u94b1\u6ca1\u5230\u3002"],
+  "bell.nudge":        ["{who} is waiting to be paid.", "{who} \u5728\u7b49\u8fd9\u7b14\u94b1\u3002"],
+  /* The button on Chat. Labelled for a screen reader and for a long press;
+     the button itself is the drawing. */
+  "bell.open":         ["What happened", "\u6709\u4ec0\u4e48\u52a8\u9759"],
+
+  "note.inbox":        ["Chat", "聊天"],
+  "note.inboxSub":     ["Everyone you are talking to.", "你在聊的人。"],
   "note.none":         ["Nothing yet", "还没有消息"],
   /* IT STILL TALKED ABOUT STUDYING TOGETHER, which is what this board was
      before it was this one. */
@@ -6387,7 +6845,6 @@ export const STRINGS = {
      do rather than the thing they are. "See where you are" is a queue
      position; the page it opens is where they write their own — which is also
      what moves them up it. */
-  "note.onList":       ["Your page — finish it and you move up", "你的资料——写完就往前排"],
   "note.canDeal":      ["deal", "已成交"],
   "note.canTo":        ["To {who}", "写给 {who}"],
   "note.canHow": [
@@ -6409,6 +6866,12 @@ export const STRINGS = {
      for is the scam it was written to stop, which has a shape: somebody you
      have not agreed anything with, asking you to send money now, or asking for
      your documents. So it names that instead of banning a word. */
+  /* THE RULE ON THE SCREEN, THE PARAGRAPH ONE TAP BEHIND IT.
+     Not a heading — "Safety" would be a word to read before the thing. This
+     line is the thing: the one sentence that stops the scam it was written
+     for, in the order somebody does it. */
+  "note.safetyShort":  ["Agree terms in writing before any money.",
+                        "先把条件写清楚，再谈钱。"],
   "note.safety": [
     "Money only after you have both agreed terms in writing, and only to the person you agreed them with. Nobody here needs photographs of your documents. Report anybody who asks.",
     "先把条件白纸黑字说定，再谈钱，而且只付给你谈定的那个人。这里没有人需要你证件的照片，有人要就举报。",
@@ -6841,7 +7304,7 @@ export const STRINGS = {
   "sh.chatPhone":      ["This conversation lives on this phone.", "这个对话只在这台手机上。"],
 
   /* The shopkeeper's side. */
-  "mn.chats":          ["Messages", "消息"],
+  "mn.chats":          ["Chat", "聊天"],
   "mn.chatNone":       ["Nobody has asked anything yet.", "还没有人来问。"],
   "mn.buyer":          ["A buyer", "买家"],
   "mn.reply":          ["Reply", "回复"],
@@ -7751,8 +8214,11 @@ export const STRINGS = {
   "wl.cantReach":      ["Couldn't reach the Exchange. Check your connection and try again.", "连不上 The Exchange，检查网络后重试。"],
   "wl.confirmIdentity":["Confirm identity", "去实名"],
   "wl.checkAmountAgain":["Check the amount again", "重新确认金额"],
-  "wl.membersOnly":    ["The wallet is for members. Once your page is up on the board, it's here.", "钱包仅限成员使用。你的主页上板后即可使用。"],
-  "wl.backToMessages": ["Back to Messages", "返回消息"],
+  /* ONE FACT AND THE BUTTON UNDER IT. It used to explain the membership rule
+     and then offer a way back to Messages, which is not a thing anybody can
+     do about it. */
+  "wl.membersOnly":    ["The wallet opens when your page is up.", "主页建好，钱包就开。"],
+  "wl.makePage":       ["Make your page", "去建主页"],
   "wl.notOnHere":      ["The wallet isn't switched on here yet.", "这里还没开通钱包。"],
   "wl.delete":         ["Delete", "删除"],
   "wl.point":          ["Point", "小数点"],

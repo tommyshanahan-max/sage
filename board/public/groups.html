@@ -6,6 +6,11 @@
      browser to the one seeded identity. See BOARD_DEMO_DEVICE in server.js. -->
 {{DEMO}}
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<!-- FIRST, AND NOT A MODULE. A page that dies in the browser said nothing to
+     anybody — see public/oops.js. It has to run before the module below so it
+     can report the module failing to parse, which is what a blank screen with
+     a working bar under it actually is. -->
+<script src="/oops.js"></script>
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" href="/favicon.png" sizes="192x192">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -81,18 +86,30 @@
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 
   .top{display:flex;align-items:center;gap:.8rem;margin:0 0 1.3rem}
-  .top h1{margin:0;font-family:var(--serif);font-weight:400;font-size:1.75rem;line-height:1.1}
+  /* THE TITLE TAKES WHAT IS LEFT AND CUTS. Without min-width:0 a flex child
+     refuses to shrink below its content, so the name pushed everything else
+     over and wrapped anyway — which is how "Tom, Axel, Nicole" came out as
+     two lines with 中文 stacked into a column beside it. A room named from
+     three handles is as long as three handles and no font size fixes that;
+     an ellipsis does. */
+  .top > div{flex:1;min-width:0}
+  .top h1{margin:0;font-family:var(--serif);font-weight:400;font-size:1.75rem;line-height:1.1;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   /* "Macau, March" broke across two lines on a 390px screen, because ⋯ and
      the language button take their width first and the title gets what is
      left. Smaller, and it fits on one. */
   @media (max-width:26rem){ .top h1{font-size:1.4rem} }
-  .top p{margin:.15rem 0 0;font-size:.85rem;color:var(--muted)}
+  .top p{margin:.15rem 0 0;font-size:.85rem;color:var(--muted);
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .back{border:0;background:none;color:var(--ink);padding:.2rem;margin-left:-.3rem;
     display:grid;place-items:center;flex:0 0 auto}
   .back svg{width:1.5rem;height:1.5rem;stroke:currentColor;fill:none;stroke-width:1.8;
     stroke-linecap:round;stroke-linejoin:round}
+  /* NEVER BROKEN ACROSS TWO LINES. Squeezed, 中文 stacked one character above
+     the other and read as a two-character column rather than a button. */
   .lang{margin-left:auto;flex:0 0 auto;border:1px solid var(--line);background:var(--raise);
-    color:var(--ink-2);border-radius:99px;padding:.42rem .9rem;font-size:.85rem;line-height:1}
+    color:var(--ink-2);border-radius:99px;padding:.42rem .9rem;font-size:.85rem;line-height:1;
+    white-space:nowrap}
 
   .rule{display:flex;align-items:center;gap:.9rem;margin:0 0 .3rem}
   .rule span{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;
@@ -131,9 +148,34 @@
   .none button{border:0;background:var(--accent);color:var(--accent-ink);border-radius:99px;
     padding:.75rem 1.6rem;font-size:1rem}
 
+  /* THE WARNING, COARSE FIRST AND FINER ON A TAP.
+   *
+   * It was the four-line paragraph now behind the summary, sitting under
+   * every conversation on the board — the heaviest block on a screen whose
+   * whole job is the two lines above it. Nothing is lost by moving it one tap
+   * deeper; it was not being read where it was.
+   *
+   * WHAT STAYS ON THE SCREEN IS THE RULE ITSELF, not a label saying there is
+   * a warning here. "Safety" would be a heading to read before the thing;
+   * this line IS the thing, and the paragraph behind it is the detail for
+   * whoever wants it. <details> rather than a script, so it works before any
+   * JavaScript has run and a keyboard opens it the way a keyboard expects. */
   .safety{margin:2rem 0 0;padding:.95rem 1.05rem;background:var(--raise);
     border:1px solid var(--line);border-left:3px solid var(--t3);border-radius:.6rem;
     font-size:.86rem;line-height:1.6;color:var(--ink-2)}
+  .safety summary{cursor:pointer;list-style:none;display:flex;gap:.5rem;
+    align-items:flex-start;font-weight:600;color:var(--ink)}
+  /* Safari draws its own triangle through list-style:none. */
+  .safety summary::-webkit-details-marker{display:none}
+  /* OUR OWN MARKER, because the browser's sits on the first line of a wrapped
+     sentence at a size nobody can see. A chevron that turns. */
+  .safety summary::before{content:"";flex:0 0 auto;width:.5rem;height:.5rem;
+    margin:.42rem .1rem 0 0;border-right:2px solid var(--t3);
+    border-bottom:2px solid var(--t3);transform:rotate(-45deg);
+    transition:transform .15s ease}
+  .safety[open] summary::before{transform:rotate(45deg);margin-top:.3rem}
+  .safety p{margin:.7rem 0 0}
+  @media (prefers-reduced-motion:reduce){ .safety summary::before{transition:none} }
 
   /* A note. Two shapes, not one with a modifier: what somebody sent you is a
      thing to decide about, what you sent is a receipt. Making them look the
@@ -284,7 +326,20 @@
   .said{display:flex;gap:.6rem;margin:0 0 .9rem;align-items:flex-start}
   .said.mine{flex-direction:row-reverse}
   .said .av{width:2rem;height:2rem;font-size:.85rem;box-shadow:none}
-  .bub{max-width:78%;padding:.6rem .85rem;border-radius:1.1rem;background:var(--raise);
+  /* THE BUBBLE IS NOT THE FLEX ITEM. .saywrap is — it holds the bubble and
+     the time under it — and the squeezing happens to that.
+     WHY IT SQUEEZES: `overflow-wrap: anywhere` is the one value of that
+     property that changes an element's MIN-CONTENT width. It declares every
+     character a legal break, so the narrowest the bubble can be is one
+     character, so the narrowest the wrapper can be is one character, and in a
+     flex row that is an invitation. The wrapper took it: "Hi" came out 37px
+     wide and two lines tall, one letter above the other.
+     `anywhere` has to stay — a pasted address with no spaces in it must wrap
+     rather than run off the screen — so the shrinking is what stops. The cap
+     moves up here with it; max-width on a box that is not being laid out was
+     never doing the job it looked like it was doing. */
+  .saywrap{flex-shrink:0;max-width:78%;min-width:0}
+  .bub{max-width:100%;padding:.6rem .85rem;border-radius:1.1rem;background:var(--raise);
     border:1px solid var(--line);font-size:1rem;line-height:1.5;overflow-wrap:anywhere;
     white-space:pre-wrap}
   .said.mine .bub{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
@@ -379,9 +434,14 @@
     box-shadow:0 10px 30px rgba(0,0,0,.12);z-index:30}
   .atmenu button{font:inherit;font-size:.85rem;padding:.35rem .7rem;border-radius:99px;
     border:1px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer}
-  .compose textarea{flex:1;min-height:2.9rem;max-height:9rem;resize:vertical;font:inherit;
+  /* IT GROWS WITH WHAT IS TYPED — see grow() below, which is the whole fix.
+     This box is about 195px wide on a phone (a mic and a Send beside it), so
+     one ordinary sentence is three lines in it; at a fixed 2.9rem you could
+     not see what you were writing past the second. resize:vertical was the
+     only way out and it is a corner nobody can drag with a thumb. */
+  .compose textarea{flex:1;min-height:2.9rem;max-height:9rem;resize:none;font:inherit;
     padding:.65rem .8rem;border-radius:1rem;border:1px solid var(--line);
-    background:var(--raise);color:var(--ink)}
+    background:var(--raise);color:var(--ink);overflow-y:auto}
   .compose button{flex:0 0 auto;border:0;border-radius:99px;background:var(--accent);
     color:var(--accent-ink);padding:.7rem 1.15rem;font-size:.95rem}
   .saycsaid{margin:.6rem 0 0;font-size:.85rem;line-height:1.55;color:var(--t5)}
@@ -753,7 +813,10 @@
   </div>
 
   <div id="screen"></div>
-  <p class="safety" id="safety"></p>
+  <details class="safety" id="safety">
+    <summary id="safetyk"></summary>
+    <p id="safetyfull"></p>
+  </details>
 </main>
 
 <script type="module">
@@ -981,58 +1044,44 @@ function go(id) {
 }
 
 function paint() {
-  $("safety").textContent = T("note.safety");
+  $("safetyk").textContent = T("note.safetyShort");
+  $("safetyfull").textContent = T("note.safety");
   $("back").setAttribute("aria-label", T("nav.back"));
   const room = GROUPS.find((g) => g.id === OPEN);
   if (room) return paintRoom(room);
   paintList();
 }
 
-/* --------------------------------------------------------------- the list */
+/* ------------------------------------------------------- making a new one */
 
+/* THE LIST OF ROOMS USED TO BE HERE AND IT WAS A SECOND INBOX.
+ *
+ * "Is this page even necessary now." Mostly it was not. Every room on it was
+ * already a row in Chat — mixed in with the two-person threads and sorted by
+ * what was said last, which is where anybody looks for a conversation, and
+ * which is the list that gets opened. This one was the same rooms again, in
+ * another place, under a word ("Groups") that makes a room sound like a
+ * different kind of thing from a chat when it is a chat with more people in
+ * it.
+ *
+ * Two lists of one set of conversations is one list to keep in step and one
+ * nobody reads. So the rooms live in Chat and this page does the one thing
+ * Chat cannot: make a new one.
+ *
+ * /groups?g=<id> IS UNTOUCHED. That is the room itself and every link on this
+ * board points at it. What is gone is only the index in front of it.
+ */
 function paintList() {
   $("topact").hidden = true;
-  $("title").textContent = T("grp.title");
-  $("sub").textContent = GROUPS.length
-    ? T("grp.count", { n: GROUPS.length }) : T("grp.sub");
+  $("title").textContent = T("grp.start");
+  $("sub").textContent = "";
   const box = $("screen");
   fill(box);
-
-  if (PICKING) { box.append(picker()); return; }
-
-  /* The button first. Making one is the thing somebody opens this page to do
-     while there are none, and it stays at the top afterwards because a list of
-     three rooms is not long enough to bury it under. */
-  const start = el("button", "start", T("grp.start"));
-  start.type = "button";
-  start.addEventListener("click", () => { PICKING = true; PICKED = []; paint(); });
-  box.append(start);
-
-  if (!GROUPS.length) {
-    const none = el("div", "none");
-    none.append(el("b", null, T("grp.none")), el("p", null, T("grp.noneBody")));
-    box.append(none);
-    return;
-  }
-
-  box.append(Object.assign(el("div", "rule"), {}));
-  const r = el("div", "rule");
-  r.append(el("span", null, T("grp.yours")), el("i"));
-  box.append(r);
-
-  for (const g of GROUPS) {
-    const b = el("button", "room");
-    b.type = "button";
-    const faces = el("div", "faces");
-    for (const p of g.who.slice(0, 4)) faces.append(face(p));
-    const m = el("div", "m");
-    m.append(el("b", null, g.name || nameOf(g)));
-    const last = g.says[g.says.length - 1];
-    m.append(el("p", null, last ? last.text : T("grp.quiet")));
-    b.append(faces, m, el("span", "chev", "›"));
-    b.addEventListener("click", () => go(g.id));
-    box.append(b);
-  }
+  /* Straight into the picker. There is nothing else on this screen to choose
+     between any more, and a page whose only content is one button is a tap
+     somebody has to make to find out there was nothing behind it. */
+  PICKING = true;
+  box.append(picker());
 }
 
 /** What to call a room nobody named: the people in it. */
@@ -1048,9 +1097,12 @@ function picker() {
 
   if (!CANADD.length) {
     box.append(el("p", "lede", T("grp.nobody")));
+    /* BACK MEANS CHAT NOW. It used to mean the list of rooms on this page,
+       and there is no list any more — the rooms are in Chat, which is also
+       where somebody sent here by "nobody to add yet" actually wants to be. */
     const back = el("button", "start", T("nav.back"));
     back.type = "button";
-    back.addEventListener("click", () => { PICKING = false; paint(); });
+    back.addEventListener("click", () => { location.assign("/notes"); });
     box.append(back);
     return box;
   }
@@ -2495,7 +2547,12 @@ function paintRoom(g) {
      * a guest who has not made one — stays a plain face, because a tile that
      * leads to a 404 is worse than one that does nothing. */
     if (!m.mine) row.append(faceLink(m, face(m, "small")));
-    const wrap = el("div");
+    /* NAMED, BECAUSE IT IS THE FLEX ITEM AND THE BUBBLE IS NOT.
+       It held the bubble and the timestamp under it and had no class, so
+       every rule written for "the bubble" — including the one stopping it
+       being squeezed — landed on an element that is not the one the row
+       lays out. See .saywrap in the stylesheet. */
+    const wrap = el("div", "saywrap");
     const bub = el("div", "bub");
     /* @somebody drawn as a mention. Never innerHTML — see at.js. */
     atText(bub, said, g.who.map((x) => x.handle).filter(Boolean));
@@ -2648,6 +2705,15 @@ function paintRoom(g) {
   ta.rows = 1;
   ta.maxLength = 600;
   ta.placeholder = T("grp.placeholder");
+  /* THE BOX GROWS WITH WHAT IS TYPED, to the limit in the stylesheet. Without
+     this it is two lines for ever and a message of any length is written
+     blind — the fault Tom photographed, where even the empty placeholder was
+     cut off in the middle of a word. */
+  const grow = () => {
+    ta.style.height = "auto";
+    ta.style.height = Math.min(ta.scrollHeight, 144) + "px";
+  };
+  ta.addEventListener("input", grow);
   /* @ somebody in the room — the same module the door rooms use, so the
      gesture is one gesture and not two that drift apart. */
   /* g.who already carries him — the doorman is in every room's `who` rather
@@ -2743,6 +2809,7 @@ function paintRoom(g) {
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(d.error || "no");
       ta.value = "";
+      grow();   // back to one line, or the empty box keeps the message's height
       said.textContent = "";
       await load();
       // It went, and something came out of it — see stripContact.
@@ -2875,12 +2942,28 @@ function addScreen(g) {
 /* THE LINK NEVER CARRIES THE CODE. Same rule as the header's invite and the
    same reason: a forwarded link would otherwise be a way in.
    THE NAME IN IT IS OPTIONAL, and `nm` is "" when nobody typed one. */
+/* AND THE ADDRESS NOW SAYS WHICH CHAT.
+ *
+ * It was /enter?for=... — the board's front door, which is where this used to
+ * put people down and is not where this invite goes. "i want the links to open
+ * on the chat page", and the shape he wrote out: /join/chat/<room>. The room's
+ * id is a label on an invitation and not a way in — /api/chat-door answers for
+ * it only while a live code exists, and the six characters beside the link
+ * remain the only thing that opens anything. See the notes over CHATKEY in
+ * notes.html and over /api/chat-door in server.js.
+ *
+ * A room id is required for the new shape and the fallback is deliberate
+ * rather than defensive: a code minted against a room that this page somehow
+ * has no id for still has to be sendable, and /enter takes it.
+ */
 function enterUrl(nm, d) {
   const q = [];
   if (nm) q.push("for=" + encodeURIComponent(nm));
   q.push("from=" + encodeURIComponent(d.from || ""));
   if (d.until) q.push("t=" + Math.round(Date.parse(d.until) / 1000));
-  return location.origin + "/enter?" + q.join("&");
+  const room = /^[a-f0-9]{20}$/.test(String(d.group || "")) ? d.group : "";
+  return location.origin + (room ? "/join/chat/" + room : "/enter")
+    + "?" + q.join("&");
 }
 
 /** The message that travels beside the link. The same words either way; the
@@ -3278,13 +3361,15 @@ function leaveButton(g) {
 }
 
 $("back").addEventListener("click", () => {
-  // Out of a room to the list, out of the list to the board. One button, and
-  // it always goes back one step rather than off the page.
-  if (PICKING) { PICKING = false; paint(); return; }
+  /* One button, and it always goes back one step rather than off the page.
+     THE LIST IS GONE, so two of these steps changed where they land: out of
+     a room goes to Chat, which is where the rooms are now, and out of the
+     picker goes there too — "PICKING = false; paint()" would just paint the
+     picker again, which is a back button that does nothing. */
   if (ADDING) { ADDING = false; INFO = true; paint(); return; }
   if (INFO) { INFO = false; paint(); return; }
-  if (OPEN) { go(""); return; }
-  if (history.length > 1) history.back(); else location.href = "/feed";
+  if (PICKING || OPEN) { location.assign("/notes"); return; }
+  if (history.length > 1) history.back(); else location.href = "/notes";
 });
 
 setLang(pickLang());

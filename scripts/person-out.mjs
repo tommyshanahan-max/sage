@@ -17,6 +17,7 @@
  * point of this one is that it can be used on a hunch and undone in the
  * morning.
  */
+import { boardFetch } from "./wait-board.mjs";
 
 const [, , base, key, ...rest] = process.argv;
 if (!base || !key) {
@@ -34,7 +35,10 @@ if (!who) {
   process.exit(2);
 }
 
-const r = await fetch(base + "/api/person/out", {
+/* boardFetch, NOT fetch. `make board && make show WHO="..."` threw an
+   undici SocketError with a stack trace at somebody who had done nothing
+   wrong — the board was still coming back up. See wait-board.mjs. */
+const r = await boardFetch(base + "/api/person/out", {
   method: "POST",
   headers: { "x-admin-secret": key, "Content-Type": "application/json" },
   body: JSON.stringify({ handle: who, back }),

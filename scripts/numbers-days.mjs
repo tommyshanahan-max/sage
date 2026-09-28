@@ -69,6 +69,44 @@ for (const day of d.series || []) {
     + "  " + [from, via].filter(Boolean).join(" | "));
 }
 
+/* ---- WHERE THEY ARE ------------------------------------------------------
+ *
+ * WHY THIS WAS MISSING AND WHY IT IS THE ANSWER TO "where was that person
+ * from". The board keeps no network address anywhere — the only place one is
+ * read at all is a rate-limit key in memory, and Caddy writes no access log
+ * for this name — so there is no address to look up and there is deliberately
+ * never going to be one. See the note over `places` in analytics/lib/store.js.
+ *
+ * What there is instead is the browser's own IANA timezone, volunteered by
+ * the page: "Asia/Shanghai", "Europe/London". Counted once per device per
+ * day. It was collected, kept per day AND over the range, and printed
+ * nowhere — so the one question this data exists to answer had no command
+ * that would answer it.
+ *
+ * It is also the better signal for this product than an address would be: a
+ * student in Manchester on a Chinese VPN geolocates to China and has their
+ * clock set to London, and London is the fact the business turns on.
+ * ------------------------------------------------------------------------ */
+{
+  const all = d.places || [];
+  console.log("\nWHERE THEY ARE  (the browser's own timezone, never an address)");
+  if (!all.length) {
+    console.log("  nothing — no page on these sites has reported one.");
+  } else {
+    for (const p of all.slice(0, 12)) {
+      console.log("  " + pad(p.name, 24) + String(p.count).padStart(5)
+        + "  " + "#".repeat(Math.min(p.count, 40)));
+    }
+    console.log("");
+    console.log(pad("day", 12) + "  where, that day");
+    for (const day of d.series || []) {
+      const here = (day.places || []).slice(0, 3)
+        .map((x) => `${x.name}:${x.count}`).join(" ");
+      if (here) console.log(pad(day.day, 12) + "  " + here);
+    }
+  }
+}
+
 // ---- what was used on the sites, day by day -------------------------------
 {
   const names = (d.uses || []).map((u) => u.name).slice(0, 6);

@@ -11,6 +11,7 @@
  *
  *   make who
  */
+import { boardFetch } from "./wait-board.mjs";
 
 const [, , base, key] = process.argv;
 if (!base || !key) {
@@ -18,7 +19,8 @@ if (!base || !key) {
   process.exit(2);
 }
 
-const d = await fetch(base + "/api/public?queue=1", { headers: { "x-admin-secret": key } })
+/* boardFetch, NOT fetch — see wait-board.mjs. */
+const d = await boardFetch(base + "/api/public?queue=1", { headers: { "x-admin-secret": key } })
   .then((r) => r.json());
 const people = d.people || [];
 if (!people.length) {

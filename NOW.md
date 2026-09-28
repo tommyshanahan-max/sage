@@ -10,6 +10,37 @@ through, and add the date to anything that changes.
 
 ---
 
+## Two people arrived as Tom, 27 Sep
+
+Tom sent a chat link. Two people opened it, made a profile, went back to the
+same link — and came in **as him**, with his whole Chat list on their phone.
+One of them sent a screenshot of it.
+
+What did it: `BOARD_DEMO_DEVICE`. It pins every browser that loads a page to
+one device number, so an App Store reviewer arrives as the seeded member
+instead of as nobody. On the demo board that is the point. On the real one it
+hands whoever opens a link somebody else's account, and no screen says so.
+
+Shut two ways, 27 Sep:
+
+- **The pin now needs two switches.** `BOARD_DEMO=1` says a container is the
+  demo board, and it is set in exactly one place — the `board-demo` service in
+  `docker-compose.yml`. Anywhere else the pin is ignored and the board says so
+  at boot. One name in `.env` can no longer do this.
+- **And it never takes an identity that is already there.** A fresh browser
+  still gets the seeded reviewer; somebody who made a profile a minute ago
+  keeps their own.
+
+**A device number IS the account here, so shutting the door does not evict
+anybody.** The two who walked in still hold his number. `make evict WHO="Tom"`
+is the other half: it prints a link to send yourself, one tap on the phone that
+should keep the account, and everybody else's copy stops being him. Nothing
+else changes — same page, same people, same messages.
+
+    make no-back                # shut every walk-in-as-somebody-else door
+    make who-am-i               # what is still open
+    make evict WHO="Tom"        # take the account back
+
 ## Waiting on other people
 
 | | |
@@ -1945,8 +1976,10 @@ as a widget any app drops in (`book/`, `<div data-book="studypal">` plus
 `thexchange.app/book/widget.js`). **Watched working 26 Sep: a video call
 between Tom's phone and his Mac**, through `make book-test`'s two links.
 
-- Video is browser to browser; the relay (`tomscoding-turn`, coturn, host
-  networking, 3478 + UDP 49160–49200) carries it when a network will not.
+- Video is browser to browser; the relay (`tomscoding-book-turn`, coturn,
+  host networking, **3479** + UDP 49160–49200) carries it when a network
+  will not. 3479 since 28 Sep: the board's Chat calls got their own relay
+  (`tomscoding-turn`) on 3478, and two cannot share a port.
   ufw was opened for those ports. Its password is minted by the book
   container — nothing in `.env`.
 - Teachers only from the terminal: `make book-teacher`, `book-list` (prints
@@ -2138,6 +2171,37 @@ the wrong answer because of it — told that the domain did not point here, it
 went looking for a DNS problem while the real one was a deploy that had been
 run on the MacBook instead of the box. A line in this file that has stopped
 being true costs more than a line that was never written.
+
+## The disk on the box
+
+**It ran out on 27 Sep and everything looked like something else.** The board
+could not write `board.json` — ENOSPC — so minting a link, saving a profile
+and sending a message all threw, Express answered with its default HTML error
+page, and the app read that as "No answer from the board. Check the signal",
+on a phone with four bars. Two hours and six screenshots went into looking for
+a bug in the link screen.
+
+Six gigabytes of it was docker's **build cache**: ten deploys in an afternoon,
+each one a fresh layer of `node_modules`. `docker builder prune -f` and
+`docker image prune -f` got it back.
+
+```
+ssh -t root@45.77.8.166 'cd ~/tc && make space'
+```
+
+That prints how full the disk is, what the biggest things under `~/tc` are,
+clears the cache and the dangling images, and prints it again. **It never
+touches volumes** — `board_data` is the board, and a prune that takes volumes
+is the one command here that cannot be undone. Never offer
+`docker system prune --volumes`.
+
+`make board` now looks before it builds and refuses under a gigabyte free,
+because a build on a full disk does not fail loudly — it half-writes a layer,
+the container comes up, and the first anybody knows is a screen saying
+something untrue.
+
+**75G disk, and it was at 95% after clearing.** Something else on there is
+large and it will fill again.
 
 ## Mail
 

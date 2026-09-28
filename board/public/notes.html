@@ -6,6 +6,11 @@
      browser to the one seeded identity. See BOARD_DEMO_DEVICE in server.js. -->
 {{DEMO}}
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<!-- FIRST, AND NOT A MODULE. A page that dies in the browser said nothing to
+     anybody — see public/oops.js. It has to run before the module below so it
+     can report the module failing to parse, which is what a blank screen with
+     a working bar under it actually is. -->
+<script src="/oops.js"></script>
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" href="/favicon.png" sizes="192x192">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -114,11 +119,12 @@
   /* A GROUP'S ROW IS A LINK, and a link arrives underlined and blue. Said
      here rather than inline so the two kinds of row cannot drift apart. */
   a.trow{text-decoration:none;color:var(--ink)}
-  /* The rule between rows lives on .swipe, which a group row does not have —
-     it cannot be swiped away, because leaving a group is a different act with
-     a different warning on it. So it carries its own. */
-  #list > a.trow{border-bottom:1px solid var(--hair)}
-  #list > a.trow:last-child{border-bottom:0}
+  /* THE RULE BETWEEN ROWS LIVES ON .swipe, AND NOW EVERY ROW HAS ONE.
+     A group row used to carry its own border because it could not be swiped
+     away — "leaving a group is a different act" — which was true about the
+     act and wrong about the list: it left the one kind of row on this screen
+     with no way to take it off the screen. Both kinds swipe now and the two
+     rules that stood in for it are gone. */
   .swipe.open .trow{width:calc(100% - 6.4rem)}
   @media (prefers-reduced-motion:reduce){.trow{transition:none}}
   .trow:hover{background:var(--raise)}
@@ -200,9 +206,55 @@
   .thead .tname b{display:block;font-family:var(--serif);font-weight:400;
     font-size:1.15rem;line-height:1.2;overflow:hidden;text-overflow:ellipsis;
     white-space:nowrap}
-  .thead .tname span{display:block;font-size:.76rem;color:var(--muted)}
+  /* ONE LINE, CUT IF IT HAS TO BE. There are four things in this header now
+     that the video button makes four, and on a 390px phone "Open — either of
+     you can write" wrapped to two lines and pushed the name up against the
+     back arrow. The name is what matters here; the line under it is a label. */
+  .thead .tname span{display:block;font-size:.76rem;color:var(--muted);
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  /* The two round buttons in the corner sit together and never shrink. */
+  .thead .more{flex:0 0 auto}
   /* The name, as a box, on the screen where a conversation's name would be. */
+  /* THE NAME BOX, ON ITS OWN, UNDER THE HEADER — see the markup note.
+     `position:relative` so the matches hanging off it at top:100% hang off
+     the box and not off a header they no longer live in. */
+  .wnew{position:relative;padding:.9rem 0 .2rem}
   .tnew{flex:1;min-width:0}
+  /* IT HAS TO LOOK LIKE SOMETHING YOU TYPE IN. In the header it was a bare
+     input with a placeholder, which on a phone reads as a greyed-out title —
+     "Their name" looked like the name of whoever this screen was about, and
+     there was nothing to say otherwise. */
+  .wnew .tnew{display:block;border:1px solid var(--line);border-radius:.9rem;
+    background:var(--raise);padding:.55rem .85rem}
+  .wnew .tnew input{font-size:1.05rem}
+  /* The one sentence that says what the send arrow does, directly under the
+     name it will be sent to. It was at the bottom of the screen, above the
+     keyboard, a long way from anything it explained. */
+  .wnwhy{margin:.7rem 0 0;color:var(--muted);font-size:.9rem;line-height:1.45}
+
+  /* THE LINK, AND IT IS THE WHOLE SCREEN — see drawWriteNew. At the top,
+     where the eye lands, rather than at the bottom where a conversation
+     would put its newest line: nothing is being read here, one thing is being
+     taken away. */
+  .linkcard{margin:1.2rem 0 0}
+  .linklab{margin:0 0 .7rem;font-size:1rem;line-height:1.45;color:var(--ink-2)}
+  /* THE URL ITSELF, READABLE AND SELECTABLE. `anywhere` because it has no
+     spaces in it and the alternative is a line running off the screen — and
+     `user-select:all` so one press takes the lot on a phone that has no idea
+     what a double-click is. */
+  .linkurl{margin:0;padding:.75rem .9rem;border:1px solid var(--line);
+    border-radius:.9rem;background:var(--raise);font-size:.95rem;
+    line-height:1.45;overflow-wrap:anywhere;user-select:all;
+    -webkit-user-select:all}
+  .linkacts{display:flex;gap:.6rem;margin:.9rem 0 0}
+  .linkacts button{flex:1;border:1px solid var(--line);background:var(--raise);
+    color:var(--ink);border-radius:99px;padding:.7rem 1rem;font:inherit;
+    font-size:1rem}
+  .linkacts button.primary{border-color:var(--accent);background:var(--accent);
+    color:var(--accent-ink)}
+  .linktill{margin:.8rem 0 0;color:var(--muted);font-size:.85rem;text-align:center}
+  .linkwhy{margin:0;color:var(--muted);font-size:.95rem;line-height:1.5}
+  .linkwhy.bad{color:var(--t5)}
   .tnew span{display:block;font-size:.66rem;letter-spacing:.1em;
     text-transform:uppercase;color:var(--muted);font-weight:700}
   .tnew input{width:100%;border:0;background:none;font:inherit;
@@ -255,9 +307,14 @@
   .talk{flex:1;display:flex;flex-direction:column;justify-content:flex-end;
     gap:.55rem;padding:.2rem 0 .6rem}
   /* For what is a screen rather than a conversation — the people at this door,
-     behind ⋯. Bottom-aligned, a short list opened with half a screen of
-     nothing over it. */
-  .talk.top{justify-content:flex-start}
+     behind ⋯, and the door of a room. Bottom-aligned, a short list opened with
+     half a screen of nothing over it.
+     NOT .top, WHICH IS THE PAGE HEADER. It is a sticky three-column grid with
+     negative margins and a rule under it — so "talk top" turned the thread
+     pane into a header: display:grid laid the lines out side by side and every
+     screen using it came out in three columns. .talk.top only ever overrode
+     justify-content, which is why it read as correct. */
+  .talk.attop{justify-content:flex-start}
   .bub{max-width:82%;padding:.6rem .8rem;border-radius:1.05rem;font-size:.95rem;
     line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
   /* Theirs on the left in the raised surface, yours on the right in the accent.
@@ -267,6 +324,78 @@
   .bub.mine{align-self:flex-end;background:var(--accent);color:var(--accent-ink);
     border-bottom-right-radius:.35rem}
   .when{align-self:center;font-size:.7rem;color:var(--muted);margin:.4rem 0 .1rem}
+  /* THE DOOR OF A CONVERSATION — see drawChatDoor. A row of who is in it, one
+     field, one button. It sits where the first bubble would, which is the
+     whole idea of the screen, so it is centred in the thread rather than
+     docked anywhere. */
+  /* ---- THE CALL ----------------------------------------------------------
+     Over the whole app, not beside it. Two people, faces, three buttons, and
+     nothing else on the screen — see the note over #callv in the markup. */
+  .callv{position:fixed;inset:0;z-index:90;background:#0b0b0d}
+  #cvthem{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#0b0b0d}
+  /* YOURSELF, SMALL, AND MIRRORED. Everybody expects their own picture to
+     behave like a mirror and nobody expects the other person's to. */
+  #cvme{position:absolute;right:14px;top:max(14px,env(safe-area-inset-top,0px));
+    width:28vw;max-width:148px;aspect-ratio:3/4;object-fit:cover;border-radius:14px;
+    border:2px solid rgba(255,255,255,.7);transform:scaleX(-1);background:#26262b}
+  /* WHO, WHILE THERE IS NOTHING TO SEE. It sits under the video rather than
+     being hidden when the call connects: their picture covers it. */
+  .cvwho{position:absolute;left:0;right:0;top:26%;display:flex;flex-direction:column;
+    align-items:center;gap:.7rem;color:#fff;pointer-events:none}
+  .cvwho .av{width:6.4rem;height:6.4rem;border-radius:50%;display:grid;place-items:center;
+    font:400 2.4rem/1 var(--serif);color:#fff;overflow:hidden}
+  .cvwho .av img{width:100%;height:100%;object-fit:cover}
+  .cvwho b{font:400 1.5rem/1.2 var(--serif)}
+  .cvstate{position:absolute;left:0;right:0;top:calc(26% + 11rem);margin:0;text-align:center;
+    color:rgba(255,255,255,.82);font-size:.95rem;text-shadow:0 1px 6px rgba(0,0,0,.6)}
+  .cvbar{position:absolute;left:0;right:0;bottom:max(26px,env(safe-area-inset-bottom,0px));
+    display:flex;justify-content:center;gap:1.1rem}
+  .cvbar button{width:62px;height:62px;border-radius:50%;border:0;padding:0;
+    background:rgba(255,255,255,.18);color:#fff;display:grid;place-items:center;
+    -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+  .cvbar button svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2;
+    stroke-linecap:round;stroke-linejoin:round}
+  /* OFF IS THE LIT ONE. A muted microphone reads as a button that is doing
+     something, which it is; a dark one reads as a button that is not there. */
+  .cvbar button.off{background:#fff;color:#111}
+  .cvbar button.end{background:#d93025}
+  .cvbar button.yes{background:#1e9e54}
+  /* THE HEADER'S VIDEO BUTTON. Same size and weight as the ⋯ beside it — it is
+     one of two things in that corner, not a feature announcing itself. */
+  .thead .vid svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;
+    stroke-linecap:round;stroke-linejoin:round}
+  /* THE LINE THAT IS THE SCREEN. It was a .when — grey, small, centred, the
+     class this page uses for a timestamp — under a room name and above three
+     faces, which made the one sentence somebody is here to read the quietest
+     thing on the page. */
+  .cdlede{align-self:center;max-width:20rem;margin:1.1rem 0 .2rem;text-align:center;
+    font:400 1.28rem/1.3 var(--serif);color:var(--ink);text-wrap:balance}
+  .cdwho{align-self:center;display:flex;flex-wrap:wrap;justify-content:center;
+    gap:.55rem .9rem;margin:.5rem 0 .2rem;max-width:22rem}
+  .cdone{display:flex;align-items:center;gap:.4rem}
+  .cdone i{font-style:normal;font-size:.82rem;color:var(--ink)}
+  .cdoor{align-self:center;display:flex;gap:.5rem;width:100%;max-width:19rem;
+    margin:.9rem 0 .2rem}
+  /* SIX CHARACTERS AND THEY ARE THE POINT OF THE SCREEN, so they are set big,
+     spaced, and in the face the rest of the board uses for a code. A phone
+     keyboard has no caps lock and the field uppercases as it goes — see the
+     input handler. */
+  .cdoor input{flex:1;min-width:0;padding:.7rem .8rem;border:1px solid var(--line);
+    border-radius:.7rem;background:var(--paper);color:var(--ink);
+    font:600 1.15rem/1 var(--mono,ui-monospace,monospace);letter-spacing:.18em;
+    text-align:center;text-transform:uppercase}
+  .cdoor input:focus{outline:2px solid var(--accent);outline-offset:1px}
+  /* THE SPACING IS FOR SIX CHARACTERS BEING TYPED, NOT FOR THE WORD IN THE
+     BOX. "口令" came out as two characters with a gap between them, which in
+     Chinese reads as a typesetting accident rather than as a hint. */
+  .cdoor input::placeholder{letter-spacing:normal;font-weight:400}
+  .cdoor button{flex:0 0 auto;padding:.7rem 1rem;border:1px solid var(--accent);
+    border-radius:.7rem;background:var(--accent);color:var(--accent-ink);
+    font-size:.92rem;font-weight:600}
+  .cdoor button:disabled{opacity:.45}
+  .cdsaid{align-self:center;max-width:22rem;text-align:center;font-size:.78rem;
+    color:var(--muted);margin:.1rem 0 0}
+  .cdsaid.bad{color:var(--warn,#c0392b)}
   /* A ROOM IS NOT A THREAD, AND WAS DRAWN LIKE ONE.
    *
    * In a two-person thread the left-hand bubble can only be one person, so a
@@ -474,6 +603,46 @@
     overflow:hidden;
     padding:.6rem .8rem;border:1px solid var(--line);border-radius:1.1rem;
     background:var(--raise);color:var(--ink);max-height:8rem}
+  /* THE ＋, LEFT OF THE BOX. Outlined rather than filled: Send is the one
+     coloured thing on this row and two accents beside each other is two
+     buttons arguing about which is the action. */
+  .plusbtn{flex:0 0 auto;width:2.4rem;height:2.4rem;padding:0;border-radius:50%;
+    border:1px solid var(--line);background:var(--raise);color:var(--ink);
+    display:grid;place-items:center;cursor:pointer;transition:transform .15s ease}
+  .plusbtn svg{width:1.15rem;height:1.15rem;fill:none;stroke:currentColor;
+    stroke-width:2;stroke-linecap:round}
+  /* TURNED INTO A ×, so the same button closes what it opened and the screen
+     says which state it is in without a word. */
+  .plusbtn[aria-expanded="true"]{transform:rotate(45deg);
+    background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  @media (prefers-reduced-motion:reduce){ .plusbtn{transition:none} }
+
+  /* WHAT IT OPENS. Four things and a fifth, as icons with two words under
+     them — a grid is read in one glance and a list of sentences is not. It
+     sits under the composer, above the tab bar, so nothing it covers is
+     anything you were reading. */
+  .pgrid{position:sticky;bottom:4.6rem;display:grid;
+    grid-template-columns:repeat(4,1fr);gap:.5rem .25rem;
+    padding:.9rem .25rem 1rem;background:var(--paper);
+    border-top:1px solid var(--hair)}
+  .pgrid button{display:flex;flex-direction:column;align-items:center;gap:.45rem;
+    border:0;background:none;padding:0;cursor:pointer;color:var(--ink);font:inherit}
+  .pgrid button i{width:3.4rem;height:3.4rem;border-radius:1.1rem;
+    background:var(--raise);border:1px solid var(--line);
+    display:grid;place-items:center}
+  .pgrid button svg{width:1.5rem;height:1.5rem;fill:none;stroke:currentColor;
+    stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  /* TWO WORDS, WRAPPING, CENTRED. "Request money" is two words in English and
+     four characters in Chinese and both have to sit under a 3.4rem square. */
+  /* TWO LINES' WORTH OF ROOM WHETHER OR NOT TWO ARE USED, so every tile is
+     the same height and the second row starts level. "Request money" wraps at
+     390px and the four beside it do not, which left the row ragged and the
+     fifth tile sitting at its own height. */
+  .pgrid button b{font-weight:400;font-size:.72rem;line-height:1.25;
+    text-align:center;color:var(--ink-2);max-width:5rem;min-height:2.5em}
+  /* .off, NOT :disabled — see ptile. A disabled button cannot be pressed and
+     the whole point is that this one can. */
+  .pgrid button:disabled,.pgrid button.off{opacity:.4}
   .send{flex:0 0 auto;width:2.4rem;height:2.4rem;border:0;border-radius:50%;
     background:var(--accent);color:var(--accent-ink);display:grid;
     place-items:center;cursor:pointer}
@@ -531,9 +700,6 @@
     padding:.45rem .2rem;font-size:.64rem;text-decoration:none;letter-spacing:.02em}
   .bar a span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .bar a[aria-current="page"]{color:var(--accent)}
-  /* The one line a waiting person gets instead of three tabs they cannot use. */
-  .bar a.waitbar{flex:1;flex-direction:row;justify-content:center;
-    font-size:.82rem;color:var(--ink-2);letter-spacing:0}
   .bar svg{width:1.5rem;height:1.5rem;stroke:currentColor;fill:none;stroke-width:1.7;
     stroke-linecap:round;stroke-linejoin:round}
   /* On a wide screen index.html moves its bar into the masthead. This page has
@@ -560,7 +726,21 @@
     line-height:1.2;text-align:center;white-space:nowrap}
   .top #langhome{justify-self:start}
   .top #langhome .lang{margin:0}
-  .plus{justify-self:end;width:2.2rem;height:2.2rem;border-radius:50%;
+  /* The right-hand cell of the header holds two things now, so the cell is a
+     row and the two keep their own sizes. `justify-self` moved off .plus and
+     on to the pair: with it on the child, the bell pushed the ＋ off centre. */
+  .rights{justify-self:end;display:flex;align-items:center;gap:.55rem}
+  /* THE BELL. Drawn rather than filled, the weight of the ＋ beside it, and
+     the count sits on its shoulder the way an unread count does everywhere
+     else on this phone. */
+  .ring{position:relative;display:grid;place-items:center;width:2.2rem;height:2.2rem;
+    color:var(--ink);text-decoration:none}
+  .ring svg{width:1.4rem;height:1.4rem;stroke:currentColor;stroke-width:1.8;
+    stroke-linecap:round;stroke-linejoin:round;fill:none}
+  .ringn{position:absolute;top:-.15rem;right:-.15rem;min-width:1.05rem;height:1.05rem;
+    padding:0 .25rem;border-radius:99px;background:var(--t5);color:#fff;
+    font-size:.66rem;line-height:1.05rem;text-align:center;font-weight:600}
+  .plus{width:2.2rem;height:2.2rem;border-radius:50%;
     border:2px solid var(--ink);background:none;color:var(--ink);padding:0;
     display:grid;place-items:center}
   .plus svg{width:1.1rem;height:1.1rem;stroke:currentColor;stroke-width:2.2;
@@ -721,9 +901,34 @@
   .wperson .wm span{display:block;font-size:.8rem;color:var(--muted);line-height:1.45}
   .wperson .wv{flex:0 0 auto;font-size:.72rem;letter-spacing:.06em;color:var(--t2)}
 
+  /* THE WARNING, COARSE FIRST AND FINER ON A TAP.
+   *
+   * It was the four-line paragraph now behind the summary, sitting under
+   * every conversation on the board — the heaviest block on a screen whose
+   * whole job is the two lines above it. Nothing is lost by moving it one tap
+   * deeper; it was not being read where it was.
+   *
+   * WHAT STAYS ON THE SCREEN IS THE RULE ITSELF, not a label saying there is
+   * a warning here. "Safety" would be a heading to read before the thing;
+   * this line IS the thing, and the paragraph behind it is the detail for
+   * whoever wants it. <details> rather than a script, so it works before any
+   * JavaScript has run and a keyboard opens it the way a keyboard expects. */
   .safety{margin:2rem 0 0;padding:.95rem 1.05rem;background:var(--raise);
     border:1px solid var(--line);border-left:3px solid var(--t3);border-radius:.6rem;
     font-size:.86rem;line-height:1.6;color:var(--ink-2)}
+  .safety summary{cursor:pointer;list-style:none;display:flex;gap:.5rem;
+    align-items:flex-start;font-weight:600;color:var(--ink)}
+  /* Safari draws its own triangle through list-style:none. */
+  .safety summary::-webkit-details-marker{display:none}
+  /* OUR OWN MARKER, because the browser's sits on the first line of a wrapped
+     sentence at a size nobody can see. A chevron that turns. */
+  .safety summary::before{content:"";flex:0 0 auto;width:.5rem;height:.5rem;
+    margin:.42rem .1rem 0 0;border-right:2px solid var(--t3);
+    border-bottom:2px solid var(--t3);transform:rotate(-45deg);
+    transition:transform .15s ease}
+  .safety[open] summary::before{transform:rotate(45deg);margin-top:.3rem}
+  .safety p{margin:.7rem 0 0}
+  @media (prefers-reduced-motion:reduce){ .safety summary::before{transition:none} }
 
   /* A note. Two shapes, not one with a modifier: what somebody sent you is a
      thing to decide about, what you sent is a receipt. Making them look the
@@ -867,6 +1072,23 @@
   .qcard{width:100%;max-width:34rem;background:var(--raise);
     border-radius:1.1rem 1.1rem 0 0;padding:1.1rem 1.05rem
     calc(1.1rem + env(safe-area-inset-bottom,0));max-height:92vh;overflow:auto}
+  /* ---- ADDING A THIRD PERSON, in the sheet the payment request already uses.
+     A search and a short list of faces; the whole screen is one choice. */
+  .acfind{width:100%;margin:.9rem 0 .6rem;padding:.7rem .85rem;font:inherit;
+    border:1px solid var(--line);border-radius:.8rem;
+    background:var(--paper);color:var(--ink)}
+  .aclist{display:flex;flex-direction:column;gap:.15rem;max-height:17rem;
+    overflow-y:auto}
+  .acone{display:flex;align-items:center;gap:.7rem;width:100%;padding:.5rem .3rem;
+    border:0;background:none;text-align:left;font:inherit;color:var(--ink);
+    border-radius:.6rem;cursor:pointer}
+  .acone:hover,.acone:focus-visible{background:var(--paper)}
+  .acone b{font-weight:400;font-size:.98rem}
+  .acsaid{margin:.7rem 0 0;font-size:.85rem;color:var(--muted);text-align:center}
+  .acsaid.bad{color:var(--warn,#c0392b)}
+  .acshut{display:block;width:100%;margin:.9rem 0 0;padding:.75rem;border:0;
+    border-radius:99px;background:var(--paper);color:var(--ink);font:inherit;
+    font-size:.95rem;cursor:pointer}
   .qlab{margin:0 0 .5rem;font-size:.72rem;letter-spacing:.14em;
     text-transform:uppercase;color:var(--muted)}
   .qcard label{display:block;margin:0 0 .75rem}
@@ -910,9 +1132,18 @@
   <div class="top" id="listtop">
     <span id="langhome"></span>
     <h1 id="title"></h1>
-    <button class="plus" id="plus" type="button" hidden>
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-    </button>
+    <!-- WHAT HAPPENED, AND THE ＋, IN THAT ORDER. The bell is to the left of
+         the ＋ because the ＋ is the corner every messenger puts "start
+         something" in and moving it would cost more than the bell gains. -->
+    <div class="rights">
+      <a class="ring" id="ring" href="/bells">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 16V11a6 6 0 1 0-12 0v5l-1.6 2.2h15.2z"/><path d="M10 20.2a2.2 2.2 0 0 0 4 0"/></svg>
+        <span class="ringn" id="ringn" hidden></span>
+      </a>
+      <button class="plus" id="plus" type="button" hidden>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
+    </div>
   </div>
 
   <div id="listview">
@@ -964,32 +1195,42 @@
          of this screen that has anybody in it is the wrong way round. -->
     <div class="none" id="none" hidden></div>
 
-    <p class="safety" id="safety"></p>
+    <details class="safety" id="safety">
+    <summary id="safetyk"></summary>
+    <p id="safetyfull"></p>
+  </details>
   </div>
 
   <!-- THE CONVERSATION. Header with the way back and their name, the lines as
        bubbles, and the box at the bottom where a thumb already is. -->
+  <!-- THE CALL, OVER EVERYTHING.
+       Its own layer rather than a screen of its own: the conversation is still
+       underneath it and hanging up puts you back in it mid-sentence, which is
+       what a call inside a chat is. See callOpen. -->
+  <div class="callv" id="callv" hidden>
+    <video id="cvthem" autoplay playsinline></video>
+    <video id="cvme" autoplay playsinline muted></video>
+    <div class="cvwho" id="cvwho"><span class="av" id="cvav"></span><b id="cvname"></b></div>
+    <p class="cvstate" id="cvstate"></p>
+    <div class="cvbar" id="cvbar">
+      <button id="cvmic" aria-label="Microphone"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+      <button id="cvcam" aria-label="Camera"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="13" height="10" rx="2"/><path d="M16 11l5-3v8l-5-3"/></svg></button>
+      <button id="cvend" class="end" aria-label="Hang up"><svg viewBox="0 0 24 24"><path d="M3 15c5-5 13-5 18 0l-3 3-3-2v-3c-2-1-4-1-6 0v3l-3 2z"/></svg></button>
+    </div>
+    <!-- BEING CALLED. Two buttons and nothing else on the screen: the choice
+         is answer or not, and a phone ringing is not a moment to read. -->
+    <div class="cvbar cvin" id="cvin" hidden>
+      <button id="cvno" class="end" aria-label="Decline"><svg viewBox="0 0 24 24"><path d="M3 15c5-5 13-5 18 0l-3 3-3-2v-3c-2-1-4-1-6 0v3l-3 2z"/></svg></button>
+      <button id="cvyes" class="yes" aria-label="Answer"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="13" height="12" rx="2.5"/><path d="M16 11l5-3v8l-5-3"/></svg></button>
+    </div>
+  </div>
+
   <div id="threadview" hidden>
     <div class="thead">
       <button class="back" id="back" aria-label="Back">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 19l-7-7 7-7"/></svg>
       </button>
       <a class="tname" id="twho" href="#"><b id="twhoname"></b><span id="twhosub"></span></a>
-      <!-- WRITING TO SOMEBODY WHO IS NOT HERE. The same screen, with the one
-           thing that differs: there is no name yet, so the name is a box.
-           Everything else — the bubbles, the composer, the send arrow — is the
-           conversation view, because it IS one: you are writing the first
-           message of a thread that does not exist yet. -->
-      <label class="tnew" id="tnew" hidden>
-        <span id="tnewk"></span>
-        <input id="tnewname" maxlength="40" autocomplete="off">
-      </label>
-      <!-- WHO ON THE BOARD MATCHES WHAT IS BEING TYPED. Empty and hidden until
-           there is something to show; see findPeople(). It hangs under the
-           name box rather than replacing it, because the box still does its
-           original job — a name that is nobody here is somebody to write a
-           note to, and that is most of the names typed into it. -->
-      <div class="tfind" id="tfind" hidden></div>
       <!-- THE LANGUAGE BUTTON LIVES IN WHICHEVER HEADER IS UP. It was in the
            list's header only, which this screen hides — so opening a
            conversation, or the screen where you write a note that is about to
@@ -997,6 +1238,13 @@
            between the two slots on every paint, rather than two buttons to
            keep in step. -->
       <span id="langaway"></span>
+      <!-- VIDEO. Beside the name of the person it calls, which is the only
+           place it can be: a call is a thing you do to somebody, and every
+           other screen would have to say who first. Hidden unless the thread
+           is open — see drawThread. -->
+      <button class="more vid" id="tvid" aria-label="Video call" hidden>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="13" height="12" rx="2.5"/><path d="M16 11l5-3v8l-5-3"/></svg>
+      </button>
       <button class="more" id="tmore" aria-label="More" aria-expanded="false">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/></svg>
       </button>
@@ -1005,6 +1253,28 @@
          has them: they are rare, permanent, and do not belong beside the box
          somebody types in. -->
     <div class="menu" id="tmenu" hidden></div>
+    <!-- WRITING TO SOMEBODY WHO IS NOT HERE YET.
+         "I'm trying to add someone into a chat from off the platform and I
+         don't understand what's going on myself. So how can anybody else?
+         What is this screen?"
+         It was a placeholder in the header that read as a greyed-out title,
+         a card offering the door you had just come through, nine hundred
+         pixels of nothing, and the one sentence explaining any of it down by
+         the keyboard. The name of the screen is in the header now and this is
+         the screen: who it goes to, and what happens when you press send. -->
+    <div class="wnew" id="wnew" hidden>
+      <label class="tnew" id="tnew">
+        <span id="tnewk"></span>
+        <input id="tnewname" maxlength="40" autocomplete="off">
+      </label>
+      <!-- WHO ON THE BOARD MATCHES WHAT IS BEING TYPED. Empty and hidden
+           until there is something to show; see findPeople(). It hangs under
+           the name box rather than replacing it, because the box still does
+           its original job — a name that is nobody here is somebody to write
+           a note to, and that is most of the names typed into it. -->
+      <div class="tfind" id="tfind" hidden></div>
+      <p class="wnwhy" id="wnwhy"></p>
+    </div>
     <!-- Who the person at the door is, above the conversation with them —
          see drawThread. Empty and hidden for a member, who has a page. -->
     <div class="tcard" id="tcard" hidden></div>
@@ -1044,7 +1314,17 @@
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
       <span id="taddsay"></span>
     </button>
+    <!-- THE ＋, AND EVERYTHING YOU CAN DO WITH SOMEBODY THAT IS NOT TYPING.
+         "there should be a + in chat which brings up an overlay with ADD
+         PERSON / Call / Send Money / Request Money." Same place WeChat puts
+         it and the same gesture, because that is the one every person on this
+         board already makes twenty times a day.
+         In the composer row rather than the header: it belongs beside the
+         box, where the thumb already is. -->
     <div class="write" id="twrite" hidden>
+      <button class="plusbtn" id="tplus" type="button" aria-expanded="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
       <textarea id="tbox" rows="1" maxlength="600"></textarea>
       <!-- HOLD TO TALK. Between the box and Send, the order a room uses, so
            the thumb finds it in the same place on both screens. Shown only
@@ -1055,6 +1335,11 @@
       </button>
     </div>
     <p class="status" id="tsaid" hidden></p>
+    <!-- WHAT THE ＋ OPENS. A grid of things to do, not a menu of words: an
+         icon and two words each, read in one glance. It sits above the
+         composer and pushes nothing, so the conversation stays where it was
+         and closing it puts you back mid-sentence. -->
+    <div class="pgrid" id="tpgrid" hidden></div>
   </div>
 </main>
 
@@ -1069,11 +1354,11 @@
      there is no second set of handlers to keep in step. -->
 <nav class="bar">
   <a href="/notes" aria-current="page">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v12H4z M4 7l8 6 8-6"/></svg>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.8-.8L3 21l1.9-5A8.4 8.4 0 0 1 12 3.1a8.4 8.4 0 0 1 9 8.4z"/></svg>
     <span id="tabnotes"></span>
   </a>
   <a href="/cards" id="tabcardsgo">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18v12H3z M3 10h18"/></svg>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.6 13.4a4 4 0 0 0 5.7 0l2.4-2.4a4 4 0 0 0-5.7-5.7l-1.4 1.4 M13.4 10.6a4 4 0 0 0-5.7 0l-2.4 2.4a4 4 0 0 0 5.7 5.7l1.4-1.4"/></svg>
     <span id="tabcards"></span>
   </a>
   <a href="/browse" id="tabbrowsego">
@@ -1090,12 +1375,6 @@
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h18v10H3z"/><circle cx="12" cy="12" r="2.4"/></svg>
     <span id="tabmoney"></span>
   </a>
-  <!-- In place of the three tabs, for somebody on the list.
-       /room AND NOT /waiting. /waiting is the operator's screen — it asks for
-       an admin key — so the one bar a person at the door is given led them to
-       a password box for somebody else's tool. /room is their own: where they
-       stand, and the form that makes their page. -->
-  <a class="waitbar" href="/room" id="waitbar" hidden></a>
 </nav>
 
 <script type="module">
@@ -1233,6 +1512,33 @@ const WAITROOMS = ["film", "invest", "raise", "trade", "other"];
  * what was said last. Opening one still goes to /groups?g=<id>, which already
  * draws a group properly — the page was never the problem, the door was. */
 let GROUPS = [];
+/* How many things have happened that this phone has not seen — see the bell
+   in the header and /api/bells. A number, never the rows. */
+let BELLS = 0;
+/* WHICH BUILD THIS PAGE WAS SERVED FROM, and whether it is already on its way
+   to a newer one. See the note in load(). */
+let BUILT = "";
+let RELOADING = false;
+
+/* WHAT THE INBOX LOOKED LIKE LAST TIME, IN ONE LINE — see watchInbox(). Four
+   things, because those are the four that mean the screen is out of date: a
+   message arrived, one was read somewhere else, somebody is ringing, or
+   somebody new became writable. */
+const sigOf = (d) => [
+  (d.notes || []).length,
+  ((d.notes || []).slice(-1)[0] || {}).id || "",
+  d.unread || 0,
+  (d.ring && d.ring.who) || "",
+  (d.can || []).length,
+].join("|");
+let SIG = "";
+
+/* A DEPLOY MUST NOT TAKE A HALF-WRITTEN MESSAGE WITH IT. The page reloads
+   itself when the board reports a build it has not seen — which is right, and
+   is wrong at the one moment somebody has a sentence in the box and has not
+   pressed send. It waits; the next tick is five seconds away and the box is
+   usually empty by then. */
+const typing = () => { const b = $("tbox"); return Boolean(b && b.value.trim()); };
 
 async function load() {
   /* AN INVITED ARRIVAL HAS NO INBOX YET. They are nobody to this server until
@@ -1247,14 +1553,61 @@ async function load() {
     paint();
     return;
   }
+  /* AND SOMEBODY STANDING OUTSIDE A ROOM, for the same reason: they are
+     nobody to this server until they spend the code, so /api/notes would be a
+     403 before the screen had drawn. /api/chat-door answers about the room and
+     about nothing else — see the note over it in server.js. */
+  if (CHATROOM) {
+    try {
+      CHATDOOR = await fetch("/api/chat-door/" + encodeURIComponent(CHATROOM),
+        { cache: "no-store" }).then((r) => (r.ok ? r.json() : { gone: true }));
+    } catch { CHATDOOR = { gone: true }; }
+    paint();
+    return;
+  }
   try {
     const d = await fetch("/api/notes", { cache: "no-store",
       headers: device ? { "x-board-device": device } : {} }).then((r) => r.json());
+    /* A DEPLOY WENT OUT AND THIS PHONE KEPT DRAWING THE OLD SCREEN.
+     *
+     * The box said `running 5e0c28a`, the fix was in it, and the button on
+     * the phone was still grey with a sentence the deployed code no longer
+     * contains. Twenty minutes went into deciding whether the bug was in the
+     * code or the deploy; it was in neither.
+     *
+     * So the build id rides along on this response — see /api/notes — and
+     * the first one seen is kept. When it changes, the app has been deployed
+     * out from under this page and every line of it is stale, so it reloads
+     * itself. ONCE: `location.reload()` on a board that somehow reports a new
+     * id every time would be a page that never finishes loading, and BUILT is
+     * set before the reload so the fresh page starts from the new one.
+     *
+     * NOT DURING A CALL. Forty-five seconds is the whole of a call and a
+     * reload in the middle of one drops it — a stale screen is a smaller
+     * problem than a conversation cut off. It will catch the next load. */
+    if (d.build) {
+      if (!BUILT) BUILT = d.build;
+      else if (BUILT !== d.build && !RELOADING && !CALL && !typing()) {
+        RELOADING = true;
+        BUILT = d.build;
+        location.reload();
+        return;
+      }
+    }
     NOTES = d.notes || [];
     WAITING = Boolean(d.waiting);
     CAN = d.can || [];
     YOU = d.you || { handle: "", photo: "" };
     UNREAD = d.unread || 0;
+    SIG = sigOf(d);
+    /* SOMEBODY IS RINGING, RIGHT NOW.
+     *
+     * The other half of the push. The buzz says "someone is calling you" and
+     * no more — no name in any push this board sends — so opening the app has
+     * to show the call itself or the buzz was a dead end. A call is over in
+     * forty-five seconds; there is no time to go looking through an inbox.
+     * Before paint(), because the layer sits over whatever it draws. */
+    if (d.ring && d.ring.who && !CALL) callIn(d.ring.who, d.ring.handle || "", d.ring.photo || "");
     /* Not awaited with the notes: a groups table that is slow or off must not
        hold up the inbox, and OFF.groups means there is nothing to ask for. */
     GROUPS = [];
@@ -1264,6 +1617,20 @@ async function load() {
           headers: device ? { "x-board-device": device } : {} }).then((r) => r.json());
         GROUPS = Array.isArray(g.groups) ? g.groups : [];
       } catch { GROUPS = []; }
+    }
+    /* WHAT HAPPENED, COUNTED. Only the number here — the rows themselves are
+       the other screen's business, and fetching sixty of them to draw one
+       digit on a header is sixty rows down a phone's connection for nothing.
+       A board too old to know the route answers 404 and the bell simply
+       carries no count, which is the right failure. */
+    BELLS = 0;
+    if (YOU.handle) {
+      try {
+        const b = await fetch("/api/bells", { cache: "no-store",
+          headers: device ? { "x-board-device": device } : {} }).then((r) =>
+          (r.ok ? r.json() : { unseen: 0 }));
+        BELLS = Number(b.unseen) || 0;
+      } catch { BELLS = 0; }
     }
     /* Not awaited with the notes either, and for the same reason: the queue is
        a second question and the inbox must not wait on it. */
@@ -1328,10 +1695,34 @@ const openWho = () => (location.hash || "").replace(/^#/, "");
  * no form, and the name is the one the member wrote on the note — they knew
  * who they were writing to.
  */
+/* ---- AND THE ADDRESS THAT SAYS WHAT IT IS ---------------------------------
+ *
+ * /join/chat/<key> is the one shape a conversation invite goes out as, and
+ * there are two things a conversation can be. What follows decides which:
+ *
+ *   six characters   a note written to one person. Identical to /w/<code>
+ *                    above, which keeps working — a link pasted into WeChat
+ *                    last week is somebody deciding to come in.
+ *   twenty hex       a room. The code travels beside the link, as it does for
+ *                    every invite on this board, and drawChatDoor asks for it.
+ *
+ * "its shared as join. i dont want it to be join", and then the shape he
+ * wanted, written out: thexchange.app/join/chat/<room>. An address is the
+ * first thing anybody reads of an invitation and this one says the two things
+ * worth saying — you are being let in, and it is a chat.
+ */
+const CHATKEY = /^\/join\/chat\//.test(location.pathname)
+  ? decodeURIComponent(location.pathname.split("/").filter(Boolean)[2] || "")
+  : "";
 const INVITED = /^\/w\//.test(location.pathname)
   ? decodeURIComponent(location.pathname.split("/").filter(Boolean)[1] || "").toUpperCase()
-  : "";
+  : (CHATKEY.length === 6 ? CHATKEY.toUpperCase() : "");
+/* A ROOM'S ID, and only if it looks like one. Twenty hex characters, so a
+   typed-over address is a 404 on this page rather than a request. */
+const CHATROOM = /^[a-f0-9]{20}$/.test(CHATKEY) ? CHATKEY : "";
 let NOTE = null;
+/* NOT `DOOR`, which is already the waiting room on this page — see above. */
+let CHATDOOR = null;
 
 /** The flat list of messages, grouped into one entry per person. The server
  *  sends messages because that is what they are; a messenger shows people. */
@@ -1402,12 +1793,31 @@ function homeLang() {
 }
 let LANGBTN = null;
 
+/** The five words along the bottom. Set here rather than halfway down paint(),
+ *  because three screens return before reaching that line — and one of them is
+ *  the write-to-somebody screen, so opening the app straight onto it, or
+ *  reloading there, gave a bar of five unlabelled drawings. */
+function tabWords() {
+  $("tabnotes").textContent = T("note.inbox");
+  $("tabcards").textContent = T("nav.cards");
+  $("tabbrowse").textContent = T("nav.browse");
+  $("tabme").textContent = T("nav.profile");
+  $("tabmoney").textContent = T("nav.money");
+}
+
 function paint() {
   const who = openWho();
   // Only a room at the door says it; drawDoor puts it back.
   $("tunvet").hidden = true;
   homeLang();
+  tabWords();
+  /* THE THREAD PANE IS BOTTOM-ALIGNED UNLESS A SCREEN SAYS OTHERWISE, and
+     three of them do. Cleared here rather than by each of the others, because
+     the one that forgets is the one that inherits a layout from whichever
+     screen was up before it. */
+  $("talk").classList.remove("attop");
   if (INVITED) return drawInvited();
+  if (CHATROOM) return drawChatDoor();
   const T0 = threads();
   /* A CONVERSATION THAT HAS NOT HAPPENED YET IS STILL A CONVERSATION.
      Tapping a face in the strip opens this screen with nothing in it and the
@@ -1429,31 +1839,39 @@ function paint() {
   $("listtop").hidden = Boolean(here);
   $("threadview").hidden = !here;
   document.title = T("note.inbox");
-  $("tabnotes").textContent = T("note.inbox");
-  $("tabcards").textContent = T("nav.cards");
-  $("tabbrowse").textContent = T("nav.browse");
-  $("tabme").textContent = T("nav.profile");
-  $("tabmoney").textContent = T("nav.money");
-  /* THE BAR IS FOR MEMBERS. Somebody on the list has one conversation and
-     three tabs that would bounce them off a door, so they get the one line
-     that is true for them instead: where they stand, and how to get in. */
+  /* THE SAME BAR FOR EVERYBODY, AND THE RULE BEHIND THE OLD ONE IS GONE.
+   *
+   * Somebody on the list used to get one line instead of four tabs, because
+   * the four would have bounced them off a door. They do not any more — see
+   * OPEN_LIST in server.js: the list has had the run of the app since the
+   * night "SECOND TIER HAS FULL ACCESS" was said. Hiding the tabs was the
+   * last thing still keeping them out, and it was invisible from the server.
+   *
+   * The line it showed instead went with it: "Your page — finish it and you
+   * move up". "nobody cares about moving up or knows what it means". */
   /* THE ANCHORS, NOT THE LABELS INSIDE THEM. tabcards and tabbrowse are the
      <span>s that hold the words — hiding those left two tabs that were still
      there, still tappable, and now wordless. */
-  for (const id of ["tabcardsgo", "tabbrowsego", "tabmego", "tabmoneygo"]) $(id).hidden = WAITING;
+  for (const id of ["tabcardsgo", "tabbrowsego", "tabmego", "tabmoneygo"]) $(id).hidden = false;
   /* AND THE MONEY TAB IS NOT IN THE APP, for anybody, waiting or not. The
      note lives over webOnly in server.js. */
   if (IN_APP) $("tabmoneygo").hidden = true;
-  $("waitbar").hidden = !WAITING;
-  /* Not for the waiting list and not for an invited arrival: both are being
-     asked to get in, and two asks at once is neither. */
-  offerInstall($("install"), !WAITING);
+  /* OFFERED TO THE LIST TOO, NOW THERE IS NOTHING ELSE ON THE BAR. These
+     were held back because the one line above was already asking something
+     of them, and two asks at once is neither. */
+  offerInstall($("install"), true);
   // Deliberately not awaited: it asks the board for the key and the browser
   // for its registration, and the list must not wait on either.
-  offerNotify($("notify"), !WAITING);
-  if (WAITING) $("waitbar").textContent = T("note.onList");
-  $("tabmego").href = YOU.handle
-    ? "/p/" + encodeURIComponent(YOU.handle.toLowerCase()) : "/browse";
+  offerNotify($("notify"), true);
+  /* WHERE PROFILE GOES FOR SOMEBODY ON THE LIST. /room — their own screen:
+     where they stand, and the form that makes the page.
+     WAITING IS TESTED BEFORE THE HANDLE, and that is the bug this line was
+     written for. Somebody on the list HAS a handle — the name on their
+     waiting row, "hi" in the case that started this — and there is no person
+     behind it, so the tab went to /p/hi and said "Not on this board" about
+     the person tapping it. */
+  $("tabmego").href = WAITING ? "/room"
+    : (YOU.handle ? "/p/" + encodeURIComponent(YOU.handle.toLowerCase()) : "/browse");
   $("back").setAttribute("aria-label", T("nav.back"));
   $("plus").setAttribute("aria-label", T("note.canHead"));
   if (here) { drawThread(here); return; }
@@ -1605,9 +2023,16 @@ function drawList(T0) {
      a second line under the title; one line that carries both is one less
      thing to read. */
   $("title").textContent = T("note.inbox") + (unread ? " (" + unread + ")" : "");
+  /* THE BELL AND ITS COUNT. Nine and over reads "9+": the difference between
+     eleven and fourteen things you have not looked at is no difference, and a
+     two-digit badge on a 1.05rem circle is a smudge. */
+  $("ring").setAttribute("aria-label", T("bell.open"));
+  $("ringn").hidden = !BELLS;
+  $("ringn").textContent = BELLS > 9 ? "9+" : String(BELLS);
   /* No "Messages" rule over the list: the bar above already says it. */
   $("listrule").hidden = true;
-  $("safety").textContent = T("note.safety");
+  $("safetyk").textContent = T("note.safetyShort");
+  $("safetyfull").textContent = T("note.safety");
 
   drawCan();
   drawWaiting();
@@ -1620,13 +2045,69 @@ function drawList(T0) {
      sorted together by when that was — not grouped by kind, which would put
      the newest thing on the screen below three older ones for no reason a
      reader could see. */
+  /* A ROOM OF TWO IS NOT A SECOND CONVERSATION WITH THE SAME PERSON.
+   *
+   * "These refunds 2 peoplegrpops can be removed." He is right, and they are
+   * not something anybody asked for: a room of two is what /api/note/terms
+   * makes when somebody presses Write terms, because the memo needed a room
+   * to live in. It then turned up in Chat as a second row for a person who
+   * was already one row up — "Tom, Axel" sitting under Axel — and the list
+   * read as the app having lost track of who you were talking to.
+   *
+   * SO THE PERSON'S ROW SWALLOWS IT. One row per person, and it opens the
+   * chat with them — the chat, every time, with the ＋ on it. The room is not
+   * deleted to tidy a screen: the terms tile behind the ＋ opens it, which is
+   * what it was made for and the only reason anybody goes there.
+   *
+   * A room of three stays its own row. So does a room of two with somebody
+   * you have no thread with, because there is nothing to swallow it.
+   */
+  /* AND A ROOM OF TWO WITH A MEMO IN IT IS NOT A CONVERSATION AT ALL.
+   *
+   * It is a deal, and deals have their own screen now — the bell in the
+   * header. "i dont want the memo in the chat. lets have it goto
+   * notications." So it leaves this list whether or not there is a thread to
+   * fold it into: with one, the person's row is the row; with none, it is
+   * simply not here, and the bell is where it turns up when anything happens
+   * to it. Nothing is deleted and nothing is unreachable — the terms tile
+   * behind the ＋ opens it, and so does every row on that screen.
+   *
+   * A ROOM OF TWO WITH NO MEMO STAYS. Two people can still be talking in one
+   * — a room somebody left, a pair who never wrote terms — and that is a
+   * conversation with a row like any other.
+   */
+  const ROOMOF = new Map();   // a thread's who  -> the room that is also them
+  const PAIRED = new Set();   // the rooms that no longer need a row
+  for (const g of GROUPS) {
+    if (g.hand) continue;
+    /* The doorman does not count and neither does a guest with no name — see
+       the note over `who` in /api/groups. Two people means two people. */
+    const real = (Array.isArray(g.who) ? g.who : []).filter((q) => q && !q.bot && q.handle);
+    if (real.length !== 2) continue;
+    if (g.deal) PAIRED.add(g.id);
+    const them = real.find((q) => !q.self);
+    const t = them && T0.find((x) => x.who === them.who);
+    /* ONE ROOM PER PERSON. Two of them with the same person is the same
+       duplication one level down; the newest wins and the older keeps its own
+       row rather than vanishing. */
+    if (!t || ROOMOF.has(t.who)) continue;
+    ROOMOF.set(t.who, g);
+    PAIRED.add(g.id);
+  }
+
   const rows = [
     /* t.last.at, NOT t.at. A thread has no `at` of its own — it is its
        newest note's — so every two-person row sorted as "" and sank below
        every group, however old the group and however new the message. */
-    ...T0.map((t) => ({ at: (t.last && t.last.at) || "", row: () => listRow(t) })),
+    /* SORTED ON THE CHAT'S OWN NEWEST LINE, not the room's. The row opens the
+       chat, so the row has to be about the chat — a row sorted to the top by
+       something said in a room, showing a month-old preview, is a row that
+       lies about itself twice over. */
+    ...T0.map((t) => ({ at: (t.last && t.last.at) || "",
+                        row: () => listRow(t, ROOMOF.get(t.who) || null) })),
     // Not the hand-kept rooms: they are cards in the banner — see drawWaiting.
-    ...GROUPS.filter((g) => !g.hand).map((g) => ({ at: lastAt(g), row: () => groupRow(g) })),
+    ...GROUPS.filter((g) => !g.hand && !PAIRED.has(g.id))
+      .map((g) => ({ at: lastAt(g), row: () => groupRow(g) })),
   ].sort((a, b) => String(b.at).localeCompare(String(a.at)));
 
   $("none").hidden = rows.length > 0;
@@ -1651,6 +2132,93 @@ function shortHandle(h, among) {
 function lastAt(g) {
   const says = Array.isArray(g.says) ? g.says : [];
   return (says.length ? says[says.length - 1].at : g.at) || "";
+}
+
+/** DRAG A ROW LEFT, AND DELETE IS UNDERNEATH IT — on both kinds of row.
+ *
+ *  "There is no way to delete roms from my chat either, grouops or 1-1 chats."
+ *  He was right twice over. A group row could not be dragged at all, so a room
+ *  he was finished with sat on the list for ever. And the button a 1-1 row did
+ *  reveal was Leave — which closes the conversation for BOTH of you and cannot
+ *  be undone — while the gentle one, the one everybody means by deleting a
+ *  chat, was three taps down inside the thread behind the ⋯.
+ *
+ *  So the easy gesture now does the mild thing and the severe one keeps its
+ *  three taps, which is the way round it should always have been:
+ *    a conversation — your copy goes, they keep theirs, nobody is told;
+ *    a room         — you walk out, and what you said stays where it is.
+ *  One word on the button either way. The sentence in the confirm is where the
+ *  difference is said, because that is the screen somebody actually reads.
+ *
+ *  IT REVEALS A BUTTON AND DOES NOT DO IT. A gesture that deletes on release
+ *  is a gesture that deletes by accident in a pocket.
+ */
+function swipeRow(row, ask, run) {
+  const wrap = el("div", "swipe");
+  const out = el("button", "wipe", T("note.delShort"));
+  out.type = "button";
+  out.addEventListener("click", async (e) => {
+    e.stopPropagation();
+    if (!window.confirm(ask)) return;
+    out.disabled = true;
+    try { await run(); await load(); } catch { out.disabled = false; }
+  });
+  wrap.append(out);
+
+  /* THE DRAG. Pointer events, so a mouse on a laptop behaves like a thumb.
+     Horizontal only: a list is scrolled vertically far more often than a row
+     is swiped, and stealing that is the way to make a list feel broken. */
+  /* AND THE BROWSER'S OWN DRAG IS TURNED OFF FIRST. A group's row is an <a>,
+     and dragging a link is a thing the browser already does — it picks the
+     link up, fires pointercancel, and the swipe ends before it has begun.
+     Caught on a laptop, where it made the gesture do nothing at all. */
+  row.draggable = false;
+  let x0 = 0, y0 = 0, decided = "", dragged = false;
+  /* CAPTURE, AND THIS IS WHY. A group row is an <a>, and a link navigates on
+     its own — a listener that runs after the tap has already been handled
+     cannot stop it. On the way down it can, so the drag that ends on the row
+     opens the room only when it was a tap. The same listener does the other
+     half: a row already open is put back rather than opened, which is what a
+     thumb expects. */
+  row.addEventListener("click", (e) => {
+    if (dragged) { dragged = false; e.preventDefault(); e.stopPropagation(); return; }
+    if (wrap.classList.contains("open")) {
+      wrap.classList.remove("open");
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  }, true);
+  row.addEventListener("pointerdown", (e) => {
+    x0 = e.clientX; y0 = e.clientY; decided = ""; dragged = false;
+  });
+  row.addEventListener("pointermove", (e) => {
+    if (!x0) return;
+    const dx = e.clientX - x0, dy = e.clientY - y0;
+    if (!decided) {
+      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+      decided = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
+    }
+    if (decided !== "x") return;
+    e.preventDefault();
+    const on = dx < -34;
+    /* ONE ROW OPEN AT A TIME, which is what every messenger does and what the
+       list looks wrong without: dragging a second row left the first one open
+       too, and a screen with two red panels down the side of it reads as the
+       app having lost track of what you were doing. */
+    if (on) for (const o of document.querySelectorAll(".swipe.open")) {
+      if (o !== wrap) o.classList.remove("open");
+    }
+    wrap.classList.toggle("open", on);
+  });
+  /* A DRAG THAT STARTS AND ENDS ON THE SAME ELEMENT STILL FIRES A CLICK. So
+     the row opened and the click that ended the drag immediately closed it
+     again — the swipe looked like it did nothing at all. The flag survives
+     until the next press, which is the only thing it has to outlive. */
+  const done = () => { dragged = decided === "x"; x0 = 0; decided = ""; };
+  row.addEventListener("pointerup", done);
+  row.addEventListener("pointercancel", done);
+  wrap.append(row);
+  return wrap;
 }
 
 /** One group, one row. The same shape as a person's row so the list reads as
@@ -1703,9 +2271,14 @@ function groupRow(g) {
   const last = says[says.length - 1];
   const prev = el("p", "prev");
   if (last) {
-    /* Who spoke, because in a room of five the name is half the message. */
+    /* Who spoke, because in a room of five the name is half the message.
+       NOT IN A ROOM OF TWO, where the name is already the title of the row:
+       "Hugo — Hugo: Only ever talked here." is the same word twice and the
+       second one is in the half somebody is trying to read. */
     if (last.mine) prev.append(el("span", "k", T("note.youSaid") + " "));
-    else if (last.handle) prev.append(el("span", "k", last.handle + ": "));
+    else if (last.handle && others.length > 1) {
+      prev.append(el("span", "k", last.handle + ": "));
+    }
     prev.append(document.createTextNode(saidShort(last)));
   } else {
     /* Nothing said yet, so say who is in it instead — an empty room with
@@ -1716,39 +2289,44 @@ function groupRow(g) {
 
   mid.append(nm, prev);
   a.append(wrap2, mid);
-  return a;
+  /* AND IT CAN BE TAKEN OFF THE LIST NOW. Leaving is the only "remove" a room
+     has — there is no copy of a room to keep — so that is what the button
+     does, and grp.leaveSure is the sentence that says so. */
+  return swipeRow(a, T("grp.leaveSure"), () =>
+    fetch("/api/group/leave", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ device, group: g.id }),
+    }).then((r) => { if (!r.ok) throw new Error("no"); }));
 }
 
 /** One person, one row.
  *
- *  DRAG IT LEFT TO LEAVE THE CONVERSATION. The way out was three taps down
- *  inside the thread, behind the ⋯ — which is where it belongs for something
- *  permanent, and is also where nobody looks when they are clearing a list.
- *  Every messenger on this phone does it with a swipe, so this does too.
+ *  DRAG IT LEFT TO DELETE IT. The way out was three taps down inside the
+ *  thread, behind the ⋯ — which is where it belongs for something permanent,
+ *  and is also where nobody looks when they are clearing a list. Every
+ *  messenger on this phone does it with a swipe, so this does too.
  *
- *  It is the same act as "Leave this chat" and just as permanent: both sides
- *  lose it, and neither is told who left. So the swipe reveals a button and
- *  does not do it — a gesture that deletes on release is a gesture that
- *  deletes by accident in a pocket.
+ *  AND IT IS THE MILD ONE NOW. This button used to be Leave, which closes the
+ *  conversation for both of you for ever; that is the wrong act to hang on
+ *  the easiest gesture on the screen, and it is still there, in the ⋯, where
+ *  something that cannot be undone belongs. What the swipe does is the thing
+ *  people mean by deleting a chat: your copy goes, they keep theirs, and they
+ *  are not told. See swipeRow.
  */
-function listRow(t) {
-  const wrap = el("div", "swipe");
-  const out = el("button", "wipe", T("note.leaveShort"));
-  out.type = "button";
-  out.addEventListener("click", async () => {
-    if (!window.confirm(T("note.leaveSure", { who: t.handle || "—" }))) return;
-    out.disabled = true;
-    try {
-      const r = await fetch("/api/note/shut", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ device, who: t.who }),
-      });
-      if (!r.ok) throw new Error("no");
-      await load();
-    } catch { out.disabled = false; }
-  });
-  wrap.append(out);
-
+function listRow(t, room) {
+  /* THE ROOM OF TWO THAT IS ALSO THIS PERSON — see drawList.
+   *
+   * IT OPENS THE CHAT. ALWAYS. The first version of this opened whichever of
+   * the two had the last word, which was clever and wrong: "Whn i open Axel i
+   * see the group message not the 1-1 and no +". A row with a person's name
+   * and a person's face has to be that person's conversation every time, with
+   * the ＋ on it and everything behind the ＋. A room is not somewhere to land
+   * by surprise because of when something was last said in it.
+   *
+   * The room is still there and nothing in it is lost — the terms tile behind
+   * the ＋ opens it, which is what it was made for. `room` is kept here for
+   * the delete below, which has to take both halves.
+   */
   const b = el("button", "trow");
   b.type = "button";
   const wrap2 = el("div", "avwrap");
@@ -1777,41 +2355,31 @@ function listRow(t) {
   prev.append(document.createTextNode(saidShort(t.last)));
   mid.append(nm, prev);
   b.append(wrap2, mid);
-  b.addEventListener("click", () => {
-    if (dragged) { dragged = false; return; }
-    // A row that is open is a row somebody dragged. Tapping it puts it back
-    // rather than opening the conversation, which is what a thumb expects.
-    if (wrap.classList.contains("open")) { wrap.classList.remove("open"); return; }
-    openThread(t.who);
-  });
+  b.addEventListener("click", () => openThread(t.who));
 
-  /* THE DRAG. Pointer events, so a mouse on a laptop behaves like a thumb.
-     Horizontal only: a list is scrolled vertically far more often than a row
-     is swiped, and stealing that is the way to make a list feel broken. */
-  let x0 = 0, y0 = 0, decided = "", dragged = false;
-  b.addEventListener("pointerdown", (e) => {
-    x0 = e.clientX; y0 = e.clientY; decided = ""; dragged = false;
-  });
-  b.addEventListener("pointermove", (e) => {
-    if (!x0) return;
-    const dx = e.clientX - x0, dy = e.clientY - y0;
-    if (!decided) {
-      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
-      decided = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
-    }
-    if (decided !== "x") return;
-    e.preventDefault();
-    wrap.classList.toggle("open", dx < -34);
-  });
-  /* A DRAG THAT STARTS AND ENDS ON THE SAME ELEMENT STILL FIRES A CLICK. So
-     the row opened and the click that ended the drag immediately closed it
-     again — the swipe looked like it did nothing at all. The flag survives
-     until the next press, which is the only thing it has to outlive. */
-  const done = () => { dragged = decided === "x"; x0 = 0; decided = ""; };
-  b.addEventListener("pointerup", done);
-  b.addEventListener("pointercancel", done);
-  wrap.append(b);
-  return wrap;
+  /* DELETING IT TAKES BOTH HALVES, and the sentence says so.
+   *
+   * One row on the screen, so one row has to go — hiding only the thread
+   * would put the room straight back on the list as its own row, which reads
+   * as the delete not having worked. And a room of two that one of you walks
+   * out of is deleted outright, messages and all: it is not a room any more.
+   * That is a real thing to do to somebody else, so it is said plainly rather
+   * than hidden behind the milder sentence a thread on its own gets. */
+  const hideThread = () => fetch("/api/note/hide", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    // A waiting person's thread is addressed by their row — see blank().
+    body: JSON.stringify({ device, who: String(t.who || "").replace(/^w:/, "") }),
+  }).then((r) => { if (!r.ok) throw new Error("no"); });
+  /* THE ROOM FIRST. If leaving fails the thread is still there and the row
+     comes back; the other way round leaves somebody looking at a room whose
+     conversation they just deleted. */
+  const both = () => fetch("/api/group/leave", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ device, group: room.id }),
+  }).then((r) => { if (!r.ok) throw new Error("no"); }).then(hideThread);
+
+  return swipeRow(b, T(room ? "note.clearBoth" : "note.clearSure"),
+    room ? both : hideThread);
 }
 
 function openThread(who) {
@@ -1835,8 +2403,10 @@ function drawInvited() {
   $("listview").hidden = true;
   $("listtop").hidden = true;
   $("threadview").hidden = false;
-  $("tnew").hidden = true;
+  $("wnew").hidden = true;
   $("tmore").hidden = true;
+  $("tvid").hidden = true;
+  $("tpgrid").hidden = true;
   $("tmenu").hidden = true;
   $("tpin").hidden = true;
   $("tleft").hidden = true;
@@ -1864,15 +2434,45 @@ function drawInvited() {
 
   $("twhoname").textContent = NOTE.from || T("board.someone");
   $("twhosub").textContent = T("wn.onThe");
-  talk.append(el("p", "when", T("wn.wrote", { who: NOTE.from || T("board.someone") })));
-  const bub = el("div", "bub them");
-  bub.textContent = NOTE.line;
-  talk.append(bub);
+  talk.append(el("p", "when", T(NOTE.line ? "wn.wrote" : "wn.sentYou",
+    { who: NOTE.from || T("board.someone") })));
+  /* ONLY IF THERE IS ONE. A link sent with no message is the ordinary case
+     now — see /api/write — and an empty bubble is a grey pill with nothing in
+     it, which reads as a message that failed to load rather than as one that
+     was never written. */
+  if (NOTE.line) {
+    const bub = el("div", "bub them");
+    bub.textContent = NOTE.line;
+    talk.append(bub);
+  }
   /* WHAT ANSWERING DOES, before they answer. A queue is not a door, and
      somebody who writes back expecting to be let in has been misled by
      leaving it out. One line, where a message would be. */
   talk.append(el("p", "when", T("wn.next", { who: NOTE.from || T("board.someone") })));
 
+  /* THEIR NAME, WHEN THE LINK DID NOT CARRY ONE.
+   *
+   * It used to: the member typed "Ray" before sending, and the reply was
+   * filed under that. A link sent on its own has nobody's name in it — see
+   * /api/write — so the reply was going up with an empty name, the route was
+   * refusing it, and the screen said "Again?" at somebody who had done
+   * nothing wrong.
+   *
+   * It is the right person to ask, too. The name that ends up on the waiting
+   * row should be the one they call themselves, not the one a friend typed
+   * for them into a box on another phone. */
+  const askName = !NOTE.to;
+  $("wnew").hidden = !askName;
+  if (askName) {
+    $("tnewk").textContent = T("wn.yourName");
+    /* NO PLACEHOLDER. The box is shared with the write-to-somebody screen,
+       whose placeholder is "Their name" — over a label reading YOUR NAME that
+       is two answers to one question. The label is the whole of what needs
+       saying here. */
+    $("tnewname").placeholder = "";
+    $("wnwhy").textContent = "";
+    $("tfind").hidden = true;
+  }
   $("twrite").hidden = false;
   micShow();
   $("tshut").hidden = true;
@@ -1887,6 +2487,845 @@ function drawInvited() {
 /** The bar, for somebody who has not answered yet. All four, because the
  *  point of arriving here is seeing what this is — and three of them lead to
  *  the door, which is what there is for them until somebody vouches. */
+/* THE DOOR OF ONE CONVERSATION, DRAWN ON THE CHAT PAGE ITSELF.
+ *
+ * "i want the links to open on the chat page. the invite links from the chat."
+ * So this is not a page about the board with a form on it — it is the
+ * messenger, with the room they are being let into at the top of it, and six
+ * characters where the first message will be. The same decision as /w/<code>
+ * one screen up, and for the same reason: what somebody should get when a
+ * friend invites them into a conversation is the conversation.
+ *
+ * WHAT IS ON IT, in the order it is read: whose chat, who is in it, one line
+ * saying who let them in, the box, the clock. Nothing else — see the note in
+ * CLAUDE.md about a screen getting four seconds and one glance.
+ *
+ * THE CODE IS NOT IN THE LINK and this screen is the whole of why that rule
+ * survives the new address. A link forwarded by accident lands here and stops.
+ */
+/* ADDING A THIRD PERSON, WITHOUT LEAVING THE CONVERSATION.
+ *
+ * "you can start a group already buy adding someone to a chat so the entrie
+ * page is reduandant." It was: this sent you to /groups?with=<id>, a page
+ * whose whole job was a list of rooms already listed on Chat and a picker.
+ * The list is gone and now the picker is too — the thing being asked for is
+ * "get Keith in on this", and that should happen where the thought happened.
+ *
+ * ONE PERSON, BECAUSE THAT IS ALL IT TAKES. A room needs three; there are two
+ * of you, so choosing one more makes it. Naming it, adding a fourth and a
+ * fifth are all things the room itself already does, on the screen where you
+ * can see who is in it.
+ *
+ * ONLY PEOPLE YOU MATCHED WITH, which is what CAN is. The server checks the
+ * same rule again and silently drops anybody who no longer passes it — see
+ * /api/group — so a list gone stale cannot fail the whole thing over one
+ * person who unfollowed while the sheet was open.
+ */
+function addToChat(t) {
+  const back = el("div", "qsheet");
+  const card = el("div", "qcard");
+  card.append(el("p", "qlab", T("pl.add")));
+  card.append(el("h3", "rtitle", T("ac.head", { who: t.handle || "" })));
+
+  const shut = () => { back.remove(); document.body.style.overflow = ""; };
+  const said = el("p", "acsaid");
+  said.hidden = true;
+
+  /* EVERYBODY BUT THE TWO ALREADY IN IT. Offering to add the person you are
+     talking to is an offer that cannot do anything. */
+  const pool = (CAN || []).filter((q) => q.who && q.who !== t.who);
+  if (!pool.length) {
+    card.append(el("p", "when", T("ac.nobody")));
+  } else {
+    const find = document.createElement("input");
+    find.className = "acfind";
+    find.maxLength = 40;
+    find.placeholder = T("grp.findName");
+    find.autocomplete = "off";
+    const list = el("div", "aclist");
+    const draw = () => {
+      const typed = find.value.trim().toLowerCase();
+      fill(list);
+      const hits = pool
+        .filter((q) => !typed || String(q.handle || "").toLowerCase().includes(typed))
+        .slice(0, 8);
+      if (!hits.length) { list.append(el("p", "when", T("dr.tellNone"))); return; }
+      for (const q of hits) {
+        const b = el("button", "acone");
+        b.type = "button";
+        const av = el("span", "av small", initial(q.handle));
+        av.style.background = wash(q.handle);
+        if (q.photo) {
+          const img = Object.assign(document.createElement("img"),
+            { src: "/api/public-media?id=" + encodeURIComponent(q.photo), alt: "", loading: "lazy" });
+          img.addEventListener("load", () => { fill(av); av.append(img); });
+        }
+        b.append(av, el("b", null, q.handle));
+        b.addEventListener("click", () => { make(q); });
+        list.append(b);
+      }
+    };
+    find.addEventListener("input", draw);
+    card.append(find, list);
+    draw();
+
+    async function make(q) {
+      said.hidden = false;
+      said.className = "acsaid";
+      said.textContent = T("note.sending");
+      let d = null;
+      try {
+        const r = await fetch("/api/group", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ device, who: [t.who, q.who] }),
+        });
+        d = await r.json().catch(() => null);
+        if (!r.ok || !d || !d.id) throw new Error((d && d.error) || "no");
+      } catch (e) {
+        said.className = "acsaid bad";
+        const known = { profile: "note.needProfile", few: "ac.few", many: "grp.outFullWhy" };
+        said.textContent = T(known[String(e.message)] || "act.again");
+        return;
+      }
+      /* STRAIGHT INTO THE ROOM. The thing that was asked for is the three of
+         you talking, and a "made it" screen with a button on it is one more
+         press between somebody and that. */
+      location.assign("/groups?g=" + encodeURIComponent(d.id));
+    }
+  }
+
+  card.append(said);
+  const no = el("button", "acshut", T("key.cancel"));
+  no.type = "button";
+  no.addEventListener("click", shut);
+  card.append(no);
+  back.addEventListener("click", (e) => { if (e.target === back) shut(); });
+  back.append(card);
+  document.body.append(back);
+  document.body.style.overflow = "hidden";
+}
+
+/* ---------------------------------------------------------------------------
+ * THE ＋ IN A CONVERSATION
+ *
+ * "there should be a + in chat which brings up an overlay with ADD PERSON
+ * (adding a new person into the 1-1 exsting chat making it a grouo) + Call
+ * *video/phone + Send MOney + REquest MOney."
+ *
+ * Everything you can do with the person you are talking to that is not
+ * typing, in one place, behind the gesture everybody on this board already
+ * makes twenty times a day in WeChat.
+ *
+ * IT TOOK THINGS OFF THE SCREEN RATHER THAN ADDING THEM. "Ask for payment"
+ * and "Write down what we agreed" were two full-width buttons stacked above
+ * the box, on every conversation, whether or not there was anything to ask
+ * for — which is most of why this screen read as cluttered. They are two of
+ * the five tiles now. The video button left the header for the same reason.
+ *
+ * NOTHING NEW IS BUILT HERE. Each tile is a door to something that already
+ * exists and already works; what was missing was one place to find them.
+ * ------------------------------------------------------------------------- */
+
+/** One tile: a square with a drawing in it and two words under. */
+function ptile(label, path, on, off) {
+  const b = el("button");
+  b.type = "button";
+  const box = el("i");
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("aria-hidden", "true");
+  for (const d of path) {
+    const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    p.setAttribute("d", d);
+    svg.append(p);
+  }
+  box.append(svg);
+  b.append(box, el("b", null, label));
+  /* A TILE THAT CANNOT WORK IS SHOWN AND DIMMED RATHER THAN HIDDEN, and the
+     press says why. A grid that changes shape between two conversations is a
+     grid nobody learns the positions of — and "why is it not there" is a
+     worse question than "why is it grey".
+   *
+   * AND THE PRESS REALLY DOES SAY IT NOW. It used to set `disabled` and put
+   * the reason in a `title`, which is a tooltip: it needs a mouse to hover
+   * and there is no mouse. On a phone a disabled button does not fire at all,
+   * so the tile was grey, the tap did nothing, and the sentence explaining
+   * why existed in an attribute nobody could ever reach. "when i press video
+   * for Axel there is no reaction." There was none to have.
+   *
+   * So it stays pressable and answers. NOT aria-disabled either, which was
+   * the first fix and is the same lie in a second place: it announces a
+   * control that does nothing, and this one does something — it explains
+   * itself. The reason goes in the label instead, so the sentence is read out
+   * with the tile rather than found by pressing it. */
+  if (!on) {
+    b.classList.add("off");
+    if (off) b.setAttribute("aria-label", label + " — " + off);
+    /* stopImmediatePropagation, AND THAT IS THE WHOLE OF IT. Every caller
+       hangs the tile's real action on this same button after ptile returns,
+       so without this BOTH fire: the reason was said and then the call it
+       could not make overwrote it with its own failure. "Allow the camera and
+       microphone" where the answer was "their page is not up". This listener
+       is registered first, so it is the one that gets to stop the rest. */
+    b.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      plusSheet(false);
+      say(off || T("note.failed"), true);
+    });
+  }
+  return b;
+}
+
+const PATHS = {
+  person: ["M16 20v-1.5a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4V20", "M9.5 10.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7", "M18 7v6M15 10h6"],
+  video:  ["M3 6.5h11a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z", "M16 11l5-3v8l-5-3"],
+  send:   ["M12 20V5", "M6 11l6-6 6 6", "M4 21h16"],
+  ask:    ["M12 4v15", "M18 13l-6 6-6-6", "M4 21h16"],
+  terms:  ["M6 3h9l4 4v14H6z", "M14 3v5h5", "M9 13h6M9 17h4"],
+};
+
+/** Open or shut it. One function, because the button's own state and the
+ *  grid's have to agree and two places setting them is one place too many. */
+function plusSheet(on) {
+  $("tpgrid").hidden = !on;
+  $("tplus").setAttribute("aria-expanded", on ? "true" : "false");
+}
+
+/** Build the grid for the conversation on screen. Called from drawThread, so
+ *  it is rebuilt whenever the thread's state changes — a closed conversation
+ *  and an open one do not offer the same things. */
+function drawPlus(t, last) {
+  const grid = $("tpgrid");
+  fill(grid);
+  plusSheet(false);
+
+  /* SOMEBODY WHO IS NOT ON THE BOARD YET has a "w:<id>" for a `who`.
+   *
+   * "why cant i video call him" / "it says not ubtil they are on baord."
+   *
+   * The sentence was mine and it was not true. THREE of these five work
+   * perfectly well for somebody on the waiting list, and the routes behind
+   * them have always said so — it was this line guessing on their behalf:
+   *
+   *   Video call      callPair takes w:<id>, and notePermit answers about a
+   *                   waiting person exactly as it does about a member.
+   *   Send money      it writes a line into the box. It is a message.
+   *   Request money   /api/request keeps the name when the target is not a
+   *                   member, which is most of what that route is for.
+   *
+   * The two that genuinely cannot are the two that need a person ROW rather
+   * than a conversation: a room is built out of member ids, and a memo names
+   * two people the board can look up. Those keep the sentence.
+   *
+   * One guess in one place, disagreeing with five routes, is the same fault
+   * as the grey call button this morning — see onBoard in server.js. */
+  const real = /^[a-f0-9]{20}$/.test(String(t.who || ""));
+  /* THE SERVER'S OWN ANSWER, NOT THIS PAGE'S GUESS AT IT.
+   *
+   * It was `last.open || last.canAnswer`, which is about the conversation and
+   * says nothing about whether the person on the other end is still in
+   * Browse. A thread with somebody's abandoned second account passes that
+   * test and fails every route behind these tiles — which is why the call
+   * "works for Keith" and flashes for the rest. `canDo` is computed in
+   * /api/notes by the same rule notePermit applies. One rule, one place.
+   *
+   * A server older than this page sends no canDo, and then the old test is
+   * the right fallback: better an occasional refusal that now says why than
+   * every tile greyed out on a board that has not been deployed yet. */
+  const live = last && last.canDo !== undefined
+    ? Boolean(last.canDo)
+    : Boolean(last && (last.open || last.canAnswer));
+  /* THE REASON A TILE IS GREY, and "not on the board yet" is now only ever
+     the reason for the two that need a person row — so it is worked out per
+     tile rather than once for all five. `why` is what the other three say;
+     `whyRow` is the extra sentence the other two get. */
+  const why = (last && last.canDo === false && (last.open || last.canAnswer))
+      ? T("pl.away")
+    : !live ? T("pl.closed") : "";
+  const whyRow = !real ? T("pl.notYet") : why;
+
+  /* ADD SOMEBODY, which is the one that turns this into a room. It opens the
+     picker with them already in it — a room still takes three and the screen
+     that makes one is the screen that makes every other one. */
+  /* `live` AND NOT `last.open`, like the other four. Adding a page that is
+     not up to a room is a room with a name in it nobody can reach. */
+  const add = ptile(T("pl.add"), PATHS.person,
+    !OFF.groups && real && live, whyRow || T("pl.closed"));
+  add.addEventListener("click", () => { plusSheet(false); addToChat(t); });
+  grid.append(add);
+
+  /* CALL. It was a button in the header; this is where he asked for it and
+     it is the right place — the header is who you are talking to, not what
+     you can do about it. */
+  /* NOT `real`. A waiting person can be called — see the note above. */
+  const call = ptile(T("pl.call"), PATHS.video, live, why);
+  call.addEventListener("click", () => {
+    plusSheet(false);
+    callOut(t.who, t.handle || "", t.photo || "");
+  });
+  grid.append(call);
+
+  /* SEND MONEY, AND IT IS HONEST ABOUT WHAT IT DOES.
+   *
+   * Money on this board only ever moves through a request: one person raises
+   * it with an amount and what it is for, the other opens a page and pays.
+   * That is not a limitation to work around — it is what stops anybody being
+   * asked to send money to a name they were given in a chat window, which is
+   * the scam the warning under every conversation is about.
+   *
+   * So this is the only true version of "send money" here: it tells them you
+   * want to pay and asks them to raise it. One tap, in the thread, where they
+   * will see it. */
+  // Not `real` either: this one writes a line into the box, and that is all.
+  const pay = ptile(T("pl.pay"), PATHS.send, live, why);
+  pay.addEventListener("click", () => {
+    plusSheet(false);
+    $("tbox").value = T("pl.payLine");
+    $("tbox").dispatchEvent(new Event("input"));
+    $("tbox").focus();
+  });
+  grid.append(pay);
+
+  /* REQUEST MONEY — the sheet that already exists, unchanged. */
+  // Nor this: /api/request keeps the name when the target is not a member.
+  const ask = ptile(T("pl.ask"), PATHS.ask, live, why);
+  ask.addEventListener("click", () => { plusSheet(false); askSheet(t, last); });
+  grid.append(ask);
+
+  /* AND THE TERMS BUTTON, which used to be a full-width button above the box
+     on every conversation. It is the fifth thing you can do with somebody and
+     it belongs with the other four. */
+  const terms = ptile(T("pl.terms"), PATHS.terms, real && live, whyRow);
+  terms.addEventListener("click", () => {
+    plusSheet(false);
+    $("taddbtn").click();
+  });
+  grid.append(terms);
+}
+
+$("tplus").addEventListener("click", () => {
+  const open = $("tpgrid").hidden;
+  plusSheet(open);
+  /* THE KEYBOARD AND THE GRID CANNOT BOTH HAVE THE BOTTOM OF THE SCREEN.
+     Opening the grid takes the focus off the box so the phone puts the
+     keyboard away; otherwise the grid opens underneath it. */
+  if (open) $("tbox").blur();
+});
+/* Typing closes it. Somebody who has started a message has answered the
+   question the grid was asking. */
+$("tbox").addEventListener("focus", () => { plusSheet(false); });
+
+/* ---------------------------------------------------------------------------
+ * A VIDEO CALL, INSIDE THE CONVERSATION
+ *
+ * THE VIDEO NEVER TOUCHES THIS BOARD. The two browsers send it to each other
+ * directly; the server carries only the few messages that introduce them —
+ * see lib/call.js, which explains why that is long-polling and not a socket.
+ *
+ * WHO CAN BE CALLED IS NOT DECIDED HERE. Every route goes through the same
+ * notePermit the composer uses: you can call whoever you can write to. This
+ * file shows the button when the thread is open and lets the server refuse.
+ *
+ * IT IS A LAYER, NOT A PAGE. The conversation stays underneath, so hanging up
+ * puts you back in it mid-sentence — which is what a call inside a chat is,
+ * and what a page of its own would have taken away.
+ * ------------------------------------------------------------------------- */
+let CALL = null;   // { who, handle, photo, role, since, gone, pc, local, ice }
+let CALLPOLL = false;
+
+const callSay = (t) => { $("cvstate").textContent = t || ""; };
+
+/** Their face while there is nothing to see yet. The same letter-and-colour
+ *  the rest of this page uses when somebody has no picture. */
+function callFace(handle, photo) {
+  const av = $("cvav");
+  fill(av);
+  av.textContent = initial(handle);
+  av.style.background = wash(handle);
+  if (photo) {
+    const img = Object.assign(document.createElement("img"),
+      { src: "/api/public-media?id=" + encodeURIComponent(photo), alt: "" });
+    img.addEventListener("load", () => { fill(av); av.append(img); });
+  }
+  $("cvname").textContent = handle || T("board.someone");
+}
+
+const callApi = (what, body) => fetch("/api/call/" + encodeURIComponent(CALL.who) + "/" + what, {
+  method: "POST", headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ device, ...body }),
+});
+const callSend = (m) => { if (CALL) callApi("send", { m }).catch(() => {}); };
+
+/** The camera and microphone, asked for once per call.
+ *
+ *  ASKED INSIDE THE TAP. A browser only opens the permission prompt from
+ *  inside the gesture that asked for it, so this cannot be moved earlier to
+ *  "warm it up" — doing that is how the prompt ends up silently refused. */
+async function callMedia() {
+  return navigator.mediaDevices.getUserMedia({
+    video: { facingMode: "user", width: { ideal: 640 } }, audio: true,
+  });
+}
+
+function callPc() {
+  const c = CALL;
+  if (c.pc) { c.pc.onicecandidate = null; c.pc.ontrack = null; c.pc.close(); }
+  c.pending = [];
+  c.pc = new RTCPeerConnection({ iceServers: c.ice || [] });
+  c.local.getTracks().forEach((t) => c.pc.addTrack(t, c.local));
+  c.pc.ontrack = (e) => { $("cvthem").srcObject = e.streams[0]; };
+  c.pc.onicecandidate = (e) => { if (e.candidate) callSend({ type: "ice", c: e.candidate }); };
+  c.pc.onconnectionstatechange = () => {
+    if (!CALL || CALL.pc !== c.pc) return;
+    const st = c.pc.connectionState;
+    if (st === "connected") {
+      clearTimeout(c.giveUp);
+      callSay("");
+      /* THEIR NAME AND LETTER GO THE MOMENT THEIR FACE ARRIVES. The comment
+         here used to say the video covered them; it does not — the video is
+         behind and these sit on top, so a live call had a grey initial parked
+         over the middle of the other person's face. */
+      $("cvwho").hidden = true;
+    }
+    else if (st === "failed") {
+      /* A CALL THAT CANNOT CONNECT LOOKS EXACTLY LIKE ONE ABOUT TO, and that
+         is the whole reason this branch says something instead of retrying
+         quietly. The caller tries once more — a first attempt can lose a race
+         with the addresses arriving — and then stops and says so. */
+      if (c.role === "out" && !c.retried) { c.retried = true; callSay(T("cv.conn")); setTimeout(callOffer, 1200); }
+      else callSay(T(c.relay ? "cv.noConn" : "cv.noRelay"));
+    } else if (st === "disconnected") {
+      callSay(T("cv.lost"));
+      // Nothing to look at again, so say who it was you were talking to.
+      $("cvwho").hidden = false;
+    }
+  };
+}
+
+async function callOffer() {
+  if (!CALL || CALL.gone) return;
+  callPc();
+  callSay(T("cv.conn"));
+  await CALL.pc.setLocalDescription(await CALL.pc.createOffer());
+  callSend({ type: "offer", sdp: CALL.pc.localDescription });
+}
+
+async function callFlush() {
+  for (const c of CALL.pending.splice(0)) {
+    try { await CALL.pc.addIceCandidate(c); } catch { /* stale */ }
+  }
+}
+
+async function callHandle(m) {
+  if (!m || !CALL || CALL.gone) return;
+  if (m.type === "answered") { CALL.role = "out"; await callOffer(); }
+  else if (m.type === "bye") callHang(T("cv.ended"));
+  else if (m.type === "offer") {
+    callPc();
+    await CALL.pc.setRemoteDescription(m.sdp);
+    await callFlush();
+    await CALL.pc.setLocalDescription(await CALL.pc.createAnswer());
+    callSend({ type: "answer", sdp: CALL.pc.localDescription });
+  } else if (m.type === "answer" && CALL.pc && CALL.pc.signalingState === "have-local-offer") {
+    await CALL.pc.setRemoteDescription(m.sdp);
+    await callFlush();
+  } else if (m.type === "ice") {
+    if (CALL.pc && CALL.pc.remoteDescription) {
+      try { await CALL.pc.addIceCandidate(m.c); } catch { /* stale */ }
+    } else if (CALL.pending) CALL.pending.push(m.c);
+  }
+}
+
+/** The held-open question, asked again as soon as it comes back. */
+async function callLoop() {
+  if (CALLPOLL) return;
+  CALLPOLL = true;
+  while (CALL && !CALL.gone) {
+    const who = CALL.who;
+    try {
+      const r = await fetch("/api/call/" + encodeURIComponent(who)
+        + "/poll?since=" + CALL.since, { cache: "no-store",
+        headers: device ? { "x-board-device": device } : {} });
+      if (!CALL || CALL.who !== who || CALL.gone) break;
+      if (!r.ok) { await new Promise((z) => setTimeout(z, 3000)); continue; }
+      const j = await r.json();
+      for (const x of j.msgs || []) {
+        CALL.since = Math.max(CALL.since, x.n);
+        try { await callHandle(x.m); } catch { /* the next one */ }
+      }
+    } catch { await new Promise((z) => setTimeout(z, 2000)); }
+  }
+  CALLPOLL = false;
+}
+
+/** Opening the layer. `role` is "out" when you pressed call and "in" when you
+ *  are being called; the two differ only in which buttons are on screen and
+ *  who makes the offer. */
+function callShow(role) {
+  $("callv").hidden = false;
+  $("cvwho").hidden = false;
+  /* AN EMPTY BOX IN THE CORNER IS NOT A SELF-VIEW. Somebody being called has
+     not been asked for a camera yet — that happens when they answer — so this
+     drew a dark rectangle with a border round nothing, on the one screen that
+     should be a face and two buttons. */
+  $("cvme").hidden = !($("cvme").srcObject);
+  $("cvbar").hidden = role === "in";
+  $("cvin").hidden = role !== "in";
+  $("cvmic").classList.remove("off");
+  $("cvcam").classList.remove("off");
+  // Put back whatever a previous failure hid — see callFailed.
+  $("cvmic").hidden = false;
+  $("cvcam").hidden = false;
+  document.body.style.overflow = "hidden";
+}
+
+/* A CALL THAT WILL NOT START STAYS ON THE SCREEN AND SAYS SO.
+ *
+ * "THE VIDEO FRAME POPS UP FOR A MICROSECOND THEN GLITCHS." That is this
+ * exact path: the layer opens, the server refuses the ring, and the old code
+ * closed the layer in the same breath — so the only thing anybody could see
+ * was a flash, and the sentence explaining it landed on the screen behind,
+ * already gone.
+ *
+ * The camera and microphone are released, because nothing is going to use
+ * them. Everything else stays: their name, the reason, and one button to
+ * leave. A failure you can read is a failure somebody can report.
+ */
+function callFailed(words) {
+  if (!CALL) return;
+  const c = CALL;
+  if (c.giveUp) clearTimeout(c.giveUp);
+  if (c.pc) { try { c.pc.close(); } catch { /* already */ } }
+  if (c.local) c.local.getTracks().forEach((t) => t.stop());
+  c.local = null;
+  c.gone = true;               // stops the poll loop; the layer is not a call
+  $("cvme").srcObject = null;
+  $("cvme").hidden = true;
+  $("cvwho").hidden = false;
+  $("cvbar").hidden = false;
+  $("cvin").hidden = true;
+  // Only the way out. Mute and camera are buttons for a call that is happening.
+  $("cvmic").hidden = true;
+  $("cvcam").hidden = true;
+  callSay(words);
+  /* THE SERVER IS TOLD, so the other end is not left ringing at somebody who
+     never got in. It is fire and forget: this screen is already correct. */
+  fetch("/api/call/" + encodeURIComponent(c.who) + "/bye", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ device }),
+  }).catch(() => {});
+}
+
+function callHang(why) {
+  if (!CALL) return;
+  const c = CALL;
+  c.gone = true;
+  if (c.giveUp) clearTimeout(c.giveUp);
+  if (c.pc) { try { c.pc.close(); } catch { /* already */ } }
+  if (c.local) c.local.getTracks().forEach((t) => t.stop());
+  $("cvthem").srcObject = null;
+  $("cvme").srcObject = null;
+  /* THE SERVER IS TOLD LAST AND NOT WAITED FOR. Hanging up has to be
+     instant — a button that takes a round trip to close a call is a button
+     people press four times. */
+  callApi("bye").catch(() => {});
+  CALL = null;
+  if (why) say(why);
+  $("callv").hidden = true;
+  document.body.style.overflow = "";
+}
+
+/** PRESSING CALL. */
+async function callOut(who, handle, photo) {
+  if (CALL) return;
+  let local;
+  try { local = await callMedia(); }
+  catch { return say(T("cv.noCam"), true); }
+  CALL = { who, handle, photo, role: "out", since: 0, pending: [], local };
+  callFace(handle, photo);
+  callShow("out");
+  $("cvme").srcObject = local;
+  $("cvme").hidden = false;
+  callSay(T("cv.ringing", { who: handle }));
+  let d = null;
+  let status = 0;
+  try {
+    const r = await callApi("ring");
+    status = r.status;
+    d = await r.json().catch(() => null);
+    if (!r.ok) {
+      /* THEY RANG AT THE SAME MOMENT. Their ring stands; this screen becomes
+         the one being called rather than both ending up in a call neither of
+         them started. */
+      if (d && d.error === "crossed") { CALL.role = "in"; callShow("in"); callSay(T("cv.incoming", { who: handle })); callLoop(); return; }
+      throw new Error((d && d.error) || "no");
+    }
+  } catch (e) {
+    /* IT SAID "Again?" AND THAT IS ALL IT SAID.
+     *
+     * Every way this can fail came out as one word with a question mark,
+     * which is no use to the person pressing the button and no use to
+     * anybody trying to find out why — it was reported as "video call fail"
+     * because that is genuinely all the screen knew how to say.
+     *
+     * Each refusal the server can give has a sentence now. Anything not on
+     * the list carries its status code, which is ugly and is the point: an
+     * unnamed failure that can be read out is a failure somebody can act on,
+     * and a pretty one that cannot is the thing being fixed. */
+    const known = { gone: "cv.gone", self: "cv.self", profile: "note.needProfile",
+                    closed: "note.closed", shut: "note.shut",
+                    waiting: "note.waiting", no: "cv.noDevice" };
+    const key = known[String(e.message)];
+    callFailed(key ? T(key) : T("cv.noGo", { n: status || 0 }));
+    return;
+  }
+  CALL.since = d.since || 0;
+  CALL.ice = d.ice || [];
+  CALL.relay = Boolean(d.relay);
+  callLoop();
+  /* RINGS OUT BY ITSELF, at the same length the server gives up at — a phone
+     in a pocket stops ringing and so does this, so "did they see it" gets an
+     answer instead of being left hanging. */
+  CALL.giveUp = setTimeout(() => { if (CALL && !CALL.pc) callHang(T("cv.noAnswer", { who: handle })); },
+    (d.ring || 45000) + 2000);
+}
+
+/** BEING CALLED. Drawn from whatever told us — the inbox on load, or the poll
+ *  of a thread that is already open. */
+function callIn(who, handle, photo) {
+  if (CALL) return;
+  CALL = { who, handle, photo, role: "in", since: 0, pending: [] };
+  callFace(handle, photo);
+  callShow("in");
+  callSay(T("cv.incoming", { who: handle }));
+  callLoop();
+}
+
+$("cvyes").addEventListener("click", async () => {
+  if (!CALL) return;
+  let local;
+  try { local = await callMedia(); }
+  catch { return callSay(T("cv.noCam")); }
+  CALL.local = local;
+  $("cvme").srcObject = local;
+  $("cvme").hidden = false;
+  $("cvbar").hidden = false;
+  $("cvin").hidden = true;
+  callSay(T("cv.conn"));
+  let d = null;
+  try {
+    const r = await callApi("answer");
+    d = await r.json().catch(() => null);
+    if (!r.ok) throw new Error((d && d.error) || "no");
+  } catch { callHang(T("cv.ended")); return; }
+  CALL.ice = d.ice || [];
+  CALL.relay = Boolean(d.relay);
+  /* THE CALLER MAKES THE OFFER. Whoever rang has been waiting; answering
+     tells them so and they start it, which is one message rather than two
+     browsers both offering and one of them losing. */
+  CALL.giveUp = setTimeout(() => {
+    if (CALL && (!CALL.pc || CALL.pc.connectionState !== "connected")) {
+      callSay(T(CALL.relay ? "cv.noConn" : "cv.noRelay"));
+    }
+  }, 22000);
+});
+$("cvno").addEventListener("click", () => { callHang(""); });
+$("cvend").addEventListener("click", () => { callHang(""); });
+$("cvmic").addEventListener("click", () => {
+  const a = CALL && CALL.local && CALL.local.getAudioTracks()[0];
+  if (!a) return;
+  a.enabled = !a.enabled;
+  $("cvmic").classList.toggle("off", !a.enabled);
+});
+$("cvcam").addEventListener("click", () => {
+  const v = CALL && CALL.local && CALL.local.getVideoTracks()[0];
+  if (!v) return;
+  v.enabled = !v.enabled;
+  $("cvcam").classList.toggle("off", !v.enabled);
+});
+/* CLOSING THE TAB ENDS THE CALL. Without this the other person watches a
+   frozen picture until the connection times out, which is worse than being
+   hung up on because it looks like their own network. */
+addEventListener("pagehide", () => { if (CALL) callHang(""); });
+
+function drawChatDoor() {
+  $("listview").hidden = true;
+  $("listtop").hidden = true;
+  $("threadview").hidden = false;
+  $("wnew").hidden = true;
+  $("tmore").hidden = true;
+  $("tvid").hidden = true;
+  $("tpgrid").hidden = true;
+  $("tmenu").hidden = true;
+  $("tpin").hidden = true;
+  $("tleft").hidden = true;
+  $("back").hidden = true;          // there is nothing behind this
+  $("twho").hidden = false;
+  $("twho").href = "#";
+  $("twrite").hidden = true;
+  micShow();
+  $("tshut").hidden = true;
+
+  const talk = $("talk");
+  fill(talk);
+  /* TOP OF THE SCREEN. .talk is a conversation and a conversation grows from
+     the bottom — which put the whole door in the bottom third with a screen of
+     nothing over it. This is a screen, not a thread, and .talk.top is the
+     class this page already has for that. */
+  talk.className = "talk attop";
+
+  if (!CHATDOOR || CHATDOOR.gone) {
+    /* DEAD IS DEAD, AND IT SAYS SO ONCE. There is nothing here to tell apart —
+       a room that never existed, one whose last code has been spent, and a
+       mistyped address are the same 404 on purpose, because answering them
+       differently would be this page telling a stranger which rooms exist. */
+    /* BOTH LINES IN THE THREAD, IN THE ORDER THEY ARE READ. The headline was
+       in #tshut, which is the strip where the composer would be — so the one
+       sentence that says what happened sat at the bottom of the screen under
+       a screen of nothing, with its own small print above it. */
+    $("twhoname").textContent = T("cd.title");
+    $("twhosub").textContent = "";
+    talk.append(el("p", "cdlede", T("cd.goneHead")));
+    talk.append(el("p", "when", T("cd.goneBody")));
+    drawInvitedTabs();
+    return;
+  }
+
+  const who = Array.isArray(CHATDOOR.who) ? CHATDOOR.who : [];
+  $("twhoname").textContent = CHATDOOR.name || T("cd.title");
+  $("twhosub").textContent = who.length === 1 ? T("grp.inIt1")
+    : T("grp.inIt", { n: who.length });
+
+  /* WHO LET THEM IN, AND WHAT THEY WERE CALLED. Both are plain text in the
+     address, typed by whoever made the link, and neither is a claim about
+     anybody — the six characters remain the only thing that opens anything.
+     Same shape and same reasoning as nameFrom in enter.html. */
+  const nameFrom = (k) => {
+    try {
+      return (new URLSearchParams(location.search).get(k) || "")
+        .replace(/[<>&"'\\]/g, "").trim().slice(0, 24);
+    } catch { return ""; }
+  };
+  const FOR = nameFrom("for");
+  const FROM = nameFrom("from");
+  talk.append(el("p", "cdlede", FROM
+    ? T(FOR ? "cd.ledeBoth" : "cd.ledeFrom", { name: FOR, who: FROM })
+    : T(FOR ? "cd.ledeName" : "cd.lede", { name: FOR })));
+
+  /* THE FACES, AS INITIALS. The door is outside /api/public-media on purpose —
+     see the note over /api/chat-door — so there is no photograph to draw here,
+     and a coloured initial is what this app already shows whenever there is
+     none. */
+  if (who.length) {
+    const row = el("div", "cdwho");
+    for (const h of who.slice(0, 6)) {
+      const one = el("span", "cdone");
+      const av = el("span", "av small", initial(h));
+      av.style.background = wash(h);
+      one.append(av, el("i", null, h));
+      row.append(one);
+    }
+    talk.append(row);
+  }
+
+  const box = el("div", "cdoor");
+  const fld = document.createElement("input");
+  fld.id = "cdcode";
+  fld.maxLength = 6;
+  fld.autocomplete = "off";
+  fld.autocapitalize = "characters";
+  fld.spellcheck = false;
+  fld.setAttribute("aria-label", T("cd.ask"));
+  fld.placeholder = T("cd.ph");
+  const go = el("button", "primary", T("cd.go"));
+  go.type = "button";
+  go.disabled = true;
+  const said = el("p", "cdsaid");
+  said.hidden = true;
+  /* UPPERCASE AS IT IS TYPED, because the codes are and a phone's keyboard is
+     not. Six characters is the whole of the form, so the button turns on at
+     six rather than making anybody guess whether it is ready. */
+  fld.addEventListener("input", () => {
+    fld.value = fld.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
+    go.disabled = fld.value.length !== 6;
+    said.hidden = true;
+  });
+  fld.addEventListener("keydown", (e) => { if (e.key === "Enter" && !go.disabled) go.click(); });
+  go.addEventListener("click", () => { chatDoorGo(fld, go, said); });
+  box.append(fld, go);
+  talk.append(box, said);
+  talk.append(el("p", "when", T("cd.note")));
+
+  /* THE CLOCK, off the deadline in the link — see the long note in enter.html
+     on why it is in the address and why it is not authority. It counts down so
+     "good for 48 hours" is true without anybody remembering to make it true. */
+  const clock = el("p", "when cdclock");
+  talk.append(clock);
+  const until = (() => {
+    const n = Number(new URLSearchParams(location.search).get("t"));
+    return Number.isFinite(n) && n > 0 ? n * 1000 : 0;
+  })();
+  const tick = () => {
+    if (!until) { clock.hidden = true; return; }
+    const left = until - Date.now();
+    if (left <= 0) { clock.textContent = T("door.clockGone"); return; }
+    const sec = Math.floor(left / 1000);
+    const two = (n) => String(n).padStart(2, "0");
+    clock.textContent = T("door.clockLab") + " "
+      + two(Math.floor(sec / 3600)) + ":" + two(Math.floor(sec / 60) % 60)
+      + ":" + two(sec % 60);
+  };
+  tick();
+  if (until) {
+    clearInterval(drawChatDoor.timer);
+    drawChatDoor.timer = setInterval(tick, 1000);
+  }
+
+  drawInvitedTabs();
+  fld.focus();
+}
+
+/** Spending it. The same /api/enter every code on this board goes through —
+ *  there is no second door and there must not be one, because a ceiling with
+ *  two doors is not a ceiling. What is new is only where it puts somebody
+ *  down: the server answers with `where`, which for a room invite is that
+ *  room. */
+async function chatDoorGo(fld, go, said) {
+  const code = fld.value.trim().toUpperCase();
+  if (code.length !== 6) return;
+  go.disabled = true;
+  said.hidden = false;
+  said.className = "cdsaid";
+  said.textContent = T("cd.trying");
+  let d = null;
+  let status = 0;
+  try {
+    const r = await fetch("/api/enter", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ device, code }),
+    });
+    status = r.status;
+    d = await r.json().catch(() => null);
+  } catch { d = null; }
+  if (d && d.ok) {
+    /* STRAIGHT IN, and nothing is said first. A "you are in" screen with a
+       button on it is a screen between somebody and the conversation they were
+       invited to, which is the one thing this whole path exists to remove. */
+    location.assign(d.where || ("/groups?g=" + encodeURIComponent(CHATROOM)));
+    return;
+  }
+  go.disabled = fld.value.length !== 6;
+  said.className = "cdsaid bad";
+  const n = Number(d && d.left) || 0;
+  said.textContent = !d ? T("door.offline")
+    : d.error === "used" ? T("door.used")
+    : d.error === "over" ? T("door.over")
+    : d.error === "slow-down" || status === 429 ? T("door.slow")
+    : T("door.wrong", { n });
+  fld.select();
+}
+
 function drawInvitedTabs() {
   $("tabnotes").textContent = T("note.inbox");
   $("tabcards").textContent = T("nav.cards");
@@ -1894,7 +3333,6 @@ function drawInvitedTabs() {
   $("tabme").textContent = T("nav.profile");
   $("tabmoney").textContent = T("nav.money");
   for (const id of ["tabcardsgo", "tabbrowsego", "tabmego"]) $(id).hidden = false;
-  $("waitbar").hidden = true;
   $("tabmego").href = "/waiting";
 }
 
@@ -1902,19 +3340,27 @@ function drawInvitedTabs() {
  *  note into a thread, and reloads onto the real conversation. */
 async function sendInvited() {
   const text = $("tbox").value.trim();
-  if (!text) { $("tbox").focus(); return; }
+  /* Theirs if they typed it, the sender's if the link carried one — see the
+     note over askName in drawInvited. */
+  const name = ($("tnewname").value.trim() || NOTE.to || "").trim();
+  if (!name) { $("tnewname").focus(); return say(T("wn.needYourName"), true); }
+  if (!text) { $("tbox").focus(); return say(T("wn.needLine"), true); }
   $("tsend").disabled = true;
   say(T("wn.sending"));
   let d = null;
   try {
     d = await fetch("/api/write/reply", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ device, code: INVITED, name: NOTE.to, reply: text }),
+      body: JSON.stringify({ device, code: INVITED, name, reply: text }),
     }).then((r) => r.json());
   } catch { d = null; }
   $("tsend").disabled = false;
   if (!d || (!d.ok && !d.already)) {
-    return say(T({ spent: "wn.spentHead", old: "wn.oldHead", bad: "wn.badCode" }[d && d.error]
+    /* `name` and `reply` are in the list now. They were not, so a refusal
+       for either came out as "Again?" — which is what somebody sees when the
+       app knows exactly what is wrong and will not say. */
+    return say(T({ spent: "wn.spentHead", old: "wn.oldHead", bad: "wn.badCode",
+                   name: "wn.needYourName", reply: "wn.needLine" }[d && d.error]
       || "act.again"), true);
   }
   if (d.already) { location.href = "/browse"; return; }
@@ -1931,7 +3377,6 @@ async function sendInvited() {
  * What was sent stays on screen as a bubble afterwards — the sheet can be
  * dismissed by accident, and a message you cannot get back is worse than an
  * extra button. */
-let MADE = null;
 
 /* EVERYBODY ON THE BOARD, FETCHED ONCE AND KEPT.
  *
@@ -1986,21 +3431,21 @@ async function findPeople() {
   const typed = $("tnewname").value.trim().toLowerCase();
   const hide = () => { box.hidden = true; fill(box); };
 
-  /* AN EMPTY BOX IS NOT NOTHING TO SAY, and it was treated as nothing.
+  /* AN EMPTY BOX SHOWS NOTHING, and that used to be a problem worth a row.
    *
-   * The row offering an invite only appeared once letters had been typed — so
-   * pressing ＋, which is the whole gesture for "add somebody", showed a name
-   * box and a blank screen under it. Somebody who wants to bring in a person
-   * this board has never heard of has no name to type that would ever produce
-   * the row telling them they can.
+   * The screen was a name box in the header and a blank phone under it, so
+   * something had to be there saying you could bring somebody in — a card
+   * reading "Not on here yet? Invite them into this chat". It is gone, and
+   * the reason is that it was answering a question the screen now answers
+   * itself: the header says "Write to somebody", the line under the name says
+   * what the send arrow does. Offering that card on this screen was offering
+   * the door you had just walked through.
    *
-   * So the row is there from the moment the screen opens. Nothing else is:
-   * a list of everybody on the board, unasked, is a directory, and this board
-   * does not publish one. */
+   * A list of everybody on the board, unasked, is a directory, and this board
+   * does not publish one. So: nothing until a name is typed. */
   if (!typed) {
     fill(box);
-    box.append(inviteRow());
-    box.hidden = false;
+    box.hidden = true;
     return;
   }
 
@@ -2012,10 +3457,10 @@ async function findPeople() {
   const hits = all.filter((q) => !q.mine && String(q.handle || "")
     .toLowerCase().includes(typed)).slice(0, 8);
 
-  /* NO LONGER HIDDEN WHEN NOBODY MATCHES, and that is the point of the row at
-     the bottom of it. Typing a name this board has never heard of used to
-     close the list and leave a name box with nothing under it — at exactly
-     the moment the answer is "they are not on here yet". */
+  /* HIDDEN WHEN NOBODY MATCHES. Typing a name this board has never heard of
+     is the ordinary case on this screen, not an error to put a row under —
+     the screen already says what happens when you press send, so an empty
+     list is the honest answer and a card repeating it is noise. */
   fill(box);
   for (const q of hits) {
     const b = el("button");
@@ -2050,143 +3495,208 @@ async function findPeople() {
     box.append(b);
   }
 
-  box.append(inviteRow());
-  box.hidden = false;
+  box.hidden = !hits.length;
 }
 
-/** AND THE PERSON WHO IS NOT ON HERE AT ALL.
+/* THE ROW THAT SAID "Not on here yet? Invite them into this chat" IS GONE.
  *
- *  The ＋ on Messages reached everybody already through the door and nobody
- *  else, which is the wrong half of what "add somebody" means when the board
- *  is invite-only: the people you most want to write to are the ones you have
- *  not brought in yet.
+ * It was the last thing on the picker and the only thing on the write-to-
+ * somebody screen, and on that second screen it was offering the door you had
+ * just come through. "I'm trying to add someone into a chat from off the
+ * platform and I don't understand what's going on myself." Neither did the
+ * screen: the row was doing the explaining, badly, from the top of a blank
+ * phone, because nothing else on it said what it was.
  *
- *  IT DOES NOT MINT ANYTHING HERE. The invite is settled and it lives on one
- *  screen — a code, the message, and the phone's own share sheet. A second
- *  copy of it here is a second copy to keep in step, and the one that drifted
- *  would be the one nobody watches. So this is a door to it.
+ * What it actually did was focus the message box. The screen says its own
+ * name now and says what the send arrow does, so there is nothing left for a
+ * row to say — see drawWriteNew and findPeople.
  */
-function inviteRow() {
-  const inv = el("button", "inv");
-  inv.type = "button";
-  const iav = el("span", "av");
-  iav.textContent = "\uFF0B";
-  const imid = el("div", "fm");
-  imid.append(el("b", null, T("wn.notHere")), el("span", null, T("wn.notHereSub")));
-  inv.append(iav, imid);
-  /* /browse AND NOT "/", which is the sales page for a cold address — the
-     board itself is served at /feed, /browse and /cards, and Browse is the one
-     the tab bar points at. Sending a member to the landing page to fetch an
-     invite is sending them out of the product. */
-  inv.addEventListener("click", () => { location.assign("/browse?invite=1"); });
-  return inv;
+
+/* SENDING SOMEBODY A LINK.
+ *
+ * "Dont worry about adding text just make it possible to share the link
+ * immediately, why would you need invite someone in the aop anyway? You can
+ * message your connects directly."
+ *
+ * Both halves of that are right, and together they take the screen apart. The
+ * people already here are one tap away in Chat, so nothing on this path is
+ * about them — it exists to get a link to somebody who is NOT here. And the
+ * link is the whole of it: a name to type and a sentence to compose were two
+ * steps in front of the only thing anybody came for, and the sentence went
+ * into a WeChat message they were about to write anyway.
+ *
+ * So the screen is the link. It is there when the screen opens, with the
+ * phone's own share sheet on one button and the clipboard on the other.
+ *
+ * ONE LINK AT A TIME. The server hands back the live one rather than minting
+ * a second — see /api/write. Opening this screen five times is one way in,
+ * not five lying about.
+ */
+let LINK = null;      // { code, till } once the server has answered
+let LINKING = false;  // one request in flight, however many paints
+
+function linkWords() {
+  return LINK && LINK.code ? location.origin + "/join/chat/" + LINK.code : "";
+}
+
+async function getLink() {
+  if (LINK || LINKING) return;
+  LINKING = true;
+  try {
+    /* THE STATUS IS READ BEFORE THE BODY, and that is the point of doing it
+       in two steps. `.then((r) => r.json())` throws on a body that is not
+       JSON, and that throw is indistinguishable from the phone being offline
+       — so a board that answered 500 with an error page said "check the
+       signal" at somebody with four bars. Now the three are three:
+         the fetch threw        nothing answered
+         the body is not JSON   something answered, and here is its number
+         the body is JSON       the board has an opinion, below */
+    const r = await fetch("/api/write", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      /* No name and no line. Both are optional now and this path sends
+         neither — see the note over /api/write. */
+      body: JSON.stringify({ device }),
+    });
+    let d = null;
+    try { d = await r.json(); } catch { d = null; }
+    if (!d) {
+      LINK = { why: T("wn.linkFailed") + " (" + r.status + ")" };
+    } else if (d.ok) {
+      LINK = { code: d.code, till: d.till };
+    } else if (d && d.error === "standing" && Array.isArray(d.need) && d.need.length) {
+      /* WHICH ONE IS MISSING, not "your profile page says what is left" —
+         standing() has already worked it out. ALL FIVE of them: the first
+         version of this list knew about three, so somebody blocked by the
+         other two got the vague sentence instead of the exact one. */
+      const first = ["face", "days", "said", "guests", "room"]
+        .find((k) => d.need.includes(k));
+      /* "face" IS TWO DIFFERENT PEOPLE. standing() fails it for a member
+         whose page has no photograph on it AND for somebody who has no page
+         at all — and "put a photo on your profile" said to the second is an
+         instruction about a thing that does not exist. The board cannot tell
+         them apart in one word; this screen can, because it knows whether
+         there is a handle. */
+      const noFace = first === "face" && !YOU.handle ? "note.needProfile" : "";
+      LINK = { why: T(noFace || { face: "wn.needFace", days: "wn.needDays",
+                        said: "wn.needSaid", guests: "wn.needGuests",
+                        room: "wn.needRoom" }[first] || "wn.mkStanding") };
+    } else {
+      /* EVERY REFUSAL THIS ROUTE CAN GIVE, and there is no "Again?" left in
+         the list.
+         "Again?" is act.again, and it is what this screen showed for five
+         different things going wrong — including two that are the board
+         telling somebody exactly what is wrong and the screen declining to
+         pass it on. Tom got it twice and there was no way to tell from the
+         outside which of the five it was, which cost two rounds of
+         screenshots.
+         The last line is deliberate and stays: an error nobody has mapped yet
+         prints its own name, small, rather than a shrug. A word somebody can
+         read out is worth more than a tidy sentence that says nothing. */
+      const known = {
+        standing: "wn.mkStanding",   // rationed, and need[] was empty
+        nopage:   "note.needProfile",
+        invite:   "wn.linkDoor",     // gate: this browser is not admitted
+        no:       "wn.linkNoDevice", // the board did not recognise the phone
+        contact:  "wn.mkNoContact",
+        bad:      "wn.linkFailed",
+        again:    "wn.linkFailed",
+        // The board threw — see the error handler at the foot of server.js.
+        broke:    "wn.linkBroke",
+      };
+      const key = known[d && d.error];
+      LINK = { why: key ? T(key)
+        : T("wn.linkFailed") + " (" + ((d && d.error) || "?") + ")" };
+    }
+  } catch (err) {
+    /* NOTHING ANSWERED. Only a real network failure reaches here now — the
+       body not being JSON is handled above, with its status — so this is the
+       one case where "check the signal" is the true sentence. */
+    LINK = { why: T("wn.linkOffline") };
+  } finally {
+    /* IN A finally, because every branch above sets LINK and any one of them
+       could grow a `return` later. Without it the screen keeps the "Making a
+       link…" line for ever and the next open does nothing, because LINKING is
+       still true. */
+    LINKING = false;
+    if (openWho() === "new") drawWriteNew();
+  }
 }
 
 function drawWriteNew() {
   $("listview").hidden = true;
   $("listtop").hidden = true;
   $("threadview").hidden = false;
-  $("twho").hidden = true;
   $("tmore").hidden = true;
+  $("tvid").hidden = true;
+  $("tpgrid").hidden = true;
   $("tmenu").hidden = true;
   $("tpin").hidden = true;
   $("tleft").hidden = true;
-  $("tnew").hidden = false;
-  $("tnewk").textContent = T("wn.mkTo");
-  $("tnewname").placeholder = T("wn.mkName");
-  /* THE LIST IS BUILT FROM WHAT IS IN THE BOX, so it is rebuilt here: this
-     screen is redrawn on every paint and a stale list of matches for a name
-     that has since been sent is a list of the wrong people. With the box empty
-     that is the invite row and nothing else — see findPeople. */
-  if (!$("tnewname").dataset.find) {
-    $("tnewname").dataset.find = "1";   // once, however many times this draws
-    $("tnewname").addEventListener("input", () => { findPeople(); });
-    /* Escape closes the list and leaves what was typed, because what was typed
-       is still a note somebody may want to send. */
-    $("tnewname").addEventListener("keydown", (e) => {
-      if (e.key === "Escape") { $("tfind").hidden = true; fill($("tfind")); }
-    });
-  }
-  /* LAST, AND THAT IS THE WHOLE OF WHY THE ROW WAS MISSING. This was called
-     three lines up, where the fill() under it emptied the box a moment after
-     findPeople had filled it — the list was shown, and shown empty. It draws
-     its own contents, so nothing else here needs to clear them first. */
-  findPeople();
+  $("wnew").hidden = true;
+  /* NO COMPOSER. There is nothing to type on this screen any more, and a box
+     with a send arrow beside it is an invitation to type something that would
+     go nowhere. */
+  $("twrite").hidden = true;
+  $("tshut").hidden = true;
+  $("twho").hidden = false;
+  $("twho").removeAttribute("href");
+  $("twhoname").textContent = T("wn.linkTitle");
+  $("twhosub").textContent = "";
 
+  /* fill() IN THIS FILE RETURNS NOTHING. bells.html has one that returns the
+     node and this was written from that habit — `const talk = fill(...)` made
+     talk undefined, the append threw, and the screen drew its header and then
+     stopped. A blank screen under a title, which is the exact fault this
+     whole change is about. */
   const talk = $("talk");
   fill(talk);
-  if (MADE) {
-    /* SENT. The block as it went, as a bubble — because that is what it is —
-       with the two ways to send it again underneath. */
-    const bub = el("div", "bub mine");
-    bub.textContent = MADE.words;
-    talk.append(bub);
-    const row = el("div", "again");
-    if (!IN_WECHAT && navigator.share) {
-      const b2 = el("button", "primary", T("wn.mkShare"));
-      b2.type = "button";
-      b2.addEventListener("click", () => {
-        navigator.share({ text: MADE.words }).catch(() => {});
-      });
-      row.append(b2);
-    }
-    const cp = el("button", null, T("cards.copy"));
-    cp.type = "button";
-    cp.addEventListener("click", () => {
-      cp.textContent = T(copyText(MADE.words)
-        ? (IN_WECHAT ? "act.wxCopied" : "cards.copied") : "act.copyFail");
-    });
-    row.append(cp);
-    talk.append(row);
-    talk.append(el("p", "when", T("wn.mkTill")));
-  } else {
-    // One line, where the first bubble will be, saying what pressing send does.
-    talk.append(el("p", "when", T("wn.mkHint")));
+  /* AT THE TOP. .talk is bottom-aligned because a conversation is read from
+     its newest line up; this is not a conversation, it is one card, and
+     bottom-aligned it sat under half a screen of nothing with the thing you
+     came for below the fold on a short phone. */
+  talk.classList.add("attop");
+  const card = el("div", "linkcard");
+
+  if (!LINK) {
+    getLink();
+    card.append(el("p", "linkwhy", T("wn.linkMaking")));
+    talk.append(card);
+    return;
+  }
+  if (LINK.why) {
+    /* A REASON, NOT A SPINNER THAT STOPPED. Somebody who cannot bring people
+       in yet is told the one thing to do about it. */
+    card.append(el("p", "linkwhy bad", LINK.why));
+    talk.append(card);
+    return;
   }
 
-  $("twrite").hidden = false;
-  micShow();
-  $("tshut").hidden = true;
-  $("tbox").placeholder = T("wn.mkLine");
-  $("tsaid").hidden = true;
-}
+  /* THE LINK ITSELF, READABLE. It is the thing being sent, so it is on the
+     screen rather than behind a button that claims to have copied something
+     — a Copy that says "Copied" and put nothing on the clipboard is
+     indistinguishable from one that worked. */
+  card.append(el("p", "linklab", T("wn.linkLab")));
+  card.append(el("p", "linkurl", linkWords()));
 
-/** Mint the note and hand it straight to the share sheet. */
-async function sendNew() {
-  const to = $("tnewname").value.trim();
-  const line = $("tbox").value.trim();
-  if (!to) { $("tnewname").focus(); return; }
-  if (!line) { $("tbox").focus(); return; }
-  $("tsend").disabled = true;
-  say(T("wn.sending"));
-  let d = null;
-  try {
-    d = await fetch("/api/write", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ device, to, line }),
-    }).then((r) => r.json());
-  } catch { d = null; }
-  $("tsend").disabled = false;
-  if (!d || !d.ok) {
-    const known = { contact: "wn.mkNoContact", standing: "wn.mkStanding",
-                    nopage: "note.needProfile" };
-    return say(T(known[d && d.error] || "act.again", { what: (d && d.what) || "" }), true);
-  }
-  MADE = { words: T("wn.mkBlock", { who: d.to, line,
-    url: location.origin + "/w/" + d.code }) };
-  $("tbox").value = "";
-  $("tbox").style.height = "auto";
-  $("tsaid").hidden = true;
-  drawWriteNew();
-  /* STRAIGHT INTO THE SHEET. This is the whole point of the change: the note
-     is made and sent in one press rather than made, displayed, and then sent
-     from a second screen. */
+  const row = el("div", "linkacts");
   if (!IN_WECHAT && navigator.share) {
-    navigator.share({ text: MADE.words }).catch(() => { /* dismissed is fine */ });
-  } else {
-    copyText(MADE.words);
-    say(T(IN_WECHAT ? "act.wxCopied" : "cards.copied"));
+    const b = el("button", "primary", T("wn.mkShare"));
+    b.type = "button";
+    b.addEventListener("click", () => {
+      navigator.share({ text: linkWords() }).catch(() => { /* dismissed is fine */ });
+    });
+    row.append(b);
   }
+  const cp = el("button", null, T("cards.copy"));
+  cp.type = "button";
+  cp.addEventListener("click", () => {
+    cp.textContent = T(copyText(linkWords())
+      ? (IN_WECHAT ? "act.wxCopied" : "cards.copied") : "act.copyFail");
+  });
+  row.append(cp);
+  card.append(row);
+  card.append(el("p", "linktill", T("wn.mkTill")));
+  talk.append(card);
 }
 
 /** A ROOM AT THE DOOR, drawn on the thread screen.
@@ -2714,7 +4224,7 @@ async function drawDoor(key) {
   $("listview").hidden = true;
   $("listtop").hidden = true;
   $("threadview").hidden = false;
-  $("tnew").hidden = true;
+  $("wnew").hidden = true;
   $("tmenu").hidden = true;
   /* THE PIN IS NOT BLANKED HERE ANY MORE. It was, because the only thing that
      ever went in it was a deal on a thread, and arriving at a door meant there
@@ -2739,6 +4249,8 @@ async function drawDoor(key) {
     $("twrite").hidden = true;
     micShow();
     $("tmore").hidden = true;
+  $("tvid").hidden = true;
+  $("tpgrid").hidden = true;
     return;
   }
   /* THE COUNT IN THE TITLE AND NOT THE LINE UNDER IT — "Beijing Apt Rentals
@@ -2793,10 +4305,10 @@ async function drawDoor(key) {
   act.onclick = () => { DOORINFO = DOORINFO === key ? "" : key; drawDoor(key); };
 
   fill(talk);
-  talk.classList.remove("top");
+  talk.classList.remove("attop");
   if (DOORINFO === key) {
     act.hidden = true;                 // back is the way out, as in groups.html
-    talk.classList.add("top");
+    talk.classList.add("attop");
     // Not the room, so not the room's pin. See hideLedgerPin.
     pin().then((m) => m && m.hideLedgerPin($("tpin")));
     talk.append(doorPeople(key));
@@ -2960,13 +4472,93 @@ function doorWatch(key) {
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) return;
   const who = openWho();
-  if (who.startsWith("d:") && !DOORINFO) drawDoor(who.slice(2));
+  if (who.startsWith("d:") && !DOORINFO) return void drawDoor(who.slice(2));
+  /* COMING BACK TO THE APP IS WHEN A PHONE SHOULD LOOK AGAIN.
+   *
+   * Two things were stale until somebody pressed something: the messages,
+   * and — worse — the code itself. A deploy went out, the box reported the
+   * new build, and this page went on drawing the old screen because nothing
+   * had asked the server anything since before it. load() checks both; see
+   * the build note in there.
+   *
+   * NOT DURING A CALL, and not on a screen that is mid-something: the
+   * invited door and the write-a-link screen hold state that a redraw would
+   * throw away. */
+  if (CALL || INVITED || CHATROOM || who === "new") return;
+  load();
 });
+
+/* AND WHILE HE IS LOOKING AT IT, WHICH IS THE CASE THAT WAS MISSING.
+ *
+ * "she messages me, and i get a notification someone messaged me but i dont
+ * see the message instantly on the screen" — and the same evening, a video
+ * call that rang out with nobody answering.
+ *
+ * Both were one thing: this page asked the server for the inbox when it
+ * opened, when the phone came back to it, and after something was pressed,
+ * and at no other moment. A messenger sitting open on a phone is precisely
+ * the moment a message arrives, so the buzz landed on the lock screen and the
+ * screen underneath it did not move. WORSE FOR A CALL: an incoming call is
+ * `ring` on the /api/notes answer (see the note in load), so somebody already
+ * in the app never saw it ring at all — a call is over in forty-five seconds
+ * and there was nothing to answer.
+ *
+ * A CHEAP ASK AND A RARE REDRAW. The tick reads /api/notes and compares one
+ * line — see sigOf — and only when that line changes does it run the full
+ * load, which paints. So a quiet inbox costs one small request and nothing
+ * else: no repaint, no jump to the bottom of a thread somebody is reading,
+ * no compose box surprised mid-sentence.
+ *
+ * FIVE SECONDS. Slow enough that a phone in a pocket is not doing work, fast
+ * enough that a message and a ringing phone both feel like now.
+ *
+ * The same four screens sit it out as the one above, for the same reasons,
+ * and a hidden tab asks nothing — the visibility handler above is what brings
+ * it back in step. */
+let INBOXTICK = 0;
+async function watchInbox() {
+  if (document.hidden || CALL || INVITED || CHATROOM) return;
+  if (openWho() === "new") return;
+  let d;
+  try {
+    d = await fetch("/api/notes", { cache: "no-store",
+      headers: device ? { "x-board-device": device } : {} }).then((r) => (r.ok ? r.json() : null));
+  } catch { return; /* a phone in a lift. The next tick is five seconds away */ }
+  if (!d) return;
+  /* Re-read the guards: the fetch took time, and a call can have started in
+     it. Painting over a call in progress would drop the call. */
+  if (document.hidden || CALL || INVITED || CHATROOM || openWho() === "new") return;
+  /* A DEPLOY WENT OUT AND THIS PHONE WAS ALREADY OPEN.
+   *
+   * "The messages are there now but didn't arrive in real time" — with the
+   * fix for exactly that already on the box. The page in his hand had been
+   * loaded before the deploy, so it had no tick in it, and the only thing
+   * that reloads a stale page is load(), which a page with no tick only runs
+   * when the phone comes back to the app. An app somebody never leaves is
+   * never brought up to date, and the newer the fix the longer it hides.
+   *
+   * So the tick checks the build too. It is the same one line load() reads —
+   * see the long note there — and it has to be HERE rather than left to the
+   * signature below, because a deploy does not change a single message. */
+  if (d.build) {
+    if (!BUILT) BUILT = d.build;
+    else if (BUILT !== d.build && !RELOADING && !typing()) {
+      RELOADING = true;
+      BUILT = d.build;
+      location.reload();
+      return;
+    }
+  }
+  if (sigOf(d) === SIG) return;
+  load();
+}
+clearInterval(INBOXTICK);
+INBOXTICK = setInterval(watchInbox, 5000);
 
 function drawThread(t) {
   $("twho").hidden = false;
   $("tmore").hidden = false;
-  $("tnew").hidden = true;
+  $("wnew").hidden = true;
   $("twhoname").textContent = t.handle || "—";
   // No page to open for somebody on the list — see drawMenu.
   const onList = String(t.who || "").startsWith("w:");
@@ -2986,6 +4578,14 @@ function drawThread(t) {
     : last.open ? T("note.openSub")
     : last.canAnswer ? T("note.oneSub")
     : T({ shut: "note.shut", waiting: "note.waitSub" }[last.why] || "note.doneSub");
+
+  /* THE CALL LIVES BEHIND THE ＋ NOW — see drawPlus, and the note over it.
+     The header says who you are talking to; what you can do about it is one
+     gesture away, with the other four. The button stays in the markup and
+     stays hidden: it is one line to put back if the ＋ ever turns out to be
+     the wrong home for it. */
+  $("tvid").hidden = true;
+  $("tpgrid").hidden = true;
 
   /* WHO THEY ARE, ON THE SCREEN THAT OPENS WHEN YOU TAP THEIR FACE.
    *
@@ -3071,7 +4671,9 @@ function drawThread(t) {
        back "no", and nothing happened. There is nothing to fix on the route:
        two people cannot pin terms before one of them has been let in. */
     const realPerson = /^[a-f0-9]{20}$/.test(String(t.who || ""));
-    addBtn.hidden = !((last.canAnswer || last.open) && realPerson);
+    /* BEHIND THE ＋ TOO — see the note on askBtn. Still pressed, by the terms
+       tile in drawPlus, so everything below this line goes on working. */
+    addBtn.hidden = true;
   /* ASK THEM TO PAY — the whole product in one button.
    *
    * "Two people are chatting, then someone sends them a request to pay."
@@ -3083,12 +4685,22 @@ function drawThread(t) {
    * somebody who is actually on this board. `to` is their handle, so the
    * page they open greets them by name.
    */
+  /* AND THE ＋'S GRID, built here because it is a fact about this
+     conversation: what you can do with somebody depends on whether the thread
+     is open and whether they are on the board at all. */
+  drawPlus(t, last);
+
   const askBtn = $("taskbtn");
   const askSay = $("tasksay");
   if (askBtn) {
     if (askSay) askSay.textContent = T("ask.go");
     askBtn.setAttribute("aria-label", T("ask.go"));
-    askBtn.hidden = !((last.canAnswer || last.open) && realPerson);
+    /* BEHIND THE ＋ NOW. These were two full-width buttons stacked above the
+       box on every conversation, whether or not there was anything to ask
+       for — most of why this screen read as cluttered, and the thing Tom
+       photographed. They are tiles in the grid; both keep working exactly as
+       they did, and drawPlus presses this one for the terms tile. */
+    askBtn.hidden = true;
     askBtn.onclick = () => askSheet(t, last);
   }
 
@@ -3384,7 +4996,22 @@ $("tmore").addEventListener("click", () => {
 });
 $("segmine").addEventListener("click", () => roomTab("mine"));
 $("segopen").addEventListener("click", () => roomTab("open"));
-$("plus").addEventListener("click", () => peopleSheet(true));
+/* THE ＋ GOES STRAIGHT THERE WHEN THERE IS NOTHING TO CHOOSE FROM.
+ *
+ * "i just tried to add someone new from the chat page ... it doesnt seem to
+ * work." It worked. It was three taps: ＋ opened a sheet, the sheet held one
+ * dashed circle, and the circle opened the screen. For a member with nobody in
+ * their strip the whole of that sheet was the sentence "Nobody yet" and the
+ * circle — a screen whose only content is a paragraph saying there is nothing
+ * here, in front of the one thing being asked for.
+ *
+ * So: a strip with people in it is a choice and the sheet is right. An empty
+ * one is not a choice, and the ＋ means the only thing it can mean.
+ */
+$("plus").addEventListener("click", () => {
+  if (!CAN.length) { location.hash = "#new"; return; }
+  peopleSheet(true);
+});
 $("scrim").addEventListener("click", () => peopleSheet(false));
 /* Anything tapped in the sheet goes somewhere — a face, "Someone", Groups —
    and the sheet should not be waiting open on the way back. */
@@ -3419,9 +5046,11 @@ $("tbox").addEventListener("input", () => {
 
 $("tsend").addEventListener("click", async () => {
   const who = openWho();
-  // Writing to somebody who is not here yet is the same button on the same
-  // screen — see drawWriteNew. A room at the door is the same again.
-  if (who === "new") return sendNew();
+  /* "#new" HAS NO COMPOSER ANY MORE — it is a link and two buttons, see
+     drawWriteNew — so there is nothing for this to send. Guarded rather than
+     assumed: the send arrow is hidden on that screen, and a hidden button is
+     still a button a keyboard can reach. */
+  if (who === "new") return;
   if (who.startsWith("d:")) return sendDoor(who.slice(2));
   if (INVITED) return sendInvited();
   const b = $("tbox");
@@ -3443,8 +5072,13 @@ $("tsend").addEventListener("click", async () => {
     // Newest line at the bottom, which is where a conversation is read from.
     window.scrollTo(0, document.body.scrollHeight);
   } catch (err) {
+    /* The same list as person.html, and it has to stay the same list: a
+       refusal that has words on one screen and "try again" on the other is
+       the same bug twice. See the note there. */
     const known = { profile: "note.needProfile", enough: "note.enough",
                     gone: "note.gone", closed: "note.closed",
+                    waiting: "note.waiting", shut: "note.shut", self: "note.self",
+                    "not in this version": "note.off",
                     spent: "note.linesSpent",
                     // See the note in /api/group/say: the one refusal that
                     // points at a way of doing the thing rather than at a rule.
@@ -3659,7 +5293,11 @@ function drawCan() {
       grp.href = "/groups";
       const face = el("span", "av pile two");
       face.append(el("i"), el("i"));
-      grp.append(face, el("b", null, T("grp.title")));
+      /* "New group", NOT "Groups". /groups is the screen that makes one now —
+         the list of rooms it used to open was the same rooms already listed
+         on this page. A circle labelled with a place is a circle you press to
+         go and look; one labelled with an act says what happens. */
+      grp.append(face, el("b", null, T("grp.start")));
       strip.append(grp);
     }
   }

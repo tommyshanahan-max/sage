@@ -18,6 +18,13 @@
  *
  *   make doors           the last fortnight
  *   make doors DAYS=30   longer
+ *   make doors HOURS=2   the last two hours, by the hour
+ *
+ * WHY HOURS EXISTS. The day table answers "did that post work" a week later.
+ * The question asked ten minutes after a link goes up is "is anybody arriving
+ * now", and a UTC day cannot answer it: read at two in the morning in Tokyo,
+ * "today" is already seventeen hours of history. Hour buckets are kept for
+ * three days — see cleanHours — so this window is short on purpose.
  */
 
 const [, , base, key, ...rest] = process.argv;
@@ -26,6 +33,7 @@ if (!base || !key) {
   process.exit(2);
 }
 const DAYS = Math.max(1, Math.min(120, Number(rest[0]) || 14));
+const HOURS = Math.max(0, Math.min(72, Number(rest[1]) || 0));
 
 const d = await fetch(base + "/api/counts", { headers: { "x-admin-secret": key } })
   .then((r) => r.json())
@@ -33,6 +41,52 @@ const d = await fetch(base + "/api/counts", { headers: { "x-admin-secret": key }
 if (!d) { console.error("The board did not answer."); process.exit(1); }
 
 const counts = d.counts || {};
+const hours = d.hours || {};
+
+const ROOMS_ = ["film", "invest", "raise", "trade", "other"];
+const PAD = (x, n) => String(x).padEnd(n);
+const N = (n, w) => String(n || "·").padStart(w);
+
+/* THE LAST FEW HOURS, AND IT RETURNS RATHER THAN FALLING THROUGH.
+ *
+ * Asked for hours, the day table underneath is not a useful second opinion —
+ * it is the same event counted in a bucket seventeen times too big, printed
+ * directly beneath the answer, which is how somebody reads the wrong number.
+ * One question, one table. */
+if (HOURS) {
+  const keys = [];
+  for (let i = HOURS - 1; i >= 0; i--) {
+    keys.push(new Date(Date.now() - i * 3600_000).toISOString().slice(0, 13));
+  }
+  const hat = (h, r, w) => hours[h + "|" + r + "|" + w] || 0;
+  const hsum = (h, w) => ROOMS_.reduce((a, r) => a + hat(h, r, w), 0);
+  console.log("");
+  console.log("  THE LAST " + HOURS + (HOURS === 1 ? " HOUR" : " HOURS") + "   (UTC)");
+  console.log("");
+  console.log("  " + PAD("hour", 8) + N("opened", 8) + N("began", 8) + N("joined", 8));
+  console.log("  " + "-".repeat(32));
+  let O = 0, F = 0, J = 0;
+  for (const h of keys) {
+    const o = hsum(h, "door"), f = hsum(h, "form"), j = hsum(h, "joined");
+    O += o; F += f; J += j;
+    console.log("  " + PAD(h.slice(11) + ":00", 8) + N(o, 8) + N(f, 8) + N(j, 8));
+  }
+  console.log("  " + "-".repeat(32));
+  console.log("  " + PAD("total", 8) + N(O, 8) + N(F, 8) + N(J, 8));
+  console.log("");
+  if (!O && !F && !J) {
+    /* NOT "nobody came". The hour buckets only start at the deploy that added
+       them, so an empty window on the first day is this counter being new and
+       not the link being quiet — and those are opposite things to do next. */
+    console.log("  Nothing in that window. If the hour counter was only just");
+    console.log("  deployed it has nothing older than that to show:  make doors");
+  } else {
+    console.log("  Hour buckets are kept for three days. Longer:  make doors DAYS=14");
+  }
+  console.log("");
+  process.exit(0);
+}
+
 if (!Object.keys(counts).length) {
   console.log("Nothing counted yet.");
   console.log("");

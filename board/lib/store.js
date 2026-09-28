@@ -587,7 +587,13 @@ export const MO = "mo";
  * Nobody is ever filed under it: cleanWait only accepts a WAITROOMS key and
  * falls back to "other", so a row can never claim it.
  */
-export const WAITROOMS_CHAT = ["film", "invest", "raise", "trade", "other", "rewards"];
+/* "learn" IS HERE AND NOT IN WAITROOMS, for the same reason "rewards" is not.
+ * Nobody is ever filed under it — cleanWait only accepts a WAITROOMS key — and
+ * anybody may stand in it whatever they came for. It was also promised before
+ * it existed: door.other.say has read "Film, money, hiring, language —
+ * different rooms, one building" since the doors were written, and language
+ * was the one with no room behind it. */
+export const WAITROOMS_CHAT = ["film", "invest", "raise", "trade", "learn", "other", "rewards"];
 
 /** The one door that is not about what somebody does. See above. */
 export const OPEN_DOOR = "rewards";
@@ -1598,6 +1604,31 @@ export function cleanPerson(raw) {
        means not yet stamped; cleanBoard does that, in `at` order. */
     seq: Number.isInteger(raw.seq) && raw.seq > 0 ? raw.seq : 0,
     state: STATES.includes(raw.state) ? raw.state : "held",
+    /* HOW THEY GOT IN, STAMPED ONCE AND NEVER RECOMPUTED.
+     *
+     * Same reasoning as `seq` above: a fact about the arrival that must not
+     * move later. Recomputing it would mean somebody's tier changed because a
+     * row somewhere else was edited, and a boundary that can move is not a
+     * boundary.
+     *
+     * "invite" — they spent a member's code.
+     * "door"   — they came through the public link and made a profile.
+     * ""       — every row written before this field existed. NOT a guess:
+     *            the only evidence for an old member is which BROWSER spent a
+     *            code, and a browser is not a person. Empty means unknown and
+     *            is treated as invited, because that is what everybody on the
+     *            board was before the public door existed.
+     *
+     * It is on the PERSON and not on the invite, which is the opposite call to
+     * `kind` and `grp` over in cleanInvite. Those describe where the door put
+     * somebody down and never mean anything again. This one decides, for the
+     * life of the account, who they may write to first. */
+    via: ["invite", "door"].includes(raw.via) ? raw.via : "",
+    /* WHO VOUCHED, as a PERSON id — deliberately not the device hash the
+     * invite row carries. A member has more than one browser and clears them;
+     * a link that only survives while a browser does is a link that quietly
+     * becomes wrong. Empty for the public door, where nobody vouched. */
+    vouchedBy: /^[a-f0-9]{20}$/.test(String(raw.vouchedBy || "")) ? String(raw.vouchedBy) : "",
     handle: s(raw.handle, 40).replace(/^@+/, ""),
     level: LEVELS.includes(raw.level) ? raw.level : LEVELS[0],
     // Where they study, as an area. Never a pin, never a live position: which
@@ -1662,6 +1693,22 @@ export function cleanPerson(raw) {
       const m = s(raw.mail, 120).trim().toLowerCase();
       return /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/.test(m) ? m : "";
     })(),
+    /* WHEN THE LAST LETTER TO EVERYBODY WENT TO THIS PERSON.
+     *
+     * A day stamp, so a second run of the same mailout cannot send it twice —
+     * the commonest way a mailing list turns into a complaint. Empty is
+     * everybody who has never had one. See /api/admin/mailout. */
+    mailedAt: /^\d{4}-\d{2}-\d{2}$/.test(String(raw.mailedAt || ""))
+      ? String(raw.mailedAt) : "",
+    /* AND WHETHER THEY ASKED NOT TO GET THEM.
+     *
+     * One press, from a link in the letter itself, and it is honoured for
+     * ever. It stops the letters to everybody and NOTHING else: a message
+     * somebody actually sent them still reaches their inbox, because that is
+     * the thing they gave the address for. Two different kinds of mail and
+     * conflating them would be either spam or a broken app, depending which
+     * way round the mistake went. */
+    noMail: Boolean(raw.noMail),
     /* GOOGLE'S OWN ID FOR AN ACCOUNT, if this person attached one.
      *
      * Digits and nothing else — it is the `sub` claim, which is what is
@@ -1781,6 +1828,17 @@ export function cleanPerson(raw) {
      */
     views: dayCounts(raw.views, 30),
     regs: dayCounts(raw.regs, 8),
+    /* THE DAY THE REPORT CARD WAS LAST SENT TO THIS PERSON.
+     *
+     * A marker, which the lift above deliberately does without — and the
+     * reason the two differ is worth saying. The lift asks a question about
+     * the rows themselves ("how many went up today"), so it needs no memory
+     * and a restart costs nothing. There is nothing equivalent to count here:
+     * a notification leaves no trace on the board, so without a stamp a box
+     * that restarts three times in an evening buzzes everybody three times.
+     * Sending twice is a worse failure than skipping a day, so the stamp
+     * stays. */
+    cardAt: /^\d{4}-\d{2}-\d{2}$/.test(String(raw.cardAt || "")) ? String(raw.cardAt) : "",
     /* EVERY LEVEL THEY HAVE HELD, AND WHEN. Eight of them, which is more weeks
      * than anybody will move in.
      *
@@ -2078,6 +2136,45 @@ export function cleanPerson(raw) {
  */
 export const FOLLOW_ID = /^(?:[a-f0-9]{20}|w:[a-f0-9]{20})$/;
 
+/** ONE THING THAT HAPPENED, FOR ONE PERSON. See the note in the loader.
+ *
+ *  `kind` is a word the screen knows and nothing else — never a sentence, so
+ *  the row reads in whichever language the phone is set to. `ref` is the
+ *  twenty characters naming what it is about, which is what the row taps
+ *  through to; `who` is the person id of whoever did it, so the row can carry
+ *  a face without the list holding a name.
+ */
+/* A FEW THOUSAND, WHICH IS YEARS OF THEM FOR ONE BOARD. Kept because the
+   oldest row is the one nobody will ever scroll to and the file is read whole
+   on every request; the cap is what stops a list nobody opens from being the
+   reason a save gets slow. */
+export const BELL_MAX = 4000;
+
+/* SPLIT RATHER THAN ONE "paid", because the three halves of a payment are
+   three different things to be told: somebody says they sent it, somebody
+   says it arrived, somebody says it did not. A single kind would have made
+   the row say "something happened about the money", which is a row that has
+   to be tapped to be read and so is not a row. */
+export const BELL_KINDS = ["terms", "agreed", "claimed", "confirmed", "denied", "nudge"];
+
+export function cleanBell(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  const id = String(raw.id || "");
+  if (!/^[a-f0-9]{20}$/.test(id)) return null;
+  const to = String(raw.to || "").slice(0, 64);
+  const kind = String(raw.kind || "");
+  if (!to || !BELL_KINDS.includes(kind)) return null;
+  const ref = String(raw.ref || "");
+  if (!/^[a-f0-9]{20}$/.test(ref)) return null;
+  const who = String(raw.who || "");
+  return {
+    id, to, kind, ref,
+    who: /^[a-f0-9]{20}$/.test(who) ? who : "",
+    at: String(raw.at || "").slice(0, 40) || new Date().toISOString(),
+    seen: Boolean(raw.seen),
+  };
+}
+
 export function cleanFollow(raw) {
   if (!raw || typeof raw !== "object") return null;
   const by = String(raw.by || "").slice(0, 64);
@@ -2337,7 +2434,32 @@ export function cleanPush(raw) {
     at: String(raw.at || "").slice(0, 40) || new Date().toISOString() };
 }
 
-export const followersOf = (follows, id) =>
+/* HOW MANY PEOPLE FOLLOW SOMEBODY, COUNTING ONLY THE ONES YOU CAN SEE.
+ *
+ * "Why does it say 12 follow me and then show me 3 people?" Because it was
+ * counting follow ROWS and listing PEOPLE, and those are different sets: a
+ * row whose author never finished a page, or took it down, or is still held,
+ * has nobody behind it. /api/followers has always dropped those — "a follow
+ * with nobody behind it" is its own comment — and the count beside it never
+ * did, so the two disagreed by nine on a board of twelve.
+ *
+ * The count follows the list rather than the other way round, because the
+ * list is the part somebody can act on. A number nobody can reach the people
+ * behind is a number that makes the app look broken, and it is the number
+ * that gets quoted.
+ *
+ * `people` is optional so that nothing which only has the rows has to change
+ * — without it this is the old behaviour exactly.
+ */
+export const followersOf = (follows, id, people) => {
+  if (!Array.isArray(people)) return countRows(follows, id);
+  const live = new Set(people
+    .filter((q) => q.state === "published" && q.handle && q.by)
+    .map((q) => q.by));
+  return follows.reduce((n, f) => n + (f.who === id && live.has(f.by) ? 1 : 0), 0);
+};
+
+const countRows = (follows, id) =>
   follows.reduce((n, f) => n + (f.who === id ? 1 : 0), 0);
 
 /* ---------------------------------------------------------------------------
@@ -2417,6 +2539,20 @@ export function cleanNote(raw) {
     text: s(raw.text, 600),
     // Read by the person it was sent to. Only ever set by them.
     seen: Boolean(raw.seen),
+    /* WHETHER THE INBOX EMAIL HAS GONE, so it goes once and only when it is
+     * needed.
+     *
+     * The email used to fire the moment a note was written, which meant
+     * somebody sitting in the app read the message and then got told about it
+     * — and the point of the email is the person who is NOT here. So the note
+     * is left a few minutes and mailed only if it is still unseen by then.
+     *
+     * A FLAG ON THE ROW, NOT A TIMER IN MEMORY. A setTimeout does not survive
+     * a deploy, so a restart in the wrong minute either loses the mail or,
+     * with a map, sends it twice after the map is rebuilt. The row is the only
+     * thing that outlives the process, so the row is where this lives — the
+     * same argument as cardAt on a person. */
+    mailed: Boolean(raw.mailed),
     // Somebody said this should not have been sent. Carries their words.
     report: s(raw.report, 400),
     /* SOMETHING SAID RATHER THAN TYPED. The same shape a line in a room
@@ -3143,6 +3279,43 @@ export function cleanCounts(raw) {
   return out;
 }
 
+/* THE SAME THREE COUNTS, BUCKETED BY THE HOUR.
+ *
+ * WHY THERE ARE TWO. `counts` is keyed by day and answers "did that post
+ * work" a week later; it is the figure `make doors` has always printed and
+ * nothing here changes it. But the question actually asked, ten minutes after
+ * a link goes up, is "is anybody arriving NOW" — and a UTC day is the wrong
+ * bucket for that twice over: at two in the morning in Tokyo the day is
+ * seventeen hours old, so "today" is nearly a full day of history wearing the
+ * word today.
+ *
+ * KEPT FOR THREE DAYS AND NO LONGER. An hour bucket per room per event is
+ * roughly five hundred keys a day, which would grow the board file for ever
+ * to answer a question nobody asks about last month. Pruned on load and on
+ * save, like everything else with a cap here.
+ *
+ * STILL A COUNTER AND NOTHING ELSE. No address, no device, no order of
+ * arrival — see the note over /api/tally about why the rate limit is one
+ * shared bucket rather than one per caller. A finer clock does not make this
+ * a log of anybody. */
+export const HOURS_KEEP = 3 * 24;
+
+export function cleanHours(raw, now = Date.now()) {
+  const out = {};
+  if (!raw || typeof raw !== "object") return out;
+  const cut = now - HOURS_KEEP * 3600_000;
+  for (const [k, v] of Object.entries(raw)) {
+    const m = /^(\d{4}-\d{2}-\d{2}T\d{2})\|([a-z]{1,10})\|([a-z]{1,10})$/.exec(String(k));
+    if (!m || !TALLY_WHAT.includes(m[3])) continue;
+    // The key IS the timestamp, so nothing else has to be stored to expire it.
+    const t = Date.parse(m[1] + ":00:00Z");
+    if (!Number.isFinite(t) || t < cut) continue;
+    const n = Math.max(0, Math.min(10_000_000, Math.floor(Number(v) || 0)));
+    if (n > 0) out[k] = n;
+  }
+  return out;
+}
+
 export function cleanBoard(raw) {
   const rows = Array.isArray(raw) ? raw : Array.isArray(raw?.posts) ? raw.posts : [];
   const seen = new Set();
@@ -3355,6 +3528,33 @@ export function cleanBoard(raw) {
     seenV.add(k);
     vouches.push(v);
   }
+  /* WHAT HAPPENED, FOR THE PERSON IT HAPPENED TO.
+   *
+   * Everything this board ever told anybody was a push, which is a thing that
+   * arrives once and is gone — miss the buzz and there is no record that it
+   * ever rang. So terms written, terms agreed and money settled had nowhere
+   * to be seen, and the answer had been to make a ROOM for them, which put a
+   * conversation in Chat that nobody had asked to have. "i dont want the memo
+   * in the chat. lets have it goto notications."
+   *
+   * A row is one fact and never its contents: who it is for, what kind of
+   * thing happened, who did it, and the twenty characters naming the thing.
+   * The screen reads the fact and writes the sentence, so a row that lands on
+   * a phone in the other language still reads in that language, and a row
+   * carrying a fee or a name in its text could never leak one from a list.
+   *
+   * SEEN, NOT READ. It goes grey when the screen has been opened, not when
+   * the memo has; the difference matters to nobody and a per-row read receipt
+   * is a thing to keep in step for no gain.
+   */
+  const bells = [];
+  const seenB = new Set();
+  for (const r of (Array.isArray(raw?.bells) ? raw.bells : [])) {
+    const v = cleanBell(r);
+    if (!v || seenB.has(v.id)) continue;
+    seenB.add(v.id);
+    bells.push(v);
+  }
   /* WHICH ONE-TIME PASSES HAVE ALREADY RUN.
      A migration that says "runs once" and has no way of knowing whether it
      did runs on every boot, and one of them was quietly republishing every
@@ -3500,6 +3700,9 @@ export function cleanBoard(raw) {
 
   return { posts, people, follows, notes, wants, invites, cards, grants, waits, vouches, ran,
     offers, shuts, hides, groups, says, signins, writes, pushes, blocks, announces,
+    /* Newest last, like says, and capped: a list nobody has opened for a year
+       is still one screen of rows and the rest is a file getting bigger. */
+    bells: bells.slice(-BELL_MAX),
     requests: requests.slice(-REQUEST_MAX),
     products: products.slice(-PRODUCT_MAX),
     orders: orders.slice(-ORDER_MAX),
@@ -3507,7 +3710,8 @@ export function cleanBoard(raw) {
     reviews: reviews.slice(-REVIEW_MAX),
     asks: asks.slice(-ASK_MAX),
     cashouts: cashouts.slice(-CASHOUT_MAX),
-    counts: cleanCounts(raw?.counts) };
+    counts: cleanCounts(raw?.counts),
+    hours: cleanHours(raw?.hours) };
 }
 
 /** Read, change, write — through a temporary file and a rename, so an

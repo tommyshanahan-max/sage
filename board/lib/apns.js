@@ -163,7 +163,17 @@ const WORDS = (lang) => (
   : { title: "交换 · The Exchange", body: "有人给你留言了 · Somebody wrote to you" }
 );
 
-export function one(deviceToken, lang) {
+/* `words` OVERRIDES THE FIXED PAIR ABOVE, and only the daily card sends it.
+ *
+ * Every push before this said one thing — somebody wrote to you — so the text
+ * could be a constant chosen by language. The report card is a number, and a
+ * number cannot be a constant: "4 people opened your page today" is the whole
+ * notification, and a lock screen saying "you have a report card" is a screen
+ * that tells somebody nothing and asks them to go and look.
+ *
+ * Passed as {title, body} already in the reader's language, built where the
+ * numbers are. Absent, the pair above is used exactly as before. */
+export function one(deviceToken, lang, words) {
   return new Promise((resolve) => {
     /* SETTLED ONCE, WHATEVER HAPPENS.
      *
@@ -259,7 +269,9 @@ export function one(deviceToken, lang) {
          i18n.js for the same reason MO_NAME is: this is the server, it has no
          i18n, and a line it sends is stored in the language it was written in. */
       aps: {
-        alert: WORDS(lang),
+        alert: (words && words.body) ? { title: String(words.title || "").slice(0, 60),
+                                         body: String(words.body).slice(0, 180) }
+                                     : WORDS(lang),
         sound: "default",
         /* ONE LINE ON THE LOCK SCREEN, NOT ELEVEN, matching the web half's
            tag: eleven replies while somebody is asleep collapse into one. */

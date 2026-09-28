@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- Empty on every deployment but the demo board. See BOARD_DEMO in server.js. -->
+{{DEMO}}
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="stylesheet" href="/site.css">
+<!-- FIRST, AND NOT A MODULE — see public/oops.js. -->
+<script src="/oops.js"></script>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="/favicon.png" sizes="192x192">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#EEF0F4">
+<meta name="theme-color" content="#0B0E15" media="(prefers-color-scheme: dark)">
+<title>交换 · The Exchange</title>
+<meta name="description" content="Six rooms. Walk into the one you came for.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="交换 · The Exchange">
+<meta property="og:description" content="Film, money, factories, language. Different rooms, one building.">
+<meta property="og:image" content="{{ORIGIN}}/share.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="{{HERE}}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="color-scheme" content="light dark">
+<style>
+  /* ONE SCREEN, ONE DECISION, AND NOTHING ABOVE IT.
+   *
+   * WHY THIS PAGE EXISTS. Seventy-two people opened a door in a week and one
+   * of them began the form — and every one of the seventy-two arrived at the
+   * landing page, which tally() files under "other" because it names no room.
+   * The row of rooms IS on that page; it is under the pitch, the frames, the
+   * feed and the sentence, which on a phone is four screens down. So the one
+   * thing that would have told somebody they were in the right building was
+   * the one thing they never reached.
+   *
+   * This is that row, on its own, at an address that can be pasted anywhere.
+   * No pitch above it: somebody who tapped a link about factories does not
+   * need to be sold the idea of a board first, they need to see the factory
+   * room. Whoever wants the argument taps the line at the bottom. */
+  .wrap{max-width:32rem;margin:0 auto;padding:0 20px calc(3rem + env(safe-area-inset-bottom,0px))}
+  .top{display:flex;align-items:center;gap:12px;padding-block:calc(1.4rem + env(safe-area-inset-top,0px)) .2rem}
+  .top b{font-size:1.05rem;font-weight:700;letter-spacing:.01em}
+  .top .sp{flex:1}
+  h1{font-size:clamp(1.6rem,7vw,2.1rem);line-height:1.15;font-weight:700;
+    letter-spacing:-.02em;margin:1.4rem 0 .5rem;text-wrap:balance}
+  .sub{margin:0 0 1.5rem;color:var(--ink-2);font-size:1.02rem;line-height:1.5}
+  .rooms{display:flex;flex-direction:column;gap:10px}
+  .rooms a{display:flex;align-items:center;gap:14px;text-decoration:none;color:inherit;
+    background:var(--card,#fff);border:1px solid var(--line,#e3e6ec);border-radius:16px;
+    padding:16px 18px;min-height:44px}
+  .rooms a:hover{border-color:var(--accent)}
+  .rooms a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .rooms b{display:block;font-size:1.08rem;font-weight:700}
+  .rooms small{display:block;font-size:.88rem;color:var(--ink-2);margin-top:2px;line-height:1.4}
+  .rooms .w{flex:1;min-width:0}
+  .rooms i{font-style:normal;font-size:1.3rem;color:var(--accent);flex:none}
+  .foot{margin:1.9rem 0 0;text-align:center;font-size:.95rem}
+  .foot a{color:var(--ink-2)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <b id="brandname"></b>
+    <span class="sp"></span>
+    <span id="langslot"></span>
+  </div>
+  <h1 id="head"></h1>
+  <p class="sub" id="sub"></p>
+  <div class="rooms" id="rooms"></div>
+  <p class="foot"><a href="/" id="whatis"></a></p>
+</div>
+
+<script type="module">
+import { T, setLang, pickLang, langButton } from "/i18n.js";
+import { tally } from "/wait.js";
+
+const $ = (id) => document.getElementById(id);
+const el = (t, c, x) => { const n = document.createElement(t); if (c) n.className = c;
+  if (x !== undefined) n.textContent = x; return n; };
+
+/* THE SAME SIX, IN THE SAME ORDER AS THE LANDING PAGE, and "other" last for
+   the same reason: a catch-all above a named door is a door nobody reads
+   past. Named here rather than fetched — they are six constants, and a page
+   whose only content waits on a request is a blank screen on a slow phone. */
+const ROOMS = ["film", "invest", "raise", "trade", "learn", "other"];
+
+function draw() {
+  document.title = T("site.title");
+  $("brandname").textContent = T("site.title");
+  $("head").textContent = T("rooms.head");
+  $("sub").textContent = T("rooms.sub");
+  $("whatis").textContent = T("rooms.whatis");
+  const box = $("rooms");
+  while (box.firstChild) box.removeChild(box.firstChild);
+  for (const k of ROOMS) {
+    const a = el("a");
+    a.href = "/r/" + k;
+    const w = el("span", "w");
+    w.append(el("b", null, T("waitroom." + k)),
+             el("small", null, T("door." + k + ".under")));
+    a.append(w, el("i", null, "›"));
+    box.append(a);
+  }
+}
+
+setLang(pickLang());
+$("langslot").append(langButton(() => draw()));
+draw();
+
+/* COUNTED AS ITS OWN DOOR. Without a room in the call tally() files this
+   under "other", which is exactly the blindness that made the landing page
+   look like the factories room for a week. */
+tally("door", "rooms");
+</script>
+</body>
+</html>

@@ -151,14 +151,106 @@ self.addEventListener("fetch", (event) => {
  * honest for a board where both languages are in every room anyway, and it is
  * better than guessing wrong on somebody's lock screen.
  */
+/* THE WORKER ASKS WHAT TO SAY NOW, because there are two kinds of push.
+ *
+ * The note above is still true — this push carries no body and nothing is
+ * encrypted — but a worker that cannot read a body also cannot tell a message
+ * apart from the daily report card, and "somebody wrote to you" on an evening
+ * when nobody did is the app lying on a lock screen.
+ *
+ * So it fetches /api/wake, which answers with the sentence for whichever kind
+ * this is. `credentials: "include"` because the sign-in cookie is the only
+ * credential a worker carries: it cannot read localStorage, and it wakes with
+ * no page to ask.
+ *
+ * THE FALLBACK IS THE EXACT LINE THIS FILE USED TO SHOW, and it is reached
+ * whenever anything at all goes wrong — offline, a slow answer, a box that
+ * has not deployed the route yet. A push that arrives saying the old thing is
+ * a worse notification; a push that arrives saying nothing is a lost message.
+ *
+ * Two and a half seconds. The worker is killed if it takes too long, and a
+ * notification that never appeared because a fetch hung is the failure this
+ * whole handler exists to avoid.
+ */
+const SAID = {
+  title: "The Exchange 交换",
+  body: "Somebody wrote to you · 有人给你留言了",
+  to: "/notes",
+};
+
+async function whatToSay() {
+  try {
+    const stop = AbortSignal.timeout ? AbortSignal.timeout(2500) : undefined;
+    const r = await fetch("/api/wake", { credentials: "include", cache: "no-store", signal: stop });
+    if (!r.ok) return SAID;
+    const d = await r.json();
+    if (!d || typeof d.body !== "string" || !d.body) return SAID;
+    return { title: String(d.title || SAID.title).slice(0, 80),
+             body: String(d.body).slice(0, 180),
+             to: typeof d.to === "string" && d.to.startsWith("/") ? d.to : "/notes" };
+  } catch { return SAID; }
+}
+
+/** One notification, drawn from whichever of the two says. Called twice per
+ *  push — see below — and the tag is what makes the second one replace the
+ *  first rather than sit under it. */
+const show = (say, again) => self.registration.showNotification(say.title, {
+  body: say.body,
+  icon: "/icon-512.png",
+  badge: "/favicon.png",
+  /* TWO TAGS, NOT ONE. Messages collapse into each other — eleven replies
+     overnight are one line — and that is right for messages and wrong
+     here: a report card replacing the unread message somebody has not
+     looked at yet is the app taking a notification away. */
+  tag: say.to.startsWith("/notes") ? "board-note" : "board-card",
+  /* THE SECOND ONE CORRECTS THE FIRST; IT DOES NOT ANNOUNCE ITSELF. Both
+     halves of the same push buzzing is two buzzes for one message, which on
+     a phone reads as two messages. */
+  renotify: !again,
+  silent: Boolean(again),
+  data: { to: say.to },
+});
+
 self.addEventListener("push", (e) => {
-  e.waitUntil(self.registration.showNotification("The Exchange 交换", {
-    body: "Somebody wrote to you · 有人给你留言了",
-    icon: "/icon-512.png",
-    badge: "/favicon.png",
-    tag: "board-note",
-    renotify: true,
-  }));
+  e.waitUntil((async () => {
+    /* SOMETHING TRUE ON THE LOCK SCREEN, ALWAYS, AND THE RIGHT THING NORMALLY.
+     *
+     * A photograph of Tom's phone: the board's icon, "交换", and under it the
+     * word "Notification" and nothing else. That is not a line this file has
+     * ever contained — it is what iOS puts up ITSELF when a push handler
+     * finishes without showing anything. This handler was finishing without
+     * showing anything because it waited on /api/wake first, and a worker has
+     * a short budget: a phone in China asking a box in Tokyo can spend all of
+     * it before a word is drawn. A buzz saying "Notification" is a message
+     * nobody knows they have.
+     *
+     * So: give the answer a moment, and if it comes, one correct notification
+     * as before. If it does not, put the fixed line up NOW — true of every
+     * push but the daily card — and correct it silently when the answer
+     * lands. Worst case is a correct sentence instead of a placeholder. */
+    const asked = whatToSay();
+    const quick = await Promise.race([
+      asked.catch(() => null),
+      new Promise((r) => setTimeout(() => r(null), 700)),
+    ]);
+    if (quick) return void await show(quick);
+
+    await show(SAID);
+    const late = await asked.catch(() => null);
+    if (!late || (late.body === SAID.body && late.to === SAID.to)) return;
+    /* THE CARD IS NOT A MESSAGE AND MUST NOT LEAVE ONE BEHIND. The two kinds
+       carry different tags on purpose, so a late card does not replace the
+       line above — it would sit under it, and the phone would show a message
+       that never arrived. Taking the placeholder down costs nothing: it went
+       up under the message tag, which means it had already replaced whatever
+       unread message line was there. */
+    if (late.to !== SAID.to) {
+      for (const n of await self.registration.getNotifications({ tag: "board-note" })) {
+        if (n.body === SAID.body) n.close();
+      }
+    }
+    await show(late, true);
+  })());
 });
 
 self.addEventListener("notificationclick", (e) => {
@@ -167,9 +259,31 @@ self.addEventListener("notificationclick", (e) => {
     /* An open tab is focused rather than a second one opened — somebody who
        has the board open on a laptop and taps the phone notification should
        land in the conversation, not in a duplicate window. */
+    /* Where the notification itself said to go. A report card is about the
+       reader's own page and the numbers on it, not about a conversation, so
+       sending it to /notes would land somebody on an empty inbox. */
+    const to = (e.notification.data && e.notification.data.to) || "/notes";
+    const want = to.split("#")[0] || "/";
     for (const c of await self.clients.matchAll({ type: "window", includeUncontrolled: true })) {
-      if (c.url.includes("/notes") && "focus" in c) return c.focus();
+      /* MATCHED ON THE PATH, NOT WITH includes(). The card's address is
+         "/#card", whose path is "/" — and includes("/") is true of every URL
+         there has ever been, so the first open tab won, whichever screen it
+         was on. Somebody reading their messages would have had the card's tap
+         focus the inbox and do nothing else. */
+      let at = "";
+      try { at = new URL(c.url).pathname; } catch { at = ""; }
+      if (at !== want || !("focus" in c)) continue;
+      /* FOCUS ALONE IS NOT ENOUGH FOR THE CARD. Its address is a hash, and a
+         hash only does anything at load — so focusing a tab already sitting
+         on the home screen brings up the home screen with both panels still
+         shut, which is the thing the tap was supposed to open. Navigating
+         re-runs it. Only when there IS a hash, so a message still just
+         focuses the inbox as it always has. */
+      if (to.includes("#") && c.navigate) {
+        try { return await c.navigate(to).then((x) => (x || c).focus()); } catch { /* focus below */ }
+      }
+      return c.focus();
     }
-    if (self.clients.openWindow) return self.clients.openWindow("/notes");
+    if (self.clients.openWindow) return self.clients.openWindow(to);
   })());
 });

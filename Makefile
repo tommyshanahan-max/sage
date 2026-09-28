@@ -3,7 +3,15 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: book-lead book-owed book-paid book-alerts book-teacher book-list book-off book-on book-cancel book-demo book-test try try-china china wallets mo-code visits app-state claire-episodes deal claire-key claire-count claire-seed claire-video listing invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who bells twice admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions whitelabel blocked partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check post post-status post-run post-login post-code post-logins weidian-pull weidian-json weidian-reviews shop-chapter review-tidy product-names review-move
+# `board`, `mailout`, `up-safe`, `can-invite`, `stripe-who` and `call-check` go
+# here for the ordinary reason, and `board` for a second one that would have
+# cost an afternoon: there is a DIRECTORY called board/ in this repo, so
+# without this line `make board` finds a file by that name, decides it is
+# already up to date, and exits saying so — a deploy command that prints a
+# reassuring sentence and deploys nothing.
+.PHONY: board board-build mailout up-safe can-invite stripe-who call-check can-call board-log space who-am-i no-back evict
+.PHONY: version faces cards traffic tier-two try try-china china wallets mo-code visits app-state claire-episodes deal claire-key claire-count claire-seed claire-video listing invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who bells twice admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions whitelabel blocked partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check post post-status post-run post-login post-code post-logins weidian-pull weidian-json weidian-reviews shop-chapter review-tidy product-names review-move
+.PHONY: book-lead book-owed book-paid book-alerts book-teacher book-list book-off book-on book-cancel book-demo book-test book-live book-live-off book-app book-square
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -33,6 +41,15 @@ deploy: ## Fetch the latest commits, then build and start everything
 	       echo "Check with: git status -sb && git log --oneline -3"; \
 	       exit 1; }
 	@$(MAKE) --no-print-directory up
+
+# The commit every build is stamped with — see board/Dockerfile and
+# `make version`. Computed once here so `up` and `deploy` cannot disagree,
+# and empty outside a checkout rather than failing the build.
+export BUILT := $(shell git rev-parse --short HEAD 2>/dev/null || echo unknown)
+# THE BRANCH THIS BOX FOLLOWS. `make board` fetches and resets to it, so the
+# deploy is one word instead of a line with a branch name in it that has to be
+# typed correctly every time. Override it for one run: make board BRANCH=other
+BRANCH ?= claude/coding-platform-vpn-alternative-i06xoc
 
 up: ## Build if needed and start everything (does NOT fetch — see 'deploy')
 	test -f .env || { echo "no .env — run: cp .env.example .env && \$$EDITOR .env"; exit 1; }
@@ -271,6 +288,22 @@ admit-existing: ## Let everybody already on the board through the door, once
 	$(COMPOSE) exec -T board node -e "fetch('http://127.0.0.1:8080/api/admit-existing',\
 	  {method:'POST',headers:{'x-admin-secret':process.env.BOARD_ADMIN_KEY}})\
 	  .then(r=>r.json()).then(d=>console.log(JSON.stringify(d)))"
+
+tier-two: ## Turn everybody standing at the door into tier two, once
+	@# There is no queue any more. These people are not waiting for permission
+	@# to exist — they are the board's tier two, and they are also the only
+	@# reason somebody arriving from a link does not land on an empty screen.
+	@# Safe to run twice: a browser that already has a profile is skipped, not
+	@# overwritten.
+	@# FILL=1 also backfills rows an earlier run already made — the face and
+	@# the sentence the first version dropped. It only ever fills a field that
+	@# is EMPTY, so anybody who has since written their own line or uploaded
+	@# their own photograph keeps it.
+	$(COMPOSE) exec -T board node -e "const go=(n)=>fetch('http://127.0.0.1:8080/api/tier-two',\
+	  {method:'POST',headers:{'x-admin-secret':process.env.BOARD_ADMIN_KEY,\
+	   'content-type':'application/json'},body:JSON.stringify({fill:$(if $(FILL),true,false)})})\
+	  .then(r=>r.json()).then(d=>console.log(JSON.stringify(d)))\
+	  .catch(e=>{if(n<=0)throw e;setTimeout(()=>go(n-1),1000)});go(10)"
 
 post-door: ## Tell the feed the board is private now, as The Professor
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
@@ -1643,19 +1676,31 @@ hide: ## Take somebody out of Browse:  make hide WHO="their name"
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/person-out.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" --who "$(WHO)"
 
+can-call: ## Can I call them, and are they in Browse:  make can-call WHO="Axel Hugo"
+	@# TWO QUESTIONS THAT USED TO BE ONE. "i coudlnt call axel or hugo", then
+	@# "the buttons still dont work for Hugo and Axel" — both times the answer
+	@# was a review hold, which the board was reading as a reason nobody could
+	@# call them either. That rule is gone (see onBoard in server.js), so this
+	@# prints both: whether the buttons work, and whether strangers are shown
+	@# them. It clears a hold, which is yours; it cannot touch their own
+	@# switch or a block, and says so.
+	@# WHO is a list of first names; leave it out for everybody not in Browse.
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/can-call.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" "$(WHO)"
+
 show: ## Put them back:  make show WHO="their name"
 	@test -n "$(WHO)" || { echo 'which one? make show WHO="their name"'; exit 1; }
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
 	  /seed/person-out.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" --who "$(WHO)" --back
 
-doors: ## Did anybody come off that link:  make doors [DAYS=30]
+doors: ## Did anybody come off that link:  make doors [DAYS=30] [HOURS=2]
 	@# Three numbers a day per room — opened, began the form, joined — and
 	@# nothing else. No addresses and no devices, so there is nothing here
 	@# that could say who came. It tells you which of three things went
 	@# wrong: the post did not travel, the door did not convince them, or
 	@# the form lost them.
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
-	  /seed/doors.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" $(DAYS)
+	  /seed/doors.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" "$(DAYS)" "$(HOURS)"
 
 waiting-rooms: ## The queue by room and by which half of the sentence they are
 	@# Who to let in is a question about pairs, not about people — see the note
@@ -2226,6 +2271,199 @@ weidian-check: ## Does Weidian answer, and what does it actually say
 	@# a wiki the build box cannot reach — see the head of lib/weidian.js.
 	$(COMPOSE) run --rm --no-deps -T --entrypoint node board /app/scripts/weidian.check.mjs
 
+traffic: ## Did anybody arrive, and through which door: make traffic [DAYS=14]
+	@# The question after putting a link on Instagram, which nothing on this
+	@# box could answer. `make who` says why one named person is or is not in
+	@# Browse; `make numbers-days` counts page views. Neither says how many
+	@# people arrived, on which day, and whether they came through the link
+	@# or were vouched in.
+	@#
+	@# It counts both kinds of arrival. Somebody who made a page and somebody
+	@# who typed a name and stopped are both people the link brought, and
+	@# counting only one of them gets the answer wrong in both directions.
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/traffic.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  "$(or $(DAYS),14)"
+
+version: ## Which commit this box is actually running: make version
+	@# THE QUESTION THAT KEPT COMING BACK. A fix is pushed, a deploy is run,
+	@# the fault is still there — and nobody can tell whether the box has the
+	@# fix or the deploy silently landed on an older commit. Both of us spent
+	@# rounds guessing at it from terminal scrollback and timestamps.
+	@#
+	@# It prints what is on disk AND what the running board was built from,
+	@# because those are different questions: board/ is COPYed into the image,
+	@# so a git reset with no build leaves the container serving the old code
+	@# with the new commit sitting on disk beside it. That gap is the trap
+	@# CLAUDE.md opens with, and this is the command that shows it.
+	@printf '\n'
+	@printf '  on disk    %s\n' "$$(git log --oneline -1)"
+	@printf '  branch     %s\n' "$$(git rev-parse --abbrev-ref HEAD)"
+	@# ASKED ONCE. It was read three times — once to print and twice more in
+	@# the test below — which is three round trips into the container and
+	@# three chances to disagree with itself.
+	@built=$$($(COMPOSE) exec -T board sh -c 'cat /app/BUILT 2>/dev/null' 2>/dev/null | tr -d '\r\n'); \
+	here=$$(git rev-parse --short HEAD); \
+	if [ -z "$$built" ]; then printf '  running    (the image does not say — it predates this)\n'; \
+	elif [ "$$built" = "unknown" ]; then printf '  running    unknown — the image was built without the stamp\n'; \
+	else printf '  running    %s\n' "$$built"; fi; \
+	printf '\n'; \
+	if [ "$$built" = "unknown" ]; then \
+	  printf '  THE IMAGE CARRIES NO COMMIT, so this cannot say whether it is current.\n'; \
+	  printf '  "unknown" is the Dockerfile default — the build ran without BUILT set,\n'; \
+	  printf '  which is what happens when the image is built by anything but this\n'; \
+	  printf '  Makefile. It is NOT evidence that the code is old.\n\n'; \
+	  printf '  Stamp it and find out:\n\n'; \
+	  printf '    BUILT=%s make up\n\n' "$$here"; \
+	elif [ -n "$$built" ] && [ "$$built" != "$$here" ]; then \
+	  printf '  THE BOARD IS RUNNING OLDER CODE THAN THE DISK.\n'; \
+	  printf '  board/ is built into the image, so a fetch alone does not move it:\n\n'; \
+	  printf '    make up\n\n'; \
+	fi
+
+call-check: ## Whether a video call in Chat can actually connect: make call-check
+	@# THE FAILURE THIS EXISTS FOR IS INVISIBLE. A call with no relay behind
+	@# it works between two phones on the same wifi and fails on every mobile
+	@# network — and from the outside a call that can never connect looks
+	@# exactly like one that is about to. The screen says so after twenty
+	@# seconds; this says so before anybody has tried.
+	@#
+	@# Three questions, because they fail separately: does the board think it
+	@# has a relay, is the relay container up, and is anything actually
+	@# listening on the port the phones will be sent to.
+	@printf '\n'
+	@if $(COMPOSE) exec -T board sh -c 'test -s /data/turnserver.conf' 2>/dev/null; then \
+	  printf '  the board    has a relay configured\n'; \
+	else \
+	  printf '  the board    NO RELAY — calls work on one network and nowhere else\n'; \
+	  printf '               BOARD_TURN_HOST is unset, or /data is not writable\n'; \
+	fi
+	@up=$$(docker ps --filter name=tomscoding-turn --format '{{.Status}}' 2>/dev/null); \
+	if [ -n "$$up" ]; then printf '  the relay    %s\n' "$$up"; \
+	else printf '  the relay    NOT RUNNING — make up\n'; fi
+	@if command -v nc >/dev/null 2>&1; then \
+	  if nc -z -u -w2 127.0.0.1 3478 >/dev/null 2>&1; then \
+	    printf '  port 3478    answering\n'; \
+	  else printf '  port 3478    nothing there\n'; fi; \
+	else printf '  port 3478    (no nc on this box to check with)\n'; fi
+	@printf '\n'
+	@printf '  Two phones on two different networks is the only real test.\n'
+	@printf '\n'
+
+faces: ## Whose photo is not showing, and put one back: make faces [WHO="Nicole"]
+	@# "Her photo got removed when she was put on the waiting list." It was
+	@# not. A picture uploaded at the door is held until somebody looks at it,
+	@# and the hold travels with her when she is let in — so the photograph
+	@# disappears from every screen at that moment, which from outside looks
+	@# exactly like a failed upload.
+	@#
+	@# With no WHO it says who is missing one and which of three things is
+	@# true: it is on her row, it is still on her waiting row, or it is gone.
+	@# With WHO it does whichever of those is needed and says what it did.
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/faces.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  "$(WHO)"
+
+mailout: ## A letter to everybody, rehearsed first: make mailout [SEND=1]
+	@# "we shoiudl emial eveyroen to come to platform."
+	@#
+	@# Prints how many people can be reached at all \u2014 which is not on any
+	@# screen and is the number that decides whether this is worth doing \u2014 then
+	@# the whole of one real letter, with somebody's name and their own number
+	@# in it. Nothing leaves the box without SEND=1.
+	@#
+	@# Once per person per day, stamped before the first one goes, and every
+	@# letter carries a one-press way out. Those three are what keep the
+	@# message mail and the login mail arriving: they leave from the same
+	@# domain, and a list that gets reported takes them with it.
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/mailout.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  "$(if $(SEND),true,false)" "$$(grep -E '^TOMSCODING_PUBLIC=' .env | tail -1 | cut -d= -f2-)"
+
+up-safe: ## Build everything without the ssh session being able to kill it: make up-safe
+	@# "Connection to 45.77.8.166 closed by remote host." Twice, both times in
+	@# the middle of a build. A docker build of eleven images is the heaviest
+	@# thing this box ever does, and when it runs out of memory the kernel
+	@# picks something to kill — sometimes sshd, and then the build dies with
+	@# the session that started it. Nothing says so; the terminal just returns.
+	@#
+	@# setsid puts the build in its own session, so it survives the ssh going
+	@# away, and the tail is only a window onto it: Ctrl-C closes the window
+	@# and the build carries on. Reconnect and tail the same file to look
+	@# again.
+	@#
+	@# It prints the free memory first, because that is the number that
+	@# decides whether this happens, and nobody has ever looked at it.
+	@printf '\n  memory before the build\n'
+	@free -h 2>/dev/null | sed 's/^/    /' || echo "    (no free(1) on this box)"
+	@printf '\n'
+	@rm -f /tmp/up.log
+	@setsid $(MAKE) up > /tmp/up.log 2>&1 < /dev/null & \
+	  sleep 2; \
+	  printf '  building. Ctrl-C closes this window, not the build.\n'; \
+	  printf '  to look again:  ssh root@%s "tail -f /tmp/up.log"\n\n' "$$(hostname -I 2>/dev/null | awk '{print $$1}')"; \
+	  tail -f /tmp/up.log
+
+stripe-who: ## Which Stripe account the board's key belongs to, and whether it still works
+	@# THE DAY STRIPE CLOSED AN ACCOUNT. A key in .env is a string nobody can
+	@# read anything off, so "is the payment side dead" was a question with no
+	@# way to answer it short of opening a dashboard that may itself be shut.
+	@#
+	@# Asks Stripe. The key never leaves the container and never appears in
+	@# this file, in a command line, or in the output: what comes back is the
+	@# account id, its country, and whether charges are still enabled.
+	@printf '\n'
+	@$(COMPOSE) exec -T board sh -c '\
+	  if [ -z "$$BOARD_STRIPE_KEY" ]; then \
+	    echo "  the board has no Stripe key set — nothing to ask about."; exit 0; fi; \
+	  curl -s -u "$$BOARD_STRIPE_KEY:" https://api.stripe.com/v1/account' 2>/dev/null \
+	  | node -e '\
+	    let s=""; process.stdin.on("data",c=>s+=c).on("end",()=>{ \
+	      if(!s.trim()){console.log("  no answer — is the board up, and can it reach the internet?");return;} \
+	      let d=null; try{d=JSON.parse(s)}catch{}; \
+	      if(!d){console.log("  Stripe answered something unreadable.");return;} \
+	      if(d.error){ \
+	        console.log("  Stripe refused the key: "+(d.error.message||d.error.type)); \
+	        console.log(""); \
+	        console.log("  A closed account is the commonest reason. Every payment"); \
+	        console.log("  screen on this board is dead until a working key is in .env."); \
+	        return; } \
+	      console.log("  account    "+(d.id||"?")); \
+	      console.log("  name       "+((d.settings&&d.settings.dashboard&&d.settings.dashboard.display_name)||d.business_profile&&d.business_profile.name||"—")); \
+	      console.log("  country    "+(d.country||"?")); \
+	      console.log("  charges    "+(d.charges_enabled?"enabled":"OFF")); \
+	      console.log("  payouts    "+(d.payouts_enabled?"enabled":"OFF")); \
+	      if(!d.charges_enabled||!d.payouts_enabled){ \
+	        console.log(""); \
+	        console.log("  This account cannot take money. The payment screens will fail."); } \
+	    });'
+	@printf '\n'
+
+can-invite: ## Who can bring somebody in, and what stops the rest: make can-invite [WHO="Tom"]
+	@# "i just tried to add someone new from the chat page, it doesnt seem to
+	@# work." Bringing people in is rationed — a photograph on your profile, a
+	@# day on the board, something posted this week — and the rationing is
+	@# invisible until somebody tries and is refused. This reads it out.
+	@#
+	@# A missing photograph is the commonest one and the one that looks most
+	@# like a broken button.  make faces  is the other half of that.
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/can-invite.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  "$(WHO)"
+
+cards: ## What tonight's report card says to each member: make cards [SEND=1]
+	@# The card goes out once a day, in one hour of the day, to a phone — so
+	@# the only way to check it was to wait until evening and ask somebody to
+	@# look at their lock screen, which is not a way to check anything.
+	@#
+	@# Prints the four numbers and the real sentence per member, in the
+	@# language their own device asked for. SEND=1 sends it now; it skips the
+	@# hour and nothing else, so the once-a-day stamp still stops anybody
+	@# being buzzed twice.
+	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/cards.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  "$(if $(SEND),true,false)"
+
 who: ## Who has a page, and who is actually in Browse
 	@# For "she added herself but I cannot see her". The public list holds only
 	@# the people who ARE in Browse, so the answer to that question was never in
@@ -2423,6 +2661,186 @@ fix-browser: ## Restart the browser after a black screen
 reload: ## Reload Caddy config without dropping connections
 	$(COMPOSE) exec caddy caddy reload --config /etc/caddy/Caddyfile
 
+evict: ## Somebody else is signed in as you:  make evict WHO="Tom"
+	@# THE HALF `make no-back` CANNOT DO. Shutting the door stops the next
+	@# person walking in as somebody else. It does nothing about the two
+	@# already holding the number — on this board a device number IS the
+	@# account, so those phones go on being him until the number changes.
+	@#
+	@# This makes a new one and moves the person onto it. Every other copy is
+	@# left owning nothing. It prints a link to send yourself and open on the
+	@# phone that should keep the account: one button, one tap, fifteen
+	@# minutes. Not `make back`, which would move him onto the leaked number
+	@# he is trying to get rid of — see scripts/evict.mjs.
+	@test -n "$(WHO)" || { echo 'make evict WHO="your name on the board"'; exit 1; }
+	$(COMPOSE) run --rm --no-deps -T \
+	  -e BOARD_PUBLIC_URL="https://$$(grep -E '^TOMSCODING_BOARD_DOMAIN=' .env | tail -1 | cut -d= -f2- | tr -d '\"')" \
+	  -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/evict.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  --who "$(WHO)"
+
+who-am-i: ## Is anybody able to walk in as somebody else:  make who-am-i
+	@# THE NIGHT THIS EXISTS FOR. Two people opened an invite link, made a
+	@# profile, went back to the link — and came in as Tom, with his
+	@# conversations in front of them.
+	@#
+	@# Three settings on this box can do that, and all three are meant to be
+	@# on for an hour in front of a reviewer and off afterwards. None of them
+	@# is visible from any screen, so the only way to know is to ask the
+	@# container — which is also the only thing that CAN answer, because the
+	@# names in .env are TOMSCODING_* and the container sees BOARD_*.
+	@#
+	@#   BOARD_DOOR_IN    a BUTTON on the front door. Tap it and you are
+	@#                    BOARD_BACK_WHO. No code, no wall at all.
+	@#   BOARD_BACK_CODE  type it and you become BOARD_BACK_WHO, and it is
+	@#                    never spent, so it works for everybody for ever.
+	@#   BOARD_DEMO_DEVICE  every browser that arrives is the same person.
+	@printf '\n'
+	@$(COMPOSE) exec -T board printenv BOARD_DOOR_IN 2>/dev/null | grep -q '^1$$' \
+	  && printf '  BOARD_DOOR_IN=1    ANYBODY WHO OPENS THE DOOR CAN TAP A BUTTON AND BE:\n    %s\n\n' \
+	       "$$($(COMPOSE) exec -T board printenv BOARD_BACK_WHO 2>/dev/null)" \
+	  || printf '  the one-tap door button is off\n'
+	@$(COMPOSE) exec -T board printenv BOARD_BACK_CODE 2>/dev/null | grep -q . \
+	  && printf '  BOARD_BACK_CODE is set  typing it makes you %s, and it is never spent\n' \
+	       "$$($(COMPOSE) exec -T board printenv BOARD_BACK_WHO 2>/dev/null)" \
+	  || printf '  no standing way-back code\n'
+	@# THE PIN NOW NEEDS TWO SWITCHES. BOARD_DEMO=1 says this container is the
+	@# demo board; without it the pin is ignored and the board says so at boot
+	@# — see DEMO_BOARD in board/server.js. Both lines are printed, because
+	@# "set" and "doing anything" stopped being the same thing.
+	@$(COMPOSE) exec -T board printenv BOARD_DEMO_DEVICE 2>/dev/null | grep -q . \
+	  && { $(COMPOSE) exec -T board printenv BOARD_DEMO 2>/dev/null | grep -q '^1$$' \
+	       && printf '  BOARD_DEMO_DEVICE is set AND THIS IS THE DEMO BOARD\n    EVERY browser that arrives is the same person\n' \
+	       || printf '  BOARD_DEMO_DEVICE is set but ignored — this is not the demo board\n'; } \
+	  || printf '  no demo device pin\n'
+	@printf '\n  Anybody who already walked in is still signed in on their own phone.\n'
+	@printf '  That is what `make evict WHO="Tom"` is for.\n\n'
+	@printf '\n  Any line above in capitals is a way into somebody else account.\n'
+	@printf '  Turn it off:  make no-back\n\n'
+
+no-back: ## Shut every walk-in-as-somebody-else door:  make no-back
+	@# Comments the three lines out of .env and restarts the board. Nothing
+	@# else changes and nothing is deleted — the values stay on the line
+	@# behind a #, so turning one back on for a demo is uncommenting it.
+	@for k in TOMSCODING_BOARD_DOOR_IN TOMSCODING_BOARD_BACK_CODE TOMSCODING_BOARD_BACK_WHO TOMSCODING_BOARD_DEMO_DEVICE; do \
+	  sed -i "s/^$$k=/#$$k=/" .env; \
+	done
+	$(COMPOSE) up -d --no-deps board
+	@printf '\n  Shut. This stops new ones. Anybody who already walked in is still\n'
+	@printf '  signed in on their own phone — take the account back with:\n'
+	@printf '      make evict WHO="Tom"\n'
+	@printf '  And check what is still open with:  make who-am-i\n\n'
+
+space: ## How full the disk is, and clear what is safe to clear:  make space
+	@# THE DAY THIS EXISTS FOR. The board could not write board.json — ENOSPC,
+	@# no space left on device — so every link, every message and every profile
+	@# save threw, and the app said "No answer from the board. Check the
+	@# signal" at somebody standing next to the router. It took two hours and
+	@# six screenshots to find, because a full disk looks exactly like a bug in
+	@# whatever you happened to be doing.
+	@#
+	@# Six gigabytes of it was docker's build cache. Ten deploys in an
+	@# afternoon is ten layers of node_modules nobody will ever read again.
+	@#
+	@# WHAT THIS WILL NOT TOUCH, and the reason it is this and not `docker
+	@# system prune`: no volumes, ever. board_data is the board — every
+	@# profile, every message, every deal — and it lives in a volume. A prune
+	@# that takes volumes is the one command on this box that cannot be undone.
+	@printf '\n  BEFORE\n'
+	@df -h / | tail -1
+	@# WHERE IT ACTUALLY GOES, which is not here. The first version of this
+	@# printed the biggest things under ~/tc and they came to twenty-four
+	@# megabytes on a box with sixty-eight gigabytes gone — a tidy listing
+	@# that answered the wrong question. Docker's own accounting first, then
+	@# the top of the filesystem, and ~/tc not at all.
+	@printf '\n  what docker is holding\n'
+	@docker system df || true
+	@printf '\n  the biggest things on the disk\n'
+	@# -x so it stops at the filesystem boundary and does not walk into
+	@# /proc, and -d1 because the answer at this box's size is always one of
+	@# six directories.
+	@du -xh -d1 / 2>/dev/null | sort -rh | head -10 || true
+	@printf '\n  clearing docker build cache and dangling images\n'
+	docker builder prune -f
+	docker image prune -f
+	@printf '\n  AFTER\n'
+	@df -h / | tail -1
+	@printf '\n'
+
+board: ## Deploy the board and nothing else: make board
+	@# SIX DEPLOYS IN ONE DAY AND HALF OF THEM DIED. "Connection closed by
+	@# remote host" twice, "port 22 timed out" three times — every one of them
+	@# during `make up`, which rebuilds ELEVEN images on a box that does not
+	@# have the memory for it. The kernel picks something to kill and
+	@# sometimes it picks sshd.
+	@#
+	@# Almost every deploy here changes board/ and nothing else. Rebuilding
+	@# thefeed, the partner seats, the workspaces, the post box and the
+	@# browser to ship a change to one HTML file is the whole cost for none of
+	@# the benefit, and it is the reason the box falls over.
+	@#
+	@# So: fetch, reset, build the one image, restart the one container, say
+	@# what is running. Seconds instead of minutes, and it cannot run the box
+	@# out of memory.
+	@#
+	@# USE `make up` WHEN docker-compose.yml OR ANOTHER CONTAINER CHANGED —
+	@# a new service, a new env var, a change under agent/ or cfm/. This
+	@# target touches the board alone and will not notice anything else.
+	@printf '\n'
+	@# LOOK AT THE DISK FIRST. A build on a box with nothing left does not
+	@# fail loudly — it half-writes a layer, the container comes up, and the
+	@# first thing anybody notices is a screen saying something untrue. One
+	@# gigabyte is roughly what an image build needs here; under that, this
+	@# stops and says so rather than making the mess worse.
+	@free=$$(df -Pk / | tail -1 | awk '{print $$4}'); \
+	  if [ "$$free" -lt 1048576 ]; then \
+	    printf '\n  THE DISK IS FULL. %s free, and a build needs about a gigabyte.\n' \
+	      "$$(df -h / | tail -1 | awk '{print $$4}')"; \
+	    printf '  Nothing has been changed. Clear what is safe to clear:\n\n'; \
+	    printf '    make space\n\n'; \
+	    exit 1; \
+	  fi
+	git fetch origin
+	git reset --hard origin/$(BRANCH)
+	@# AND PUT THE BRANCH NAME ON IT TOO, which the reset above does not.
+	@#
+	@# A reset moves the commit and leaves HEAD attached to whatever branch
+	@# the box happened to be on — so a box that was last deployed from
+	@# another session's branch goes on calling itself that branch while
+	@# holding this one's code. The summary at the end then prints a branch
+	@# name that is not the code on disk, and `make deploy` can never
+	@# fast-forward, because the local branch name and the commit disagree.
+	@# That cost most of an afternoon and a screen reported missing three
+	@# times — see the deploy section of CLAUDE.md.
+	@#
+	@# -B rather than checkout: it creates the branch if the box has never
+	@# had it and repoints it if it has, and the tree already matches, so
+	@# there is nothing here that can refuse.
+	git checkout -B $(BRANCH) origin/$(BRANCH)
+	@# AND NOW HAND OVER TO THE MAKEFILE THAT WAS JUST FETCHED.
+	@#
+	@# This target changes the working tree it is running out of, and make
+	@# read this file into memory before the first line of the recipe ran. So
+	@# every variable here — BUILT most of all, which is a `:=` evaluated at
+	@# parse time — still holds the value it had at the OLD commit, and a fix
+	@# to this Makefile can never take effect on the run that delivers it.
+	@#
+	@# It showed up as a deploy that built the new code and stamped it with
+	@# the previous commit, twice, each time reported by `make version` as
+	@# "running older code than the disk" — which was false about the code
+	@# and true about the label, the most confusing way round for it to be.
+	@#
+	@# A sub-make re-reads the file from disk. Everything below the reset
+	@# happens at the commit that was just fetched, including the rule that
+	@# decides what to do next.
+	@$(MAKE) --no-print-directory board-build
+	@printf '\n'
+	@$(MAKE) --no-print-directory version
+
+board-build: ## (internal) Build and restart the board at whatever is on disk
+	$(COMPOSE) build board
+	$(COMPOSE) up -d --no-deps board
+
 rebuild: ## Rebuild the workspace image (picks up new CLI versions)
 	$(COMPOSE) build --no-cache workspace
 	$(COMPOSE) up -d workspace
@@ -2514,6 +2932,14 @@ pay-why: ## What a payer's phone actually saw when a pay button failed: make pay
 	  echo "  A failure from before that went with the old container."; \
 	  echo ""; \
 	fi
+
+board-log: ## The last of the board's own log, and it does not follow:  make board-log [N=120]
+	@# `make logs` is `logs -f`, which is right for watching a deploy and wrong
+	@# for answering a question — it hangs the terminal and somebody has to
+	@# know to press Ctrl-C. This prints and stops. One service, because the
+	@# question is always about the board and six services interleaved is a
+	@# wall.
+	$(COMPOSE) logs --no-log-prefix --tail=$(or $(N),120) board
 
 logs: ## Tail logs from all services
 	$(COMPOSE) logs -f --tail=100
