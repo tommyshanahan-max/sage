@@ -1996,7 +1996,7 @@ again.
   then send the API docs link (never keys). `lib/pay.mjs` (Square) is then
   swapped for PingPong; the rest of the selling stays.
 
-## Translated video calls — deployed 29 Sep, at call.laonei.co
+## Translated video calls — live at call.laonei.co, watched working on Tom's phone
 
 **`call.laonei.co/call`** (DNS `call` A → 45.77.8.166 at Porkbun; also still
 at `thexchange.app/book/call`), answering 200 on 29 Sep. Start a call, send the link, both talk, and each
@@ -2006,8 +2006,9 @@ Speech is heard by each phone's own dictation — works on iPhones (in China
 too) and on Chrome outside China; NOT on Android inside China (Google's
 dictation is blocked). Translation is Claude on the box's ANTHROPIC_API_KEY.
 Tested here with two browsers and simulated speech + fake translation: video
-both ways, live words, translated subtitles, third person refused. Real
-dictation and real translation not yet tried — needs two phones. Book now
+both ways, live words, translated subtitles, third person refused. **Tom
+reported it working on his phone** after the fix that starts dictation
+inside the Join tap (iOS refuses it otherwise). Book now
 has one npm dependency (the Anthropic SDK), installed from its lockfile.
 
 ## Book — lessons widget and video room, live 26 Sep, watched working
