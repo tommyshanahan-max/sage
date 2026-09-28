@@ -42,8 +42,8 @@
   .sub b{display:block;font-size:24px;line-height:1.3;font-weight:700}
   .sub small{display:block;font-size:15px;opacity:.75;margin-top:2px}
   .sub.live b{opacity:.75;font-weight:600}
-  .mine{position:absolute;left:14px;top:max(14px,env(safe-area-inset-top));max-width:60%;font-size:15px;
-    background:rgba(0,0,0,.45);border-radius:10px;padding:5px 10px;opacity:.9}
+  .mine{position:absolute;left:14px;top:max(14px,env(safe-area-inset-top));max-width:60%;font-size:16px;
+    background:rgba(0,0,0,.55);border-radius:10px;padding:7px 12px;opacity:.95;cursor:pointer}
   .bar{position:absolute;left:0;right:0;bottom:max(22px,env(safe-area-inset-bottom));display:flex;justify-content:center;gap:18px}
   .bar button{width:60px;height:60px;border-radius:50%;border:0;background:rgba(255,255,255,.18);color:#fff;display:grid;place-items:center;cursor:pointer;backdrop-filter:blur(8px)}
   .bar button.off{background:#fff;color:#111}
@@ -85,14 +85,14 @@
     joinSub: "字幕会翻译成你的语言。", wait: "等对方加入…", conn: "正在连接…", left: "对方挂断了", you: "通话已结束",
     again: "重新加入", cam: "请允许使用摄像头和麦克风，再试一次。", key: "这个链接打不开通话。", over: "这个通话已过期。",
     full: "这个通话已经有两个人了。", net: "连不上，检查一下网络再试。", noSubs: "这个浏览器不支持字幕，换 Safari 或 Chrome。",
-    lost: "连接断了，正在重连…",
+    lost: "连接断了，正在重连…", tapSubs: "🎙 点这里打开字幕", subsOff: "字幕暂时不可用",
   } : {
     start: "Talk to anyone.", startSub: "What they say appears in your language.", startGo: "Start a call",
     link: "Send them this link", send: "Share link", copied: "Copied", join: "Join call", joinTitle: "Video call",
     joinSub: "Subtitles in your language.", wait: "Waiting for them to join…", conn: "Connecting…", left: "They left the call", you: "Call ended",
     again: "Join again", cam: "Allow the camera and microphone, then try again.", key: "This link doesn't open a call.", over: "This call link has expired.",
     full: "This call already has two people.", net: "Can't connect — check the network and try again.", noSubs: "No subtitles in this browser — try Safari or Chrome.",
-    lost: "Connection dropped — reconnecting…",
+    lost: "Connection dropped — reconnecting…", tapSubs: "🎙 Tap to turn on subtitles", subsOff: "Subtitles are off right now",
   };
   const $ = (id) => document.getElementById(id);
   const LK = window.LivekitClient;
@@ -210,31 +210,48 @@
 
   /* THE DICTATION. Chrome and Safari call it (webkit)SpeechRecognition. It
      stops by itself after a pause, so it is restarted for as long as the call
-     is on and the microphone is open. */
+     is on and the microphone is open.
+
+     STARTED IN THE TAP. iPhone Safari lets a page start dictation only while
+     handling a tap; started a few seconds later, after the call connected,
+     it refused without a word and the first real test showed nothing at all.
+     So `listen` runs first thing in the Join press, before anything waits,
+     and if the phone still refuses — or refuses a restart later — the corner
+     says so and becomes the button that turns it back on, since that tap is
+     one the phone will accept. */
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  let rec = null, listening = false;
+  let rec = null, listening = false, blocked = false;
+  const corner = (t) => { $("mine").hidden = false; $("mine").textContent = t; };
   function listen() {
     if (!SR || ended || !micOn()) return;
     if (!rec) {
       rec = new SR();
       rec.continuous = true;
       rec.interimResults = true;
+      rec.onstart = () => { blocked = false; if (!$("mine").dataset.said) corner("🎙 …"); };
       rec.onresult = (e) => {
+        $("mine").dataset.said = "1";
         for (let i = e.resultIndex; i < e.results.length; i++) heard(e.results[i][0].transcript, e.results[i].isFinal);
       };
-      rec.onend = () => { listening = false; setTimeout(listen, 300); };
-      rec.onerror = () => { /* onend follows and restarts it */ };
+      rec.onend = () => { listening = false; if (!blocked) setTimeout(listen, 300); };
+      rec.onerror = (e) => {
+        // Refused — not a pause. Waiting for a tap, not retrying in a loop.
+        if (/not-allowed|service-not-allowed|audio-capture/.test(e.error || "")) { blocked = true; corner(W.tapSubs); }
+      };
     }
     rec.lang = lang === "zh" ? "zh-CN" : "en-US";
     if (listening) return;
     try { rec.start(); listening = true; } catch { /* already started */ }
   }
+  $("mine").onclick = () => { if (blocked) { blocked = false; listening = false; listen(); } };
   const micOn = () => { const a = tracks.find((t) => t.kind === "audio"); return !a || !a.isMuted; };
 
   // ---- THE CALL -----------------------------------------------------------
   const say = (t) => { $("state").textContent = t || ""; };
   async function start() {
     $("err").textContent = "";
+    ended = false;
+    listen(); // now, inside the tap — see THE DICTATION above
     try {
       if (!tracks.length) tracks = await LK.createLocalTracks({ audio: true, video: { facingMode: "user", resolution: LK.VideoPresets.h540.resolution } });
     } catch { $("err").textContent = W.cam; return; }
@@ -269,8 +286,9 @@
     for (const p of room.remoteParticipants.values()) if (p.name) them = p.name;
     say(room.remoteParticipants.size ? "" : W.wait);
     room.startAudio().catch(() => {});
-    if (!SR) { $("mine").hidden = false; $("mine").textContent = W.noSubs; }
-    else if (j.subtitles) listen();
+    if (!SR) corner(W.noSubs);
+    else if (!j.subtitles) { blocked = true; try { rec && rec.stop(); } catch { /* */ } corner(W.subsOff); }
+    else listen();
   }
 
   function finish() {
