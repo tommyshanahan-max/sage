@@ -2991,6 +2991,12 @@ save: ## Copy the board, the ledger and any partner board out to ./backups
 	    -v "$$PWD/backups:/out" alpine:3 \
 	    sh -c 'tar czf /out/data-'"$$stamp"'.tar.gz -C / board cfm wl' \
 	  && echo "wrote backups/data-$$stamp.tar.gz"
+	@# THE NEWEST TEN, AND NO MORE. Every deploy runs this, nothing ever
+	@# deleted one, and on 28 Sep they were 29G of a 75G disk: the board's
+	@# own writes started failing with ENOSPC ("waiting room lift failed")
+	@# before anybody knew backups had a size. Ten deploys back is further
+	@# than anybody has ever needed to reach; older ones go.
+	@ls -1t backups/data-*.tar.gz 2>/dev/null | tail -n +11 | xargs -r rm -f
 	@# And what went into it. Counted off the live volume, which is what was
 	@# just copied — see data-count.mjs for why this is printed at all.
 	@$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" \
