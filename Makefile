@@ -1039,8 +1039,19 @@ weidian-orders: ## Five years of 微店 orders, for a risk team:  make weidian-o
 	@# It runs here rather than in a container: the export is on whichever
 	@# machine downloaded it, and moving a file into a container to read it
 	@# is a step for nothing.
-	@test -n "$(FILE)" || { echo 'make weidian-orders FILE=~/Downloads/orders.csv'; exit 1; }
-	@node scripts/weidian-orders.mjs "$(FILE)"
+	@# NO ARGUMENT WHEN THERE IS AN OBVIOUS ONE. The export was downloaded
+	@# thirty seconds ago, so the newest thing in Downloads is it — and a
+	@# filename typed out of a download banner is a filename that will have a
+	@# bracket or a space in it and fail. It says which file it chose, and
+	@# FILE= still overrides when the guess is wrong.
+	@f="$(FILE)"; \
+	  if [ -z "$$f" ] && [ -d "$$HOME/Downloads" ]; then \
+	    n=$$(ls -t "$$HOME/Downloads" 2>/dev/null | head -1); \
+	    [ -n "$$n" ] && f="$$HOME/Downloads/$$n"; \
+	  fi; \
+	  test -n "$$f" || { echo 'nothing in ~/Downloads. make weidian-orders FILE=path'; exit 1; }; \
+	  printf '\n  reading %s\n' "$$f"; \
+	  node scripts/weidian-orders.mjs "$$f"
 
 weidian-json: ## Print what weidian-pull read: make weidian-json
 	@$(COMPOSE) --profile post run --rm --no-deps -T post-browser \
