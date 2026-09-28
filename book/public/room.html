@@ -1,0 +1,226 @@
+<!doctype html>
+<!-- THE LESSON ROOM. Two people, face to face, nothing else on the screen.
+     Opened from the link in the booking (the student's) or the one Tom sends
+     the teacher; the #key in the link says which of them this is. See
+     lib/room.mjs for how the two browsers find each other and why the video
+     never touches this server unless a network forces it through the relay. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Lesson</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:#111;color:#fff;
+    font:17px/1.4 -apple-system,BlinkMacSystemFont,"PingFang SC","Segoe UI",Helvetica,Arial,sans-serif}
+  .pre{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:14px;padding:24px;text-align:center;background:#faf7f1;color:#1c1917}
+  .pre h1{margin:0;font:700 28px/1.2 Georgia,"Songti SC",serif}
+  .pre p{margin:0;color:#57504a}
+  .pre video{width:220px;height:290px;object-fit:cover;border-radius:18px;background:#e8e2d8;transform:scaleX(-1)}
+  .go{border:0;border-radius:16px;padding:16px 40px;background:#c8261e;color:#fff;font-weight:700;font-size:18px;
+    font-family:inherit;cursor:pointer}
+  .err{color:#b3261e;min-height:1.2em}
+  .call{position:fixed;inset:0;background:#111}
+  #them{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#111}
+  #me{position:absolute;right:14px;top:max(14px,env(safe-area-inset-top));width:28vw;max-width:150px;
+    aspect-ratio:3/4;object-fit:cover;border-radius:14px;border:2px solid rgba(255,255,255,.7);
+    transform:scaleX(-1);background:#333}
+  .state{position:absolute;left:0;right:0;top:40%;text-align:center;font-size:19px;font-weight:600;
+    text-shadow:0 1px 6px rgba(0,0,0,.6)}
+  .state small{display:block;font-weight:400;font-size:15px;opacity:.8;margin-top:4px}
+  .bar{position:absolute;left:0;right:0;bottom:max(22px,env(safe-area-inset-bottom));
+    display:flex;justify-content:center;gap:18px}
+  .bar button{width:62px;height:62px;border-radius:50%;border:0;background:rgba(255,255,255,.18);
+    color:#fff;display:grid;place-items:center;cursor:pointer;backdrop-filter:blur(8px)}
+  .bar button.off{background:#fff;color:#111}
+  .bar button.end{background:#d93025}
+  .bar svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  [hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="pre" id="pre">
+  <h1 id="title"></h1>
+  <p id="when"></p>
+  <video id="preview" autoplay playsinline muted></video>
+  <button class="go" id="join"></button>
+  <p class="err" id="err"></p>
+</div>
+<div class="call" id="call" hidden>
+  <video id="them" autoplay playsinline></video>
+  <video id="me" autoplay playsinline muted></video>
+  <div class="state" id="state"></div>
+  <div class="bar">
+    <button id="mic" aria-label="Microphone"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+    <button id="cam" aria-label="Camera"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="13" height="10" rx="2"/><path d="M16 11l5-3v8l-5-3"/></svg></button>
+    <button id="end" class="end" aria-label="Leave"><svg viewBox="0 0 24 24"><path d="M3 15c5-5 13-5 18 0l-3 3-3-2v-3c-2-1-4-1-6 0v3l-3 2z"/></svg></button>
+  </div>
+</div>
+<script>
+(() => {
+  const zh = (navigator.language || "").startsWith("zh");
+  const W = zh ? {
+    title: "和{who}上课", join: "进入课堂", wait: "等{who}进来…", conn: "正在连接…",
+    lost: "连接断了，正在重连…", left: "{who}离开了", you: "你已离开", again: "重新进入",
+    cam: "请允许使用摄像头和麦克风，再试一次。", key: "这个链接打不开课堂。",
+    over: "这节课已经结束了。", net: "连不上，检查一下网络再试。", today: "今天",
+  } : {
+    title: "Class with {who}", join: "Join class", wait: "Waiting for {who}…", conn: "Connecting…",
+    lost: "Connection dropped — reconnecting…", left: "{who} left", you: "You left", again: "Join again",
+    cam: "Allow the camera and microphone, then try again.", key: "This link doesn't open a class.",
+    over: "This class is over.", net: "Can't connect — check the network and try again.", today: "Today",
+  };
+  const fill = (s, v) => s.replace(/\{(\w+)\}/g, (_, k) => v[k] ?? "");
+  const $ = (id) => document.getElementById(id);
+
+  const id = location.pathname.split("/").pop();
+  const key = location.hash.slice(1);
+  const BASE = location.pathname.replace(/\/room\/[a-f0-9]+$/, "");
+  const api = (what, body) => fetch(`${BASE}/api/room/${id}/${what}`, {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key, ...body }),
+  });
+
+  let info = null, local = null, pc = null, since = 0, pending = [], them = "", gone = false, polling = false;
+
+  // What the page says before anybody joins: who, and when, in Beijing time.
+  const whenWord = (iso) => {
+    const d = new Date(iso);
+    const today = new Date().toDateString() === d.toDateString();
+    return (today ? W.today + " " : d.toLocaleDateString([], { weekday: "short", day: "numeric" }) + " ")
+      + d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  };
+  (async () => {
+    $("join").textContent = W.join;
+    try {
+      const r = await fetch(`${BASE}/api/room/${id}/info?key=${encodeURIComponent(key)}`);
+      if (r.status === 403) { $("title").textContent = W.key; $("join").hidden = true; return; }
+      if (r.status === 410) { $("title").textContent = W.over; $("join").hidden = true; return; }
+      const j = await r.json();
+      $("title").textContent = fill(W.title, { who: j.them });
+      $("when").textContent = whenWord(j.start) + " · " + j.minutes + (zh ? " 分钟" : " min");
+    } catch { /* the join press will say so */ }
+    try {
+      local = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: 640 } }, audio: true });
+      $("preview").srcObject = local;
+    } catch { /* asked again on join, which is a tap and allowed to prompt */ }
+  })();
+
+  const say = (txt, sub) => {
+    $("state").textContent = txt || "";
+    if (sub) { const s = document.createElement("small"); s.textContent = sub; $("state").append(s); }
+  };
+  const send = (m) => api("send", { m }).catch(() => {});
+
+  function newPc() {
+    if (pc) { pc.onicecandidate = null; pc.ontrack = null; pc.close(); }
+    pending = [];
+    pc = new RTCPeerConnection({ iceServers: info.ice });
+    local.getTracks().forEach((t) => pc.addTrack(t, local));
+    pc.ontrack = (e) => { $("them").srcObject = e.streams[0]; };
+    pc.onicecandidate = (e) => { if (e.candidate) send({ type: "ice", c: e.candidate }); };
+    pc.onconnectionstatechange = () => {
+      const st = pc.connectionState;
+      if (st === "connected") say("");
+      else if (st === "connecting" || st === "new") say(W.conn);
+      else if (st === "disconnected" || st === "failed") {
+        say(W.lost);
+        // The student makes the call, so the student makes it again.
+        if (info.role === "s" && st === "failed") setTimeout(() => { if (!gone) offer(); }, 1500);
+      }
+    };
+  }
+  async function offer() {
+    newPc();
+    say(W.conn);
+    await pc.setLocalDescription(await pc.createOffer());
+    send({ type: "offer", sdp: pc.localDescription });
+  }
+  async function flush() {
+    for (const c of pending.splice(0)) { try { await pc.addIceCandidate(c); } catch { /* stale */ } }
+  }
+  async function handle(m) {
+    if (!m || gone) return;
+    if (m.type === "here") { if (info.role === "s") await offer(); else say(W.conn); }
+    else if (m.type === "left") { $("them").srcObject = null; say(fill(W.left, { who: them })); }
+    else if (m.type === "offer" && info.role === "t") {
+      newPc();
+      await pc.setRemoteDescription(m.sdp);
+      await flush();
+      await pc.setLocalDescription(await pc.createAnswer());
+      send({ type: "answer", sdp: pc.localDescription });
+    } else if (m.type === "answer" && pc && pc.signalingState === "have-local-offer") {
+      await pc.setRemoteDescription(m.sdp);
+      await flush();
+    } else if (m.type === "ice") {
+      if (pc && pc.remoteDescription) { try { await pc.addIceCandidate(m.c); } catch { /* stale */ } }
+      else pending.push(m.c);
+    }
+  }
+  async function loop() {
+    if (polling) return;
+    polling = true;
+    while (!gone) {
+      try {
+        const r = await fetch(`${BASE}/api/room/${id}/poll?key=${encodeURIComponent(key)}&since=${since}`);
+        if (!r.ok) { await new Promise((z) => setTimeout(z, 3000)); continue; }
+        const j = await r.json();
+        for (const x of j.msgs) { since = Math.max(since, x.n); try { await handle(x.m); } catch { /* next one */ } }
+      } catch { await new Promise((z) => setTimeout(z, 2000)); }
+    }
+    polling = false;
+  }
+
+  $("join").addEventListener("click", async () => {
+    $("err").textContent = "";
+    try {
+      if (!local) local = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: 640 } }, audio: true });
+    } catch { $("err").textContent = W.cam; return; }
+    let r;
+    try { r = await api("join"); } catch { $("err").textContent = W.net; return; }
+    if (!r.ok) { $("err").textContent = r.status === 410 ? W.over : r.status === 403 ? W.key : W.net; return; }
+    info = await r.json();
+    them = info.them;
+    since = info.since;
+    gone = false;
+    $("pre").hidden = true;
+    $("call").hidden = false;
+    $("me").srcObject = local;
+    say(fill(W.wait, { who: them }));
+    loop();
+    if (info.role === "s" && info.here) offer();
+  });
+
+  $("mic").addEventListener("click", () => {
+    const a = local && local.getAudioTracks()[0];
+    if (!a) return;
+    a.enabled = !a.enabled;
+    $("mic").classList.toggle("off", !a.enabled);
+  });
+  $("cam").addEventListener("click", () => {
+    const v = local && local.getVideoTracks()[0];
+    if (!v) return;
+    v.enabled = !v.enabled;
+    $("cam").classList.toggle("off", !v.enabled);
+  });
+  const leave = () => {
+    if (gone || !info) return;
+    gone = true;
+    navigator.sendBeacon?.(`${BASE}/api/room/${id}/leave`, JSON.stringify({ key }));
+    if (pc) pc.close();
+    pc = null;
+  };
+  $("end").addEventListener("click", () => {
+    leave();
+    $("call").hidden = true;
+    $("pre").hidden = false;
+    $("title").textContent = W.you;
+    $("when").textContent = "";
+    $("join").textContent = W.again;
+  });
+  addEventListener("pagehide", leave);
+
+})();
+</script>
+</body>
+</html>

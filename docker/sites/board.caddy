@@ -57,6 +57,29 @@
 		reverse_proxy analytics:3000
 	}
 
+	# THE BOOKING WIDGET, under the board's name so it needs no DNS record of
+	# its own — see the note over `book` in docker-compose.yml. /book/ is the
+	# demo page, /book/widget.js is what other apps load, /book/api/* is what
+	# the widget talks to. The prefix is stripped: the service has no idea
+	# where it is mounted, and the widget finds it from its own src.
+	# /book/lk is the live class's video server (LiveKit), whose browser side
+	# is a websocket; Caddy passes those through as they are. More specific
+	# than /book/*, so Caddy tries it first.
+	# Apple Pay's proof that Square may take payments for this site — Apple
+	# fetches it from exactly this address. The file is Square's, put in the
+	# book container by `make book-square`.
+	handle /.well-known/apple-developer-merchantid-domain-association {
+		rewrite * /apple-pay-domain
+		reverse_proxy book:8080
+	}
+	handle_path /book/lk/* {
+		reverse_proxy livekit:7880
+	}
+	@bookbare path /book
+	redir @bookbare /book/ 308
+	handle_path /book/* {
+		reverse_proxy book:8080
+	}
 	handle {
 		reverse_proxy board:8080
 	}

@@ -1969,6 +1969,87 @@ for it, and the authorise screen settles it.
 sheets are separate files and unskinned. One tap deep and it is the board
 again.
 
+## 28 Sep — disk was full; Book and Laonei's key are live
+
+- **The box's disk filled up** (95%, 3.7G free) and the board's writes were
+  failing: `waiting room lift failed: ENOSPC`. Cause: `make save` runs
+  before every deploy and never deleted a copy — 572 of them, 29G in
+  `~/tc/backups`. Cleared to the newest 10 (disk 50%, 37G free), and
+  `make save` now keeps ten. If ENOSPC is ever seen again, `du -xh /
+  --max-depth=3 | sort -h | tail` before anything else.
+- **The box is on `claude/messenger-device-improvement-azbdmn`**, which
+  contains all of `claude/coding-platform-vpn-alternative-i06xoc` as of
+  28 Sep. Deploying that branch without merging this one takes Book — and
+  Laonei's live API — off the box; it happened after 26 Sep.
+- `POST https://thexchange.app/book/api/lives` answers 401 (watched, 28 Sep).
+  livekit and `book-turn` (3479) are up.
+- **Laonei's key is installed**: `BOOK_APP_KEY` in
+  `/root/fern/deploy/fern/.env` on 45.32.58.178 (Laonei's own box, `fern`
+  service), piped there from this box so it was never on a screen. Rotate
+  with the same piped command (in this session's history / book/README).
+- Square not yet set up — no Buy or gift buttons until `make book-square`.
+
+## Book — lessons widget and video room, live 26 Sep, watched working
+
+A shelf of teachers, their free hours, bookings, and a video room per lesson,
+as a widget any app drops in (`book/`, `<div data-book="studypal">` plus
+`thexchange.app/book/widget.js`). **Watched working 26 Sep: a video call
+between Tom's phone and his Mac**, through `make book-test`'s two links.
+
+- Video is browser to browser; the relay (`tomscoding-book-turn`, coturn,
+  host networking, **3479** + UDP 49160–49200) carries it when a network
+  will not. 3479 since 28 Sep: the board's Chat calls got their own relay
+  (`tomscoding-turn`) on 3478, and two cannot share a port.
+  ufw was opened for those ports. Its password is minted by the book
+  container — nothing in `.env`.
+- Teachers only from the terminal: `make book-teacher`, `book-list` (prints
+  both room links per booking — send the teacher theirs), `book-off`,
+  `book-cancel`, `book-demo SHELF=…`, `book-test`.
+- The "studypal" shelf holds the four made-up demo teachers — replace them
+  with real ones before anybody is sent there.
+- **Study Pal's `/teachers` page is built and NOT deployed** (study-pal repo,
+  branch `claude/messenger-device-improvement-azbdmn`). Where Study Pal runs
+  on the box was not found in `~/study-pal`.
+- **The box is checked out on `claude/messenger-device-improvement-azbdmn`**
+  since 26 Sep, which merged `claude/coding-platform-vpn-alternative-i06xoc`
+  up to a7a44b4. So the "never deployed" sections below that were on that
+  branch by then are on the box and built — not watched working. A session
+  deploying the other branch without merging this one takes Book down.
+- Booking alerts, built 26 Sep, not yet deployed: each booking is a line
+  from Mo in a hand-kept room called **Bookings**, and the board pushes it
+  like any message — `make book-alerts` makes the room. Carries the
+  teacher's room link, ready to forward. Server酱 (WeChat) is optional
+  (`KEY=SCT...`): its WeChat login opened a blank page on Tom's phone.
+- Payment is only a link.
+- **Teams (Julia), built 26 Sep, not deployed.** A tutor is paid their fee
+  (¥100); the team lead gets 20% of the fee on top, Tom 40% of the fee on
+  top, so a student pays ¥160 (¥140 on Julia's own lessons). Julia's portal
+  is `/book/team#<key>` — `make book-lead NAME=Julia CUT=20 [FEE=100 …]`
+  prints it. Tutors join with `make book-teacher … FEE=100 LEAD=Julia`.
+  Payouts are BY HAND: `make book-owed` says who is owed what and prints her
+  bank card in full; `make book-paid NAME=Julia AMOUNT=…` records it. There
+  is no rail to a Chinese bank card (Stripe can't, Airwallex declined).
+  A lesson counts as earned once its start time passes — nothing checks it
+  actually happened.
+- **Live class, built 27 Sep, not deployed.** One teacher on camera, up to
+  10 watching (`BOOK_LIVE_MAX`), through LiveKit — the `tomscoding-livekit`
+  container, image `livekit/livekit-server:v1.13.7`, published 7881/tcp and
+  7882/udp, signalling via Caddy at `/book/lk`. `make book-live NAME=Julia`
+  prints two links: hers (sends) and one for the group (watch only). Tested
+  here against a real LiveKit 1.13.7 with Chromium's fake camera: 10 viewers
+  got 720p video and sound, the 11th was told "This class is full". Not yet
+  tried on a phone, nor across the Great Firewall. Wise payouts are next:
+  Tom's Wise Business account exists, verification pending.
+- **Selling during a live, built 28 Sep, not deployed.** For Tom at a market
+  in China, a global audience watching. Items added mid-live from the
+  streaming camera, a row under the video, Apple Pay / Google Pay / card
+  over the video through **Square (Australia)** — Tom has no Stripe account
+  for this, and Wise only takes Apple Pay on its own page. Gifts $2/$5/$20,
+  chat, takings with buyers' contacts. Tested here in fake-pay mode only.
+  Waiting on Tom: a Square AU account, then `make book-square` (ssh -t).
+  Laonei starts lives through `POST /api/lives` (`make book-app
+  NAME=laonei`); Laonei's own screens are the Laonei session's work.
+
 ## Voice messages — live 24 Sep, watched working on Tom's phone
 
 Hold the round button beside Send, speak, let go. No calls: Tom asked for

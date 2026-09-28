@@ -1402,6 +1402,108 @@ services:
   #
   # Off unless asked for: add `board-demo` to COMPOSE_PROFILES in .env.
   # ClaireTv: vertical micro-drama, and the console a partner runs it from.
+  # BOOK — one-to-one lessons, as a widget any app can carry.
+  #
+  # A shelf of teachers, their free hours, and bookings, behind a script tag:
+  #   <div data-book="studypal"></div>
+  #   <script src="https://<board domain>/book/widget.js" async></script>
+  # See book/server.mjs.
+  #
+  # ON THE BOARD'S PROFILE AND UNDER THE BOARD'S HOSTNAME, at /book/, so it
+  # comes up with the board and needs no DNS record or .env line of its own —
+  # see docker/sites/board.caddy. Nothing here is the board's: its own
+  # container, its own volume, and it can move to a name of its own without
+  # the widget changing, because the widget reads its address off its src.
+  #
+  # Teachers go on from the terminal (`make book-teacher`), never the web.
+  # ---------------------------------------------------------------------------
+  book:
+    profiles: ["board"]
+    build:
+      context: ./book
+    image: tomscoding-book:latest
+    container_name: tomscoding-book
+    restart: unless-stopped
+    user: "1000:1000"
+    environment:
+      BOOK_DIR: /data
+      TZ: Asia/Shanghai
+      # The box's public address, for the video relay below. Not a secret —
+      # it is the address every site here already answers on.
+      BOOK_TURN_IP: ${TOMSCODING_TURN_IP:-45.77.8.166}
+      # A WeChat message to Tom on every booking, through Server酱 — the same
+      # SendKey Study Pal's new-user alert uses. `make book-alerts` copies it
+      # here from /root/notify.env once. Unset, bookings are silent.
+      SCT_KEY: ${TOMSCODING_SCT_KEY:-}
+      # And, first, on Tom's own board: Mo says each booking into a room called
+      # Bookings and the phone buzzes. The board's own admin key, so nothing
+      # new to set — the book container asks board:8080 on the shared network.
+      BOOK_BOARD_KEY: ${TOMSCODING_BOARD_KEY:-}
+      # Square, for Apple Pay during a live (book/lib/pay.mjs). Written by
+      # `make book-square`; unset, a live shows no Buy or gift buttons.
+      BOOK_SQUARE_TOKEN: ${TOMSCODING_SQUARE_TOKEN:-}
+      BOOK_SQUARE_APP: ${TOMSCODING_SQUARE_APP:-}
+      BOOK_SQUARE_LOCATION: ${TOMSCODING_SQUARE_LOCATION:-}
+    volumes:
+      - book_data:/data
+    expose:
+      - "8080"
+    networks:
+      - tomscoding
+
+  # THE VIDEO RELAY for Book's lesson rooms and lives (TURN). Most calls go
+  # phone to phone and never touch it; it carries the ones where a network —
+  # Chinese mobile networks especially — will not let two phones reach each
+  # other.
+  #
+  # HOST NETWORKING, because a relay has to answer on the box's own address,
+  # on 3479 and on a range of UDP ports (49160–49200) for the media itself.
+  # 3479 because the board's own relay (`turn`, above) has 3478 — see
+  # book/lib/room.mjs. Its settings, password included, are written by the
+  # book container on start into the volume mounted here read-only, so there
+  # is nothing to put in .env. It never relays into private addresses.
+  book-turn:
+    profiles: ["board"]
+    image: coturn/coturn:4.6
+    container_name: tomscoding-book-turn
+    restart: unless-stopped
+    network_mode: host
+    depends_on:
+      - book
+    volumes:
+      - book_data:/book:ro
+    command: ["-c", "/book/turnserver.conf"]
+
+  # THE LIVE CLASS VIDEO SERVER — one teacher, up to ten watching (Book's
+  # /live pages). LiveKit, free and self-hosted. The teacher's phone sends its
+  # video here once and this sends it on to each viewer; phone to phone, the
+  # teacher would have to upload it ten times. See book/lib/live.mjs.
+  #
+  # Its settings, key included, are written by the book container on start
+  # into the volume mounted here read-only — nothing to put in .env, same as
+  # the relay. Browsers reach it two ways: its signalling through Caddy at
+  # /book/lk (no new certificate), and the video itself straight to this
+  # box's address on the two ports below. Published ports, not host
+  # networking, so Caddy finds it by name; Docker opens published ports
+  # itself, so there is no ufw rule to add.
+  livekit:
+    profiles: ["board"]
+    image: livekit/livekit-server:v1.13.7
+    container_name: tomscoding-livekit
+    restart: unless-stopped
+    depends_on:
+      - book
+    volumes:
+      - book_data:/book:ro
+    command: ["--config", "/book/livekit.yaml"]
+    expose:
+      - "7880"
+    ports:
+      - "7881:7881/tcp"
+      - "7882:7882/udp"
+    networks:
+      - tomscoding
+
   #
   # Off unless asked for, like every other optional service here — add `claire`
   # to COMPOSE_PROFILES in .env to switch it on. A new product does not get to
@@ -1828,6 +1930,9 @@ volumes:
   # anything: this is a separate product and the day it moves to its own box is
   # a day it should be one `docker volume` to carry.
   board_data:
+  # The booking shelf — teachers and who booked them. Its own volume so the
+  # day it moves to a box of its own it is one `docker volume` to carry.
+  book_data:
   # ClaireTv's catalogue, its coin ledger and who unlocked what. Its own
   # volume for the same reason every other product here has one: a separate
   # product, and the day it moves to its own box it should be one

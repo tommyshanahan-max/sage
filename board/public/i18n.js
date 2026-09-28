@@ -5653,11 +5653,14 @@ export const STRINGS = {
   "pm.send":           ["Send", "付钱"],
   "pm.wallet":         ["Wallet", "钱包"],
   "pm.walletSet":      ["Set up your wallet", "开通钱包"],
-  "pm.all":            ["See all", "查看全部"],
   // Closed, the wallet row says only what is owed to you — see money-card.js.
-  "pm.owed":           ["{amount} owed", "待收 {amount}"],
-  "pm.owedN":          ["{n} owed", "{n} 笔待收"],
-  "pm.openWallet":     ["Open wallet", "打开钱包"],
+  // The three tiles in the opened wallet — see money-card.js.
+  // On the blue wallet card — see money-card.js.
+  "pm.owedTo":         ["Owed to you", "待收"],
+  "pm.earnedAll":      ["Earned {amount}", "累计 {amount}"],
+  "pm.thisMonth":      ["This month {amount}", "本月 {amount}"],
+  "pm.reqsOwed":       ["Requests owed to you", "待收笔数"],
+  "pm.inMonth":        ["In this month", "本月收到"],
   /* THE FOLD ON YOUR OWN PAGE: the key, Google, and the safety note, one tap
      down. They are read once; the page is opened every day. */
   "me.keyFold":        ["Your key & sign-in", "你的钥匙和登录"],

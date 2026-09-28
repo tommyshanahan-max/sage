@@ -11,6 +11,7 @@ COMPOSE := docker compose
 # reassuring sentence and deploys nothing.
 .PHONY: board board-build mailout up-safe can-invite stripe-who call-check can-call board-log space who-am-i no-back evict
 .PHONY: version faces cards traffic tier-two try try-china china wallets mo-code visits app-state claire-episodes deal claire-key claire-count claire-seed claire-video listing invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who bells twice admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions whitelabel blocked partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check post post-status post-run post-login post-code post-logins weidian-pull weidian-json weidian-orders weidian-reviews shop-chapter review-tidy product-names review-move
+.PHONY: book-lead book-owed book-paid book-alerts book-teacher book-list book-off book-on book-cancel book-demo book-test book-live book-live-off book-app book-square
 
 help: ## Show this help
 	grep -hE '^[a-z0-9-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  \033[1m%-10s\033[0m %s\n", $$1, $$2}'
@@ -596,6 +597,92 @@ board-keys: ## Make the keypair the board needs to buzz a phone: make board-keys
 	@# job is to print two strings.
 	$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" \
 	  --entrypoint node board /seed/board-keys.mjs
+
+# ---------------------------------------------------------------------------
+# BOOK — the one-to-one lessons widget. See book/server.mjs.
+#
+# Values go in as environment variables so a name with a space, a "·" or
+# Chinese in it survives make, docker and the shell without any quoting.
+# Adding a teacher who is already on the shelf (same SHELF, same NAME)
+# updates them — changing hours is the same command with new HOURS.
+# ---------------------------------------------------------------------------
+BOOK_ENV = -e SHELF="$(SHELF)" -e NAME="$(NAME)" -e ZH="$(ZH)" -e LINE="$(LINE)" \
+  -e TAGS="$(TAGS)" -e PRICE="$(PRICE)" -e MINUTES="$(MINUTES)" -e PHOTO="$(PHOTO)" \
+  -e VOICE="$(VOICE)" -e PAY="$(PAY)" -e HOURS="$(HOURS)" -e ID="$(ID)" \
+  -e FEE="$(FEE)" -e LEAD="$(LEAD)" -e CUT="$(CUT)" -e AMOUNT="$(AMOUNT)" \
+  -e TITLE="$(TITLE)" -e WHEN="$(WHEN)" -e MAX="$(MAX)" -e OFF="$(OFF)"
+
+book-teacher: ## Add or update a teacher: make book-teacher SHELF=studypal NAME="Li Wei" PRICE=¥120 HOURS="mon-fri 19:00 20:00"
+	@$(COMPOSE) exec -T $(BOOK_ENV) book node cli.mjs teacher
+
+book-list: ## Every shelf, every teacher, and what is booked
+	@$(COMPOSE) exec -T book node cli.mjs list
+
+book-off: ## Hide a teacher: make book-off NAME="Li Wei"
+	@$(COMPOSE) exec -T $(BOOK_ENV) book node cli.mjs off
+
+book-on: ## Show a hidden teacher again: make book-on NAME="Li Wei"
+	@$(COMPOSE) exec -T $(BOOK_ENV) book node cli.mjs on
+
+book-cancel: ## Free a booked slot: make book-cancel ID=… (the id is in book-list)
+	@$(COMPOSE) exec -T $(BOOK_ENV) book node cli.mjs cancel
+
+book-alerts: ## Every lesson booked arrives in a "Bookings" room on your board, and buzzes: make book-alerts [WHO=Tom]
+	@# NO OUTSIDE SERVICE. Mo says each booking into a room kept by hand called
+	@# Bookings, and the board pushes it to your phone like any message — see
+	@# /api/admin/room-say in board/server.js. This makes that room with you in
+	@# it (WHO is your handle; Tom unless told otherwise) and restarts the book
+	@# container so it picks up the board's key. Safe to run twice.
+	@# KEY=SCT... as well sends a WeChat copy through Server酱 — optional; its
+	@# WeChat login opened a blank page on Tom's phone, which is why this exists.
+	@$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" --entrypoint node board \
+	  /seed/handroom.mjs http://board:8080 "$$(grep -E '^TOMSCODING_BOARD_KEY=' .env | tail -1 | cut -d= -f2-)" \
+	  --name "Bookings" --who "$(or $(WHO),Tom)" >/dev/null && echo "Bookings room: ready, with $(or $(WHO),Tom) in it."
+	@if [ -n "$(KEY)" ]; then \
+	  sed -i '/^TOMSCODING_SCT_KEY=/d' .env; printf '\nTOMSCODING_SCT_KEY=%s\n' "$(KEY)" >> .env; echo "WeChat copy: on."; fi
+	@$(COMPOSE) up -d book >/dev/null 2>&1 && echo "Booking alerts on: each lesson booked is a message from Mo in Bookings."
+
+book-lead: ## A team and its lead: make book-lead NAME=Julia [CUT=20] [FEE=100 HOURS="…" if she teaches too]
+	@$(COMPOSE) exec -T $(BOOK_ENV) book node cli.mjs lead
+
+book-owed: ## What each team lead is owed and where to send it, plus your own share this month
+	@$(COMPOSE) exec -T book node cli.mjs owed
+
+book-paid: ## After paying a lead by hand: make book-paid NAME=Julia AMOUNT=14000
+	@$(COMPOSE) exec -T $(BOOK_ENV) book node cli.mjs paid
+
+book-test: ## Book a test lesson and print its two video links (phone + laptop)
+	@$(COMPOSE) exec -T $(BOOK_ENV) book node cli.mjs test
+
+book-live: ## A live, up to 10 watching: make book-live NAME=Julia [TITLE="HSK 4"] [WHEN="2026-10-03 19:00"] [MAX=100]
+	@$(COMPOSE) exec -T $(BOOK_ENV) book node cli.mjs live
+
+book-app: ## A key for an app to start lives: make book-app NAME=laonei INTO=/path/to/laonei/.env [VAR=BOOK_APP_KEY] [OFF=1]
+	@# INTO: the key goes straight into that app's settings file as VAR=bk_…
+	@# and is never printed — a key on a screen is a key somebody copies into
+	@# a chat. The file's old copy is kept beside it. Without INTO it is shown
+	@# once, the old way. Either way, running it again makes a new key and the
+	@# old one stops working.
+	@if [ -n "$(INTO)" ] && [ -z "$(OFF)" ]; then \
+	  [ -f "$(INTO)" ] || { echo "  No file at $(INTO)."; exit 1; }; \
+	  k="$$($(COMPOSE) exec -T $(BOOK_ENV) -e RAW=1 book node cli.mjs app)"; \
+	  case "$$k" in bk_*) ;; *) echo "  No key made: $$k"; exit 1 ;; esac; \
+	  v="$(or $(VAR),BOOK_APP_KEY)"; \
+	  cp "$(INTO)" "$(INTO).before-book-app"; \
+	  { grep -v "^$$v=" "$(INTO)" || true; printf '%s=%s\n' "$$v" "$$k"; } > "$(INTO).next" && mv "$(INTO).next" "$(INTO)"; \
+	  echo "  $(NAME)'s key is in $(INTO) as $$v — not shown. Restart $(NAME) so it reads it."; \
+	else \
+	  $(COMPOSE) exec -T $(BOOK_ENV) book node cli.mjs app; \
+	fi
+
+book-square: ## Square keys, so a live takes Apple Pay (asks for 3 values; run with ssh -t)
+	@bash scripts/square-keys.sh
+
+book-live-off: ## Close a live class early: make book-live-off ID=…
+	@$(COMPOSE) exec -T $(BOOK_ENV) book node cli.mjs live-off
+
+book-demo: ## Four made-up teachers on a shelf (default "demo"; SHELF=studypal for Study Pal)
+	@$(COMPOSE) exec -T $(BOOK_ENV) book node cli.mjs demo
 
 ferry-keys: ## Make the keypair Ferry needs to send notifications
 	@# VAPID: the standard that lets a server push to Apple's and Google's
@@ -2922,6 +3009,12 @@ save: ## Copy the board, the ledger and any partner board out to ./backups
 	    -v "$$PWD/backups:/out" alpine:3 \
 	    sh -c 'tar czf /out/data-'"$$stamp"'.tar.gz -C / board cfm wl' \
 	  && echo "wrote backups/data-$$stamp.tar.gz"
+	@# THE NEWEST TEN, AND NO MORE. Every deploy runs this, nothing ever
+	@# deleted one, and on 28 Sep they were 29G of a 75G disk: the board's
+	@# own writes started failing with ENOSPC ("waiting room lift failed")
+	@# before anybody knew backups had a size. Ten deploys back is further
+	@# than anybody has ever needed to reach; older ones go.
+	@ls -1t backups/data-*.tar.gz 2>/dev/null | tail -n +11 | xargs -r rm -f
 	@# And what went into it. Counted off the live volume, which is what was
 	@# just copied — see data-count.mjs for why this is printed at all.
 	@$(COMPOSE) run --rm --no-deps -T -v "$(CURDIR)/scripts:/seed:ro" \

@@ -325,6 +325,18 @@
     white-space:nowrap;padding:0;border:0}
   .fact dd{flex:0 1 auto;font-weight:600}
   .fact dd small{display:inline;margin:0 0 0 .3rem}
+  /* THE BANNER OVER THE WALLET — see where it is built. Pale, like the tiles
+     under it: it is a fact about you, not a button. */
+  .standban{display:flex;align-items:center;gap:.75rem;margin:1.4rem 1.15rem 0;
+    padding:1.1rem 1.1rem;border-radius:1.1rem;background:#DCE7FB;color:#151B28}
+  @media (prefers-color-scheme:dark){.standban{background:#18233D;color:#E9EDF5}}
+  .standban b{flex:1;min-width:0;font-size:1.15rem;font-weight:700;line-height:1.3}
+  .standban b span{display:block;font-weight:500}
+  .standban .sbpill{flex:0 0 auto;display:flex;align-items:center;gap:.35rem;
+    background:rgba(255,255,255,.65);color:#3F68D8;font-size:.82rem;font-weight:600;
+    padding:.4rem .75rem;border-radius:99px;white-space:nowrap}
+  .standban .sbpill svg{width:1rem;height:1rem;fill:none;stroke:currentColor;stroke-width:2;
+    stroke-linecap:round;stroke-linejoin:round}
   /* The bio, three lines and a More — coarse first, the rest on a tap. */
   .goal.clamp{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
   .biomore{border:0;background:none;padding:.2rem 0 0;font:inherit;font-size:.95rem;
@@ -1356,7 +1368,8 @@ function paint() {
      drops `seq` on the way out, because "the 47th member" invites a
      comparison between two people the scheme treats as identical, and it is
      not a thing anybody can repeat to a friend. See store.LAYERS. */
-  if (q.layer) {
+  /* Not on your own page: there it is the banner over the wallet. */
+  if (q.layer && !q.mine) {
     const v = el("span");
     v.append(document.createTextNode(T("layer." + q.layer.key)));
     /* AND HOW MANY PLACES ARE LEFT, on your own page only. It is the one
@@ -1388,11 +1401,43 @@ function paint() {
      /dealio is web-only, so every button on the new one would bounce there. */
   /* FURTHER DOWN, AND QUIET. It was moved to the very top when it was a dark
      block of totals — 1074px down was too far for the question this page gets
-     opened to answer. It is a folding Wallet row now, the shape of the rows
-     around it (see money-card.js), and a row that quiet at the top of the
-     page would be shouting from the wrong place. Closed it says what is owed
-     and nothing else, so being further down costs a glance rather than a
-     scroll. */
+     opened to answer. It is Tom's option B now — a blue wallet card
+     over a white card of who owes you (see money-card.js) — under the
+     banner below, where a glance reaches it without a scroll. */
+  /* WHERE YOU STAND, AS ONE BANNER. On your own page the layer, the places
+     left in it, who follows you and what you are here for were four separate
+     things — a chip, a grey line, a caption and a pill — scattered down the
+     middle of the page. Tom's mockup put them in one blue band over the
+     wallet: the layer and its places on the left, the followers in a pill,
+     and "Here for" on one line under it. Other people's pages keep the
+     separate lines; this is the view from the inside. */
+  if (q.mine) {
+    const lay = q.layer ? T("layer." + q.layer.key) : "";
+    const left = q.layer && LEFT
+      ? T(LEFT.left === 1 ? "layer.last" : "layer.left", { n: LEFT.left }).replace(/[.。]$/, "") : "";
+    const fol = q.followers ? T(q.followers === 1 ? "bud.followersMine1" : "bud.followersMine",
+      { n: q.followers }) : "";
+    if (lay || fol) {
+      const ban = el("div", "standban");
+      /* The layer on one line and the places left on the next — the two
+         things the banner is for, big enough to read at a glance. */
+      const t = el("b");
+      t.append(document.createTextNode(lay + (left ? " \u2014" : "")));
+      if (left) t.append(el("span", null, left));
+      ban.append(t);
+      if (fol) {
+        const pill = el("span", "sbpill");
+        pill.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/>'
+          + '<path d="M3 19a6 6 0 0 1 12 0"/><circle cx="17" cy="9" r="2.6"/><path d="M15.5 14.2A5 5 0 0 1 21 19"/></svg>';
+        pill.append(document.createTextNode(fol));
+        ban.append(pill);
+      }
+      box.append(ban);
+    }
+    /* "Here for" is not repeated here: it is what you chose in Edit, and a
+       third line under the banner was the clutter Tom asked to lose. */
+  }
+
   if (q.mine) {
     if (NATIVE) mountWalletCard(box, device);
     else {
@@ -1433,7 +1478,7 @@ function paint() {
   /* AND THE SAME ON THE LINE UNDER IT. "12 following them", read by the them
      in question, is the page talking about its owner as though they were not
      holding it. */
-  if (q.followers) {
+  if (q.followers && !q.mine) {
     const one = q.followers === 1;
     const words = q.mine
       ? T(one ? "bud.followersMine1" : "bud.followersMine", { n: q.followers })
@@ -1475,7 +1520,7 @@ function paint() {
    *
    * Two words above them fixes it. The chips are unchanged and still say what
    * they always said; what changed is that the page now says what they are. */
-  if (Array.isArray(q.rooms) && q.rooms.length) {
+  if (!q.mine && Array.isArray(q.rooms) && q.rooms.length) {
     head.append(el("p", "chipcap", T("bud.hereFor")));
     const chips = el("div", "chips");
     for (const r of q.rooms) chips.append(el("span", "chip", T("room." + r)));
