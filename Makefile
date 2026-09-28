@@ -624,8 +624,23 @@ book-test: ## Book a test lesson and print its two video links (phone + laptop)
 book-live: ## A live, up to 10 watching: make book-live NAME=Julia [TITLE="HSK 4"] [WHEN="2026-10-03 19:00"] [MAX=100]
 	@$(COMPOSE) exec -T $(BOOK_ENV) book node cli.mjs live
 
-book-app: ## A key for an app to start lives itself (shown once): make book-app NAME=laonei [OFF=1 to remove]
-	@$(COMPOSE) exec -T $(BOOK_ENV) book node cli.mjs app
+book-app: ## A key for an app to start lives: make book-app NAME=laonei INTO=/path/to/laonei/.env [VAR=BOOK_APP_KEY] [OFF=1]
+	@# INTO: the key goes straight into that app's settings file as VAR=bk_…
+	@# and is never printed — a key on a screen is a key somebody copies into
+	@# a chat. The file's old copy is kept beside it. Without INTO it is shown
+	@# once, the old way. Either way, running it again makes a new key and the
+	@# old one stops working.
+	@if [ -n "$(INTO)" ] && [ -z "$(OFF)" ]; then \
+	  [ -f "$(INTO)" ] || { echo "  No file at $(INTO)."; exit 1; }; \
+	  k="$$($(COMPOSE) exec -T $(BOOK_ENV) -e RAW=1 book node cli.mjs app)"; \
+	  case "$$k" in bk_*) ;; *) echo "  No key made: $$k"; exit 1 ;; esac; \
+	  v="$(or $(VAR),BOOK_APP_KEY)"; \
+	  cp "$(INTO)" "$(INTO).before-book-app"; \
+	  { grep -v "^$$v=" "$(INTO)" || true; printf '%s=%s\n' "$$v" "$$k"; } > "$(INTO).next" && mv "$(INTO).next" "$(INTO)"; \
+	  echo "  $(NAME)'s key is in $(INTO) as $$v — not shown. Restart $(NAME) so it reads it."; \
+	else \
+	  $(COMPOSE) exec -T $(BOOK_ENV) book node cli.mjs app; \
+	fi
 
 book-square: ## Square keys, so a live takes Apple Pay (asks for 3 values; run with ssh -t)
 	@bash scripts/square-keys.sh

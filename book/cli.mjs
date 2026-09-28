@@ -185,6 +185,9 @@ if (cmd === "teacher") {
   const key = "bk_" + randomBytes(24).toString("hex");
   db.apps.push({ name, hash: createHash("sha256").update(key).digest("hex"), at: new Date().toISOString() });
   save(db);
+  // RAW=1: the key alone, for `make book-app INTO=…` to write straight into
+  // the app's settings file without it ever being on a screen.
+  if (E.RAW) { process.stdout.write(key); process.exit(0); }
   console.log(`Key for ${name} — goes in ${name}'s own server settings, never in a page:\n\n  ${key}\n`);
   console.log(`It is shown once. Lost: run this again for a new one (the old one stops).`);
 } else if (cmd === "test") {
