@@ -2011,7 +2011,8 @@ reported it working on his phone** after the fix that starts dictation
 inside the Join tap (iOS refuses it otherwise).
 **NOT YET DEPLOYED (29 Sep):** 786918c (中/EN button in the call, spoken
 language read from the words, one subtitle line) and 59ebf9e (send on a
-pause — iPhone withholds "final"; logs `subtitle en 812ms`). Tom's first
+pause — iPhone withholds "final"; logs `subtitle en 812ms`) and 80acbf0
+(✓ when delivered; tap the subtitle for the whole conversation). Tom's first
 tests were two phones in one room: BOTH dictated his voice, one set to 中,
 so each showed a different "translation". Mute the phone not being spoken
 into. Real test with his wife next. Haiku for speed offered, not chosen. Book now
