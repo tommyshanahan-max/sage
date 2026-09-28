@@ -1,0 +1,38 @@
+# LAONEI'S TRANSLATED CALLS, under Laonei's own name — call.laonei.co.
+#
+# The call pages live in the book container (book/public/call.html) and were
+# first reachable only as thexchange.app/book/call. Inside the Laonei app
+# nobody sees the address, but the LINK is the product — it is what one
+# person sends another, often somebody in China who has never heard of any of
+# this — and a Laonei call arriving as a link to a different company's site
+# is a link people hesitate over. So the same pages answer here too, at the
+# root: call.laonei.co/call/<id>#<key>.
+#
+# Needs one DNS record, `call` → this box, at laonei.co's registrar. Until it
+# exists Caddy cannot get a certificate for the name and says so in its log;
+# every other site here carries on regardless.
+#
+# The video still signals through thexchange.app/book/lk (the ticket names
+# it), which the page reaches cross-origin; only the pages and their API
+# move. /lk here too, so a later switch of BOOK_PUBLIC is a .env change.
+{$TOMSCODING_CALL_DOMAIN:call.localhost} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "same-origin"
+		-Server
+	}
+
+	# The bare name opens the start page.
+	@root path /
+	redir @root /call 302
+
+	handle_path /lk/* {
+		reverse_proxy livekit:7880
+	}
+	handle {
+		reverse_proxy book:8080
+	}
+}
