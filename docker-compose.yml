@@ -1441,6 +1441,9 @@ services:
       BOOK_BOARD_KEY: ${TOMSCODING_BOARD_KEY:-}
       # Square, for Apple Pay during a live (book/lib/pay.mjs). Written by
       # `make book-square`; unset, a live shows no Buy or gift buttons.
+      # The translated calls' subtitles (book/lib/speak.mjs): the same key the
+      # board's translate button uses, capped per call and per day there.
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       BOOK_SQUARE_TOKEN: ${TOMSCODING_SQUARE_TOKEN:-}
       BOOK_SQUARE_APP: ${TOMSCODING_SQUARE_APP:-}
       BOOK_SQUARE_LOCATION: ${TOMSCODING_SQUARE_LOCATION:-}

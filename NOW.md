@@ -1996,6 +1996,19 @@ again.
   then send the API docs link (never keys). `lib/pay.mjs` (Square) is then
   swapped for PingPong; the rest of the selling stays.
 
+## Translated video calls — built 29 Sep, not deployed
+
+`thexchange.app/book/call`: start a call, send the link, both talk, and each
+side's words appear under the other's video translated (English ⇄ 中文)
+about a second later. Free; capped per call and per day (`book/lib/speak.mjs`).
+Speech is heard by each phone's own dictation — works on iPhones (in China
+too) and on Chrome outside China; NOT on Android inside China (Google's
+dictation is blocked). Translation is Claude on the box's ANTHROPIC_API_KEY.
+Tested here with two browsers and simulated speech + fake translation: video
+both ways, live words, translated subtitles, third person refused. Real
+dictation and real translation not yet tried — needs two phones. Book now
+has one npm dependency (the Anthropic SDK), installed from its lockfile.
+
 ## Book — lessons widget and video room, live 26 Sep, watched working
 
 A shelf of teachers, their free hours, bookings, and a video room per lesson,

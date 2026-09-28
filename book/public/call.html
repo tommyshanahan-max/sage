@@ -1,0 +1,291 @@
+<!doctype html>
+<!-- A TRANSLATED CALL. Start one, send the link, talk: whatever the other
+     person says appears under their video in your language, a second after
+     they say it. See lib/calls.mjs for how the pieces fit.
+
+     Each phone hears ITS OWN speaker, with the browser's built-in dictation
+     (the same thing behind the microphone key on the keyboard) — so no audio
+     is sent anywhere to be transcribed, and there is nothing to pay for until
+     a finished sentence is translated. Where the browser has no dictation,
+     the call still works; that side's words just carry no subtitles. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Call</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:#111;color:#fff;
+    font:17px/1.4 -apple-system,BlinkMacSystemFont,"PingFang SC","Segoe UI",Helvetica,Arial,sans-serif}
+  button,input{font-family:inherit}
+  .pre{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:18px;padding:24px;text-align:center;background:#faf7f1;color:#1c1917}
+  .pre h1{margin:0;font:700 34px/1.15 Georgia,"Songti SC",serif}
+  .pre p{margin:0;color:#57504a;font-size:19px}
+  .pre video{width:200px;height:260px;object-fit:cover;border-radius:18px;background:#e8e2d8;transform:scaleX(-1)}
+  .langs{display:flex;gap:10px}
+  .langs button{border:2px solid #d8d2c8;background:#fff;border-radius:14px;padding:12px 22px;font-size:19px;font-weight:700;cursor:pointer;color:#1c1917}
+  .langs button.on{border-color:#1c1917;background:#1c1917;color:#fff}
+  .go{border:0;border-radius:16px;padding:17px 44px;background:#c8261e;color:#fff;font-weight:700;font-size:19px;cursor:pointer}
+  .go.dark{background:#1c1917}
+  .link{width:100%;max-width:420px;background:#fff;border:2px solid #e5e2dc;border-radius:14px;padding:14px;font-size:16px;word-break:break-all;color:#1c1917}
+  .row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+  .err{color:#b3261e;min-height:1.2em}
+  .call{position:fixed;inset:0;background:#111}
+  #them{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#111}
+  #me{position:absolute;right:14px;top:max(14px,env(safe-area-inset-top));width:26vw;max-width:140px;
+    aspect-ratio:3/4;object-fit:cover;border-radius:14px;border:2px solid rgba(255,255,255,.7);transform:scaleX(-1);background:#333}
+  .state{position:absolute;left:0;right:0;top:38%;padding:0 24px;text-align:center;font-size:20px;font-weight:600;text-shadow:0 1px 6px rgba(0,0,0,.6)}
+  .subs{position:absolute;left:14px;right:14px;bottom:calc(max(22px,env(safe-area-inset-bottom)) + 84px);
+    display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;pointer-events:none}
+  .sub{background:rgba(0,0,0,.62);border-radius:12px;padding:8px 14px;max-width:100%}
+  .sub b{display:block;font-size:24px;line-height:1.3;font-weight:700}
+  .sub small{display:block;font-size:15px;opacity:.75;margin-top:2px}
+  .sub.live b{opacity:.75;font-weight:600}
+  .mine{position:absolute;left:14px;top:max(14px,env(safe-area-inset-top));max-width:60%;font-size:15px;
+    background:rgba(0,0,0,.45);border-radius:10px;padding:5px 10px;opacity:.9}
+  .bar{position:absolute;left:0;right:0;bottom:max(22px,env(safe-area-inset-bottom));display:flex;justify-content:center;gap:18px}
+  .bar button{width:60px;height:60px;border-radius:50%;border:0;background:rgba(255,255,255,.18);color:#fff;display:grid;place-items:center;cursor:pointer;backdrop-filter:blur(8px)}
+  .bar button.off{background:#fff;color:#111}
+  .bar button.end{background:#d93025}
+  .bar svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  [hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="pre" id="pre">
+  <h1 id="title"></h1>
+  <p id="sub"></p>
+  <div class="langs" id="langs"><button data-l="en">English</button><button data-l="zh">中文</button></div>
+  <video id="preview" autoplay playsinline muted hidden></video>
+  <div class="link" id="link" hidden></div>
+  <div class="row" id="share" hidden><button class="go dark" id="send"></button></div>
+  <button class="go" id="go"></button>
+  <p class="err" id="err"></p>
+</div>
+<div class="call" id="call" hidden>
+  <video id="them" autoplay playsinline></video>
+  <video id="me" autoplay playsinline muted></video>
+  <div class="state" id="state"></div>
+  <div class="mine" id="mine" hidden></div>
+  <div class="subs" id="subs"></div>
+  <div class="bar">
+    <button id="mic" aria-label="Microphone"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+    <button id="cam" aria-label="Camera"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="13" height="10" rx="2"/><path d="M16 11l5-3v8l-5-3"/></svg></button>
+    <button id="end" class="end" aria-label="Leave"><svg viewBox="0 0 24 24"><path d="M3 15c5-5 13-5 18 0l-3 3-3-2v-3c-2-1-4-1-6 0v3l-3 2z"/></svg></button>
+  </div>
+</div>
+<script src="livekit.js"></script>
+<script>
+(() => {
+  const zhUI = (navigator.language || "").startsWith("zh");
+  const W = zhUI ? {
+    start: "跟谁都能聊", startSub: "对方说什么，都会变成你的语言字幕。", startGo: "发起通话",
+    link: "把链接发给对方", send: "分享链接", copied: "已复制", join: "加入通话", joinTitle: "视频通话",
+    joinSub: "字幕会翻译成你的语言。", wait: "等对方加入…", conn: "正在连接…", left: "对方挂断了", you: "通话已结束",
+    again: "重新加入", cam: "请允许使用摄像头和麦克风，再试一次。", key: "这个链接打不开通话。", over: "这个通话已过期。",
+    full: "这个通话已经有两个人了。", net: "连不上，检查一下网络再试。", noSubs: "这个浏览器不支持字幕，换 Safari 或 Chrome。",
+    lost: "连接断了，正在重连…",
+  } : {
+    start: "Talk to anyone.", startSub: "What they say appears in your language.", startGo: "Start a call",
+    link: "Send them this link", send: "Share link", copied: "Copied", join: "Join call", joinTitle: "Video call",
+    joinSub: "Subtitles in your language.", wait: "Waiting for them to join…", conn: "Connecting…", left: "They left the call", you: "Call ended",
+    again: "Join again", cam: "Allow the camera and microphone, then try again.", key: "This link doesn't open a call.", over: "This call link has expired.",
+    full: "This call already has two people.", net: "Can't connect — check the network and try again.", noSubs: "No subtitles in this browser — try Safari or Chrome.",
+    lost: "Connection dropped — reconnecting…",
+  };
+  const $ = (id) => document.getElementById(id);
+  const LK = window.LivekitClient;
+  const store = { get: (k) => { try { return localStorage.getItem(k) || ""; } catch { return ""; } },
+    set: (k, v) => { try { localStorage.setItem(k, v); } catch { /* private window */ } } };
+
+  const m = location.pathname.match(/\/call\/([a-f0-9]{16})$/);
+  let id = m ? m[1] : "";
+  let key = location.hash.slice(1);
+  const BASE = location.pathname.replace(/\/call(\/[a-f0-9]{16})?$/, "");
+  const api = (what, body) => fetch(`${BASE}/api/call/${id}/${what}`, {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key, ...body }),
+  });
+
+  /* I SPEAK — the one choice on the screen: it decides what the dictation
+     listens for and what the other person's words are translated into.
+     Guessed from the phone's language; remembered once changed. */
+  let lang = store.get("call:lang") || (zhUI ? "zh" : "en");
+  const drawLangs = () => [...$("langs").children].forEach((b) => b.classList.toggle("on", b.dataset.l === lang));
+  $("langs").onclick = (e) => { const l = e.target.dataset && e.target.dataset.l; if (l) { lang = l; store.set("call:lang", l); drawLangs(); } };
+  drawLangs();
+
+  let room = null, tracks = [], me = "", ended = false;
+
+  // ---- THE START PAGE: make a call, send the link ------------------------
+  const linkOf = () => `${location.origin}${BASE}/call/${id}#${key}`;
+  if (!id) {
+    $("title").textContent = W.start;
+    $("sub").textContent = W.startSub;
+    $("go").textContent = W.startGo;
+    $("go").onclick = async () => {
+      $("err").textContent = "";
+      const r = await fetch(`${BASE}/api/call`, { method: "POST" }).catch(() => null);
+      if (!r || !r.ok) { $("err").textContent = W.net; return; }
+      ({ id, key } = await r.json());
+      history.replaceState(null, "", `${BASE}/call/${id}#${key}`);
+      $("sub").textContent = W.link;
+      $("link").textContent = linkOf();
+      $("link").hidden = false;
+      $("share").hidden = false;
+      $("send").textContent = W.send;
+      $("go").textContent = W.join;
+      $("go").onclick = start;
+    };
+  } else {
+    $("title").textContent = W.joinTitle;
+    $("sub").textContent = W.joinSub;
+    $("go").textContent = W.join;
+    $("go").onclick = start;
+  }
+  $("send").onclick = async () => {
+    try { if (navigator.share) { await navigator.share({ url: linkOf() }); return; } } catch { /* cancelled */ }
+    try { await navigator.clipboard.writeText(linkOf()); $("send").textContent = W.copied; } catch { /* the link is on screen */ }
+  };
+
+  // ---- SUBTITLES ----------------------------------------------------------
+  /* The other person's line: their words as they speak (in their language,
+     dimmed), then the translation in mine once the sentence is finished. */
+  let fade = 0;
+  function showSub(big, small, live) {
+    const s = document.createElement("div");
+    s.className = "sub" + (live ? " live" : "");
+    const b = document.createElement("b"); b.textContent = big;
+    s.append(b);
+    if (small) { const sm = document.createElement("small"); sm.textContent = small; s.append(sm); }
+    const box = $("subs");
+    if (box.lastChild && box.lastChild.classList.contains("live")) box.lastChild.remove();
+    box.append(s);
+    while (box.children.length > 2) box.firstChild.remove();
+    clearTimeout(fade);
+    fade = setTimeout(() => box.replaceChildren(), 9000);
+  }
+  function hear(msg, fromServer) {
+    if (msg.t === "live" && !fromServer) showSub(msg.text, "", true);
+    if (msg.t === "cap" && fromServer && msg.who !== me) {
+      const mine = msg.lang === lang ? msg.text : (msg.tr && msg.tr[lang]) || msg.text;
+      showSub(mine, mine === msg.text ? "" : msg.text, false);
+    }
+  }
+
+  /* MY OWN WORDS, as the phone heard them, small in the corner — so a
+     speaker can see it is listening, and catch it mishearing. */
+  let lastLive = 0;
+  const enc = new TextEncoder();
+  function heard(text, final) {
+    text = String(text || "").trim();
+    if (!text || !room) return;
+    $("mine").hidden = false;
+    $("mine").textContent = text;
+    if (!final) {
+      // At most five a second: the other phone only needs to see it moving.
+      if (Date.now() - lastLive < 200) return;
+      lastLive = Date.now();
+      room.localParticipant.publishData(enc.encode(JSON.stringify({ t: "live", text })), { reliable: false, topic: "call" }).catch(() => {});
+      return;
+    }
+    api("say", { me, text, lang }).catch(() => {});
+  }
+  window.__heard = heard; // for tests: what the dictation would have said
+
+  /* THE DICTATION. Chrome and Safari call it (webkit)SpeechRecognition. It
+     stops by itself after a pause, so it is restarted for as long as the call
+     is on and the microphone is open. */
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  let rec = null, listening = false;
+  function listen() {
+    if (!SR || ended || !micOn()) return;
+    if (!rec) {
+      rec = new SR();
+      rec.continuous = true;
+      rec.interimResults = true;
+      rec.onresult = (e) => {
+        for (let i = e.resultIndex; i < e.results.length; i++) heard(e.results[i][0].transcript, e.results[i].isFinal);
+      };
+      rec.onend = () => { listening = false; setTimeout(listen, 300); };
+      rec.onerror = () => { /* onend follows and restarts it */ };
+    }
+    rec.lang = lang === "zh" ? "zh-CN" : "en-US";
+    if (listening) return;
+    try { rec.start(); listening = true; } catch { /* already started */ }
+  }
+  const micOn = () => { const a = tracks.find((t) => t.kind === "audio"); return !a || !a.isMuted; };
+
+  // ---- THE CALL -----------------------------------------------------------
+  const say = (t) => { $("state").textContent = t || ""; };
+  async function start() {
+    $("err").textContent = "";
+    try {
+      if (!tracks.length) tracks = await LK.createLocalTracks({ audio: true, video: { facingMode: "user", resolution: LK.VideoPresets.h540.resolution } });
+    } catch { $("err").textContent = W.cam; return; }
+    let r;
+    try { r = await api("join", { lang }); } catch { $("err").textContent = W.net; return; }
+    if (!r.ok) { $("err").textContent = ({ 403: W.key, 410: W.over, 409: W.full })[r.status] || W.net; return; }
+    const j = await r.json();
+    me = j.me;
+    ended = false;
+    room = new LK.Room({ adaptiveStream: true, dynacast: true });
+    room.on(LK.RoomEvent.TrackSubscribed, (track) => {
+      if (track.kind === "video") { track.attach($("them")); say(""); }
+      else document.body.append(track.attach());
+    });
+    room.on(LK.RoomEvent.TrackUnsubscribed, (track) => track.detach().forEach((e) => { if (e !== $("them")) e.remove(); }));
+    room.on(LK.RoomEvent.ParticipantDisconnected, () => { $("them").srcObject = null; say(W.left); });
+    room.on(LK.RoomEvent.ParticipantConnected, () => say(W.conn));
+    room.on(LK.RoomEvent.DataReceived, (payload, p, kind, topic) => {
+      try { hear(JSON.parse(new TextDecoder().decode(payload)), !p); } catch { /* not ours */ }
+    });
+    room.on(LK.RoomEvent.Reconnecting, () => say(W.lost));
+    room.on(LK.RoomEvent.Reconnected, () => say(""));
+    room.on(LK.RoomEvent.Disconnected, () => { if (!ended) finish(); });
+    $("pre").hidden = true;
+    $("call").hidden = false;
+    say(W.conn);
+    try { await room.connect(j.url, j.token); }
+    catch { room = null; $("call").hidden = true; $("pre").hidden = false; $("err").textContent = W.net; return; }
+    for (const t of tracks) await room.localParticipant.publishTrack(t);
+    const v = tracks.find((t) => t.kind === "video");
+    if (v) v.attach($("me"));
+    say(room.remoteParticipants.size ? "" : W.wait);
+    room.startAudio().catch(() => {});
+    if (!SR) { $("mine").hidden = false; $("mine").textContent = W.noSubs; }
+    else if (j.subtitles) listen();
+  }
+
+  function finish() {
+    ended = true;
+    try { rec && rec.stop(); } catch { /* not running */ }
+    const was = room; room = null;
+    if (was) was.disconnect();
+    tracks.forEach((t) => t.stop()); tracks = [];
+    $("call").hidden = true;
+    $("pre").hidden = false;
+    $("link").hidden = true; $("share").hidden = true;
+    $("title").textContent = W.you;
+    $("sub").textContent = "";
+    $("go").textContent = W.again;
+    $("go").onclick = start;
+  }
+  $("end").onclick = finish;
+  $("mic").onclick = () => {
+    const a = tracks.find((t) => t.kind === "audio");
+    if (!a) return;
+    if (a.isMuted) { a.unmute(); listen(); } else { a.mute(); try { rec && rec.stop(); } catch { /* */ } }
+    $("mic").classList.toggle("off", a.isMuted);
+  };
+  $("cam").onclick = () => {
+    const v = tracks.find((t) => t.kind === "video");
+    if (!v) return;
+    if (v.isMuted) v.unmute(); else v.mute();
+    $("cam").classList.toggle("off", v.isMuted);
+  };
+  addEventListener("pagehide", () => { if (room) room.disconnect(); });
+})();
+</script>
+</body>
+</html>

@@ -2,5 +2,8 @@
   "name": "book",
   "private": true,
   "type": "module",
-  "description": "One-to-one lessons: a shelf of teachers, their free hours, and a widget any app can drop in."
+  "description": "One-to-one lessons: a shelf of teachers, their free hours, and a widget any app can drop in.",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.124.0"
+  }
 }

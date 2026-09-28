@@ -1,12 +1,15 @@
 # Book: a shelf of teachers and a widget any of Tom's apps can drop in.
 #
-# node:22-slim, the base the board and Ferry already build on. No npm install:
-# the server is node's own http module and nothing else, so there is nothing
-# on this box that could be updated out from under it.
+# node:22-slim, the base the board and Ferry already build on. ONE dependency,
+# Anthropic's SDK, for the translated calls (lib/speak.mjs) — everything else
+# is node's own http module. Installed from the lockfile, so what runs here is
+# exactly what was tested, and a new release cannot arrive unannounced.
 FROM node:22-slim
 
 WORKDIR /app
-COPY package.json server.mjs cli.mjs ./
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev --no-audit --no-fund
+COPY server.mjs cli.mjs ./
 COPY lib ./lib
 COPY public ./public
 

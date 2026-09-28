@@ -61,6 +61,16 @@ asks for three values from Square's Developer Console and turns Apple Pay on
 for the domain. Without it a live has no Buy or gift buttons. To try the page
 with no account: `BOOK_SQUARE_FAKE=1` (refused when a real token is set).
 
+## Translated calls
+
+`/book/call`: press Start, send the link, talk. Each phone's own dictation
+hears its speaker; each finished sentence is translated (English ⇄ 中文) and
+shown under the other person's video about a second later. Two people per
+call, link good for a day, free — capped per call and per day in
+`lib/speak.mjs`. Needs `ANTHROPIC_API_KEY` (the board's). Dictation is the
+browser's: Safari and Chrome; Chrome's uses Google, so it does not work on
+Android inside China.
+
 ## Another app starting lives (Laonei)
 
 ```

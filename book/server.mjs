@@ -38,6 +38,7 @@ import * as notify from "./lib/notify.mjs";
 import { liveSetup } from "./lib/live.mjs";
 import * as market from "./lib/market.mjs";
 import * as apps from "./lib/apps.mjs";
+import * as calls from "./lib/calls.mjs";
 
 // Where the service is reached from outside — for links put in messages.
 const PUBLIC = (process.env.BOOK_PUBLIC || "https://thexchange.app/book").replace(/\/$/, "");
@@ -57,6 +58,9 @@ const FILES = {
   // and unpkg are slow or blocked on plenty of Chinese networks, and a live
   // class that cannot load its script is a black screen.
   "/livekit.js": ["public/vendor/livekit-client.umd.js", "text/javascript; charset=utf-8"],
+  // The same, one folder down, for /call/<id>: the call page names it
+  // relatively so it works at /call and at /call/<id> alike.
+  "/call/livekit.js": ["public/vendor/livekit-client.umd.js", "text/javascript; charset=utf-8"],
 };
 
 /* A BOOKING BUCKET PER ADDRESS: ten, then one more every six minutes. A
@@ -216,6 +220,17 @@ const server = http.createServer(async (req, res) => {
     try { return send(res, 200, readFileSync(path.join(HERE, "public/live.html")), "text/html; charset=utf-8"); }
     catch { return send(res, 404, { error: "missing" }); }
   }
+  /* ---- A TRANSLATED CALL — see lib/calls.mjs. /call is the start page,
+     /call/<id>#<key> the call itself. */
+  if (req.method === "GET" && /^\/call(\/[a-f0-9]{16})?$/.test(p)) {
+    try { return send(res, 200, readFileSync(path.join(HERE, "public/call.html")), "text/html; charset=utf-8"); }
+    catch { return send(res, 404, { error: "missing" }); }
+  }
+  if (p === "/api/call" || p.startsWith("/api/call/")) {
+    const ip = String(req.headers["x-forwarded-for"] || req.socket.remoteAddress || "").split(",")[0].trim();
+    if (await calls.routes(req, res, p, { send, readBody, allowed, ip })) return;
+  }
+
   // An app starting and ending its own lives — lib/apps.mjs.
   if (p === "/api/lives" || p.startsWith("/api/lives/")) {
     if (await apps.routes(req, res, p, { send, readBody })) return;
