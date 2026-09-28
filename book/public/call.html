@@ -110,7 +110,21 @@
   /* I SPEAK — the one choice on the screen: it decides what the dictation
      listens for and what the other person's words are translated into.
      Guessed from the phone's language; remembered once changed. */
-  let lang = store.get("call:lang") || (zhUI ? "zh" : "en");
+  /* AN APP CARRYING THIS PAGE (Laonei, in a frame) says who is calling and
+     in what language: /call?name=Tom&lang=zh. Both optional; a person who
+     opened a link from a chat gets the guesses below. */
+  const q = new URLSearchParams(location.search);
+  const myName = (q.get("name") || store.get("call:name") || "").slice(0, 30);
+  let lang = (q.get("lang") === "zh" || q.get("lang") === "en") ? q.get("lang") : store.get("call:lang") || (zhUI ? "zh" : "en");
+  /* AND IS TOLD WHAT HAPPENED, so it can offer "Save Julia?" after a call:
+     created (with the link to share), joined, ended — with the other
+     person's name. postMessage to the frame's parent only; standing alone,
+     nothing is sent anywhere. */
+  let them = "";
+  const tellApp = (type, extra) => {
+    if (window.parent === window) return;
+    try { window.parent.postMessage({ source: "book-call", type, id, them: them ? { name: them } : null, ...extra }, "*"); } catch { /* */ }
+  };
   const drawLangs = () => [...$("langs").children].forEach((b) => b.classList.toggle("on", b.dataset.l === lang));
   $("langs").onclick = (e) => { const l = e.target.dataset && e.target.dataset.l; if (l) { lang = l; store.set("call:lang", l); drawLangs(); } };
   drawLangs();
@@ -136,6 +150,7 @@
       $("send").textContent = W.send;
       $("go").textContent = W.join;
       $("go").onclick = start;
+      tellApp("created", { link: linkOf() });
     };
   } else {
     $("title").textContent = W.joinTitle;
@@ -224,7 +239,7 @@
       if (!tracks.length) tracks = await LK.createLocalTracks({ audio: true, video: { facingMode: "user", resolution: LK.VideoPresets.h540.resolution } });
     } catch { $("err").textContent = W.cam; return; }
     let r;
-    try { r = await api("join", { lang }); } catch { $("err").textContent = W.net; return; }
+    try { r = await api("join", { lang, name: myName }); } catch { $("err").textContent = W.net; return; }
     if (!r.ok) { $("err").textContent = ({ 403: W.key, 410: W.over, 409: W.full })[r.status] || W.net; return; }
     const j = await r.json();
     me = j.me;
@@ -236,7 +251,7 @@
     });
     room.on(LK.RoomEvent.TrackUnsubscribed, (track) => track.detach().forEach((e) => { if (e !== $("them")) e.remove(); }));
     room.on(LK.RoomEvent.ParticipantDisconnected, () => { $("them").srcObject = null; say(W.left); });
-    room.on(LK.RoomEvent.ParticipantConnected, () => say(W.conn));
+    room.on(LK.RoomEvent.ParticipantConnected, (p) => { say(W.conn); if (p.name) them = p.name; tellApp("joined"); });
     room.on(LK.RoomEvent.DataReceived, (payload, p, kind, topic) => {
       try { hear(JSON.parse(new TextDecoder().decode(payload)), !p); } catch { /* not ours */ }
     });
@@ -251,6 +266,7 @@
     for (const t of tracks) await room.localParticipant.publishTrack(t);
     const v = tracks.find((t) => t.kind === "video");
     if (v) v.attach($("me"));
+    for (const p of room.remoteParticipants.values()) if (p.name) them = p.name;
     say(room.remoteParticipants.size ? "" : W.wait);
     room.startAudio().catch(() => {});
     if (!SR) { $("mine").hidden = false; $("mine").textContent = W.noSubs; }
@@ -258,6 +274,7 @@
   }
 
   function finish() {
+    if (!ended) tellApp("ended");
     ended = true;
     try { rec && rec.stop(); } catch { /* not running */ }
     const was = room; room = null;
