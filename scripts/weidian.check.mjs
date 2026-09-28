@@ -19,9 +19,13 @@ const show = (label, v) => {
 };
 
 if (!configured()) {
-  console.log("\n  Not configured. Both of these have to be in .env:\n");
-  console.log("    BOARD_WEIDIAN_KEY=…");
-  console.log("    BOARD_WEIDIAN_SECRET=…\n");
+  /* THE NAMES IN .env ARE NOT THE NAMES THE CONTAINER SEES. This said
+     BOARD_WEIDIAN_KEY, which is true inside here and is not a line that
+     belongs in .env — grepping .env for it finds nothing and always will.
+     docker-compose.yml maps one to the other. */
+  console.log("\n  Not configured. Both of these have to be in .env on the box:\n");
+  console.log("    TOMSCODING_WEIDIAN_KEY=…");
+  console.log("    TOMSCODING_WEIDIAN_SECRET=…\n");
   console.log("  They are on open.weidian.com under 管理 for the app.\n");
   process.exit(1);
 }

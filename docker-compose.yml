@@ -1328,6 +1328,21 @@ services:
       # on first start and writes it where the relay reads it; a value here
       # overrides that, which is only useful when one relay serves two boards.
       BOARD_TURN_SECRET: ${TOMSCODING_TURN_SECRET:-}
+      # 微店's OWN API, read-only — see board/lib/weidian.js, which never
+      # writes an order and never touches money.
+      #
+      # THESE WERE MISSING AND THAT IS WHY NOTHING WEIDIAN HAS EVER RUN. The
+      # library reads BOARD_WEIDIAN_KEY and BOARD_WEIDIAN_SECRET; nothing
+      # mapped them in, so `configured()` was false on the box and the honest
+      # answer "Not configured" was indistinguishable from "no keys exist".
+      # The same shape as every other pair here: TOMSCODING_* in .env, BOARD_*
+      # in the container. Grepping .env for BOARD_WEIDIAN finds nothing and
+      # always will — ask the container instead.
+      #
+      # They come from open.weidian.com, under 管理 for the app, on the
+      # account that owns the shop.
+      BOARD_WEIDIAN_KEY: ${TOMSCODING_WEIDIAN_KEY:-}
+      BOARD_WEIDIAN_SECRET: ${TOMSCODING_WEIDIAN_SECRET:-}
     volumes:
       - board_data:/data
     expose:
