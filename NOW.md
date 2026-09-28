@@ -1987,7 +1987,14 @@ again.
   `/root/fern/deploy/fern/.env` on 45.32.58.178 (Laonei's own box, `fern`
   service), piped there from this box so it was never on a screen. Rotate
   with the same piped command (in this session's history / book/README).
-- Square not yet set up — no Buy or gift buttons until `make book-square`.
+- **Payments are going to PingPong Checkout, not Square** (29 Sep). Tom has
+  a Chinese 营业执照 and a company bank account; Stripe and Square gave him
+  trouble. PingPong's chat says Checkout takes cards, Apple Pay and Google
+  Pay, supports live-selling, and can show the payment as a pop-up over the
+  live page, paid out in CNY to the company account. That came from their
+  chat bot — confirm with a person at onboarding. Waiting on Tom: register,
+  then send the API docs link (never keys). `lib/pay.mjs` (Square) is then
+  swapped for PingPong; the rest of the selling stays.
 
 ## Book — lessons widget and video room, live 26 Sep, watched working
 
