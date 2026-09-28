@@ -1996,9 +1996,10 @@ again.
   then send the API docs link (never keys). `lib/pay.mjs` (Square) is then
   swapped for PingPong; the rest of the selling stays.
 
-## Translated video calls — built 29 Sep, not deployed
+## Translated video calls — deployed 29 Sep, at call.laonei.co
 
-`thexchange.app/book/call`: start a call, send the link, both talk, and each
+**`call.laonei.co/call`** (DNS `call` A → 45.77.8.166 at Porkbun; also still
+at `thexchange.app/book/call`), answering 200 on 29 Sep. Start a call, send the link, both talk, and each
 side's words appear under the other's video translated (English ⇄ 中文)
 about a second later. Free; capped per call and per day (`book/lib/speak.mjs`).
 Speech is heard by each phone's own dictation — works on iPhones (in China
