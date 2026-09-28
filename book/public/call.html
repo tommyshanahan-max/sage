@@ -50,6 +50,20 @@
   .bar button.end{background:#d93025}
   .bar #lng{font-size:19px;font-weight:800}
   .bar svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .subs .sub{pointer-events:auto;cursor:pointer}
+  .sub .hint{display:block;font-size:13px;font-weight:500;opacity:.7;margin-top:4px}
+  .ok{color:#4ade80;font-weight:900;margin-left:6px}
+  .log{position:absolute;left:0;right:0;bottom:0;height:62%;background:#fff;color:#1c1917;border-radius:24px 24px 0 0;
+    display:flex;flex-direction:column;z-index:5}
+  .log .grab{flex:none;padding:12px 0 8px;display:grid;place-items:center;cursor:pointer}
+  .log .grab i{width:44px;height:5px;border-radius:3px;background:#d6d3d1}
+  .lines{flex:1;overflow-y:auto;padding:0 16px calc(env(safe-area-inset-bottom) + 16px);-webkit-overflow-scrolling:touch}
+  .ln{display:flex;flex-direction:column;align-items:flex-start;margin:10px 0}
+  .ln.me{align-items:flex-end}
+  .ln small{font-size:13px;color:#78716c;margin:0 6px 2px}
+  .ln span{max-width:80%;padding:10px 14px;border-radius:18px;font-size:20px;line-height:1.3;background:#f1efec;overflow-wrap:anywhere}
+  .ln.me span{background:#1c1917;color:#fff}
+  .ln.me .ok{color:#4ade80}
   [hidden]{display:none!important}
 </style>
 </head>
@@ -70,6 +84,7 @@
   <div class="state" id="state"></div>
   <div class="mine" id="mine" hidden></div>
   <div class="subs" id="subs"></div>
+  <div class="log" id="log" hidden><div class="grab" id="grab"><i></i></div><div class="lines" id="lines"></div></div>
   <div class="bar">
     <button id="mic" aria-label="Microphone"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
     <button id="cam" aria-label="Camera"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="13" height="10" rx="2"/><path d="M16 11l5-3v8l-5-3"/></svg></button>
@@ -87,14 +102,14 @@
     joinSub: "字幕会翻译成你的语言。", wait: "等对方加入…", conn: "正在连接…", left: "对方挂断了", you: "通话已结束",
     again: "重新加入", cam: "请允许使用摄像头和麦克风，再试一次。", key: "这个链接打不开通话。", over: "这个通话已过期。",
     full: "这个通话已经有两个人了。", net: "连不上，检查一下网络再试。", noSubs: "这个浏览器不支持字幕，换 Safari 或 Chrome。",
-    lost: "连接断了，正在重连…", tapSubs: "🎙 点这里打开字幕", subsOff: "字幕暂时不可用",
+    lost: "连接断了，正在重连…", tapSubs: "🎙 点这里打开字幕", subsOff: "字幕暂时不可用", more: "点一下看完整对话", they: "对方",
   } : {
     start: "Talk to anyone.", startSub: "What they say appears in your language.", startGo: "Start a call",
     link: "Send them this link", send: "Share link", copied: "Copied", join: "Join call", joinTitle: "Video call",
     joinSub: "Subtitles in your language.", wait: "Waiting for them to join…", conn: "Connecting…", left: "They left the call", you: "Call ended",
     again: "Join again", cam: "Allow the camera and microphone, then try again.", key: "This link doesn't open a call.", over: "This call link has expired.",
     full: "This call already has two people.", net: "Can't connect — check the network and try again.", noSubs: "No subtitles in this browser — try Safari or Chrome.",
-    lost: "Connection dropped — reconnecting…", tapSubs: "🎙 Tap to turn on subtitles", subsOff: "Subtitles are off right now",
+    lost: "Connection dropped — reconnecting…", tapSubs: "🎙 Tap to turn on subtitles", subsOff: "Subtitles are off right now", more: "tap for the whole conversation", they: "Them",
   };
   const $ = (id) => document.getElementById(id);
   const LK = window.LivekitClient;
@@ -172,11 +187,14 @@
      read as broken. Then the translation once the sentence is finished. */
   let fade = 0;
   function showSub(big, small, live) {
+    if (!$("log").hidden) return; // the conversation is open and has it
     const s = document.createElement("div");
     s.className = "sub" + (live ? " live" : "");
     const b = document.createElement("b"); b.textContent = big;
     s.append(b);
     if (small) { const sm = document.createElement("small"); sm.textContent = small; s.append(sm); }
+    $("subs").querySelectorAll(".hint").forEach((h) => h.remove()); // on the newest line only
+    if (!live && !opened) { const h = document.createElement("span"); h.className = "hint"; h.textContent = W.more; s.append(h); }
     const box = $("subs");
     if (box.lastChild && box.lastChild.classList.contains("live")) box.lastChild.remove();
     box.append(s);
@@ -185,9 +203,15 @@
     fade = setTimeout(() => box.replaceChildren(), 9000);
   }
   function hear(msg, fromServer) {
-    if (msg.t === "live" && !fromServer) showSub(!msg.lang || msg.lang === lang ? msg.text : "…", "", true);
+    if (msg.t === "live" && !fromServer) {
+      const t = !msg.lang || msg.lang === lang ? msg.text : "…";
+      showSub(t, "", true);
+      line(false, t, true);
+    }
     if (msg.t === "cap" && fromServer && msg.who !== me) {
-      showSub(msg.lang === lang ? msg.text : (msg.tr && msg.tr[lang]) || msg.text, "", false);
+      const t = msg.lang === lang ? msg.text : (msg.tr && msg.tr[lang]) || msg.text;
+      showSub(t, "", false);
+      line(false, t, false);
     }
   }
 
@@ -211,13 +235,24 @@
   function send(i, text) {
     const part = after(text, sent.get(i) || "");
     sent.set(i, text);
-    if (/[\p{L}\p{N}]/u.test(part)) api("say", { me, text: part, lang }).catch(() => {});
+    if (!/[\p{L}\p{N}]/u.test(part)) return;
+    const row = line(true, part, false);
+    api("say", { me, text: part, lang }).then((r) => {
+      if (!r.ok) return;
+      // Said into the room — the other phone has it. The tick is what tells
+      // the speaker to stop and wait, which nothing on screen did before.
+      tick(row);
+      if ($("mine").dataset.part === part) tick($("mine"));
+    }).catch(() => {});
   }
   function heard(text, final, i = 0) {
     text = String(text || "").trim();
     if (!text || !room) return;
     $("mine").hidden = false;
-    $("mine").textContent = text;
+    // Only the sentence being said now, not the whole growing transcript,
+    // so the tick lands on the words it belongs to.
+    const now = after(text, sent.get(i) || "");
+    if (/[\p{L}\p{N}]/u.test(now)) { $("mine").textContent = now; $("mine").dataset.part = now; }
     clearTimeout(pauseT);
     if (final) return send(i, text);
     pauseT = setTimeout(() => send(i, text), PAUSE_MS);
@@ -228,6 +263,42 @@
     if (live) room.localParticipant.publishData(enc.encode(JSON.stringify({ t: "live", text: live, lang: HAN.test(live) ? "zh" : "en" })), { reliable: false, topic: "call" }).catch(() => {});
   }
   window.__heard = heard; // for tests: what the dictation would have said
+
+  /* THE WHOLE CONVERSATION, one tap under the subtitle. Subtitles fade after
+     nine seconds and a line missed was gone; this keeps every line, both
+     people, in my language, like a chat. Opened by tapping the subtitle,
+     closed by tapping the video or pulling it down. Memory only: nothing
+     here is kept anywhere once the page closes. */
+  let opened = false, pending = null;
+  const tick = (el) => { if (el && !el.querySelector(".ok")) { const k = document.createElement("b"); k.className = "ok"; k.textContent = "✓"; el.append(k); } };
+  function line(mine, text, live) {
+    const box = $("lines");
+    const near = box.scrollHeight - box.scrollTop - box.clientHeight < 60;
+    // Their words while they speak sit in one row that the finished
+    // translation then replaces.
+    let row = !mine && pending && pending.isConnected ? pending : null;
+    if (!row) {
+      row = document.createElement("div");
+      row.className = "ln" + (mine ? " me" : "");
+      if (!mine) { const who = document.createElement("small"); who.textContent = them || W.they; row.append(who); }
+      row.append(document.createElement("span"));
+      box.append(row);
+    }
+    row.lastChild.textContent = text;
+    pending = !mine && live ? row : mine ? pending : null;
+    if (near) box.scrollTop = box.scrollHeight;
+    return row.lastChild;
+  }
+  function openLog(on) {
+    $("log").hidden = !on;
+    if (on) { opened = true; $("subs").replaceChildren(); $("lines").scrollTop = $("lines").scrollHeight; }
+  }
+  $("subs").onclick = () => openLog(true);
+  $("them").onclick = () => openLog(false);
+  $("grab").onclick = () => openLog(false);
+  let y0 = null;
+  $("log").addEventListener("touchstart", (e) => { y0 = $("lines").scrollTop <= 0 ? e.touches[0].clientY : null; }, { passive: true });
+  $("log").addEventListener("touchend", (e) => { if (y0 !== null && e.changedTouches[0].clientY - y0 > 70) openLog(false); y0 = null; });
 
   /* THE DICTATION. Chrome and Safari call it (webkit)SpeechRecognition. It
      stops by itself after a pause, so it is restarted for as long as the call
