@@ -1,4 +1,10 @@
 .env
+# AND EVERY COPY OF IT. `make weidian-keys` writes .env.before-weidian-<date>
+# before touching the real one, and a backup of .env holds every secret this
+# box has. Ignoring only the exact name left those copies untracked-but-
+# visible, one `git add -A` away from being published.
+.env.*
+!.env.example
 backups/
 *.log
 

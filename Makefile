@@ -10,7 +10,7 @@ COMPOSE := docker compose
 # already up to date, and exits saying so — a deploy command that prints a
 # reassuring sentence and deploys nothing.
 .PHONY: board board-build mailout up-safe can-invite stripe-who call-check can-call board-log space who-am-i no-back evict
-.PHONY: version faces cards traffic tier-two try try-china china wallets mo-code visits app-state claire-episodes deal claire-key claire-count claire-seed claire-video listing invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who bells twice admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions whitelabel blocked partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check post post-status post-run post-login post-code post-logins weidian-pull weidian-json weidian-reviews shop-chapter review-tidy product-names review-move
+.PHONY: version faces cards traffic tier-two try try-china china wallets mo-code visits app-state claire-episodes deal claire-key claire-count claire-seed claire-video listing invite-each mo mo-say handroom back mail ferry-keys waiting-rooms gram gram-clips gram-next gram-token gram-list gram-post demo demo-cards demo-rm cfm-project can-offer offer offers announcer announcements save restore why-no-row room-keep cfm-setup cfm-self cfm-owner cfm-owners cfm-grantor cfm-stake cfm-offer cfm-seal cfm-seals cfm-keypair cfm-anchoring cfm-anchor cfm-verify cfm-unseal cfm-reopen cfm-void cfm-offers hide show doors feed-quiet post-profile pair match who bells twice admit groups group-invite flags waiting waiting-in waiting-back waiting-no waiting-rm featured feature feature-off peeks peek peek-off tell-rooms post-improved post-numbers help up deploy down restart reload rebuild logs shell shell-2 claude ps backup check doctor privacy password fix-browser instructions whitelabel blocked partner-sync partner-sync-2 feed-sync partner-mockups whats-new feed-people feed-posts numbers-days app-check post post-status post-run post-login post-code post-logins weidian-pull weidian-json weidian-orders weidian-check weidian-history weidian-keys weidian-reviews shop-chapter review-tidy product-names review-move
 .PHONY: book-lead book-owed book-paid book-alerts book-teacher book-list book-off book-on book-cancel book-demo book-test book-live book-live-off book-app book-square
 
 help: ## Show this help
@@ -1023,6 +1023,35 @@ weidian-pull: ## Read the old 微店 shop: make weidian-pull SHOP=https://weidia
 	@# path removes the guess from HOME as well.
 	@$(COMPOSE) --profile post run --rm --no-deps -T -v "$(CURDIR)/scripts:/app/seed:ro" post-browser \
 	  node /app/seed/weidian-pull.mjs --shop "$(SHOP)" --out /data/weidian.json --max "$(or $(MAX),40)"
+
+weidian-orders: ## Five years of 微店 orders, for a risk team:  make weidian-orders FILE=~/Downloads/orders.csv
+	@# NOT A SCRAPER, AND THAT IS THE POINT. `weidian-pull` reads the
+	@# shopfront and is deliberately not logged in; orders are seller side,
+	@# and a headless browser signing into a Chinese seller account from this
+	@# box is the thing that gets an account looked at.
+	@#
+	@# It is also the wrong artefact. Stripe asked for trading history and a
+	@# file this repo generated proves nothing — 微店's own export does. So:
+	@# export it from 订单管理 and send THAT, and this prints the summary that
+	@# goes beside it, in the shape underwriting reads: how long, how
+	@# steadily, how large, and how often it went wrong.
+	@#
+	@# It runs here rather than in a container: the export is on whichever
+	@# machine downloaded it, and moving a file into a container to read it
+	@# is a step for nothing.
+	@# NO ARGUMENT WHEN THERE IS AN OBVIOUS ONE. The export was downloaded
+	@# thirty seconds ago, so the newest thing in Downloads is it — and a
+	@# filename typed out of a download banner is a filename that will have a
+	@# bracket or a space in it and fail. It says which file it chose, and
+	@# FILE= still overrides when the guess is wrong.
+	@f="$(FILE)"; \
+	  if [ -z "$$f" ] && [ -d "$$HOME/Downloads" ]; then \
+	    n=$$(ls -t "$$HOME/Downloads" 2>/dev/null | head -1); \
+	    [ -n "$$n" ] && f="$$HOME/Downloads/$$n"; \
+	  fi; \
+	  test -n "$$f" || { echo 'nothing in ~/Downloads. make weidian-orders FILE=path'; exit 1; }; \
+	  printf '\n  reading %s\n' "$$f"; \
+	  node scripts/weidian-orders.mjs "$$f"
 
 weidian-json: ## Print what weidian-pull read: make weidian-json
 	@$(COMPOSE) --profile post run --rm --no-deps -T post-browser \
@@ -2269,7 +2298,73 @@ weidian-check: ## Does Weidian answer, and what does it actually say
 	@# Run once, with real keys, before anything is built on top. It prints
 	@# what comes back rather than a verdict, because the field names are in
 	@# a wiki the build box cannot reach — see the head of lib/weidian.js.
-	$(COMPOSE) run --rm --no-deps -T --entrypoint node board /app/scripts/weidian.check.mjs
+	@#
+	@# THE TWO MOUNTS ARE NOT OPTIONAL AND THIS TARGET WAS BROKEN WITHOUT
+	@# THEM. scripts/ is not COPYed into the board image — only server.js,
+	@# lib, public and china are — so /app/scripts did not exist and node
+	@# answered "Cannot find module" for a path that reads as though it were
+	@# in there. The second mount is the import: the script says
+	@# ../board/lib/weidian.js, which from /app/scripts is /app/board/lib,
+	@# and the image keeps that file at /app/lib. Mounting the repo's copy at
+	@# the path the import names is the smaller fix, and it means a git reset
+	@# on the box changes the library without a rebuild.
+	$(COMPOSE) run --rm --no-deps -T \
+	  -v "$(CURDIR)/scripts:/app/scripts:ro" -v "$(CURDIR)/board/lib:/app/board/lib:ro" \
+	  --entrypoint node board /app/scripts/weidian.check.mjs
+
+weidian-keys: ## Put the 微店 API keys in .env and run the history: make weidian-keys KEY="paste_key_here" SECRET="paste_secret_here"
+	@# ONE COMMAND, BECAUSE THE ALTERNATIVE WAS FOUR. Open .env in an editor,
+	@# find the right place, type two names exactly right, save, then remember
+	@# which target to run. Every one of those is a step that can go wrong on a
+	@# small screen, and the names are the kind that fail silently when wrong.
+	@#
+	@# The keys are on open.weidian.com, under 管理 for the app, on the account
+	@# that owns the shop.
+	@#
+	@# IT NEVER PRINTS EITHER VALUE. They go from the command line into .env
+	@# and nowhere else. .env is backed up first, because a half-written .env
+	@# is every service on this box down at once.
+	@test -n "$(KEY)" -a -n "$(SECRET)" || { \
+	  echo; echo '  make weidian-keys KEY="…" SECRET="…"'; echo; exit 1; }
+	@# THE EXAMPLE IS NOT A KEY. The last command handed over with a bracket in
+	@# it was pasted exactly as written, so this one is quoted — which parses —
+	@# and says so rather than writing "paste_key_here" into .env and failing
+	@# an hour later with a signature error.
+	@case "$(KEY)$(SECRET)" in *paste_*here*) \
+	  echo; echo '  That is the example. Put your own key and secret in the quotes.'; \
+	  echo '  They are on open.weidian.com, under 管理 for the app.'; echo; exit 1;; esac
+	@test -f .env || { echo '  No .env here. Is this ~/tc?'; exit 1; }
+	@cp -p .env ".env.before-weidian-$$(date +%Y%m%d-%H%M%S)"
+	@grep -v -E '^TOMSCODING_WEIDIAN_(KEY|SECRET)=' .env > .env.new
+	@printf 'TOMSCODING_WEIDIAN_KEY=%s\nTOMSCODING_WEIDIAN_SECRET=%s\n' '$(KEY)' '$(SECRET)' >> .env.new
+	@# NEVER SHORTER THAN WHAT WAS THERE. The only way this file loses a line
+	@# is a mistake in the two lines above, and it is cheaper to check than to
+	@# find out from a box that will not come up.
+	@test "$$(wc -l < .env.new)" -ge "$$(wc -l < .env)" || { \
+	  echo '  .env.new came out shorter. Nothing changed.'; rm -f .env.new; exit 1; }
+	@chmod --reference=.env .env.new 2>/dev/null || chmod 600 .env.new
+	@mv .env.new .env
+	@echo; echo "  Keys written to .env. Asking 微店 now."; echo
+	@$(MAKE) --no-print-directory weidian-history $(if $(FROM),FROM="$(FROM)",) $(if $(TO),TO="$(TO)",)
+
+weidian-history: ## Every 微店 order Stripe asked for: make weidian-history [FROM=2012] [TO=2017]
+	@# THE SHOP IS THE ANSWER TO THE QUESTION STRIPE ASKED. They declined on
+	@# category and asked for trading history; the history is in 微店, going
+	@# back to 2012, and the export is a button in a seller console that
+	@# queues a file somebody then has to find and move to the right machine.
+	@# That route was tried and the file never arrived. This asks the API
+	@# instead — vdian.order.list.get, which lib/weidian.js already had.
+	@#
+	@# It reads and only reads, and only things that have already happened.
+	@#
+	@# IT NEEDS KEYS, and they were never mapped into the container until
+	@# now — see the note beside BOARD_WEIDIAN_KEY in docker-compose.yml. If
+	@# it says it is not configured, that is true and the message says which
+	@# two lines .env is missing.
+	$(COMPOSE) run --rm --no-deps -T \
+	  -v "$(CURDIR)/scripts:/app/scripts:ro" -v "$(CURDIR)/board/lib:/app/board/lib:ro" \
+	  --entrypoint node board /app/scripts/weidian-history.mjs \
+	  $(if $(FROM),--from "$(FROM)",) $(if $(TO),--to "$(TO)",)
 
 traffic: ## Did anybody arrive, and through which door: make traffic [DAYS=14]
 	@# The question after putting a link on Instagram, which nothing on this
