@@ -31,6 +31,9 @@ const BURST = Number(process.env.BOOK_TRANSLATE_BURST || 40);
 const REFILL_PER_MIN = Number(process.env.BOOK_TRANSLATE_REFILL || 12);
 const PER_DAY = Number(process.env.BOOK_TRANSLATE_DAY || 5000);
 const buckets = new Map();
+// Set once the account turns the fallback option down, so every later
+// subtitle makes one call and not a refused one followed by a real one.
+let plainOnly = false;
 let day = { on: new Date().toDateString(), used: 0 };
 
 function allow(who) {
@@ -78,6 +81,7 @@ export async function translate(raw, to, who) {
   if (FAKE) return `[${to}] ${text}`;
 
   let out = "";
+  const t0 = Date.now();
   try {
     const { default: Anthropic } = await import("@anthropic-ai/sdk");
     const client = new Anthropic({ apiKey: KEY, timeout: 15_000, maxRetries: 1 });
@@ -92,7 +96,8 @@ export async function translate(raw, to, who) {
       messages: [{ role: "user", content: `Translate into ${LANGS[to]}:\n\n${text}` }],
     };
     let res;
-    try {
+    if (plainOnly) res = await client.messages.create(ask);
+    else try {
       // If a sentence trips a safety classifier, a fallback model finishes
       // it rather than the subtitle silently not arriving.
       res = await client.beta.messages.create({ ...ask, betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" });
@@ -102,6 +107,7 @@ export async function translate(raw, to, who) {
          has been making successfully is made instead — a subtitle without a
          fallback beats no subtitle. Anything else is a real failure. */
       if (!err || err.status !== 400) throw err;
+      plainOnly = true;
       res = await client.messages.create(ask);
     }
     if (res.stop_reason === "refusal") throw Object.assign(new Error("refused"), { status: "refusal" });
@@ -113,6 +119,9 @@ export async function translate(raw, to, who) {
     throw new Error("failed");
   }
   if (!out) throw new Error("failed");
+  // How long the other person waited, readable with
+  // `docker compose logs book | grep subtitle`. No words, only the time.
+  console.log(`subtitle ${to} ${Date.now() - t0}ms`);
   out = out.slice(0, 600);
   CACHE.set(k, out);
   if (CACHE.size > 2000) CACHE.delete(CACHE.keys().next().value);

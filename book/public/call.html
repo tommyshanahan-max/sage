@@ -196,19 +196,36 @@
   let lastLive = 0;
   const HAN = /[\u3400-\u9fff\uf900-\ufaff]/; // same test as lib/calls.mjs
   const enc = new TextEncoder();
-  function heard(text, final) {
+  /* SENT ON A PAUSE, NOT ON "FINAL". Waiting for the phone to call a
+     sentence finished was most of the delay: iPhone Safari in continuous
+     mode often does not say so until dictation stops, and sometimes keeps
+     one result growing for the whole call. So a sentence goes when the words
+     have not changed for PAUSE_MS, and only the part not already sent —
+     "hello there" went, so "hello there how are you" sends "how are you". */
+  const PAUSE_MS = 650;
+  let sent = new Map(), pauseT = 0;
+  // The phone's own final version often only re-capitalises or adds a full
+  // stop to what already went; that is compared without either, and not sent.
+  const bare = (t) => t.toLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
+  const after = (text, was) => (text.startsWith(was) || bare(text).startsWith(bare(was)) ? text.slice(was.length) : text).trim();
+  function send(i, text) {
+    const part = after(text, sent.get(i) || "");
+    sent.set(i, text);
+    if (/[\p{L}\p{N}]/u.test(part)) api("say", { me, text: part, lang }).catch(() => {});
+  }
+  function heard(text, final, i = 0) {
     text = String(text || "").trim();
     if (!text || !room) return;
     $("mine").hidden = false;
     $("mine").textContent = text;
-    if (!final) {
-      // At most five a second: the other phone only needs to see it moving.
-      if (Date.now() - lastLive < 200) return;
-      lastLive = Date.now();
-      room.localParticipant.publishData(enc.encode(JSON.stringify({ t: "live", text, lang: HAN.test(text) ? "zh" : "en" })), { reliable: false, topic: "call" }).catch(() => {});
-      return;
-    }
-    api("say", { me, text, lang }).catch(() => {});
+    clearTimeout(pauseT);
+    if (final) return send(i, text);
+    pauseT = setTimeout(() => send(i, text), PAUSE_MS);
+    // At most five a second: the other phone only needs to see it moving.
+    if (Date.now() - lastLive < 200) return;
+    lastLive = Date.now();
+    const live = after(text, sent.get(i) || "");
+    if (live) room.localParticipant.publishData(enc.encode(JSON.stringify({ t: "live", text: live, lang: HAN.test(live) ? "zh" : "en" })), { reliable: false, topic: "call" }).catch(() => {});
   }
   window.__heard = heard; // for tests: what the dictation would have said
 
@@ -232,10 +249,10 @@
       rec = new SR();
       rec.continuous = true;
       rec.interimResults = true;
-      rec.onstart = () => { blocked = false; if (!$("mine").dataset.said) corner("🎙 …"); };
+      rec.onstart = () => { blocked = false; sent = new Map(); if (!$("mine").dataset.said) corner("🎙 …"); };
       rec.onresult = (e) => {
         $("mine").dataset.said = "1";
-        for (let i = e.resultIndex; i < e.results.length; i++) heard(e.results[i][0].transcript, e.results[i].isFinal);
+        for (let i = e.resultIndex; i < e.results.length; i++) heard(e.results[i][0].transcript, e.results[i].isFinal, i);
       };
       rec.onend = () => { listening = false; if (!blocked) setTimeout(listen, 300); };
       rec.onerror = (e) => {
