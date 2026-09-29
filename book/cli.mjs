@@ -67,6 +67,11 @@ if (cmd === "cast-test") {
   for await (const chunk of process.stdin) raw += chunk;
   let pulled;
   try { pulled = JSON.parse(raw); } catch { console.error("That was not the reader's JSON. Run make shop-sync SHOP=…"); process.exit(1); }
+  /* PICK=: only the items whose name contains it — one product to test
+     with, or the few Tom chose, rather than everything the shop has. */
+  const pick = String(E.PICK || "").trim();
+  if (pick) pulled.items = (pulled.items || []).filter((x) => String(x.name || "").includes(pick));
+  if (pick && !pulled.items.length) { console.error(`  Nothing in that shop is called "${pick}". Nothing changed.`); process.exit(1); }
   const items = await importItems(pulled, (zh) => translate(zh, "en", "shop-import"));
   for (const x of items) console.log(`  ¥${String(x.cny).padEnd(7)} ${x.en || "(not translated)"}  ·  ${x.zh}`);
   console.log(`\n  ${items.length} in the shop: https://call.laonei.co/shop`);
