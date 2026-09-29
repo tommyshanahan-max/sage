@@ -759,7 +759,6 @@ services:
       # Defaulted to the real name, not a .localhost: it has one home and no
       # other deployment of this file uses it; the DNS record is the switch.
       TOMSCODING_CALL_DOMAIN: ${TOMSCODING_CALL_DOMAIN:-call.laonei.co}
-      TOMSCODING_LAONEI_DOMAIN: ${TOMSCODING_LAONEI_DOMAIN:-laonei.co, www.laonei.co}
       TOMSCODING_SITE_WWW: ${TOMSCODING_SITE_WWW:-www.exchange.localhost}
       # The ledger. Its site block reads these from Caddy's own environment —
       # putting the hostname in .env and the file in docker/sites is not
