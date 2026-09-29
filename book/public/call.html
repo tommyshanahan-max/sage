@@ -298,6 +298,7 @@
   const bare = (t) => t.toLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
   const after = (text, was) => (text.startsWith(was) || bare(text).startsWith(bare(was)) ? text.slice(was.length) : text).trim();
   function send(i, text) {
+    clearTimeout(liveT); liveText = ""; // the finished sentence supersedes it
     const part = after(text, sent.get(i) || "");
     sent.set(i, text);
     if (!/[\p{L}\p{N}]/u.test(part)) return;
@@ -322,11 +323,20 @@
     clearTimeout(pauseT);
     if (final) return send(i, text);
     pauseT = setTimeout(() => send(i, text), PAUSE_MS);
-    // At most five a second: the other phone only needs to see it moving.
-    if (Date.now() - lastLive < 200) return;
+    /* At most five a second, and THE LAST ONE ALWAYS GOES. It used to drop
+       whatever arrived inside the 200ms, so the words said just before a
+       pause never reached the other screen until the finished sentence did:
+       Tom's corner read "…how are you" while the other phone still showed
+       "…Tom how", and the other phone's subtitle looked slow. */
+    liveText = after(text, sent.get(i) || "");
+    const wait = 200 - (Date.now() - lastLive);
+    clearTimeout(liveT);
+    if (wait > 0) liveT = setTimeout(pushLive, wait); else pushLive();
+  }
+  let liveText = "", liveT = 0;
+  function pushLive() {
     lastLive = Date.now();
-    const live = after(text, sent.get(i) || "");
-    if (live) room.localParticipant.publishData(enc.encode(JSON.stringify({ t: "live", text: live, lang: HAN.test(live) ? "zh" : "en" })), { reliable: false, topic: "call" }).catch(() => {});
+    if (liveText && room) room.localParticipant.publishData(enc.encode(JSON.stringify({ t: "live", text: liveText, lang: HAN.test(liveText) ? "zh" : "en" })), { reliable: false, topic: "call" }).catch(() => {});
   }
   window.__heard = heard; // for tests: what the dictation would have said
 
