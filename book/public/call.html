@@ -36,12 +36,6 @@
   #me{position:absolute;right:14px;top:max(14px,env(safe-area-inset-top));width:26vw;max-width:140px;
     aspect-ratio:3/4;object-fit:cover;border-radius:14px;border:2px solid rgba(255,255,255,.7);transform:scaleX(-1);background:#333}
   .state{position:absolute;left:0;right:0;top:38%;padding:0 24px;text-align:center;font-size:20px;font-weight:600;text-shadow:0 1px 6px rgba(0,0,0,.6)}
-  .subs{position:absolute;left:14px;right:14px;bottom:calc(max(22px,env(safe-area-inset-bottom)) + 84px);
-    display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;pointer-events:none}
-  .sub{background:rgba(0,0,0,.62);border-radius:12px;padding:8px 14px;max-width:100%}
-  .sub b{display:block;font-size:24px;line-height:1.3;font-weight:700}
-  .sub small{display:block;font-size:15px;opacity:.75;margin-top:2px}
-  .sub.live b{opacity:.75;font-weight:600}
   .mine{position:absolute;left:14px;top:max(14px,env(safe-area-inset-top));max-width:60%;font-size:16px;
     background:rgba(0,0,0,.55);border-radius:10px;padding:7px 12px;opacity:.95;cursor:pointer}
   .bar{position:absolute;left:0;right:0;bottom:max(22px,env(safe-area-inset-bottom));display:flex;justify-content:center;gap:12px}
@@ -50,23 +44,26 @@
   .bar button.end{background:#d93025}
   .bar #lng{font-size:19px;font-weight:800}
   .bar svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-  .subs .sub{pointer-events:auto;cursor:pointer}
+  /* THE CARD — every word in the call, in one place. */
+  .card{position:absolute;left:10px;right:10px;bottom:calc(max(22px,env(safe-area-inset-bottom)) + 76px);
+    background:rgba(255,255,255,.96);color:#1c1917;border-radius:22px;display:flex;flex-direction:column;cursor:pointer}
+  .card.open{top:max(20%,env(safe-area-inset-top));cursor:default}
+  .ctop{flex:none;display:flex;align-items:center;justify-content:center;position:relative;height:26px}
+  .ctop .grab{width:44px;height:5px;border-radius:3px;background:#d6d3d1}
+  .ctop button{position:absolute;right:10px;top:6px;border:1.5px solid #d6d3d1;background:#fff;color:#57534e;border-radius:10px;
+    font-size:13px;font-weight:800;padding:3px 8px;cursor:pointer}
+  .card.both .ctop button{background:#1c1917;border-color:#1c1917;color:#fff}
+  .lines{padding:0 16px 12px}
+  /* Small: the newest two lines, whole — a height cut them in half. */
+  .card:not(.open) .ln:not(:nth-last-child(-n+2)){display:none}
+  .card.open .lines{flex:1;max-height:none;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .ln{margin:6px 0;font-size:22px;line-height:1.3;font-weight:700}
+  .ln.me{text-align:right;font-size:17px;font-weight:500;color:#57534e}
+  .ln.live .t{opacity:.6}
+  .ln .alt{display:none;font-size:15px;font-weight:500;color:#78716c}
+  .card.both .ln .alt:not(:empty){display:block}
+  .ok{color:#16a34a;font-weight:900;margin-left:6px}
   .callshare{position:absolute;left:24px;right:24px;top:52%;width:auto}
-  .sub.me{align-self:flex-end;background:rgba(0,0,0,.45);max-width:85%}
-  .sub.me b{font-size:18px;font-weight:600}
-  .sub b.ok{display:inline;font-size:inherit}
-  .ok{color:#4ade80;font-weight:900;margin-left:6px}
-  .log{position:absolute;left:0;right:0;bottom:0;height:62%;background:#fff;color:#1c1917;border-radius:24px 24px 0 0;
-    display:flex;flex-direction:column;z-index:5}
-  .log .grab{flex:none;padding:12px 0 8px;display:grid;place-items:center;cursor:pointer}
-  .log .grab i{width:44px;height:5px;border-radius:3px;background:#d6d3d1}
-  .lines{flex:1;overflow-y:auto;padding:0 16px calc(env(safe-area-inset-bottom) + 16px);-webkit-overflow-scrolling:touch}
-  .ln{display:flex;flex-direction:column;align-items:flex-start;margin:10px 0}
-  .ln.me{align-items:flex-end}
-  .ln small{font-size:13px;color:#78716c;margin:0 6px 2px}
-  .ln span{max-width:80%;padding:10px 14px;border-radius:18px;font-size:20px;line-height:1.3;background:#f1efec;overflow-wrap:anywhere}
-  .ln.me span{background:#1c1917;color:#fff}
-  .ln.me .ok{color:#4ade80}
   [hidden]{display:none!important}
 </style>
 </head>
@@ -87,13 +84,14 @@
   <div class="state" id="state"></div>
   <div class="mine" id="mine" hidden></div>
   <button class="go dark callshare" id="send2" hidden></button>
-  <div class="subs" id="subs"></div>
-  <div class="log" id="log" hidden><div class="grab" id="grab"><i></i></div><div class="lines" id="lines"></div></div>
+  <div class="card" id="card" hidden>
+    <div class="ctop"><i class="grab"></i><button id="both" aria-label="Both languages">文A</button></div>
+    <div class="lines" id="lines"></div>
+  </div>
   <div class="bar">
     <button id="mic" aria-label="Microphone"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
     <button id="cam" aria-label="Camera"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="13" height="10" rx="2"/><path d="M16 11l5-3v8l-5-3"/></svg></button>
     <button id="lng" aria-label="Language"></button>
-    <button id="chat" aria-label="Conversation"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg></button>
     <button id="end" class="end" aria-label="Leave"><svg viewBox="0 0 24 24"><path d="M3 15c5-5 13-5 18 0l-3 3-3-2v-3c-2-1-4-1-6 0v3l-3 2z"/></svg></button>
   </div>
 </div>
@@ -107,14 +105,14 @@
     joinSub: "字幕会翻译成你的语言。", wait: "等对方加入…", conn: "正在连接…", left: "对方挂断了", you: "通话已结束",
     again: "重新加入", cam: "请允许使用摄像头和麦克风，再试一次。", key: "这个链接打不开通话。", over: "这个通话已过期。",
     full: "这个通话已经有两个人了。", net: "连不上，检查一下网络再试。", noSubs: "这个浏览器不支持字幕，换 Safari 或 Chrome。",
-    lost: "连接断了，正在重连…", tapSubs: "🎙 点这里打开字幕", subsOff: "字幕暂时不可用", they: "对方", tapGo: "🎙 点一下开始字幕",
+    lost: "连接断了，正在重连…", tapSubs: "🎙 点这里打开字幕", subsOff: "字幕暂时不可用", tapGo: "🎙 点一下开始字幕",
   } : {
     start: "Talk to anyone.", startSub: "What they say appears in your language.", startGo: "Start a call",
     link: "Send them this link", send: "Share link", copied: "Copied", join: "Join call", joinTitle: "Video call",
     joinSub: "Subtitles in your language.", wait: "Waiting for them to join…", conn: "Connecting…", left: "They left the call", you: "Call ended",
     again: "Join again", cam: "Allow the camera and microphone, then try again.", key: "This link doesn't open a call.", over: "This call link has expired.",
     full: "This call already has two people.", net: "Can't connect — check the network and try again.", noSubs: "No subtitles in this browser — try Safari or Chrome.",
-    lost: "Connection dropped — reconnecting…", tapSubs: "🎙 Tap to turn on subtitles", subsOff: "Subtitles are off right now", they: "Them", tapGo: "🎙 Tap to start subtitles",
+    lost: "Connection dropped — reconnecting…", tapSubs: "🎙 Tap to turn on subtitles", subsOff: "Subtitles are off right now", tapGo: "🎙 Tap to start subtitles",
   };
   const $ = (id) => document.getElementById(id);
   const LK = window.LivekitClient;
@@ -238,49 +236,73 @@
     })();
   }
 
-  // ---- SUBTITLES ----------------------------------------------------------
-  /* The other person's line, in MY language only. While they talk: their
-     words if they are already in my language, otherwise "…" — the first
-     phone test showed English and then Chinese stacked on one screen, which
-     read as broken. Then the translation once the sentence is finished. */
-  let fade = 0;
-  /* ONE PLACE FOR WORDS. The first real call (Tom and his wife) had my own
-     words in the top corner and theirs at the bottom, two things to watch,
-     and it was confusing. Now both are here, like the end of a chat: theirs
-     big in the middle, mine smaller on the right with a tick once it has
-     reached them. The corner only says whether the microphone is on. */
-  function subRow(mine, text, live) {
-    if (!$("log").hidden) return null; // the conversation is open and has it
-    const box = $("subs");
-    let row = [...box.children].find((r) => r.classList.contains("live") && r.classList.contains("me") === mine);
-    if (!row) {
+  // ---- THE CARD -----------------------------------------------------------
+  /* EVERY WORD IN ONE PLACE. Two calls taught this: English and Chinese
+     stacked read as broken, and then my words in a corner with theirs at
+     the bottom was two places to watch. So one white card above the
+     buttons, like the end of a chat: their line big, mine small on the
+     right with a tick once it has reached them, both in my language. It
+     shows the newest two; tapped or pulled up it is the whole call, and
+     tapping the video or pulling it down shrinks it again.
+
+     文A shows the other language under each line — what they actually said,
+     and what they saw of mine — for whoever wants it; it stays off unless
+     turned on, and is remembered. Memory only: nothing on the card is kept
+     anywhere once the page closes. */
+  let pThem = null, pMe = null; // the rows still being spoken
+  const tick = (row) => { const t = row && row.querySelector(".t"); if (t && !t.querySelector(".ok")) { const k = document.createElement("b"); k.className = "ok"; k.textContent = "✓"; t.append(k); } };
+  const setAlt = (row, text) => { if (row) row.querySelector(".alt").textContent = text || ""; };
+  function line(mine, text, live) {
+    const box = $("lines");
+    const near = box.scrollHeight - box.scrollTop - box.clientHeight < 60;
+    let row = mine ? pMe : pThem;
+    if (!row || !row.isConnected) {
       row = document.createElement("div");
-      row.className = "sub" + (mine ? " me" : "");
-      row.append(document.createElement("b"));
+      row.className = "ln" + (mine ? " me" : "");
+      const t = document.createElement("span"); t.className = "t";
+      const a = document.createElement("div"); a.className = "alt";
+      row.append(t, a);
       box.append(row);
     }
     row.classList.toggle("live", live);
-    row.firstChild.textContent = text;
-    while (box.children.length > 3) box.firstChild.remove();
-    clearTimeout(fade);
-    fade = setTimeout(() => box.replaceChildren(), 12000);
-    return row.firstChild;
+    row.querySelector(".t").textContent = text;
+    if (mine) pMe = live ? row : null; else pThem = live ? row : null;
+    $("card").hidden = false;
+    if (near || !$("card").classList.contains("open")) box.scrollTop = box.scrollHeight;
+    return row;
   }
+  function openCard(on) {
+    $("card").classList.toggle("open", on);
+    $("lines").scrollTop = $("lines").scrollHeight;
+  }
+  $("card").onclick = (e) => { if (!$("card").classList.contains("open")) openCard(true); else if (e.target.closest(".ctop")) openCard(false); };
+  $("both").onclick = (e) => {
+    e.stopPropagation();
+    const on = $("card").classList.toggle("both");
+    store.set("call:both", on ? "1" : "");
+  };
+  if (store.get("call:both")) $("card").classList.add("both");
+  $("them").onclick = () => openCard(false);
+  let y0 = null;
+  $("card").addEventListener("touchstart", (e) => { y0 = e.touches[0].clientY; }, { passive: true });
+  $("card").addEventListener("touchend", (e) => {
+    if (y0 === null) return;
+    const dy = e.changedTouches[0].clientY - y0, open = $("card").classList.contains("open");
+    if (dy < -50 && !open) openCard(true);
+    if (dy > 70 && open && $("lines").scrollTop + $("lines").clientHeight >= $("lines").scrollHeight - 4) openCard(false);
+    y0 = null;
+  });
 
   function hear(msg, fromServer) {
-    if (msg.t === "live" && !fromServer) {
-      const t = !msg.lang || msg.lang === lang ? msg.text : "…";
-      subRow(false, t, true);
-      line(false, t, true);
-    }
+    if (msg.t === "live" && !fromServer) line(false, !msg.lang || msg.lang === lang ? msg.text : "…", true);
     if (msg.t === "cap" && fromServer && msg.who !== me) {
-      const t = msg.lang === lang ? msg.text : (msg.tr && msg.tr[lang]) || msg.text;
-      subRow(false, t, false);
-      line(false, t, false);
+      const tr = msg.lang === lang ? "" : (msg.tr && msg.tr[lang]) || "";
+      const row = line(false, tr || msg.text, false);
+      setAlt(row, tr ? msg.text : "");
     }
   }
 
-  /* MY OWN WORDS, as the phone heard them, small in the corner — so a
+  /* MY OWN WORDS, as the phone heard them, on the card — so a
      speaker can see it is listening, and catch it mishearing. */
   let lastLive = 0;
   const HAN = /[\u3400-\u9fff\uf900-\ufaff]/; // same test as lib/calls.mjs
@@ -303,13 +325,13 @@
     sent.set(i, text);
     if (!/[\p{L}\p{N}]/u.test(part)) return;
     const row = line(true, part, false);
-    const sub = subRow(true, part, false);
-    api("say", { me, text: part, lang }).then((r) => {
+    api("say", { me, text: part, lang }).then(async (r) => {
       if (!r.ok) return;
       // Said into the room — the other phone has it. The tick is what tells
       // the speaker to stop and wait, which nothing on screen did before.
       tick(row);
-      tick(sub);
+      const j = await r.json().catch(() => ({}));
+      setAlt(row, Object.values(j.tr || {}).find(Boolean) || ""); // what they saw
     }).catch(() => {});
   }
   function heard(text, final, i = 0) {
@@ -319,7 +341,7 @@
     // Only the sentence being said now, not the whole growing transcript,
     // so the tick lands on the words it belongs to.
     const now = after(text, sent.get(i) || "");
-    if (/[\p{L}\p{N}]/u.test(now)) subRow(true, now, true);
+    if (/[\p{L}\p{N}]/u.test(now)) line(true, now, true);
     clearTimeout(pauseT);
     if (final) return send(i, text);
     pauseT = setTimeout(() => send(i, text), PAUSE_MS);
@@ -339,46 +361,6 @@
     if (liveText && room) room.localParticipant.publishData(enc.encode(JSON.stringify({ t: "live", text: liveText, lang: HAN.test(liveText) ? "zh" : "en" })), { reliable: false, topic: "call" }).catch(() => {});
   }
   window.__heard = heard; // for tests: what the dictation would have said
-
-  /* THE WHOLE CONVERSATION, one tap under the subtitle. Subtitles fade after
-     nine seconds and a line missed was gone; this keeps every line, both
-     people, in my language, like a chat. Opened by tapping the subtitle,
-     closed by tapping the video or pulling it down. Memory only: nothing
-     here is kept anywhere once the page closes. */
-  let pending = null;
-  const tick = (el) => { if (el && !el.querySelector(".ok")) { const k = document.createElement("b"); k.className = "ok"; k.textContent = "✓"; el.append(k); } };
-  function line(mine, text, live) {
-    const box = $("lines");
-    const near = box.scrollHeight - box.scrollTop - box.clientHeight < 60;
-    // Their words while they speak sit in one row that the finished
-    // translation then replaces.
-    let row = !mine && pending && pending.isConnected ? pending : null;
-    if (!row) {
-      row = document.createElement("div");
-      row.className = "ln" + (mine ? " me" : "");
-      if (!mine) { const who = document.createElement("small"); who.textContent = them || W.they; row.append(who); }
-      row.append(document.createElement("span"));
-      box.append(row);
-    }
-    row.lastChild.textContent = text;
-    pending = !mine && live ? row : mine ? pending : null;
-    if (near) box.scrollTop = box.scrollHeight;
-    return row.lastChild;
-  }
-  function openLog(on) {
-    $("log").hidden = !on;
-    if (on) { $("subs").replaceChildren(); $("lines").scrollTop = $("lines").scrollHeight; }
-  }
-  /* A BUTTON, not only a tap on the subtitle: in the first real call the
-     small "tap for the whole conversation" under a subtitle went unseen, and
-     the page it opens was never found. */
-  $("subs").onclick = () => openLog(true);
-  $("chat").onclick = () => openLog($("log").hidden);
-  $("them").onclick = () => openLog(false);
-  $("grab").onclick = () => openLog(false);
-  let y0 = null;
-  $("log").addEventListener("touchstart", (e) => { y0 = $("lines").scrollTop <= 0 ? e.touches[0].clientY : null; }, { passive: true });
-  $("log").addEventListener("touchend", (e) => { if (y0 !== null && e.changedTouches[0].clientY - y0 > 70) openLog(false); y0 = null; });
 
   /* THE DICTATION. Chrome and Safari call it (webkit)SpeechRecognition. It
      stops by itself after a pause, so it is restarted for as long as the call
