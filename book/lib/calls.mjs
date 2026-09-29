@@ -64,7 +64,11 @@ export async function routes(req, res, p, { send, readBody, allowed, ip }) {
     const me = "p-" + newId();
     const name = String(b.name || "").replace(/[\u0000-\u001f]/g, " ").trim().slice(0, 30);
     people.set(me, { lang: langOf(b.lang), name });
-    const t = ticket(room(c), me, name, true);
+    /* WHICH LAONEI DEVICE THIS IS, when the app says (?uid= on the page), so
+       the other end's app can ring it next time. Handed to the other phone
+       as it is; it is the app's own label, not a proof of who anybody is. */
+    const uid = /^[A-Za-z0-9_-]{1,64}$/.test(String(b.uid || "")) ? String(b.uid) : "";
+    const t = ticket(room(c), me, name, true, uid ? JSON.stringify({ uid }) : "");
     if (!t) return send(res, 503, { error: "off" }), true;
     return send(res, 200, { ...t, me, subtitles: speak.on() }), true;
   }

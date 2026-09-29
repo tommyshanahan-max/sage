@@ -90,11 +90,12 @@ const b64 = (o) => Buffer.from(typeof o === "string" ? o : JSON.stringify(o)).to
 
 /** A ticket into one class — LiveKit's own format, a signed JWT. Six hours:
  *  longer than any class, shorter than a forwarded link is worth keeping. */
-export function ticket(room, identity, name, host) {
+export function ticket(room, identity, name, host, metadata) {
   if (!SECRET) return null;
   const now = Math.floor(Date.now() / 1000);
   const body = b64({ alg: "HS256", typ: "JWT" }) + "." + b64({
     iss: KEY, sub: identity, name, nbf: now - 10, exp: now + 6 * 3600,
+    ...(metadata ? { metadata } : {}),
     video: {
       room, roomJoin: true, canSubscribe: true,
       // Watchers can send nothing at all: not video, not sound, not data.
