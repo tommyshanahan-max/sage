@@ -2024,7 +2024,11 @@ port 22 — the deploy line with a 5-try loop gets through.
 claimed laonei.co, which brand.caddy already serves (TOMSCODING_BRAND_DOMAIN
 is laonei.co on the box). Two site blocks for one address stop Caddy, and
 every site on the box with it. Removed (9dd4b98), Caddy recreated, all 200.
-Before adding a site, grep the box's .env for the name, not just the repo. Book now
+Before adding a site, grep the box's .env for the name, not just the repo.
+**Shop test 30 Sep:** call.laonei.co/shop. First `make shop-sync` used the
+example link 1202970134 — not Tom's shop; branded replica listings ("top
+factory" Nike/Burberry/Celine). Emptied the same night. shop-sync now needs
+SHOP=. Waiting on Tom's own 微店 link. Book now
 has one npm dependency (the Anthropic SDK), installed from its lockfile.
 
 ## Book — lessons widget and video room, live 26 Sep, watched working

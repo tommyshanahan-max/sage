@@ -657,11 +657,15 @@ book-test: ## Book a test lesson and print its two video links (phone + laptop)
 cast-test: ## Go live from your own phone, products under the video: make cast-test [TITLE="Huaqiangbei gadgets"]
 	@$(COMPOSE) exec -T -e NAME="$(or $(NAME),Tom)" -e TITLE="$(TITLE)" book node cli.mjs cast-test
 
-shop-sync: ## Your 微店 products into the Laonei shop test, in English: make shop-sync [SHOP=https://weidian.com/s/1202970134] [MAX=40]
+shop-sync: ## Your 微店 products into the Laonei shop test, in English: make shop-sync SHOP=<your 微店 link> [MAX=40]
 	@# Two steps that are always run together: the 微店 reader (the same one
 	@# weidian-pull is, not logged in), then its JSON into the book service,
 	@# which puts the names into English and shows them at call.laonei.co/shop.
-	@$(MAKE) --no-print-directory weidian-pull SHOP="$(or $(SHOP),https://weidian.com/s/1202970134)" MAX="$(or $(MAX),40)"
+	@# NO DEFAULT SHOP. The first run used the example link from weidian-pull,
+	@# which is somebody else's shop — branded "top factory" copies — and put
+	@# 39 of them on a page under Laonei's name. Say which shop, every time.
+	@test -n "$(SHOP)" || { echo; echo '  Which shop? make shop-sync SHOP=<your 微店 link>'; echo; exit 1; }
+	@$(MAKE) --no-print-directory weidian-pull SHOP="$(SHOP)" MAX="$(or $(MAX),40)"
 	@$(MAKE) --no-print-directory -s weidian-json | $(COMPOSE) exec -T book node cli.mjs shop-import
 
 shop-wants: ## Who asked for what on the Laonei shop test
