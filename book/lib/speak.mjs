@@ -20,7 +20,11 @@ const FAKE = process.env.BOOK_TRANSLATE_FAKE === "1" && !KEY;
 export const on = () => FAKE || Boolean(KEY);
 
 const MAX_CHARS = 300;
-export const LANGS = { en: "English", zh: "Simplified Chinese" };
+export const LANGS = { en: "English", zh: "Simplified Chinese",
+  // For a broadcast's audience (cast.mjs): a viewer anywhere reads the live
+  // in their own language. Calls still speak only the first two.
+  ru: "Russian", ja: "Japanese", ko: "Korean", es: "Spanish", fr: "French",
+  de: "German", vi: "Vietnamese", th: "Thai", ar: "Arabic", pt: "Portuguese", id: "Indonesian" };
 
 /* WHAT IT COSTS AND WHO CAN SPEND IT. Per call, a burst that refills — an
    hour of ordinary talking never touches it, a script exhausts its own call

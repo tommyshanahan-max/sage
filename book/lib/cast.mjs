@@ -30,6 +30,7 @@
  */
 import { load, save, newId } from "./store.mjs";
 import { ticket, ensureRoom, watching, closeRoom, CEIL } from "./live.mjs";
+import * as speak from "./speak.mjs";
 
 const room = (c) => "cast-" + c.id;
 const OPEN_MS = 12 * 3600e3;
@@ -83,8 +84,27 @@ export async function appRoutes(req, res, p, { send, readBody, app }) {
   return send(res, 200, { id: c.id, watch: `${WATCH}/cast/${c.id}`, open: open(c), watching: open(c) ? await watching(room(c)) : 0 }), true;
 }
 
-/** The audience's side: no key, a ticket that can only watch. */
-export async function watchRoutes(req, res, p, { send }) {
+/** The audience's side: no key, a ticket that can only watch — and a line
+ *  in any other language. */
+export async function watchRoutes(req, res, p, { send, readBody }) {
+  /* ANY LANGUAGE, FOR THE WATCHER. The broadcaster sends Chinese and
+     English; a viewer in Moscow picks Русский and each line is translated
+     here. Once per line per language, not per viewer: speak.mjs caches by
+     text, so two hundred Russian readers cost one call a line. Capped per
+     broadcast by speak.mjs's bucket (the broadcast id is the "who"), and
+     only while the broadcast is open, so this is not a free translator for
+     anybody holding a link. */
+  const tr = p.match(/^\/api\/cast\/([a-f0-9]{16})\/tr$/);
+  if (tr && req.method === "POST") {
+    const c = load().casts.find((x) => x.id === tr[1]);
+    if (!c || !open(c)) return send(res, 410, { error: "over" }), true;
+    const b = (await readBody(req)) || {};
+    const to = String(b.to || "");
+    if (!speak.LANGS[to] || to === "en" || to === "zh") return send(res, 400, { error: "lang" }), true;
+    // Per broadcast AND language, so three languages do not share one bucket.
+    try { return send(res, 200, { text: await speak.translate(String(b.text || ""), to, `cast-${c.id}-${to}`) }), true; }
+    catch (e) { return send(res, e.message === "busy" ? 429 : 502, { error: e.message }), true; }
+  }
   const m = p.match(/^\/api\/cast\/([a-f0-9]{16})\/watch$/);
   if (!m || req.method !== "POST") return false;
   // No per-address limit: a classroom behind one address is forty viewers,

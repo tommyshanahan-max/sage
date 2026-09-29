@@ -17,7 +17,10 @@
   @media (orientation:portrait){#v{object-fit:cover}}
   .top{position:absolute;left:14px;right:14px;top:max(14px,env(safe-area-inset-top));display:flex;align-items:center;gap:10px}
   .live{background:#d93025;border-radius:8px;padding:3px 9px;font-weight:800;font-size:14px;letter-spacing:.04em}
-  .title{flex:1;font-weight:700;font-size:17px;text-shadow:0 1px 5px rgba(0,0,0,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* The title on its own line under the buttons: beside them, on a phone,
+     it was squeezed to nothing. */
+  .top{flex-wrap:wrap}
+  .title{order:9;flex-basis:100%;font-weight:700;font-size:17px;text-shadow:0 1px 5px rgba(0,0,0,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .langs{display:flex;gap:6px}
   .langs button{border:0;border-radius:10px;padding:6px 11px;font-size:15px;font-weight:800;background:rgba(0,0,0,.5);color:#fff;cursor:pointer}
   .langs button.on{background:#fff;color:#111}
@@ -33,6 +36,9 @@
   .veil h1{margin:0;font-size:26px}
   .go{border:0;border-radius:18px;padding:18px 48px;background:#fff;color:#111;font-size:21px;font-weight:800;cursor:pointer;text-decoration:none}
   .brand{color:#fff;text-decoration:none;font-weight:800;font-size:14px;background:rgba(0,0,0,.5);border-radius:8px;padding:3px 9px}
+  .more{position:absolute;right:12px;top:calc(max(14px,env(safe-area-inset-top)) + 42px);background:rgba(20,20,20,.94);border-radius:16px;padding:8px;display:grid;grid-template-columns:1fr 1fr;gap:6px;min-width:230px}
+  .more button{border:0;border-radius:10px;padding:10px 12px;background:rgba(255,255,255,.1);color:#fff;font-size:17px;font-weight:700;text-align:left;cursor:pointer}
+  .more button.on{background:#fff;color:#111}
   .share{border:0;border-radius:10px;padding:6px 10px;background:rgba(0,0,0,.5);color:#fff;font-size:15px;cursor:pointer}
   [hidden]{display:none!important}
 </style>
@@ -41,7 +47,8 @@
 <video id="v" autoplay playsinline></video>
 <div class="top"><span class="live">LIVE</span><a class="brand" id="brand" target="_blank" rel="noopener">Laonei</a><span class="title" id="title"></span>
   <button class="share" id="share" aria-label="Share">⤴</button>
-  <div class="langs" id="langs"><button data-l="zh">中</button><button data-l="py">拼</button><button data-l="en">EN</button></div></div>
+  <div class="langs" id="langs"><button data-l="zh">中</button><button data-l="py">拼</button><button data-l="en">EN</button><button data-l="more" id="globe" aria-label="More languages">🌐</button></div></div>
+<div class="more" id="more" hidden></div>
 <div class="subs" id="subs"></div>
 <div class="veil" id="veil"><h1 id="msg"></h1><button class="go" id="go" hidden></button><a class="go" id="getapp" target="_blank" rel="noopener" hidden></a></div>
 <script src="livekit.js"></script>
@@ -74,21 +81,52 @@
      above — for learners), EN. Guessed from the phone, remembered once
      changed, and changeable any time: it only redraws. */
   const q = new URLSearchParams(location.search);
-  let read = ["zh", "py", "en"].includes(q.get("lang")) ? q.get("lang") : store.get("cast:read") || (zhUI ? "zh" : "en");
-  const drawLangs = () => [...$("langs").children].forEach((b) => b.classList.toggle("on", b.dataset.l === read));
-  $("langs").onclick = (e) => { const l = e.target.dataset && e.target.dataset.l; if (l) { read = l; store.set("cast:read", l); drawLangs(); redraw(); } };
+  /* ANY OTHER LANGUAGE behind 🌐: the broadcaster sends Chinese and
+     English, and a viewer in Moscow reads Russian — each line translated by
+     the server once per language (lib/cast.mjs), shown in English until it
+     arrives. Each name is written in its own language: whoever needs it can
+     read it. Codes match lib/speak.mjs. */
+  const MORE = { ru: "Русский", ja: "日本語", ko: "한국어", es: "Español", fr: "Français", de: "Deutsch",
+    pt: "Português", vi: "Tiếng Việt", th: "ไทย", id: "Indonesia", ar: "العربية" };
+  const guess = () => { const l = (navigator.language || "").slice(0, 2); return l === "zh" ? "zh" : MORE[l] ? l : "en"; };
+  const ok = (l) => ["zh", "py", "en"].includes(l) || MORE[l];
+  let read = ok(q.get("lang")) ? q.get("lang") : ok(store.get("cast:read")) ? store.get("cast:read") : guess();
+  for (const [code, name] of Object.entries(MORE)) {
+    const b = document.createElement("button"); b.dataset.l = code; b.textContent = name; $("more").append(b);
+  }
+  const drawLangs = () => {
+    [...$("langs").children, ...$("more").children].forEach((b) => b.classList.toggle("on", b.dataset.l === read || (b.dataset.l === "more" && !!MORE[read])));
+    $("globe").textContent = MORE[read] ? read.toUpperCase() : "🌐";
+  };
+  const pick = (e) => {
+    const l = e.target.dataset && e.target.dataset.l;
+    if (!l) return;
+    if (l === "more") { $("more").hidden = !$("more").hidden; return; }
+    read = l; store.set("cast:read", l); $("more").hidden = true; drawLangs();
+    lines.slice(-2).forEach(need); redraw();
+  };
+  $("langs").onclick = pick; $("more").onclick = pick;
   drawLangs();
 
   // ---- SUBTITLES: the last two lines, the newest large. -------------------
   const lines = [];
   let fade = 0;
+  /* The line in the viewer's other language, asked for once. */
+  function need(s) {
+    if (!MORE[read] || s.x[read] !== undefined) return;
+    const to = read;
+    s.x[to] = null; // asked
+    fetch(`${BASE}/api/cast/${id}/tr`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: s.en || s.zh, to }) })
+      .then((r) => (r.ok ? r.json() : {})).then((j) => { s.x[to] = j.text || ""; if (read === to) redraw(); })
+      .catch(() => { s.x[to] = ""; });
+  }
   function redraw() {
     const box = $("subs");
     box.replaceChildren();
     lines.slice(-2).forEach((s, i, all) => {
       const d = document.createElement("div");
       d.className = "sub" + (i < all.length - 1 ? " old" : "");
-      const main = read === "en" ? s.en || s.zh : s.zh || s.en;
+      const main = MORE[read] ? s.x[read] || s.en || s.zh : read === "en" ? s.en || s.zh : s.zh || s.en;
       if (read === "py" && s.pinyin && s.zh) { const p = document.createElement("span"); p.className = "py"; p.textContent = s.pinyin; d.append(p); }
       const b = document.createElement("b"); b.textContent = main; d.append(b);
       box.append(d);
@@ -96,9 +134,10 @@
   }
   function sub(m) {
     const clip = (v) => String(v || "").slice(0, 300);
-    const s = { zh: clip(m.zh), en: clip(m.en), pinyin: clip(m.pinyin) };
+    const s = { zh: clip(m.zh), en: clip(m.en), pinyin: clip(m.pinyin), x: {} };
     if (!s.zh && !s.en) return;
     lines.push(s);
+    need(s);
     if (lines.length > 20) lines.shift();
     redraw();
     clearTimeout(fade);
@@ -148,6 +187,7 @@
     if (!host || !host.videoTrackPublications.size) veil(W.soon); else $("veil").hidden = true;
     $("go").onclick = () => { room.startAudio().catch(() => {}); $("veil").hidden = true; };
   }
+  $("v").onclick = () => { $("more").hidden = true; };
   addEventListener("pagehide", () => { if (room) room.disconnect(); });
 })();
 </script>

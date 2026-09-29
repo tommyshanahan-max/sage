@@ -242,7 +242,7 @@ const server = http.createServer(async (req, res) => {
     catch { return send(res, 404, { error: "missing" }); }
   }
   if (p.startsWith("/api/cast/")) {
-    if (await cast.watchRoutes(req, res, p, { send })) return;
+    if (await cast.watchRoutes(req, res, p, { send, readBody })) return;
   }
   if (p === "/api/casts" || p.startsWith("/api/casts/")) {
     const app = apps.whose(req, load());
