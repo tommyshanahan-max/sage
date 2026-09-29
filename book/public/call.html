@@ -66,6 +66,8 @@
      landed right. 文A only adds the original under THEIR lines. */
   .ln.me .alt:not(:empty){display:block;color:#16a34a;font-weight:600}
   .ok{color:#16a34a;font-weight:900;margin-left:6px}
+  .star{border:0;background:none;font-size:22px;line-height:1;color:#a8a29e;padding:0 0 0 8px;cursor:pointer;vertical-align:middle}
+  .star.on{color:#f59e0b}
   .callshare{position:absolute;left:24px;right:24px;top:52%;width:auto;background:#fff!important;color:#1c1917}
   [hidden]{display:none!important}
 </style>
@@ -265,6 +267,32 @@
   let pThem = null, pMe = null; // the rows still being spoken
   const tick = (row) => { const t = row && row.querySelector(".t"); if (t && !t.querySelector(".ok")) { const k = document.createElement("b"); k.className = "ok"; k.textContent = "✓"; t.append(k); } };
   const setAlt = (row, text) => { if (row) row.querySelector(".alt").textContent = text || ""; };
+
+  /* ☆ ON A LINE SENDS IT TO LAONEI'S SAVED PHRASES. Tom: a call is where
+     the useful sentences turn up, and there was nothing to keep one with.
+     Only inside the app (a frame) — a link opened from a chat has nowhere
+     to save to, so it shows no stars. Each star tells the app at once, as
+     {type:"star", on, phrase:{zh, en}}, and "ended" carries every starred
+     line as saved:[{zh, en}] in case the app was not listening. Pinyin is
+     the app's to add; it already makes it for everything else it saves. */
+  const IN_APP = window.parent !== window;
+  const starred = new Set();
+  function starable(row, a, b) {
+    if (!IN_APP || !row || !a || !b || row.querySelector(".star")) return;
+    const zh = HAN.test(a) ? a : b, en = HAN.test(a) ? b : a;
+    if (!HAN.test(zh) || HAN.test(en)) return; // both sides in one language: nothing to learn
+    const pair = { zh, en };
+    const st = document.createElement("button");
+    st.className = "star"; st.textContent = "☆"; st.setAttribute("aria-label", "Save");
+    st.onclick = (e) => {
+      e.stopPropagation();
+      const on = !st.classList.contains("on");
+      st.classList.toggle("on", on); st.textContent = on ? "★" : "☆";
+      if (on) starred.add(pair); else starred.delete(pair);
+      tellApp("star", { on, phrase: pair });
+    };
+    row.querySelector(".t").append(st);
+  }
   function line(mine, text, live) {
     const box = $("lines");
     const near = box.scrollHeight - box.scrollTop - box.clientHeight < 60;
@@ -368,6 +396,7 @@
     if (msg.t === "cap" && fromServer && msg.who !== me) {
       const tr = msg.lang === lang ? "" : (msg.tr && msg.tr[lang]) || "";
       const row = line(false, tr || msg.text, false);
+      starable(row, msg.text, tr);
       setAlt(row, tr ? msg.text : "");
     }
   }
@@ -402,7 +431,9 @@
       // the speaker to stop and wait, which nothing on screen did before.
       tick(row);
       const j = await r.json().catch(() => ({}));
-      setAlt(row, Object.values(j.tr || {}).find(Boolean) || ""); // what they saw
+      const got = Object.values(j.tr || {}).find(Boolean) || "";
+      setAlt(row, got); // what they saw
+      starable(row, part, got);
     }).catch(() => {});
   }
   function heard(text, final, i = 0) {
@@ -534,7 +565,7 @@
   }
 
   function finish() {
-    if (!ended) tellApp("ended");
+    if (!ended) tellApp("ended", { saved: [...starred] });
     ended = true;
     try { rec && rec.stop(); } catch { /* not running */ }
     const was = room; room = null;
