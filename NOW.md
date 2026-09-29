@@ -2028,7 +2028,12 @@ Before adding a site, grep the box's .env for the name, not just the repo.
 **Shop test 30 Sep:** call.laonei.co/shop. First `make shop-sync` used the
 example link 1202970134 — not Tom's shop; branded replica listings ("top
 factory" Nike/Burberry/Celine). Emptied the same night. shop-sync now needs
-SHOP=. Waiting on Tom's own 微店 link. Book now
+SHOP=. Waiting on Tom's own 微店 link.
+**Laonei's shape, agreed 30 Sep** (docs/mockups/laonei-four-tabs.png): bottom
+bar Laonei · Video · Shop · Learn. Ship Laonei · Call · Learn now (Learn
+named, not an icon — it is the come-back-tomorrow tab, and 2% come back);
+Call becomes Video when Go live lands; Shop last. Tom's own 微店 is mostly
+branded copies — only picked, unbranded items go in the shop (shop-pick). Book now
 has one npm dependency (the Anthropic SDK), installed from its lockfile.
 
 ## Book — lessons widget and video room, live 26 Sep, watched working
