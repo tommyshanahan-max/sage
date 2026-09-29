@@ -303,7 +303,30 @@
     y0 = null;
   });
 
+  /* THEIR VOICE, HEARD BY MY DICTATION. On speaker, my phone's dictation
+     hears the other person out of my own speaker — the call's echo
+     cancelling cleans what is sent to them, not what dictation hears — and
+     Tom's test on a Mac showed "hello how are you" twice, once as theirs and
+     once as his. So what they said in the last 15 seconds is kept, and a
+     sentence of mine that is mostly their words is dropped. Headphones
+     avoid it altogether. */
+  const theirs = [];
+  const words = (t) => bare(t).length ? t.toLowerCase().match(/[\p{L}\p{N}]+/gu) || [] : [];
+  function echo(text) {
+    const now = Date.now();
+    while (theirs.length && now - theirs[0].at > 15000) theirs.shift();
+    const w = words(text);
+    if (!w.length) return false;
+    // Chinese has no spaces: compare it character by character instead.
+    const units = HAN.test(text) ? [...bare(text)] : w;
+    return theirs.some((x) => {
+      const pool = HAN.test(x.text) ? [...bare(x.text)] : words(x.text);
+      const hit = units.filter((u) => pool.includes(u)).length;
+      return hit / units.length >= 0.7;
+    });
+  }
   function hear(msg, fromServer) {
+    if ((msg.t === "live" && !fromServer) || (msg.t === "cap" && fromServer && msg.who !== me)) theirs.push({ text: msg.text, at: Date.now() });
     if (msg.t === "live" && !fromServer) line(false, !msg.lang || msg.lang === lang ? msg.text : "…", true);
     if (msg.t === "cap" && fromServer && msg.who !== me) {
       const tr = msg.lang === lang ? "" : (msg.tr && msg.tr[lang]) || "";
@@ -334,6 +357,7 @@
     const part = after(text, sent.get(i) || "");
     sent.set(i, text);
     if (!/[\p{L}\p{N}]/u.test(part)) return;
+    if (echo(part)) { if (pMe && pMe.isConnected) pMe.remove(); pMe = null; return; }
     const row = line(true, part, false);
     api("say", { me, text: part, lang }).then(async (r) => {
       if (!r.ok) return;
@@ -368,7 +392,7 @@
   let liveText = "", liveT = 0;
   function pushLive() {
     lastLive = Date.now();
-    if (liveText && room) room.localParticipant.publishData(enc.encode(JSON.stringify({ t: "live", text: liveText, lang: HAN.test(liveText) ? "zh" : "en" })), { reliable: false, topic: "call" }).catch(() => {});
+    if (liveText && room && !echo(liveText)) room.localParticipant.publishData(enc.encode(JSON.stringify({ t: "live", text: liveText, lang: HAN.test(liveText) ? "zh" : "en" })), { reliable: false, topic: "call" }).catch(() => {});
   }
   window.__heard = heard; // for tests: what the dictation would have said
 
