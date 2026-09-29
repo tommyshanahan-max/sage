@@ -2019,7 +2019,12 @@ chosen — `make book-bench` compares it with Opus on the box's key.
 key → watch link call.laonei.co/cast/<id> + a broadcaster ticket for
 Laonei's Live screen; viewers watch-only, subtitles as data (中/拼/EN).
 Laonei's side not built yet. Deploys from Tom's Mac sometimes time out on
-port 22 — the deploy line with a 5-try loop gets through. Book now
+port 22 — the deploy line with a 5-try loop gets through.
+**Outage 29 Sep ~23:40, a few minutes, my fault:** a new docker/sites file
+claimed laonei.co, which brand.caddy already serves (TOMSCODING_BRAND_DOMAIN
+is laonei.co on the box). Two site blocks for one address stop Caddy, and
+every site on the box with it. Removed (9dd4b98), Caddy recreated, all 200.
+Before adding a site, grep the box's .env for the name, not just the repo. Book now
 has one npm dependency (the Anthropic SDK), installed from its lockfile.
 
 ## Book — lessons widget and video room, live 26 Sep, watched working
