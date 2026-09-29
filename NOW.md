@@ -2014,7 +2014,12 @@ then: one white card for every word (swipe/drag to any height, 文A for both
 languages, mine always show the translation they got), Share in the bar,
 ?lang= skips the intro, ?uid= comes back as them.uid, echo filter (dictation
 hearing the other person from the speaker). Haiku for speed offered, not
-chosen — `make book-bench` compares it with Opus on the box's key. Book now
+chosen — `make book-bench` compares it with Opus on the box's key.
+**Broadcast deployed 29 Sep** (2b0acfa): `POST /api/casts` with the Laonei
+key → watch link call.laonei.co/cast/<id> + a broadcaster ticket for
+Laonei's Live screen; viewers watch-only, subtitles as data (中/拼/EN).
+Laonei's side not built yet. Deploys from Tom's Mac sometimes time out on
+port 22 — the deploy line with a 5-try loop gets through. Book now
 has one npm dependency (the Anthropic SDK), installed from its lockfile.
 
 ## Book — lessons widget and video room, live 26 Sep, watched working
