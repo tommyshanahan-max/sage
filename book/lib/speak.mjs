@@ -70,6 +70,50 @@ RULES, in order of importance:
 
 Reply with the translation only: no quotes, no labels, no notes, no alternatives.`;
 
+/* WHICH MODEL. Opus at low effort until `make book-bench` says otherwise:
+   that runs the same sentences through two models on the box, where the key
+   is, and prints how fast each was and whether it answered in the wrong
+   language — Tom remembered a Haiku test doing that, and nobody could find
+   it written down. BOOK_TRANSLATE_MODEL overrides without a rebuild. */
+export const MODEL = (process.env.BOOK_TRANSLATE_MODEL || "claude-opus-5").trim();
+
+/** The model call alone — no cache, no cap. `translate` wraps it; the bench
+ *  calls it directly. Throws on failure, with the provider's error. */
+export async function once(text, to, model = MODEL) {
+  const { default: Anthropic } = await import("@anthropic-ai/sdk");
+  const client = new Anthropic({ apiKey: KEY, timeout: 15_000, maxRetries: 1 });
+  // Haiku 4.5 takes neither effort nor the fallback option (both are errors
+  // on it); the Opus line wants both.
+  const small = /haiku/.test(model);
+  const ask = {
+    model,
+    max_tokens: 1000,
+    // A subtitle is not a reasoning problem, and somebody is waiting for
+    // it: thinking stays on (turning it off has its own failure modes on
+    // this model) at the lowest effort.
+    ...(small ? {} : { output_config: { effort: "low" } }),
+    system: SYSTEM,
+    messages: [{ role: "user", content: `Translate into ${LANGS[to]}:\n\n${text}` }],
+  };
+  let res;
+  if (plainOnly || small) res = await client.messages.create(ask);
+  else try {
+    // If a sentence trips a safety classifier, a fallback model finishes
+    // it rather than the subtitle silently not arriving.
+    res = await client.beta.messages.create({ ...ask, betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" });
+  } catch (err) {
+    /* WRITTEN WITHOUT A KEY TO TRY IT ON, so if the account refuses the
+       fallback option (a 400), the plain call the board's translate button
+       has been making successfully is made instead — a subtitle without a
+       fallback beats no subtitle. Anything else is a real failure. */
+    if (!err || err.status !== 400) throw err;
+    plainOnly = true;
+    res = await client.messages.create(ask);
+  }
+  if (res.stop_reason === "refusal") throw Object.assign(new Error("refused"), { status: "refusal" });
+  return res.content.filter((b) => b.type === "text").map((b) => b.text).join("").trim();
+}
+
 /** One sentence into `to` ("en" or "zh"). Resolves to the text, or throws
  *  an Error whose message is safe to show ("busy", "failed"). */
 export async function translate(raw, to, who) {
@@ -83,35 +127,7 @@ export async function translate(raw, to, who) {
   let out = "";
   const t0 = Date.now();
   try {
-    const { default: Anthropic } = await import("@anthropic-ai/sdk");
-    const client = new Anthropic({ apiKey: KEY, timeout: 15_000, maxRetries: 1 });
-    const ask = {
-      model: "claude-opus-5",
-      max_tokens: 1000,
-      // A subtitle is not a reasoning problem, and somebody is waiting for
-      // it: thinking stays on (turning it off has its own failure modes on
-      // this model) at the lowest effort.
-      output_config: { effort: "low" },
-      system: SYSTEM,
-      messages: [{ role: "user", content: `Translate into ${LANGS[to]}:\n\n${text}` }],
-    };
-    let res;
-    if (plainOnly) res = await client.messages.create(ask);
-    else try {
-      // If a sentence trips a safety classifier, a fallback model finishes
-      // it rather than the subtitle silently not arriving.
-      res = await client.beta.messages.create({ ...ask, betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" });
-    } catch (err) {
-      /* WRITTEN WITHOUT A KEY TO TRY IT ON, so if the account refuses the
-         fallback option (a 400), the plain call the board's translate button
-         has been making successfully is made instead — a subtitle without a
-         fallback beats no subtitle. Anything else is a real failure. */
-      if (!err || err.status !== 400) throw err;
-      plainOnly = true;
-      res = await client.messages.create(ask);
-    }
-    if (res.stop_reason === "refusal") throw Object.assign(new Error("refused"), { status: "refusal" });
-    out = res.content.filter((b) => b.type === "text").map((b) => b.text).join("").trim();
+    out = await once(text, to);
   } catch (err) {
     // Never the provider's message: it can name the account or the model,
     // and this reply goes to anybody holding a call link.

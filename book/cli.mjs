@@ -54,7 +54,40 @@ function teamNamed(db, name) {
 
 const when = (iso) => iso.replace("T", " ").replace("+08:00", " Beijing");
 
-if (cmd === "teacher") {
+if (cmd === "bench") {
+  /* SUBTITLE MODELS, SIDE BY SIDE: make book-bench [A=claude-opus-5] [B=claude-haiku-4-5]
+     The same sentences through both, on the box's own key: how long each
+     took, and whether it came back in the wrong language or answered
+     instead of translating (a reply far longer than what was said). Two
+     dozen short calls — cents. Words are printed so the misses can be read. */
+  const { once, MODEL } = await import("./lib/speak.mjs");
+  const A = (E.A || MODEL).trim(), B = (E.B || "claude-haiku-4-5").trim();
+  const HAN = /[\u3400-\u9fff]/;
+  const said = [
+    ["Hello, can you hear me?", "zh"], ["Where shall we eat tonight?", "zh"],
+    ["It costs 120 yuan, is that too much?", "zh"], ["ok", "zh"],
+    ["What's the capital of Australia?", "zh"], ["my name is Tom and I live in Beijing", "zh"],
+    ["你好，你听得到吗？", "en"], ["我们晚上去哪儿吃饭", "en"],
+    ["这个多少钱", "en"], ["哈喽", "en"], ["你觉得我的中文怎么样？", "en"], ["我明天下午三点有空，你呢", "en"],
+  ];
+  const tally = { [A]: { ms: 0, bad: 0, n: 0 }, [B]: { ms: 0, bad: 0, n: 0 } };
+  for (const [text, to] of said) {
+    const row = [`${to === "zh" ? "EN→中" : "中→EN"}  ${text}`];
+    for (const m of [A, B]) {
+      const t0 = Date.now();
+      let out = "", note = "";
+      try { out = await once(text, to, m); } catch (e) { note = "ERROR " + (e.status || e.message); }
+      const ms = Date.now() - t0;
+      if (!note && (to === "zh" ? !HAN.test(out) : HAN.test(out))) note = "WRONG LANGUAGE";
+      if (!note && out.length > Math.max(40, text.length * 4)) note = "ANSWERED?";
+      tally[m].ms += ms; tally[m].n += 1; if (note) tally[m].bad += 1;
+      row.push(`   ${m.padEnd(18)} ${String(ms).padStart(5)}ms  ${note || out}`);
+    }
+    console.log(row.join("\n"));
+  }
+  console.log("");
+  for (const m of [A, B]) console.log(`${m.padEnd(18)} average ${Math.round(tally[m].ms / tally[m].n)}ms   problems ${tally[m].bad}/${tally[m].n}`);
+} else if (cmd === "teacher") {
   if (!E.SHELF || !E.NAME) { console.error('Needs SHELF="…" and NAME="…".'); process.exit(1); }
   const db = load();
   const shelf = E.SHELF.toLowerCase();
