@@ -54,7 +54,24 @@ function teamNamed(db, name) {
 
 const when = (iso) => iso.replace("T", " ").replace("+08:00", " Beijing");
 
-if (cmd === "bench") {
+if (cmd === "shop-import") {
+  /* The 微店 reader's JSON on stdin (make shop-sync pipes it here), names
+     put into English once. Prints what the shop now shows. */
+  const { importItems } = await import("./lib/shop.mjs");
+  const { translate } = await import("./lib/speak.mjs");
+  let raw = "";
+  for await (const chunk of process.stdin) raw += chunk;
+  let pulled;
+  try { pulled = JSON.parse(raw); } catch { console.error("That was not the reader's JSON. Run make shop-sync SHOP=…"); process.exit(1); }
+  const items = await importItems(pulled, (zh) => translate(zh, "en", "shop-import"));
+  for (const x of items) console.log(`  ¥${String(x.cny).padEnd(7)} ${x.en || "(not translated)"}  ·  ${x.zh}`);
+  console.log(`\n  ${items.length} in the shop: https://call.laonei.co/shop`);
+} else if (cmd === "shop-wants") {
+  const db = load();
+  const name = new Map(db.shop.items.map((x) => [x.id, x.en || x.zh]));
+  if (!db.shop.wants.length) console.log("  Nobody has asked for anything yet.");
+  for (const w of db.shop.wants.slice(-50)) console.log(`  ${w.at.slice(0, 16).replace("T", " ")}  ${name.get(w.item) || w.item}  ←  ${w.name || "?"} · ${w.reach} · ${w.country || "?"}`);
+} else if (cmd === "bench") {
   /* SUBTITLE MODELS, SIDE BY SIDE: make book-bench [A=claude-opus-5] [B=claude-haiku-4-5]
      The same sentences through both, on the box's own key: how long each
      took, and whether it came back in the wrong language or answered

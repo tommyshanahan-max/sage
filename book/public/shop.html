@@ -1,0 +1,131 @@
+<!doctype html>
+<!-- LAONEI SHOP, A TEST — see lib/shop.mjs. Tom's 微店 products in English,
+     a live on top when one is on, and "I want this" instead of a till: the
+     test is whether people abroad ask, before any money is involved. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Laonei Shop</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#faf7f1;color:#1c1917;font:17px/1.4 -apple-system,BlinkMacSystemFont,"PingFang SC","Segoe UI",Helvetica,Arial,sans-serif}
+  button,input{font-family:inherit}
+  main{max-width:560px;margin:0 auto;padding:max(18px,env(safe-area-inset-top)) 16px 40px}
+  h1{margin:0 0 14px;font:700 32px/1.1 Georgia,"Songti SC",serif}
+  .sec{font-size:13px;letter-spacing:.12em;font-weight:800;color:#78716c;margin:22px 0 10px}
+  .live{display:block;position:relative;height:200px;border-radius:20px;overflow:hidden;background:linear-gradient(160deg,#8c7a66,#2d241d);text-decoration:none;color:#fff}
+  .live .tag{position:absolute;left:12px;top:12px;background:#dc2626;border-radius:7px;padding:3px 9px;font-weight:800;font-size:13px}
+  .live .t{position:absolute;left:14px;bottom:14px;right:110px;font-size:20px;font-weight:800;text-shadow:0 1px 6px rgba(0,0,0,.7)}
+  .live .go{position:absolute;right:12px;bottom:12px;background:#fff;color:#111;border-radius:12px;padding:9px 16px;font-weight:800}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .p{background:#fff;border:1px solid #eee7dc;border-radius:16px;overflow:hidden;cursor:pointer;text-align:left;padding:0;color:inherit}
+  .p img,.p .ph{width:100%;aspect-ratio:1;object-fit:cover;display:block;background:#eee7dc}
+  .p .n{font-size:15px;font-weight:700;padding:8px 10px 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .p .pr{font-size:17px;font-weight:800;padding:2px 10px 10px}
+  .empty{color:#78716c;text-align:center;padding:40px 0}
+  /* One product, one tap deeper: a sheet over the list. */
+  .sheet{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center}
+  .card{background:#faf7f1;width:100%;max-width:560px;max-height:92vh;overflow-y:auto;border-radius:22px 22px 0 0;padding:0 0 max(18px,env(safe-area-inset-bottom))}
+  .card img{width:100%;max-height:340px;object-fit:cover;display:block}
+  .card .in{padding:14px 16px}
+  .card h2{margin:0;font-size:22px}
+  .card .zh{color:#78716c;font-size:15px;margin-top:2px}
+  .card .price{font-size:28px;font-weight:800;margin:8px 0}
+  .card .price small{font-size:15px;color:#78716c;font-weight:600}
+  .card input{width:100%;font-size:18px;padding:13px 14px;border:1.5px solid #d6d3d1;border-radius:12px;margin:6px 0;background:#fff}
+  .card .want{width:100%;border:0;border-radius:14px;padding:16px;background:#1c1917;color:#fff;font-size:19px;font-weight:800;margin-top:8px;cursor:pointer}
+  .card .done{font-size:20px;font-weight:700;text-align:center;padding:18px 0}
+  .card .x{position:absolute;right:14px;top:14px;border:0;background:rgba(0,0,0,.5);color:#fff;border-radius:50%;width:36px;height:36px;font-size:18px;cursor:pointer}
+  .err{color:#c8261e;min-height:1.4em}
+  [hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main>
+  <h1>Laonei Shop</h1>
+  <div id="liveBox" hidden><div class="sec" id="liveH"></div><a class="live" id="live"><span class="tag">LIVE</span><span class="t" id="liveT"></span><span class="go" id="liveGo"></span></a></div>
+  <div class="sec" id="dropsH"></div>
+  <div class="grid" id="grid"></div>
+  <p class="empty" id="empty" hidden></p>
+</main>
+<div class="sheet" id="sheet" hidden><div class="card" style="position:relative" id="card"></div></div>
+<script>
+(() => {
+  const zhUI = (navigator.language || "").startsWith("zh");
+  const W = zhUI
+    ? { live: "正在直播", drops: "好物", watch: "观看", none: "还没有商品。", want: "我想要", name: "名字", reach: "邮箱或微信", country: "国家", sent: "收到了，我们会联系你。", need: "留个联系方式吧", net: "没发出去，再试一次。", from: "约" }
+    : { live: "LIVE NOW", drops: "FROM CHINA", watch: "Watch", none: "Nothing here yet.", want: "I want this", name: "Your name", reach: "Email or WhatsApp", country: "Country", sent: "Got it — we'll be in touch.", need: "How do we reach you?", net: "Didn't send — try again.", from: "about" };
+  const $ = (id) => document.getElementById(id);
+  const BASE = location.pathname.replace(/\/shop$/, "");
+  $("liveH").textContent = W.live; $("dropsH").textContent = W.drops; $("liveGo").textContent = W.watch;
+  let items = [];
+
+  fetch(`${BASE}/api/shop`).then((r) => r.json()).then((j) => {
+    items = j.items || [];
+    /* THE LIVE LEADS. A card for now; playing it silently in the banner is
+       the next step, once a real broadcast has been through the watch page. */
+    if (j.live) {
+      const url = `${BASE}/cast/${j.live.id}`;
+      $("live").href = url;
+      $("liveT").textContent = j.live.title || j.live.name || "";
+      $("liveBox").hidden = false;
+    }
+    draw();
+  }).catch(() => { $("empty").textContent = W.net; $("empty").hidden = false; });
+
+  const name = (x) => (zhUI ? x.zh : x.en || x.zh);
+  const price = (x) => (zhUI ? `¥${x.cny}` : `A$${x.aud}`);
+  function draw() {
+    $("grid").replaceChildren();
+    $("empty").hidden = items.length > 0; $("empty").textContent = W.none;
+    for (const x of items) {
+      const b = document.createElement("button"); b.className = "p";
+      const img = x.photo ? Object.assign(document.createElement("img"), { src: x.photo, alt: "", loading: "lazy", referrerPolicy: "no-referrer" }) : Object.assign(document.createElement("div"), { className: "ph" });
+      // A 微店 picture that will not load is a plain square, not a broken-image icon.
+      img.onerror = () => img.replaceWith(Object.assign(document.createElement("div"), { className: "ph" }));
+      const n = Object.assign(document.createElement("div"), { className: "n", textContent: name(x) });
+      const pr = Object.assign(document.createElement("div"), { className: "pr", textContent: price(x) });
+      b.append(img, n, pr);
+      b.onclick = () => open(x);
+      $("grid").append(b);
+    }
+  }
+
+  /* One product: the picture, the name in both languages, the price, and
+     three boxes. No till yet — asking is the test. */
+  function open(x) {
+    const c = $("card"); c.replaceChildren();
+    const close = Object.assign(document.createElement("button"), { className: "x", textContent: "✕", onclick: () => ($("sheet").hidden = true) });
+    if (x.photo) c.append(Object.assign(document.createElement("img"), { src: x.photo, alt: "", referrerPolicy: "no-referrer" }));
+    const inn = Object.assign(document.createElement("div"), { className: "in" });
+    inn.append(Object.assign(document.createElement("h2"), { textContent: name(x) }));
+    if (!zhUI && x.en) inn.append(Object.assign(document.createElement("div"), { className: "zh", textContent: x.zh }));
+    const pr = Object.assign(document.createElement("div"), { className: "price" });
+    pr.append(zhUI ? `¥${x.cny}` : `A$${x.aud} `);
+    if (!zhUI) pr.append(Object.assign(document.createElement("small"), { textContent: `¥${x.cny}` }));
+    inn.append(pr);
+    const f = (ph, ac) => Object.assign(document.createElement("input"), { placeholder: ph, autocomplete: ac });
+    const nm = f(W.name, "name"), rc = f(W.reach, "email"), co = f(W.country, "country-name");
+    const err = Object.assign(document.createElement("div"), { className: "err" });
+    rc.oninput = () => { err.textContent = ""; };
+    const go = Object.assign(document.createElement("button"), { className: "want", textContent: W.want });
+    go.onclick = async () => {
+      if (!rc.value.trim()) { err.textContent = W.need; rc.focus(); return; }
+      go.disabled = true;
+      try {
+        const r = await fetch(`${BASE}/api/shop/want`, { method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ item: x.id, name: nm.value, reach: rc.value, country: co.value }) });
+        if (!r.ok) throw 0;
+        inn.replaceChildren(Object.assign(document.createElement("div"), { className: "done", textContent: W.sent }));
+      } catch { err.textContent = W.net; go.disabled = false; }
+    };
+    inn.append(nm, rc, co, err, go);
+    c.append(close, inn);
+    $("sheet").hidden = false;
+  }
+  $("sheet").onclick = (e) => { if (e.target === $("sheet")) $("sheet").hidden = true; };
+})();
+</script>
+</body>
+</html>

@@ -40,6 +40,7 @@ import * as market from "./lib/market.mjs";
 import * as apps from "./lib/apps.mjs";
 import * as calls from "./lib/calls.mjs";
 import * as cast from "./lib/cast.mjs";
+import * as shop from "./lib/shop.mjs";
 
 // Where the service is reached from outside — for links put in messages.
 const PUBLIC = (process.env.BOOK_PUBLIC || "https://thexchange.app/book").replace(/\/$/, "");
@@ -234,6 +235,16 @@ const server = http.createServer(async (req, res) => {
   if (p === "/api/call" || p.startsWith("/api/call/")) {
     const ip = String(req.headers["x-forwarded-for"] || req.socket.remoteAddress || "").split(",")[0].trim();
     if (await calls.routes(req, res, p, { send, readBody, allowed, ip })) return;
+  }
+
+  /* ---- THE SHOP TEST — see lib/shop.mjs. */
+  if (req.method === "GET" && p === "/shop") {
+    try { return send(res, 200, readFileSync(path.join(HERE, "public/shop.html")), "text/html; charset=utf-8"); }
+    catch { return send(res, 404, { error: "missing" }); }
+  }
+  if (p === "/api/shop" || p.startsWith("/api/shop/")) {
+    const ip = String(req.headers["x-forwarded-for"] || req.socket.remoteAddress || "").split(",")[0].trim();
+    if (await shop.routes(req, res, p, { send, readBody, allowed, ip })) return;
   }
 
   /* ---- A BROADCAST — see lib/cast.mjs. /cast/<id> is the watch page. */
