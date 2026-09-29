@@ -22,7 +22,7 @@ import { load, save } from "./store.mjs";
 import { newLive, links, liveOpen, watching, closeRoom } from "./live.mjs";
 
 /** Which app this request is from, or "" — by the hash of its key. */
-function whose(req, db) {
+export function whose(req, db) {
   const m = /^Bearer\s+(bk_[a-f0-9]{48})$/.exec(String(req.headers.authorization || ""));
   if (!m) return "";
   const h = createHash("sha256").update(m[1]).digest();

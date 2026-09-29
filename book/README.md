@@ -83,6 +83,17 @@ From that app's server, with `Authorization: Bearer <key>`:
 Show the seller link to whoever goes live and the viewer link to everybody
 else. In a frame: `allow="camera; microphone; autoplay; payment"`.
 
+## Broadcast (Laonei's Live tab)
+
+One on camera, up to 200 watching, nobody else can speak. `lib/cast.mjs`.
+From Laonei's server, with the same `bk_` key as lives:
+`POST /api/casts {name, title}` → `{id, watch, host:{url, token}}`. The Live
+screen connects with `host` (livekit-client, served at `/livekit.js`),
+publishes camera + mic, and sends subtitles as data
+`{type:"sub", zh, en, pinyin, at}`. `watch` (call.laonei.co/cast/<id>) draws
+the last two lines over the video in 中 / 拼 / EN, the viewer's choice.
+`/host` re-issues the ticket, `/end` closes it, `GET` says how many watch.
+
 ## Not yet
 
 - Nobody is told when a lesson is booked — `make book-list` shows them.

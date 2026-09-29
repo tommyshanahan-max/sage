@@ -39,6 +39,7 @@ import { liveSetup } from "./lib/live.mjs";
 import * as market from "./lib/market.mjs";
 import * as apps from "./lib/apps.mjs";
 import * as calls from "./lib/calls.mjs";
+import * as cast from "./lib/cast.mjs";
 
 // Where the service is reached from outside — for links put in messages.
 const PUBLIC = (process.env.BOOK_PUBLIC || "https://thexchange.app/book").replace(/\/$/, "");
@@ -61,6 +62,7 @@ const FILES = {
   // The same, one folder down, for /call/<id>: the call page names it
   // relatively so it works at /call and at /call/<id> alike.
   "/call/livekit.js": ["public/vendor/livekit-client.umd.js", "text/javascript; charset=utf-8"],
+  "/cast/livekit.js": ["public/vendor/livekit-client.umd.js", "text/javascript; charset=utf-8"],
 };
 
 /* A BOOKING BUCKET PER ADDRESS: ten, then one more every six minutes. A
@@ -232,6 +234,19 @@ const server = http.createServer(async (req, res) => {
   if (p === "/api/call" || p.startsWith("/api/call/")) {
     const ip = String(req.headers["x-forwarded-for"] || req.socket.remoteAddress || "").split(",")[0].trim();
     if (await calls.routes(req, res, p, { send, readBody, allowed, ip })) return;
+  }
+
+  /* ---- A BROADCAST — see lib/cast.mjs. /cast/<id> is the watch page. */
+  if (req.method === "GET" && /^\/cast\/[a-f0-9]{16}$/.test(p)) {
+    try { return send(res, 200, readFileSync(path.join(HERE, "public/cast.html")), "text/html; charset=utf-8"); }
+    catch { return send(res, 404, { error: "missing" }); }
+  }
+  if (p.startsWith("/api/cast/")) {
+    if (await cast.watchRoutes(req, res, p, { send })) return;
+  }
+  if (p === "/api/casts" || p.startsWith("/api/casts/")) {
+    const app = apps.whose(req, load());
+    if (await cast.appRoutes(req, res, p, { send, readBody, app })) return;
   }
 
   // An app starting and ending its own lives — lib/apps.mjs.
