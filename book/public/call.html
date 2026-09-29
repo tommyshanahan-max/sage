@@ -48,7 +48,7 @@
   .card{position:absolute;left:10px;right:10px;bottom:calc(max(22px,env(safe-area-inset-bottom)) + 76px);
     background:rgba(255,255,255,.96);color:#1c1917;border-radius:22px;display:flex;flex-direction:column;cursor:pointer}
   .card.open{top:max(20%,env(safe-area-inset-top));cursor:default}
-  .ctop{flex:none;display:flex;align-items:center;justify-content:center;position:relative;height:26px}
+  .ctop{flex:none;display:flex;align-items:center;justify-content:center;position:relative;height:30px;touch-action:none;cursor:ns-resize}
   .ctop .grab{width:44px;height:5px;border-radius:3px;background:#d6d3d1}
   .ctop button{position:absolute;right:10px;top:6px;border:1.5px solid #d6d3d1;background:#fff;color:#57534e;border-radius:10px;
     font-size:13px;font-weight:800;padding:3px 8px;cursor:pointer}
@@ -286,9 +286,42 @@
   }
   function openCard(on) {
     $("card").classList.toggle("open", on);
+    const top = Number(store.get("call:top")) || 0;
+    $("card").style.top = on && top ? Math.max(60, top * innerHeight) + "px" : "";
     $("lines").scrollTop = $("lines").scrollHeight;
   }
-  $("card").onclick = (e) => { if (!$("card").classList.contains("open")) openCard(true); else if (e.target.closest(".ctop")) openCard(false); };
+  /* ANY HEIGHT, by dragging the top edge — one fixed size was either too
+     much video hidden or too little conversation. Dragged below two lines'
+     worth it snaps back to the small card; the height is remembered. */
+  let drag = null;
+  $("card").addEventListener("pointerdown", (e) => {
+    if (!e.target.closest(".ctop") || e.target.closest("button")) return;
+    drag = { y: e.clientY, moved: false };
+    $("card").setPointerCapture(e.pointerId);
+  });
+  $("card").addEventListener("pointermove", (e) => {
+    if (!drag) return;
+    if (Math.abs(e.clientY - drag.y) > 8) drag.moved = true;
+    if (!drag.moved) return;
+    const bottom = $("card").getBoundingClientRect().bottom;
+    const top = Math.max(60, e.clientY - 15);
+    if (bottom - top < 150) { $("card").classList.remove("open"); $("card").style.top = ""; return; }
+    $("card").classList.add("open");
+    $("card").style.top = top + "px";
+    $("lines").scrollTop = $("lines").scrollHeight;
+  });
+  $("card").addEventListener("pointerup", () => {
+    if (drag && drag.moved) {
+      if ($("card").classList.contains("open")) store.set("call:top", String(parseFloat($("card").style.top) / innerHeight));
+    }
+    dragDone = drag && drag.moved;
+    drag = null;
+  });
+  let dragDone = false;
+  $("card").onclick = (e) => {
+    if (dragDone) { dragDone = false; return; } // the end of a drag, not a tap
+    if (!$("card").classList.contains("open")) openCard(true); else if (e.target.closest(".ctop")) openCard(false);
+  };
   $("both").onclick = (e) => {
     e.stopPropagation();
     const on = $("card").classList.toggle("both");
@@ -297,7 +330,8 @@
   if (store.get("call:both")) $("card").classList.add("both");
   $("them").onclick = () => openCard(false);
   let y0 = null;
-  $("card").addEventListener("touchstart", (e) => { y0 = e.touches[0].clientY; }, { passive: true });
+  // Swipes on the lines; the top edge is the drag handle above.
+  $("card").addEventListener("touchstart", (e) => { y0 = e.target.closest(".ctop") ? null : e.touches[0].clientY; }, { passive: true });
   $("card").addEventListener("touchend", (e) => {
     if (y0 === null) return;
     const dy = e.changedTouches[0].clientY - y0, open = $("card").classList.contains("open");
