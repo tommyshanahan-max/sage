@@ -31,28 +31,44 @@
   .sub.old b{font-size:21px}
   .veil{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;padding:24px;background:rgba(0,0,0,.55)}
   .veil h1{margin:0;font-size:26px}
-  .go{border:0;border-radius:18px;padding:18px 48px;background:#fff;color:#111;font-size:21px;font-weight:800;cursor:pointer}
+  .go{border:0;border-radius:18px;padding:18px 48px;background:#fff;color:#111;font-size:21px;font-weight:800;cursor:pointer;text-decoration:none}
+  .brand{color:#fff;text-decoration:none;font-weight:800;font-size:14px;background:rgba(0,0,0,.5);border-radius:8px;padding:3px 9px}
+  .share{border:0;border-radius:10px;padding:6px 10px;background:rgba(0,0,0,.5);color:#fff;font-size:15px;cursor:pointer}
   [hidden]{display:none!important}
 </style>
 </head>
 <body>
 <video id="v" autoplay playsinline></video>
-<div class="top"><span class="live">LIVE</span><span class="title" id="title"></span>
+<div class="top"><span class="live">LIVE</span><a class="brand" id="brand" target="_blank" rel="noopener">Laonei</a><span class="title" id="title"></span>
+  <button class="share" id="share" aria-label="Share">⤴</button>
   <div class="langs" id="langs"><button data-l="zh">中</button><button data-l="py">拼</button><button data-l="en">EN</button></div></div>
 <div class="subs" id="subs"></div>
-<div class="veil" id="veil"><h1 id="msg"></h1><button class="go" id="go" hidden></button></div>
+<div class="veil" id="veil"><h1 id="msg"></h1><button class="go" id="go" hidden></button><a class="go" id="getapp" target="_blank" rel="noopener" hidden></a></div>
 <script src="livekit.js"></script>
 <script>
 (() => {
   const zhUI = (navigator.language || "").startsWith("zh");
   const W = zhUI
-    ? { watch: "▶ 观看", soon: "马上开始…", over: "直播已结束", gone: "找不到这个直播", full: "观看人数已满", net: "连不上，检查一下网络再试。", sound: "🔈 点一下开声音" }
-    : { watch: "▶ Watch", soon: "Starting soon…", over: "This live has ended", gone: "This live doesn't exist", full: "This live is full", net: "Can't connect — check the network and try again.", sound: "🔈 Tap for sound" };
+    ? { watch: "▶ 观看", soon: "马上开始…", over: "直播已结束", gone: "找不到这个直播", full: "观看人数已满", net: "连不上，检查一下网络再试。", sound: "🔈 点一下开声音", app: "打开 Laonei", copied: "链接已复制" }
+    : { watch: "▶ Watch", soon: "Starting soon…", over: "This live has ended", gone: "This live doesn't exist", full: "This live is full", net: "Can't connect — check the network and try again.", sound: "🔈 Tap for sound", app: "Get Laonei", copied: "Link copied" };
   const $ = (id) => document.getElementById(id);
   const store = { get: (k) => { try { return localStorage.getItem(k) || ""; } catch { return ""; } },
     set: (k, v) => { try { localStorage.setItem(k, v); } catch { /* private window */ } } };
   const id = (location.pathname.match(/\/cast\/([a-f0-9]{16})$/) || [])[1] || "";
   const BASE = location.pathname.replace(/\/cast\/[a-f0-9]{16}$/, "");
+
+  /* EVERY VIEWER IS A FRIEND OF A USER — the best way anybody arrives. So
+     the page says whose it is (the Laonei badge), lets a viewer pass the live
+     on, and when it ends offers the app. ?from=cast so the Numbers page can
+     tell these arrivals from Instagram's. */
+  const APP = "https://liuxuesheng.help/?from=cast";
+  $("brand").href = APP;
+  $("getapp").href = APP; $("getapp").textContent = W.app;
+  $("share").onclick = async () => {
+    const url = location.origin + location.pathname;
+    try { if (navigator.share) { await navigator.share({ url }); return; } } catch { return; }
+    try { await navigator.clipboard.writeText(url); $("share").textContent = "✓"; } catch { /* nothing to copy with */ }
+  };
 
   /* WHICH LANGUAGE TO READ: 中 (characters), 拼 (characters with pinyin
      above — for learners), EN. Guessed from the phone, remembered once
@@ -95,6 +111,8 @@
   const veil = (msg, button) => {
     $("veil").hidden = false; $("msg").textContent = msg || "";
     $("go").hidden = !button; if (button) $("go").textContent = button;
+    // Over, or never was: the moment to offer what it was made with.
+    $("getapp").hidden = !(msg === W.over || msg === W.gone);
   };
   /* ONE TAP FIRST: a phone plays a page's sound only after a tap, and a
      broadcast without its voice is half a broadcast. */

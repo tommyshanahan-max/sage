@@ -26,7 +26,7 @@
   .langs{display:flex;gap:10px}
   .langs button{border:2px solid #d8d2c8;background:#fff;border-radius:14px;padding:12px 22px;font-size:19px;font-weight:700;cursor:pointer;color:#1c1917}
   .langs button.on{border-color:#1c1917;background:#1c1917;color:#fff}
-  .go{border:0;border-radius:16px;padding:17px 44px;background:#c8261e;color:#fff;font-weight:700;font-size:19px;cursor:pointer}
+  .go{border:0;border-radius:16px;padding:17px 44px;background:#c8261e;color:#fff;font-weight:700;font-size:19px;cursor:pointer;text-decoration:none}
   .go.dark{background:#1c1917}
   .link{width:100%;max-width:420px;background:#fff;border:2px solid #e5e2dc;border-radius:14px;padding:14px;font-size:16px;word-break:break-all;color:#1c1917}
   .row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
@@ -82,6 +82,7 @@
   <div class="row" id="share" hidden><button class="go dark" id="send"></button></div>
   <button class="go" id="go"></button>
   <p class="err" id="err"></p>
+  <a class="go dark" id="getapp" target="_blank" rel="noopener" hidden></a>
 </div>
 <div class="call" id="call" hidden>
   <video id="them" autoplay playsinline></video>
@@ -111,14 +112,14 @@
     joinSub: "字幕会翻译成你的语言。", wait: "等对方加入…", conn: "正在连接…", left: "对方挂断了", you: "通话已结束",
     again: "重新加入", cam: "请允许使用摄像头和麦克风，再试一次。", key: "这个链接打不开通话。", over: "这个通话已过期。",
     full: "这个通话已经有两个人了。", net: "连不上，检查一下网络再试。", noSubs: "这个浏览器不支持字幕，换 Safari 或 Chrome。",
-    lost: "连接断了，正在重连…", tapSubs: "🎙 点这里打开字幕", subsOff: "字幕暂时不可用", tapGo: "🎙 点一下开始字幕",
+    lost: "连接断了，正在重连…", tapSubs: "🎙 点这里打开字幕", subsOff: "字幕暂时不可用", tapGo: "🎙 点一下开始字幕", app: "打开 Laonei",
   } : {
     start: "Talk to anyone.", startSub: "What they say appears in your language.", startGo: "Start a call",
     link: "Send them this link", send: "Share link", copied: "Copied", join: "Join call", joinTitle: "Video call",
     joinSub: "Subtitles in your language.", wait: "Waiting for them to join…", conn: "Connecting…", left: "They left the call", you: "Call ended",
     again: "Join again", cam: "Allow the camera and microphone, then try again.", key: "This link doesn't open a call.", over: "This call link has expired.",
     full: "This call already has two people.", net: "Can't connect — check the network and try again.", noSubs: "No subtitles in this browser — try Safari or Chrome.",
-    lost: "Connection dropped — reconnecting…", tapSubs: "🎙 Tap to turn on subtitles", subsOff: "Subtitles are off right now", tapGo: "🎙 Tap to start subtitles",
+    lost: "Connection dropped — reconnecting…", tapSubs: "🎙 Tap to turn on subtitles", subsOff: "Subtitles are off right now", tapGo: "🎙 Tap to start subtitles", app: "Get Laonei",
   };
   const $ = (id) => document.getElementById(id);
   const LK = window.LivekitClient;
@@ -577,7 +578,12 @@
     $("title").textContent = W.you;
     $("sub").textContent = "";
     $("go").textContent = W.again;
+    $("go").hidden = false; // hidden by going straight in (?lang=)
     $("go").onclick = start;
+    /* WHOEVER CAME FROM A LINK has just used Laonei without having it: the
+       moment to offer it. Not inside the app, which they already have.
+       ?from=call so the Numbers page can count them. */
+    if (!IN_APP) { $("getapp").href = "https://liuxuesheng.help/?from=call"; $("getapp").textContent = W.app; $("getapp").hidden = false; }
   }
   $("end").onclick = finish;
   $("mic").onclick = () => {

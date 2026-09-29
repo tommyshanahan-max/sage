@@ -1,0 +1,17 @@
+# LAONEI'S OWN NAME — laonei.co, and www.
+#
+# Somebody who hears "Laonei" types laonei.co, and until this it answered
+# nothing: after an Instagram push, that is a person lost at the door. The
+# app itself lives at liuxuesheng.help (on its own server, the StudyPal
+# side), so this only forwards there, keeping the path and any ?from= tag
+# so the Numbers page can still say where they came from.
+#
+# 302, not 301: if the app later moves to laonei.co itself, phones that
+# remembered a permanent redirect would keep going to the old name.
+#
+# Needs one DNS record at the registrar: A, host empty (the bare domain) →
+# this box; www the same, or a CNAME to laonei.co. Until then Caddy logs
+# that it cannot get a certificate and every other site carries on.
+{$TOMSCODING_LAONEI_DOMAIN:laonei.localhost} {
+	redir https://liuxuesheng.help{uri} 302
+}
