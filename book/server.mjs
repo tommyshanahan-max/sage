@@ -248,6 +248,10 @@ const server = http.createServer(async (req, res) => {
   }
 
   /* ---- A BROADCAST — see lib/cast.mjs. /cast/<id> is the watch page. */
+  if (req.method === "GET" && /^\/cast\/[a-f0-9]{16}\/go$/.test(p)) {
+    try { return send(res, 200, readFileSync(path.join(HERE, "public/cast-go.html")), "text/html; charset=utf-8"); }
+    catch { return send(res, 404, { error: "missing" }); }
+  }
   if (req.method === "GET" && /^\/cast\/[a-f0-9]{16}$/.test(p)) {
     try { return send(res, 200, readFileSync(path.join(HERE, "public/cast.html")), "text/html; charset=utf-8"); }
     catch { return send(res, 404, { error: "missing" }); }

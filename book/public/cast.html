@@ -40,6 +40,20 @@
   .more button{border:0;border-radius:10px;padding:10px 12px;background:rgba(255,255,255,.1);color:#fff;font-size:17px;font-weight:700;text-align:left;cursor:pointer}
   .more button.on{background:#fff;color:#111}
   .share{border:0;border-radius:10px;padding:6px 10px;background:rgba(0,0,0,.5);color:#fff;font-size:15px;cursor:pointer}
+  /* PRODUCTS UNDER THE VIDEO: the seller holds it up, the viewer taps it. */
+  body.shop .subs{bottom:calc(max(12px,env(safe-area-inset-bottom)) + 104px)}
+  .row{position:absolute;left:0;right:0;bottom:max(10px,env(safe-area-inset-bottom));display:flex;gap:8px;padding:0 10px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .it{flex:none;width:118px;background:#fff;color:#111;border:0;border-radius:14px;padding:6px;text-align:left}
+  .it img,.it .ph{width:100%;height:52px;object-fit:cover;border-radius:9px;display:block;background:#e7e2da}
+  .it .nm{font-size:12px;font-weight:700;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .it .pr{font-size:14px;font-weight:800;background:#111;color:#fff;border-radius:8px;text-align:center;padding:4px;margin-top:4px}
+  .sheet{position:absolute;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end}
+  .card{background:#faf7f1;color:#1c1917;width:100%;border-radius:22px 22px 0 0;padding:16px 16px max(18px,env(safe-area-inset-bottom))}
+  .card h2{margin:0 0 2px;font-size:21px}.card .zh{color:#78716c;font-size:15px}
+  .card .price{font-size:26px;font-weight:800;margin:6px 0 8px}
+  .card input{width:100%;font-size:18px;padding:12px 14px;border:1.5px solid #d6d3d1;border-radius:12px;margin:5px 0;background:#fff}
+  .card .want{width:100%;border:0;border-radius:14px;padding:15px;background:#1c1917;color:#fff;font-size:19px;font-weight:800;margin-top:6px}
+  .card .msg{color:#c8261e;min-height:1.3em}.card .done{font-size:20px;font-weight:700;text-align:center;padding:16px 0}
   [hidden]{display:none!important}
 </style>
 </head>
@@ -50,14 +64,16 @@
   <div class="langs" id="langs"><button data-l="zh">中</button><button data-l="py">拼</button><button data-l="en">EN</button><button data-l="more" id="globe" aria-label="More languages">🌐</button></div></div>
 <div class="more" id="more" hidden></div>
 <div class="subs" id="subs"></div>
+<div class="row" id="row" hidden></div>
+<div class="sheet" id="sheet" hidden><div class="card" id="card"></div></div>
 <div class="veil" id="veil"><h1 id="msg"></h1><button class="go" id="go" hidden></button><a class="go" id="getapp" target="_blank" rel="noopener" hidden></a></div>
 <script src="livekit.js"></script>
 <script>
 (() => {
   const zhUI = (navigator.language || "").startsWith("zh");
   const W = zhUI
-    ? { watch: "▶ 观看", soon: "马上开始…", over: "直播已结束", gone: "找不到这个直播", full: "观看人数已满", net: "连不上，检查一下网络再试。", sound: "🔈 点一下开声音", app: "打开 Laonei", copied: "链接已复制" }
-    : { watch: "▶ Watch", soon: "Starting soon…", over: "This live has ended", gone: "This live doesn't exist", full: "This live is full", net: "Can't connect — check the network and try again.", sound: "🔈 Tap for sound", app: "Get Laonei", copied: "Link copied" };
+    ? { watch: "▶ 观看", soon: "马上开始…", over: "直播已结束", gone: "找不到这个直播", full: "观看人数已满", net: "连不上，检查一下网络再试。", sound: "🔈 点一下开声音", app: "打开 Laonei", copied: "链接已复制", want: "我想要", name: "名字", reach: "邮箱或微信", country: "国家", sent: "收到了，我们会联系你。", need: "留个联系方式吧", retry: "没发出去，再试一次。" }
+    : { watch: "▶ Watch", soon: "Starting soon…", over: "This live has ended", gone: "This live doesn't exist", full: "This live is full", net: "Can't connect — check the network and try again.", sound: "🔈 Tap for sound", app: "Get Laonei", copied: "Link copied", want: "I want this", name: "Your name", reach: "Email or WhatsApp", country: "Country", sent: "Got it — we'll be in touch.", need: "How do we reach you?", retry: "Didn't send — try again." };
   const $ = (id) => document.getElementById(id);
   const store = { get: (k) => { try { return localStorage.getItem(k) || ""; } catch { return ""; } },
     set: (k, v) => { try { localStorage.setItem(k, v); } catch { /* private window */ } } };
@@ -188,6 +204,49 @@
     $("go").onclick = () => { room.startAudio().catch(() => {}); $("veil").hidden = true; };
   }
   $("v").onclick = () => { $("more").hidden = true; };
+  /* THE PRODUCTS (lib/shop.mjs): the shop's own items in a row under the
+     video. A tap opens "I want this" over the live, which keeps playing —
+     no money yet; asking is the test. Hidden when the shop is empty. */
+  fetch(`${BASE}/api/shop`).then((r) => r.json()).then((j) => {
+    const items = (j.items || []).slice(0, 12);
+    if (!items.length) return;
+    document.body.classList.add("shop");
+    const nameOf = (x) => (zhUI ? x.zh : x.en || x.zh);
+    for (const x of items) {
+      const b = document.createElement("button"); b.className = "it";
+      const img = x.photo ? Object.assign(document.createElement("img"), { src: x.photo, alt: "", loading: "lazy", referrerPolicy: "no-referrer" }) : Object.assign(document.createElement("div"), { className: "ph" });
+      img.onerror = () => img.replaceWith(Object.assign(document.createElement("div"), { className: "ph" }));
+      b.append(img, Object.assign(document.createElement("div"), { className: "nm", textContent: nameOf(x) }),
+        Object.assign(document.createElement("div"), { className: "pr", textContent: zhUI ? `¥${x.cny}` : `A$${x.aud}` }));
+      b.onclick = () => want(x, nameOf(x));
+      $("row").append(b);
+    }
+    $("row").hidden = false;
+  }).catch(() => { /* no shop: just the live */ });
+  function want(x, nm) {
+    const c = $("card"); c.replaceChildren();
+    c.append(Object.assign(document.createElement("h2"), { textContent: nm }));
+    if (!zhUI && x.en) c.append(Object.assign(document.createElement("div"), { className: "zh", textContent: x.zh }));
+    c.append(Object.assign(document.createElement("div"), { className: "price", textContent: zhUI ? `¥${x.cny}` : `A$${x.aud}  ·  ¥${x.cny}` }));
+    const f = (ph, ac) => Object.assign(document.createElement("input"), { placeholder: ph, autocomplete: ac });
+    const n = f(W.name, "name"), r = f(W.reach, "email"), co = f(W.country, "country-name");
+    const msg = Object.assign(document.createElement("div"), { className: "msg" });
+    r.oninput = () => { msg.textContent = ""; };
+    const go = Object.assign(document.createElement("button"), { className: "want", textContent: W.want });
+    go.onclick = async () => {
+      if (!r.value.trim()) { msg.textContent = W.need; r.focus(); return; }
+      go.disabled = true;
+      try {
+        const res = await fetch(`${BASE}/api/shop/want`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ item: x.id, name: n.value, reach: r.value, country: co.value }) });
+        if (!res.ok) throw 0;
+        c.replaceChildren(Object.assign(document.createElement("div"), { className: "done", textContent: W.sent }));
+        setTimeout(() => { $("sheet").hidden = true; }, 1800);
+      } catch { msg.textContent = W.retry; go.disabled = false; }
+    };
+    c.append(n, r, co, msg, go);
+    $("sheet").hidden = false;
+  }
+  $("sheet").onclick = (e) => { if (e.target === $("sheet")) $("sheet").hidden = true; };
   addEventListener("pagehide", () => { if (room) room.disconnect(); });
 })();
 </script>

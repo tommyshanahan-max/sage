@@ -1,0 +1,138 @@
+<!doctype html>
+<!-- GOING LIVE FROM TOM'S PHONE — a test broadcaster, until Laonei's Live
+     screen does this itself (lib/cast.mjs, `make cast-test`). The camera goes
+     out to everybody on the watch link; what Tom says is heard by the phone's
+     own dictation, turned into Chinese and English by the server, and sent as
+     subtitles — never burned into the picture. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Go live</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:#000;color:#fff;overflow:hidden;
+    font:17px/1.4 -apple-system,BlinkMacSystemFont,"PingFang SC","Segoe UI",Helvetica,Arial,sans-serif}
+  button{font-family:inherit;cursor:pointer}
+  #v{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#111}
+  .pre{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px;text-align:center;background:rgba(0,0,0,.55)}
+  .pre h1{margin:0;font:700 30px/1.15 Georgia,serif}
+  .langs{display:flex;gap:10px}
+  .langs button{border:2px solid rgba(255,255,255,.5);background:transparent;color:#fff;border-radius:14px;padding:11px 22px;font-size:19px;font-weight:700}
+  .langs button.on{background:#fff;color:#111;border-color:#fff}
+  .go{border:0;border-radius:50%;width:130px;height:130px;background:#dc2626;color:#fff;font-size:22px;font-weight:800;box-shadow:0 0 0 12px rgba(220,38,38,.3)}
+  .top{position:absolute;left:12px;right:12px;top:max(12px,env(safe-area-inset-top));display:flex;gap:8px;align-items:center}
+  .live{background:#dc2626;border-radius:8px;padding:4px 10px;font-weight:800;font-size:14px}
+  .n{background:rgba(0,0,0,.55);border-radius:8px;padding:4px 10px;font-weight:700;font-size:14px}
+  .sp{flex:1}
+  .pill{border:0;border-radius:20px;padding:8px 14px;font-weight:800;font-size:15px;background:#fff;color:#111}
+  .sub{position:absolute;left:12px;right:12px;bottom:calc(max(24px,env(safe-area-inset-bottom)) + 70px);text-align:center}
+  .sub div{display:inline-block;background:rgba(0,0,0,.62);border-radius:14px;padding:8px 14px;max-width:100%}
+  .sub b{display:block;font-size:24px}.sub small{display:block;font-size:17px;opacity:.85}
+  .bar{position:absolute;left:0;right:0;bottom:max(18px,env(safe-area-inset-bottom));display:flex;justify-content:center;gap:14px}
+  .bar button{height:52px;border-radius:26px;border:0;padding:0 20px;background:rgba(255,255,255,.2);color:#fff;font-size:16px;font-weight:700}
+  .bar .end{background:#dc2626}
+  .err{color:#fca5a5;min-height:1.4em}
+  [hidden]{display:none!important}
+</style>
+</head>
+<body>
+<video id="v" autoplay playsinline muted></video>
+<div class="pre" id="pre">
+  <h1 id="title"></h1>
+  <div class="langs" id="langs"><button data-l="en">I speak English</button><button data-l="zh">我说中文</button></div>
+  <button class="go" id="go">Go live</button>
+  <p class="err" id="err"></p>
+</div>
+<div id="on" hidden>
+  <div class="top"><span class="live">LIVE</span><span class="n" id="n">👁 0</span><span class="sp"></span><button class="pill" id="share">⤴ Share</button></div>
+  <div class="sub" id="sub" hidden><div><b id="subA"></b><small id="subB"></small></div></div>
+  <div class="bar"><button id="flip">🔄 Flip</button><button id="end" class="end">End live</button></div>
+</div>
+<script src="../livekit.js"></script>
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const LK = window.LivekitClient;
+  const id = (location.pathname.match(/\/cast\/([a-f0-9]{16})\/go$/) || [])[1] || "";
+  const key = location.hash.slice(1);
+  const BASE = location.pathname.replace(/\/cast\/[a-f0-9]{16}\/go$/, "");
+  const post = (what, body) => fetch(`${BASE}/api/cast/${id}/${what}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key, ...body }) });
+  let lang = (navigator.language || "").startsWith("zh") ? "zh" : "en";
+  const drawLangs = () => [...$("langs").children].forEach((b) => b.classList.toggle("on", b.dataset.l === lang));
+  $("langs").onclick = (e) => { const l = e.target.dataset && e.target.dataset.l; if (l) { lang = l; drawLangs(); } };
+  drawLangs();
+  let room = null, tracks = [], watch = "", facing = "environment";
+
+  /* WHAT I SAY → SUBTITLES. The phone's dictation, restarted whenever it
+     stops; a sentence goes after a short pause (iPhone rarely says "final"
+     on its own — see call.html), the server gives it back in both
+     languages, and it is sent to every viewer as data. */
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  let rec = null, pause = 0, lastSent = "", live = false;
+  function listen() {
+    if (!SR || !live) return;
+    if (!rec) {
+      rec = new SR(); rec.continuous = true; rec.interimResults = true;
+      rec.onresult = (e) => {
+        let t = ""; for (let i = e.resultIndex; i < e.results.length; i++) t = e.results[i][0].transcript;
+        t = t.trim(); if (!t) return;
+        clearTimeout(pause);
+        pause = setTimeout(() => say(t), 700);
+      };
+      rec.onend = () => { if (live) setTimeout(() => { try { rec.start(); } catch { /* running */ } }, 300); };
+    }
+    rec.lang = lang === "zh" ? "zh-CN" : "en-US";
+    try { rec.start(); } catch { /* running */ }
+  }
+  async function say(t) {
+    const part = t.startsWith(lastSent) ? t.slice(lastSent.length).trim() : t;
+    lastSent = t;
+    if (!/[\p{L}\p{N}]/u.test(part) || !room) return;
+    let s;
+    try { const r = await post("say", { text: part }); if (!r.ok) return; s = await r.json(); } catch { return; }
+    const msg = { type: "sub", zh: s.zh || "", en: s.en || "", pinyin: "", at: Date.now() };
+    room.localParticipant.publishData(new TextEncoder().encode(JSON.stringify(msg)), { reliable: true, topic: "sub" }).catch(() => {});
+    $("subA").textContent = lang === "zh" ? msg.zh : msg.en;
+    $("subB").textContent = lang === "zh" ? msg.en : msg.zh;
+    $("sub").hidden = false;
+  }
+
+  $("go").onclick = async () => {
+    $("err").textContent = "";
+    live = true; listen(); // inside the tap: an iPhone allows dictation only here
+    let j;
+    try { const r = await post("go", {}); if (!r.ok) throw r.status; j = await r.json(); }
+    catch (s) { live = false; $("err").textContent = s === 410 ? "This broadcast has ended." : s === 403 ? "This link doesn't go live." : "Can't connect — try again."; return; }
+    watch = j.watch;
+    try {
+      tracks = await LK.createLocalTracks({ audio: true, video: { facingMode: facing, resolution: LK.VideoPresets.h720.resolution } });
+      room = new LK.Room();
+      await room.connect(j.host.url, j.host.token);
+      for (const t of tracks) await room.localParticipant.publishTrack(t);
+    } catch { live = false; $("err").textContent = "Allow the camera and microphone, then try again."; return; }
+    tracks.find((t) => t.kind === "video").attach($("v"));
+    const count = () => { $("n").textContent = "👁 " + room.remoteParticipants.size; };
+    room.on(LK.RoomEvent.ParticipantConnected, count); room.on(LK.RoomEvent.ParticipantDisconnected, count); count();
+    $("pre").hidden = true; $("on").hidden = false;
+  };
+  $("share").onclick = async () => {
+    try { if (navigator.share) { await navigator.share({ url: watch }); return; } } catch { return; }
+    try { await navigator.clipboard.writeText(watch); $("share").textContent = "✓ Copied"; } catch { /* nothing to copy with */ }
+  };
+  $("flip").onclick = async () => {
+    const v = tracks.find((t) => t.kind === "video"); if (!v) return;
+    facing = facing === "environment" ? "user" : "environment";
+    try { await v.restartTrack({ facingMode: facing }); } catch { /* one camera */ }
+  };
+  $("end").onclick = () => {
+    live = false; try { rec && rec.stop(); } catch { /* */ }
+    if (room) room.disconnect(); tracks.forEach((t) => t.stop());
+    $("on").hidden = true; $("pre").hidden = false; $("go").hidden = true; $("langs").hidden = true;
+    $("title").textContent = "Live ended";
+  };
+  $("title").textContent = "Go live";
+})();
+</script>
+</body>
+</html>

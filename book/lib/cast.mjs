@@ -28,6 +28,7 @@
  *
  * HOW MANY: up to live.mjs's CEIL (200) at once, one box's honest limit.
  */
+import { randomBytes } from "node:crypto";
 import { load, save, newId } from "./store.mjs";
 import { ticket, ensureRoom, watching, closeRoom, CEIL } from "./live.mjs";
 import * as speak from "./speak.mjs";
@@ -41,7 +42,20 @@ const words = (v, n) => String(v || "").replace(/[\u0000-\u001f<>]/g, " ").trim(
 export function cleanCast(r) {
   if (!r || !/^[a-f0-9]{16}$/.test(r.id) || !/^[a-z0-9-]{1,30}$/.test(r.app)) return null;
   if (Number.isNaN(Date.parse(r.at))) return null;
-  return { id: r.id, app: r.app, at: r.at, name: words(r.name, 30), title: words(r.title, 80), off: Boolean(r.off) };
+  return { id: r.id, app: r.app, at: r.at, name: words(r.name, 30), title: words(r.title, 80), off: Boolean(r.off),
+    ...(/^[a-f0-9]{24}$/.test(r.hKey || "") ? { hKey: r.hKey } : {}) };
+}
+
+/* A BROADCAST FROM TOM'S OWN PHONE, for testing before Laonei's Live screen
+   exists: `make cast-test` makes one with a broadcaster key, and the link
+   /cast/<id>/go#<key> is a page that goes live and sends subtitles itself
+   (public/cast-go.html). The key is the whole permission, like a call's. */
+export function newTestCast(name, title) {
+  const db = load();
+  const c = { id: newId(), app: "tom", at: new Date().toISOString(), name: words(name, 30), title: words(title, 80), off: false, hKey: randomBytes(12).toString("hex") };
+  db.casts = db.casts.filter(open).concat(c);
+  save(db);
+  return { go: `${WATCH}/cast/${c.id}/go#${c.hKey}`, watch: `${WATCH}/cast/${c.id}` };
 }
 
 const hostTicket = (c) => ticket(room(c), "host", c.name || "Live", true);
@@ -104,6 +118,27 @@ export async function watchRoutes(req, res, p, { send, readBody }) {
     // Per broadcast AND language, so three languages do not share one bucket.
     try { return send(res, 200, { text: await speak.translate(String(b.text || ""), to, `cast-${c.id}-${to}`) }), true; }
     catch (e) { return send(res, e.message === "busy" ? 429 : 502, { error: e.message }), true; }
+  }
+  /* THE TEST BROADCASTER'S TWO CALLS, with its key: a ticket to go live,
+     and one sentence translated (Chinese ⇄ English) for its subtitles. */
+  const g = p.match(/^\/api\/cast\/([a-f0-9]{16})\/(go|say)$/);
+  if (g && req.method === "POST") {
+    const c = load().casts.find((x) => x.id === g[1]);
+    const b = (await readBody(req)) || {};
+    if (!c || !c.hKey || String(b.key || "") !== c.hKey) return send(res, 403, { error: "key" }), true;
+    if (!open(c)) return send(res, 410, { error: "over" }), true;
+    if (g[2] === "go") {
+      await ensureRoom(room(c), CEIL);
+      const host = hostTicket(c);
+      return host ? (send(res, 200, { host, watch: `${WATCH}/cast/${c.id}`, title: c.title }), true) : (send(res, 503, { error: "off" }), true);
+    }
+    const text = String(b.text || "").trim().slice(0, 300);
+    if (!text) return send(res, 400, { error: "empty" }), true;
+    const zh = /[\u3400-\u9fff]/.test(text);
+    try {
+      const other = await speak.translate(text, zh ? "en" : "zh", `cast-${c.id}-host`);
+      return send(res, 200, zh ? { zh: text, en: other } : { zh: other, en: text }), true;
+    } catch (e) { return send(res, e.message === "busy" ? 429 : 502, { error: e.message }), true; }
   }
   const m = p.match(/^\/api\/cast\/([a-f0-9]{16})\/watch$/);
   if (!m || req.method !== "POST") return false;

@@ -54,7 +54,11 @@ function teamNamed(db, name) {
 
 const when = (iso) => iso.replace("T", " ").replace("+08:00", " Beijing");
 
-if (cmd === "shop-import") {
+if (cmd === "cast-test") {
+  const { newTestCast } = await import("./lib/cast.mjs");
+  const l = newTestCast(E.NAME || "Tom", E.TITLE || "Live from China");
+  console.log(`\n  YOU, on your phone:   ${l.go}\n  EVERYBODY ELSE:       ${l.watch}\n\n  Open for 12 hours.\n`);
+} else if (cmd === "shop-import") {
   /* The 微店 reader's JSON on stdin (make shop-sync pipes it here), names
      put into English once. Prints what the shop now shows. */
   const { importItems } = await import("./lib/shop.mjs");
