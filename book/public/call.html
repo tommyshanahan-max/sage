@@ -63,7 +63,7 @@
   .ln .alt{display:none;font-size:15px;font-weight:500;color:#78716c}
   .card.both .ln .alt:not(:empty){display:block}
   .ok{color:#16a34a;font-weight:900;margin-left:6px}
-  .callshare{position:absolute;left:24px;right:24px;top:52%;width:auto}
+  .callshare{position:absolute;left:24px;right:24px;top:52%;width:auto;background:#fff!important;color:#1c1917}
   [hidden]{display:none!important}
 </style>
 </head>
@@ -92,6 +92,7 @@
     <button id="mic" aria-label="Microphone"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
     <button id="cam" aria-label="Camera"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="13" height="10" rx="2"/><path d="M16 11l5-3v8l-5-3"/></svg></button>
     <button id="lng" aria-label="Language"></button>
+    <button id="shr" aria-label="Share link"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 8l5-5 5 5"/><path d="M5 12v7h14v-7"/></svg></button>
     <button id="end" class="end" aria-label="Leave"><svg viewBox="0 0 24 24"><path d="M3 15c5-5 13-5 18 0l-3 3-3-2v-3c-2-1-4-1-6 0v3l-3 2z"/></svg></button>
   </div>
 </div>
@@ -186,10 +187,19 @@
   }
   const share = async (btn) => {
     try { if (navigator.share) { await navigator.share({ url: linkOf() }); return; } } catch { /* cancelled */ }
-    try { await navigator.clipboard.writeText(linkOf()); btn.textContent = W.copied; } catch { /* the link is on screen */ }
+    try {
+      await navigator.clipboard.writeText(linkOf());
+      if (!btn.querySelector("svg")) btn.textContent = W.copied;
+      else { const was = $("state").textContent; say(W.copied); setTimeout(() => say(was), 1500); }
+    } catch { /* the link is on screen */ }
   };
   $("send").onclick = () => share($("send"));
   $("send2").onclick = () => share($("send2"));
+  /* THE LINK, ALWAYS ONE TAP AWAY. Going straight into the call dropped the
+     screen the link was on, and the big Share only shows while waiting —
+     so once anybody had joined, or on the joining phone, there was no way
+     to pass the call on. The bar keeps one. */
+  $("shr").onclick = () => share($("shr"));
 
   /* STRAIGHT IN, when the app already asked. Laonei opens this with ?lang=
      after the person picked their language on its own Call tab, and this
