@@ -2033,7 +2033,13 @@ SHOP=. Waiting on Tom's own 微店 link.
 bar Laonei · Video · Shop · Learn. Ship Laonei · Call · Learn now (Learn
 named, not an icon — it is the come-back-tomorrow tab, and 2% come back);
 Call becomes Video when Go live lands; Shop last. Tom's own 微店 is mostly
-branded copies — only picked, unbranded items go in the shop (shop-pick). Book now
+branded copies — only picked, unbranded items go in the shop (shop-pick).
+**Learn, agreed 30 Sep:** docs/mockups/laonei-learn.png (today's word from
+the user's own translations, swipe deck, keep-or-bin sort; prototype
+claude.ai/artifact/1CjgrzPksS8BSEh9uco7Ft) and laonei-teachers.png (Book a
+teacher row → teachers → teacher + slots → pay → lesson with the teacher's
+board, ☆ into phrases). Teachers/booking/video room exist in book/;
+payment waits on PingPong. Book now
 has one npm dependency (the Anthropic SDK), installed from its lockfile.
 
 ## Book — lessons widget and video room, live 26 Sep, watched working
